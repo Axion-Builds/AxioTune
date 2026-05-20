@@ -1,0 +1,898 @@
+[
+  {
+    "category": "Top result",
+    "resultType": "artist",
+    "subscribers": "293M",
+    "artists": [
+      {
+        "name": "Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      }
+    ],
+    "thumbnails": [
+      {
+        "url": "https://lh3.googleusercontent.com/Ss_NEfGmfpwXCiuoNxiKxWAoU3M484SwZ4UmahATX7KwOqIaoqTyESuNyZV3fzJm25bmjtfSUxsIFI8=w60-h60-p-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://lh3.googleusercontent.com/Ss_NEfGmfpwXCiuoNxiKxWAoU3M484SwZ4UmahATX7KwOqIaoqTyESuNyZV3fzJm25bmjtfSUxsIFI8=w120-h120-p-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "song",
+    "title": "ONE BOTTLE DOWN",
+    "album": null,
+    "inLibrary": false,
+    "pinnedToListenAgain": false,
+    "videoId": "0CmzfoJuer0",
+    "videoType": "MUSIC_VIDEO_TYPE_ATV",
+    "duration": "3:17",
+    "year": null,
+    "artists": [
+      {
+        "name": "LIL GOLU",
+        "id": "UCKtKjwT5geJT1Pibjr_qrOA"
+      },
+      {
+        "name": "YO YO HONEY SINGH",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      }
+    ],
+    "duration_seconds": 197,
+    "views": "276M",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/C4CQ3z7SMxjNQ1niZ-Upj2uN5oSOr6mAIVnNoTHoi3H4-dZhM3yMkEkhHjRGOjcJx5xOi3VcolR7iUM=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/C4CQ3z7SMxjNQ1niZ-Upj2uN5oSOr6mAIVnNoTHoi3H4-dZhM3yMkEkhHjRGOjcJx5xOi3VcolR7iUM=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "song",
+    "title": "Dope Shope",
+    "album": null,
+    "inLibrary": false,
+    "pinnedToListenAgain": false,
+    "videoId": "-vmqeMuL5M8",
+    "videoType": "MUSIC_VIDEO_TYPE_ATV",
+    "duration": "3:14",
+    "year": null,
+    "artists": [
+      {
+        "name": "Yo Yo Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      },
+      {
+        "name": "Deep Money",
+        "id": "UCYeXQlj99Y2-ffB1vv6BUDA"
+      }
+    ],
+    "duration_seconds": 194,
+    "views": "553M",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/Ej74BaoxGgz_NWcUIhnlwlHH_wBBN54vGnzSbalds41OAylbsOxC2BNqJubYYsp_JQkkaD9g4-IKVJQ=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/Ej74BaoxGgz_NWcUIhnlwlHH_wBBN54vGnzSbalds41OAylbsOxC2BNqJubYYsp_JQkkaD9g4-IKVJQ=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "song",
+    "title": "BLUE EYES",
+    "album": null,
+    "inLibrary": false,
+    "pinnedToListenAgain": false,
+    "videoId": "R7JjuceJzFY",
+    "videoType": "MUSIC_VIDEO_TYPE_ATV",
+    "duration": "3:41",
+    "year": null,
+    "artists": [
+      {
+        "name": "YO YO HONEY SINGH & LILL GOLLU",
+        "id": null
+      }
+    ],
+    "duration_seconds": 221,
+    "views": "900M",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/UR4V8rnlNyhnrJ2tlTGeG01hHeFSs9eJX2QAarkxNGR9mIbguMdvRBTo4jRUbM7psNeZ0sJZBNFLy4o=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/UR4V8rnlNyhnrJ2tlTGeG01hHeFSs9eJX2QAarkxNGR9mIbguMdvRBTo4jRUbM7psNeZ0sJZBNFLy4o=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "album",
+    "title": "Desi Kalakaar",
+    "type": "Album",
+    "playlistId": "OLAK5uy_kujAjE6flp8eR6seQ2_cPnTjdqDehFCvQ",
+    "duration": null,
+    "year": "2014",
+    "artists": [
+      {
+        "name": "Yo Yo Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      },
+      {
+        "name": "Lil Golu",
+        "id": "UCKtKjwT5geJT1Pibjr_qrOA"
+      }
+    ],
+    "browseId": "MPREb_7Ag1bV2CLB2",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/FnPqwVKEy-l9qjAXJ8RdYhHiATYcLZiMXrbd2IUPAUo5esiOmgMvDMInJc0hZ1I7WDYsDL9TlxUG_7Hj=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/FnPqwVKEy-l9qjAXJ8RdYhHiATYcLZiMXrbd2IUPAUo5esiOmgMvDMInJc0hZ1I7WDYsDL9TlxUG_7Hj=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/FnPqwVKEy-l9qjAXJ8RdYhHiATYcLZiMXrbd2IUPAUo5esiOmgMvDMInJc0hZ1I7WDYsDL9TlxUG_7Hj=w226-h226-l90-rj",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/FnPqwVKEy-l9qjAXJ8RdYhHiATYcLZiMXrbd2IUPAUo5esiOmgMvDMInJc0hZ1I7WDYsDL9TlxUG_7Hj=w544-h544-l90-rj",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "album",
+    "title": "Best Of Yo Yo Honey Singh",
+    "type": "Album",
+    "playlistId": "OLAK5uy_lmXnuKG8ouiTPdNbJcWNxWRILHQvtNp_c",
+    "duration": null,
+    "year": "2025",
+    "artists": [
+      {
+        "name": "Yo Yo Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      }
+    ],
+    "browseId": "MPREb_FkKa1imPHoW",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/ZQj65F7W4DtJl5mwNRBc3-xD_AV_wMdU6W8EN3bRkLEepRkzkfTWmpM4LQ4AMnMK4FkoLr9P2URvHxAZ=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/ZQj65F7W4DtJl5mwNRBc3-xD_AV_wMdU6W8EN3bRkLEepRkzkfTWmpM4LQ4AMnMK4FkoLr9P2URvHxAZ=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/ZQj65F7W4DtJl5mwNRBc3-xD_AV_wMdU6W8EN3bRkLEepRkzkfTWmpM4LQ4AMnMK4FkoLr9P2URvHxAZ=w226-h226-l90-rj",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/ZQj65F7W4DtJl5mwNRBc3-xD_AV_wMdU6W8EN3bRkLEepRkzkfTWmpM4LQ4AMnMK4FkoLr9P2URvHxAZ=w544-h544-l90-rj",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "artist",
+    "artist": "Badshah",
+    "shuffleId": "RDAOOpbtii-o6H51yvm6m6SArQ",
+    "radioId": "RDEMOpbtii-o6H51yvm6m6SArQ",
+    "browseId": "UCVfSAUepe_FzP6ge6WexO5Q",
+    "thumbnails": [
+      {
+        "url": "https://lh3.googleusercontent.com/bbR8znm7CX07mCGQH-M484ckFRaKkSmTjwrwuFZxQUBy7Uc5gQcintkpqDXCuSX0DdLLg2aPskZhC2s=w60-h60-p-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://lh3.googleusercontent.com/bbR8znm7CX07mCGQH-M484ckFRaKkSmTjwrwuFZxQUBy7Uc5gQcintkpqDXCuSX0DdLLg2aPskZhC2s=w120-h120-p-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "album",
+    "title": "Yo Yo Honey Singh Is Back",
+    "type": "Album",
+    "playlistId": "OLAK5uy_kRklLKvPYLg9RQNg1YDAZsYL_1UMyCxPg",
+    "duration": null,
+    "year": "2018",
+    "artists": [
+      {
+        "name": "Yo Yo Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      }
+    ],
+    "browseId": "MPREb_UO3wurPxLBN",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/KCq3BKJ8HwqBh2aDXTcr6fUX5Y1NgMm8IM5wE8WBKqqe-B415l0W5YWLaRa0tkyQG3B_I05wdvFYtlw=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/KCq3BKJ8HwqBh2aDXTcr6fUX5Y1NgMm8IM5wE8WBKqqe-B415l0W5YWLaRa0tkyQG3B_I05wdvFYtlw=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/KCq3BKJ8HwqBh2aDXTcr6fUX5Y1NgMm8IM5wE8WBKqqe-B415l0W5YWLaRa0tkyQG3B_I05wdvFYtlw=w226-h226-l90-rj",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/KCq3BKJ8HwqBh2aDXTcr6fUX5Y1NgMm8IM5wE8WBKqqe-B415l0W5YWLaRa0tkyQG3B_I05wdvFYtlw=w544-h544-l90-rj",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "song",
+    "title": "Desi Kalakaar",
+    "album": null,
+    "inLibrary": false,
+    "pinnedToListenAgain": false,
+    "videoId": "4MOV2I1QVoU",
+    "videoType": "MUSIC_VIDEO_TYPE_ATV",
+    "duration": null,
+    "year": null,
+    "artists": [
+      {
+        "name": "Yo Yo Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      }
+    ],
+    "views": "359M",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/FnPqwVKEy-l9qjAXJ8RdYhHiATYcLZiMXrbd2IUPAUo5esiOmgMvDMInJc0hZ1I7WDYsDL9TlxUG_7Hj=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/FnPqwVKEy-l9qjAXJ8RdYhHiATYcLZiMXrbd2IUPAUo5esiOmgMvDMInJc0hZ1I7WDYsDL9TlxUG_7Hj=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "song",
+    "title": "Love Dose",
+    "album": null,
+    "inLibrary": false,
+    "pinnedToListenAgain": false,
+    "videoId": "gYmVMU2_J0o",
+    "videoType": "MUSIC_VIDEO_TYPE_ATV",
+    "duration": null,
+    "year": null,
+    "artists": [
+      {
+        "name": "Yo Yo Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      }
+    ],
+    "views": "655M",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/FnPqwVKEy-l9qjAXJ8RdYhHiATYcLZiMXrbd2IUPAUo5esiOmgMvDMInJc0hZ1I7WDYsDL9TlxUG_7Hj=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/FnPqwVKEy-l9qjAXJ8RdYhHiATYcLZiMXrbd2IUPAUo5esiOmgMvDMInJc0hZ1I7WDYsDL9TlxUG_7Hj=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "song",
+    "title": "Chaar Botal Vodka",
+    "album": null,
+    "inLibrary": false,
+    "pinnedToListenAgain": false,
+    "videoId": "sUbf9PhT7VQ",
+    "videoType": "MUSIC_VIDEO_TYPE_ATV",
+    "duration": null,
+    "year": null,
+    "artists": [
+      {
+        "name": "Yo Yo Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      }
+    ],
+    "views": "345M",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/RqhsUKT4se5GF5vsvM1pxNs2o2kR3VHsBw6a3R2iJQQkLD1kK_I4gr3wHgJsg6U58FMFFF4wuzqws4fR=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/RqhsUKT4se5GF5vsvM1pxNs2o2kR3VHsBw6a3R2iJQQkLD1kK_I4gr3wHgJsg6U58FMFFF4wuzqws4fR=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "song",
+    "title": "Achko Machko",
+    "album": null,
+    "inLibrary": false,
+    "pinnedToListenAgain": false,
+    "videoId": "Y5FmH0hO2ac",
+    "videoType": "MUSIC_VIDEO_TYPE_ATV",
+    "duration": null,
+    "year": null,
+    "artists": [
+      {
+        "name": "Yo YO Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      }
+    ],
+    "views": "156M",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/I0frVX9EEvIDxuha3-Aw4vMlO30Vk0hvhIlIzUENTHc8zqpBgZIokNXquZH7W3mXVcHctCQ5LoZYpeQFHQ=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/I0frVX9EEvIDxuha3-Aw4vMlO30Vk0hvhIlIzUENTHc8zqpBgZIokNXquZH7W3mXVcHctCQ5LoZYpeQFHQ=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "playlist",
+    "title": "Presenting Yo Yo Honey Singh",
+    "itemCount": "YouTube",
+    "author": "YouTube Music",
+    "browseId": "VLRDCLAK5uy_kr3pcLM0Dc_A9wvxCj0vVjob3maWg1WgA",
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/8yEPk894s_NpcOQ5YehoHiaYlfltrkS3L5-8gVL0fyLHIZGG4jQeLr96V25fkqdK_RPmUfslatiEopM=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/8yEPk894s_NpcOQ5YehoHiaYlfltrkS3L5-8gVL0fyLHIZGG4jQeLr96V25fkqdK_RPmUfslatiEopM=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/8yEPk894s_NpcOQ5YehoHiaYlfltrkS3L5-8gVL0fyLHIZGG4jQeLr96V25fkqdK_RPmUfslatiEopM=w226-h226-l90-rj",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/8yEPk894s_NpcOQ5YehoHiaYlfltrkS3L5-8gVL0fyLHIZGG4jQeLr96V25fkqdK_RPmUfslatiEopM=w544-h544-l90-rj",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "song",
+    "title": "First Kiss",
+    "album": null,
+    "inLibrary": false,
+    "pinnedToListenAgain": false,
+    "videoId": "nYPRkswuNng",
+    "videoType": "MUSIC_VIDEO_TYPE_ATV",
+    "duration": null,
+    "year": null,
+    "artists": [
+      {
+        "name": "Yo Yo Honey Singh",
+        "id": "UCGPCYz1FTl_dvFFnzQTQzjw"
+      },
+      {
+        "name": "Ipsitaa",
+        "id": "UCis4mpCtt0uMjLoquubYaNg"
+      }
+    ],
+    "views": "285M",
+    "isExplicit": false,
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/isN4aaEp19HKG-KhWnN-1qk2GiA2WKeTDUajd5AKTDShvBwRlABty7OgcSTQRIjbFoW0nSpvS2jgGJa3=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/isN4aaEp19HKG-KhWnN-1qk2GiA2WKeTDUajd5AKTDShvBwRlABty7OgcSTQRIjbFoW0nSpvS2jgGJa3=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "video",
+    "title": "honey singh songs || honey singh latest songs || new honey singh songs || yo yo honey singh song ||",
+    "videoId": "vgKdf8ktVtU",
+    "videoType": "MUSIC_VIDEO_TYPE_UGC",
+    "duration": null,
+    "year": null,
+    "artists": [
+      {
+        "name": "Feel The Music -GP \ud83c\udfb6 ",
+        "id": "UC-QzoxBPtTUFE-XHhZjv3cA"
+      }
+    ],
+    "views": "6.2M",
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/vi/vgKdf8ktVtU/sddefault.jpg?sqp=-oaymwEWCJADEOEBIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3lHGly9uxrXNKoQ_LdWlRtfwV9X9g",
+        "width": 400,
+        "height": 225
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "artist",
+    "artist": "Diljit Dosanjh",
+    "shuffleId": "RDAOmKmyqVoovqMEbC3lkv2lGg",
+    "radioId": "RDEMmKmyqVoovqMEbC3lkv2lGg",
+    "browseId": "UCJ2m-WpROlZCiZZID9r7NSQ",
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/7EYXXMXY594V8y4sZT2aawmdKgDAGTu5jNm9C-HpR3jY9cZJ0NMxS__nZKBdWZ1PUpJPjc2BAA=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/7EYXXMXY594V8y4sZT2aawmdKgDAGTu5jNm9C-HpR3jY9cZJ0NMxS__nZKBdWZ1PUpJPjc2BAA=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "playlist",
+    "title": "Yo Yo Honey Singh",
+    "itemCount": "Parth",
+    "author": "Parth Patel",
+    "browseId": "VLPLRK9QOsPBlGPeS5oXjF6nF6PHK3BMTtox",
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/Zco6vy6DnBjLafR_pUUoSzpfo72B5ZqbjEfkqUo3ReShZanOHWKcfCXSB-_UAO3IvvPSOtU99eJG=s192",
+        "width": 192,
+        "height": 192
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/Zco6vy6DnBjLafR_pUUoSzpfo72B5ZqbjEfkqUo3ReShZanOHWKcfCXSB-_UAO3IvvPSOtU99eJG=s576",
+        "width": 576,
+        "height": 576
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/Zco6vy6DnBjLafR_pUUoSzpfo72B5ZqbjEfkqUo3ReShZanOHWKcfCXSB-_UAO3IvvPSOtU99eJG=s1200",
+        "width": 1200,
+        "height": 1200
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "episode",
+    "title": "Chillgum",
+    "videoId": "cTokGAQAaK4",
+    "videoType": "MUSIC_VIDEO_TYPE_PODCAST_EPISODE",
+    "live": false,
+    "date": "Nov 7, 2025",
+    "podcast": {
+      "id": "UCGPCYz1FTl_dvFFnzQTQzjw",
+      "name": "Yo Yo Honey Singh"
+    },
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/vi/cTokGAQAaK4/sddefault.jpg?sqp=-oaymwEWCJADEOEBIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3lgc_twhfxv4T6tTlF7Obz7PjCrpg",
+        "width": 400,
+        "height": 225
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "episode",
+    "title": "Love Dose (From \"Desi Kalakaar\")",
+    "videoId": "TvngY4unjn4",
+    "videoType": "MUSIC_VIDEO_TYPE_PODCAST_EPISODE",
+    "live": false,
+    "date": "Oct 3, 2014",
+    "podcast": {
+      "id": "UCGPCYz1FTl_dvFFnzQTQzjw",
+      "name": "Yo Yo Honey Singh"
+    },
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/vi/TvngY4unjn4/sddefault.jpg?sqp=-oaymwEWCJADEOEBIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3nrac1m2vTAS9Zn64qAMxBeOn8pvg",
+        "width": 400,
+        "height": 225
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "artist",
+    "artist": "Honey Singh Rathore ",
+    "browseId": "UCBLTPSh-tPQhBpxy0zN5SCw",
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/sFV-H0_XZYGIuGjrvwg5Bu62qp9Evj4jbn9Txr8JytBi6E5YnpOa63KlIo3CbGnl6Sz8jQ4XSQ=w60-c-h60-k-c0x00ffffff-no-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/sFV-H0_XZYGIuGjrvwg5Bu62qp9Evj4jbn9Txr8JytBi6E5YnpOa63KlIo3CbGnl6Sz8jQ4XSQ=w120-c-h120-k-c0x00ffffff-no-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "artist",
+    "artist": "AP Dhillon",
+    "shuffleId": "RDAOPPb8wSKuAXdb3wul7yn9eA",
+    "radioId": "RDEMPPb8wSKuAXdb3wul7yn9eA",
+    "browseId": "UCQmNiXx378nooDuZPA2fTAg",
+    "thumbnails": [
+      {
+        "url": "https://lh3.googleusercontent.com/yJh1MZL2FvtJz3YeDAUhTRpfdUSwdotWw8XmB_An-4coKiVG4pDpUGRAPV7ooqmzBP4HAWrtjPyAfI4=w60-h60-p-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://lh3.googleusercontent.com/yJh1MZL2FvtJz3YeDAUhTRpfdUSwdotWw8XmB_An-4coKiVG4pDpUGRAPV7ooqmzBP4HAWrtjPyAfI4=w120-h120-p-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "playlist",
+    "title": "\ud83d\udd25\ud83d\udd25Yo Yo Honey Singh\ud83d\udd25\ud83d\udd25 Bass Boosted Songs\ud83d\udd25\ud83d\udd25",
+    "itemCount": "KM",
+    "author": "KM ",
+    "browseId": "VLPLWMsTd1a2jVncuUUghzwAlUjvJsARS334",
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/vi/U98MABxHLr4/sddefault.jpg?sqp=-oaymwEWCJADEOEBIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3kZcOQqe4HFFnVv48QMnQMHGcw5eg",
+        "width": 400,
+        "height": 225
+      },
+      {
+        "url": "https://i.ytimg.com/vi/U98MABxHLr4/hq720.jpg?sqp=-oaymwEXCKAGEMIDIAQqCwjVARCqCBh4INgESFo&rs=AMzJL3mNy0BMaazLohDHuRP25eBaKDceVg",
+        "width": 800,
+        "height": 450
+      },
+      {
+        "url": "https://i.ytimg.com/vi/U98MABxHLr4/hq720.jpg?sqp=-oaymwEXCNUGEOADIAQqCwjVARCqCBh4INgESFo&rs=AMzJL3ml3d3bOBbt9sBL0-eFBvX_kpSe0A",
+        "width": 853,
+        "height": 480
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "playlist",
+    "title": "YO YO HONEY SINGH SONGS [BASS BOOSTED]",
+    "itemCount": "JBL",
+    "author": "JBL DJ MUSIC ",
+    "browseId": "VLPLqS3z_VuF27jYNpqxstjDW4h5FM8Yyxb9",
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/vi/lwophwy7UyE/sddefault.jpg?sqp=-oaymwEWCJADEOEBIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3mY3g7HWsftKxVYIgJrGcwAu9L6dg",
+        "width": 400,
+        "height": 225
+      },
+      {
+        "url": "https://i.ytimg.com/vi/lwophwy7UyE/sddefault.jpg?sqp=-oaymwEWCKoDEPABIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3kR4rHSaGCMQyyQ9ReK8E0F2R4ZSg",
+        "width": 426,
+        "height": 240
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "artist",
+    "artist": "Honey Singh",
+    "browseId": "UC_48y2Ivk4zJ7XmsH3tM5sg",
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/ytc/AIdro_npcUR6XsdtEyWk5O0DUPbiBwaX_JeUikuODvjwubz_UpOPbxUG2HLiUrAGCHsdKbjT0g=w60-c-h60-k-c0x00ffffff-no-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/ytc/AIdro_npcUR6XsdtEyWk5O0DUPbiBwaX_JeUikuODvjwubz_UpOPbxUG2HLiUrAGCHsdKbjT0g=w120-c-h120-k-c0x00ffffff-no-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "artist",
+    "artist": "@ yo yo honey Singh new song",
+    "browseId": "UCa37ZRg2jhgitePq_UfjLMA",
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/POB7oWMJ983gPRzAqwCGz6Xpove7thNX2mEN2b8v53axDGFwgFRO3vnoTbDpObXjoHb715sgPbE=w60-c-h60-k-c0x00ffffff-no-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/POB7oWMJ983gPRzAqwCGz6Xpove7thNX2mEN2b8v53axDGFwgFRO3vnoTbDpObXjoHb715sgPbE=w120-c-h120-k-c0x00ffffff-no-l90-rj",
+        "width": 120,
+        "height": 120
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "playlist",
+    "title": "Lata Mangeshkar: 70s Hits",
+    "itemCount": "YouTube",
+    "author": "YouTube Music",
+    "browseId": "VLRDCLAK5uy_lmQJPAbjefudy9EfVbgMNgqh3mQ6i9WmU",
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/Sm7jid4FVvxR_Ag2zFq1E2XQYfI6dLV4-AEctfobVAWGi-SpGFFLzNpb_EUhTvf5l2Agn6b99A6GtPY=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/Sm7jid4FVvxR_Ag2zFq1E2XQYfI6dLV4-AEctfobVAWGi-SpGFFLzNpb_EUhTvf5l2Agn6b99A6GtPY=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/Sm7jid4FVvxR_Ag2zFq1E2XQYfI6dLV4-AEctfobVAWGi-SpGFFLzNpb_EUhTvf5l2Agn6b99A6GtPY=w226-h226-l90-rj",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/Sm7jid4FVvxR_Ag2zFq1E2XQYfI6dLV4-AEctfobVAWGi-SpGFFLzNpb_EUhTvf5l2Agn6b99A6GtPY=w544-h544-l90-rj",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "episode",
+    "title": "Yo Yo Honey Singh \u0928\u0947 Badshah, Raftar \u0938\u0947 \u0905\u0938\u0932 \u0932\u0921\u093c\u093e\u0908, Mafia Mundeer, Shahrukh, \u0928\u0936\u0947 \u092a\u0930 \u0916\u0941\u0932\u0915\u0930 \u092c\u0924\u093e\u092f\u093e |GITN",
+    "videoId": "LP1gfUFP4go",
+    "videoType": "MUSIC_VIDEO_TYPE_PODCAST_EPISODE",
+    "live": false,
+    "date": "Aug 31, 2024",
+    "podcast": {
+      "id": "MPSPPL1BQkm1ZUCaWFMz_ZxuioZIStF-XUEWzi",
+      "name": "Guest in the Newsroom"
+    },
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/vi/LP1gfUFP4go/hqdefault.jpg?sqp=-oaymwEWCOADEI4CIAQqCggAEOADGC0guwJIWg&rs=AMzJL3kZ1qFafpl8V6oTx5yQikT24R2ClA",
+        "width": 480,
+        "height": 270
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "playlist",
+    "title": "10s Bollywood Dance",
+    "itemCount": "YouTube",
+    "author": "YouTube Music",
+    "browseId": "VLRDCLAK5uy_kkmYQJUx6MqEE1Uj3Y0UhBxzwOfAWpHm0",
+    "thumbnails": [
+      {
+        "url": "https://yt3.googleusercontent.com/8x13gPtq9KGrTmaHI5tL8ypuYlZWhwOsZDxgc3MWWeqPXpzb8esdXP7Gg73XiG49fYPsxRNSPkjXH-4=w60-h60-l90-rj",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/8x13gPtq9KGrTmaHI5tL8ypuYlZWhwOsZDxgc3MWWeqPXpzb8esdXP7Gg73XiG49fYPsxRNSPkjXH-4=w120-h120-l90-rj",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/8x13gPtq9KGrTmaHI5tL8ypuYlZWhwOsZDxgc3MWWeqPXpzb8esdXP7Gg73XiG49fYPsxRNSPkjXH-4=w226-h226-l90-rj",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://yt3.googleusercontent.com/8x13gPtq9KGrTmaHI5tL8ypuYlZWhwOsZDxgc3MWWeqPXpzb8esdXP7Gg73XiG49fYPsxRNSPkjXH-4=w544-h544-l90-rj",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "episode",
+    "title": "Working With Honey Singh Is Every Artist\u2019s Dream: Indeep Bakshi Gets Real #shorts",
+    "videoId": "BCISAomvams",
+    "videoType": "MUSIC_VIDEO_TYPE_PODCAST_EPISODE",
+    "live": false,
+    "date": "Dec 24, 2025",
+    "podcast": {
+      "id": "MPSPPLdS70brcDzogjiyY_RMl3eRrYoh56fjDB",
+      "name": "Indeep Bakshi"
+    },
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/vi/BCISAomvams/hqdefault.jpg?sqp=-oaymwEWCOADEI4CIAQqCggAEOADGC0guwJIWg&rs=AMzJL3nEj0NrPjlUtgzs7yLxggD4cSLO5w",
+        "width": 480,
+        "height": 270
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "episode",
+    "title": "Yo Yo Honey Singh: King of Indian Pop @YoYoHoneySingh",
+    "videoId": "iAgb_uSdzMw",
+    "videoType": "MUSIC_VIDEO_TYPE_PODCAST_EPISODE",
+    "live": false,
+    "date": "Nov 20, 2025",
+    "podcast": {
+      "id": "MPSPPLJ78fcjBEGC4KPEhA9r-KNltzASIOCUfd",
+      "name": "Individual Stories"
+    },
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/vi/iAgb_uSdzMw/hqdefault.jpg?sqp=-oaymwEWCOADEI4CIAQqCggAEOADGC0guwJIWg&rs=AMzJL3njPbnASLZBFW2s2XvpfftBUl3QpA",
+        "width": 480,
+        "height": 270
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "podcast",
+    "title": "Honey Singh new girlfriend",
+    "browseId": "MPSPPL3xbgr4kFU_Iweu-XGhezRzelL_p3K4KM",
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/pl_c/PL3xbgr4kFU_Iweu-XGhezRzelL_p3K4KM/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEICDwQPCAASFqi85f_AwYI5d-VwAY&rs=AMzJL3k_eEengIeZy90ffBWmduZWg0NxxQ",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PL3xbgr4kFU_Iweu-XGhezRzelL_p3K4KM/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEICHgQeCAASFqi85f_AwYI5d-VwAY&rs=AMzJL3lwDKU25vBZ6thwMRDbh2jl2ukifQ",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PL3xbgr4kFU_Iweu-XGhezRzelL_p3K4KM/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEKCOIBEOIBIABIWqLzl_8DBgjl35XABg&rs=AMzJL3nMobbvLhL2veH0g-zcwpNGWKomFA",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PL3xbgr4kFU_Iweu-XGhezRzelL_p3K4KM/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEKCKAEEKAEIABIWqLzl_8DBgjl35XABg&rs=AMzJL3kJ38SY6WSTk1FQ3_kLLqnEyBWDhg",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "podcast",
+    "title": "Honey Singh vs Badshah Memes",
+    "browseId": "MPSPPLMIga2m6iulfnILI1g_RbYOy789SRkDTM",
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/pl_c/PLMIga2m6iulfnILI1g_RbYOy789SRkDTM/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEICDwQPCAASFqi85f_AwYI4qGvvAY&rs=AMzJL3mzuY7cAg9glN8xAU5Qal_MoR7NPA",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PLMIga2m6iulfnILI1g_RbYOy789SRkDTM/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEICHgQeCAASFqi85f_AwYI4qGvvAY&rs=AMzJL3lC8whx7lz4a-BJn7s3zbfjMtok7Q",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PLMIga2m6iulfnILI1g_RbYOy789SRkDTM/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEKCOIBEOIBIABIWqLzl_8DBgjioa-8Bg&rs=AMzJL3lKXPNS2UOMX28hQwybIP58dVb5LA",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PLMIga2m6iulfnILI1g_RbYOy789SRkDTM/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEKCKAEEKAEIABIWqLzl_8DBgjioa-8Bg&rs=AMzJL3kgNX1itkJg-T05gqkT4nmvTR864Q",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  },
+  {
+    "category": null,
+    "resultType": "podcast",
+    "title": "Mehwish Hayat and Honey Singh tease new song collaboration",
+    "browseId": "MPSPPL3xbgr4kFU_LVlMqVHU6JKdb77zo8hQ8L",
+    "thumbnails": [
+      {
+        "url": "https://i.ytimg.com/pl_c/PL3xbgr4kFU_LVlMqVHU6JKdb77zo8hQ8L/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEICDwQPCAASFqi85f_AwYIjNGouAY&rs=AMzJL3ntlVALcsS3l6aBxaL35yF3uYxthg",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PL3xbgr4kFU_LVlMqVHU6JKdb77zo8hQ8L/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEICHgQeCAASFqi85f_AwYIjNGouAY&rs=AMzJL3k_eZkMOSyNwO9Ij2uZSWvzE9662Q",
+        "width": 120,
+        "height": 120
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PL3xbgr4kFU_LVlMqVHU6JKdb77zo8hQ8L/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEKCOIBEOIBIABIWqLzl_8DBgiM0ai4Bg&rs=AMzJL3n_R4qDIhVoQkc73nkAPyw451F6lg",
+        "width": 226,
+        "height": 226
+      },
+      {
+        "url": "https://i.ytimg.com/pl_c/PL3xbgr4kFU_LVlMqVHU6JKdb77zo8hQ8L/studio_square_thumbnail.jpg?sqp=CO62rdAG-oaymwEKCKAEEKAEIABIWqLzl_8DBgiM0ai4Bg&rs=AMzJL3kYVhxgzIDNZu-l-WTbY76TarnIAg",
+        "width": 544,
+        "height": 544
+      }
+    ]
+  }
+]

@@ -3,4 +3,3 @@ uvicorn
 yt-dlp
 httpx
 ytmusicapi
-
