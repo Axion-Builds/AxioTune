@@ -1220,7 +1220,7 @@ const audioPlayer = document.getElementById('audio-player');
                 prefetchVideoId = null;
                 window.prefetchedStreamData = null;
                 const streamData = await fetchStreamUrl(currentVideoId, true);
-                audioPlayer.src = streamData.url;
+                audioPlayer.src = `/api/proxy_stream?url=${encodeURIComponent(streamData.url)}`;
                 audioPlayer.load();
                 if (savedTime > 0) {
                     audioPlayer.currentTime = Math.min(savedTime, audioPlayer.duration || savedTime);
@@ -1245,7 +1245,7 @@ const audioPlayer = document.getElementById('audio-player');
             if (nextSong.videoId && prefetchVideoId !== nextSong.videoId) {
                 try {
                     const data = await fetchStreamUrl(nextSong.videoId);
-                    prefetchedStreamUrl = data.url;
+                    prefetchedStreamUrl = `/api/proxy_stream?url=${encodeURIComponent(data.url)}`;
                     prefetchVideoId = nextSong.videoId;
                     window.prefetchedStreamData = data;
                 } catch(e) {}
@@ -1445,7 +1445,7 @@ const audioPlayer = document.getElementById('audio-player');
                     lrc1 = lrcRes;
                     
                     // Set src — this automatically triggers load. Then play.
-                    audioPlayer.src = streamData.url;
+                    audioPlayer.src = `/api/proxy_stream?url=${encodeURIComponent(streamData.url)}`;
                     audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 }
 

@@ -432,6 +432,42 @@ async def stream(id: str, refresh: bool = False):
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
+@app.get("/api/proxy_stream")
+async def proxy_stream(request: Request, url: str):
+    headers = {}
+    range_header = request.headers.get("range")
+    if range_header:
+        headers["Range"] = range_header
+        
+    client = httpx.AsyncClient()
+    req = client.build_request("GET", url, headers=headers)
+    
+    try:
+        r = await client.send(req, stream=True)
+    except Exception as e:
+        await client.aclose()
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    response_headers = {}
+    for k, v in r.headers.items():
+        if k.lower() in ["content-type", "content-length", "content-range", "accept-ranges"]:
+            response_headers[k] = v
+            
+    async def stream_generator():
+        try:
+            async for chunk in r.aiter_bytes(chunk_size=65536):
+                yield chunk
+        finally:
+            await r.aclose()
+            await client.aclose()
+
+    return StreamingResponse(
+        stream_generator(), 
+        status_code=r.status_code, 
+        headers=response_headers,
+        media_type=response_headers.get("Content-Type", "audio/webm")
+    )
+
 @app.get("/api/trending")
 async def get_trending():
     try:
