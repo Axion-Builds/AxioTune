@@ -27,19 +27,7 @@
                 <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
             </button>
         </div>
-        <!-- Filter Toggle Button — outside the search bar -->
-        <button id="filter-btn" title="Filter" style="pointer-events:auto;">
-            <svg viewBox="0 0 24 24"><path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/></svg>
-            <span id="filter-btn-label">All</span>
-        </button>
-        <!-- Filter Popup -->
-        <div id="filter-popup">
-            <button class="filter-chip active" data-filter="all"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>All</button>
-            <button class="filter-chip" data-filter="song"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>Songs</button>
-            <button class="filter-chip" data-filter="artist"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Artists</button>
-            <button class="filter-chip" data-filter="album"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>Albums</button>
-            <button class="filter-chip" data-filter="video"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>Videos</button>
-        </div>
+        <!-- Filter removed as requested -->
         <!-- Live Suggestions Dropdown -->
         <div id="search-suggestions"></div>
     </div>
@@ -48,6 +36,8 @@
     <!-- Liquid Glass Navigation Pill -->
     <nav id="side-nav">
         <div class="hover-orb" id="nav-orb"></div>
+
+        
         <button class="nav-btn active" data-index="0" title="Home">
             <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
             <span class="nav-tooltip">Home</span>
@@ -62,8 +52,15 @@
         </button>
     </nav>
     
-    <button id="floating-queue-btn" title="Queue">
+    <!-- Floating Side Buttons (Matching Nav-Bar Style) -->
+    <button id="floating-pip-btn" class="nav-btn floating-side-btn" title="MiniPlayer">
+        <svg viewBox="0 0 24 24"><path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z"/></svg>
+        <span class="nav-tooltip">MiniPlayer</span>
+    </button>
+
+    <button id="floating-queue-btn" class="nav-btn floating-side-btn" title="Queue">
         <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
+        <span class="nav-tooltip">Queue</span>
     </button>
 
     <!-- Home Screen with 3D Vinyl Gallery -->
@@ -104,6 +101,8 @@
 
     <!-- Player Screen -->
     <div id="player-screen" class="screen-view hidden-screen">
+
+
         <!-- Left Panel -->
         <div id="left-panel">
             <div id="cover-wrapper">
@@ -174,29 +173,69 @@
                         <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
                     </button>
                 </div>
+                
+                <div class="bottom-extra-controls" style="display:none !important; align-items:center; justify-content:center; margin-top: 5px; width: 100%;">
+                    <div class="am-volume-container">
+                        <button id="volume-mute-btn" class="am-volume-btn" title="Mute">
+                            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        </button>
+                        <div class="am-volume-slider-wrapper">
+                            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
         <!-- Right Panel (Lyrics) -->
         <div id="right-panel">
-            <button id="lyrics-toggle-btn" class="lyrics-on" title="Toggle Lyrics">
-                <svg viewBox="0 0 24 24"><path d="M3 18h12v-2H3v2zm0-5h12v-2H3v2zm0-7v2h12V6H3zm13 9.5L21.5 12 16 8.5v9z"/></svg>
-                <span id="lyrics-btn-label">Lyrics ON</span>
-            </button>
+            <div id="top-right-controls" style="position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 15px; z-index: 50;">
+                <button id="full-screen-btn" class="top-circle-btn" title="Full Screen">
+                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                </button>
+                <button id="listen-together-btn" class="top-circle-btn" title="Listen Together (Coming Soon)">
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                </button>
+                <button id="lyrics-toggle-btn" class="lyrics-on" title="Toggle Lyrics">
+                    <svg viewBox="0 0 24 24"><path d="M3 18h12v-2H3v2zm0-5h12v-2H3v2zm0-7v2h12V6H3zm13 9.5L21.5 12 16 8.5v9z"/></svg>
+                    <span id="lyrics-btn-label">Lyrics ON</span>
+                </button>
+            </div>
             <div id="lyrics-container">
                 <div class="empty-state">Type a song in the top-left to stream.</div>
             </div>
         </div>
-    </div> <!-- Close player-screen here -->
 
-        <!-- Queue Panel -->
-        <div id="queue-panel">
-            <button id="close-queue-btn" title="Close Queue">
-                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-            </button>
-            <h2 class="section-title">Up Next 🐾</h2>
+        <!-- Queue Panel — position:fixed, fully self-contained -->
+        <div id="queue-panel" style="
+            position: fixed;
+            top: 0; right: 0;
+            width: 380px; height: 100vh;
+            background: rgba(8, 0, 18, 0.85);
+            backdrop-filter: blur(60px) saturate(200%);
+            -webkit-backdrop-filter: blur(60px) saturate(200%);
+            border-left: 1px solid rgba(255,255,255,0.12);
+            z-index: 99999;
+            padding: 30px 28px 40px;
+            overflow-y: auto; overflow-x: hidden;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1);
+            box-sizing: border-box;
+        ">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 style="margin:0; font-size:1.2rem; font-weight:700; color:white;">Up Next 🐾</h2>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <button id="clear-queue-btn" style="background:transparent; border:none; color:rgba(255,255,255,0.45); cursor:pointer; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 8px;">Clear</button>
+                    <button id="close-queue-btn" style="background:rgba(255,255,255,0.08); border:none; color:white; cursor:pointer; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                    </button>
+                </div>
+            </div>
             <div id="queue-list"></div>
         </div>
+    </div> <!-- Close player-screen here -->
+
+
 
         <!-- History Screen -->
         <div id="history-screen" class="screen-view hidden-screen">
@@ -663,8 +702,6 @@
             <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
             Share
         </button>
-    </div>
-    
     <script src="app.js"></script>
 </body>
 </html>

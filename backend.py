@@ -362,17 +362,61 @@ async def stream(id: str, refresh: bool = False):
         # Prefer high quality: Opus/WebM first (best for web), then m4a, then anything
         'format': 'bestaudio[ext=webm][abr>=128]/bestaudio[ext=m4a][abr>=128]/bestaudio[abr>=128]/bestaudio/best',
         'quiet': True,
+        'no_warnings': True,
     }
     
+    # List of public Piped API instances for fallback
+    PIPED_INSTANCES = [
+        "https://pipedapi.kavin.rocks",
+        "https://pipedapi.syncpundit.io",
+        "https://pipedapi.us.projectsegfau.lt"
+    ]
+
     def fetch_stream():
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # We don't download, we just extract the direct raw audio URL
-            info = ydl.extract_info(id, download=False)
-            url = info['url']
-            format_note = info.get('format_note', '')
-            abr = info.get('abr', 0)
-            ext = info.get('ext', '')
-            return {"url": url, "quality": f"{abr}kbps {ext}", "format_note": format_note}
+        # PLAN A: Try our own yt-dlp first (Fastest on Localhost)
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"https://www.youtube.com/watch?v={id}", download=False)
+                url = info['url']
+                quality = info.get('abr', 128)
+                return {
+                    "url": url,
+                    "quality": f"{int(quality)}kbps",
+                    "format_note": info.get('ext', 'unknown'),
+                    "cached": False,
+                    "source": "yt-dlp"
+                }
+        except Exception as e:
+            print(f"[Fallback Alert] yt-dlp failed (likely IP block). Trying Piped API... Error: {e}")
+            pass # Move to fallback
+
+        # PLAN B & C: Fallback to Piped API instances (Bypasses IP blocks on Render/Netlify)
+        for instance in PIPED_INSTANCES:
+            try:
+                # Using httpx synchronously in a thread
+                with httpx.Client() as client:
+                    resp = client.get(f"{instance}/streams/{id}", timeout=5.0)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        # Find the best audio-only stream
+                        audio_streams = data.get("audioStreams", [])
+                        if audio_streams:
+                            # Sort by bitrate descending
+                            audio_streams.sort(key=lambda x: x.get("bitrate", 0), reverse=True)
+                            best_stream = audio_streams[0]
+                            return {
+                                "url": best_stream["url"],
+                                "quality": f"{int(best_stream.get('bitrate', 128000)/1000)}kbps",
+                                "format_note": best_stream.get('format', 'unknown'),
+                                "cached": False,
+                                "source": f"piped ({instance})"
+                            }
+            except Exception as ex:
+                print(f"[Fallback Alert] Piped API {instance} failed. Trying next... Error: {ex}")
+                continue # Try next instance
+
+        # If everything fails
+        raise HTTPException(status_code=404, detail="All streaming engines failed to extract audio.")
 
     try:
         res = await asyncio.to_thread(fetch_stream)
@@ -661,5 +705,6 @@ def unsync_account():
     return {"status": "success", "message": "Disconnected successfully."}
 
 if __name__ == "__main__":
-    print("Starting Apple Music Streaming Server at http://localhost:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    print(f"Starting Apple Music Streaming Server at http://localhost:{port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -305,6 +305,73 @@ const audioPlayer = document.getElementById('audio-player');
         });
 
         // ============================================================
+        // VOLUME CONTROLS (Keyboard & Scroll)
+        // ============================================================
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                let v = Math.min(1, audioPlayer.volume + 0.05);
+                audioPlayer.volume = v;
+                showToast(`Volume: ${Math.round(v * 100)}%`);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                let v = Math.max(0, audioPlayer.volume - 0.05);
+                audioPlayer.volume = v;
+                showToast(`Volume: ${Math.round(v * 100)}%`);
+            }
+        });
+
+        const volCoverWrapper = document.getElementById('cover-art-container');
+        if (volCoverWrapper) {
+            volCoverWrapper.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                let v = audioPlayer.volume;
+                if (e.deltaY < 0) {
+                    v = Math.min(1, v + 0.05);
+                } else {
+                    v = Math.max(0, v - 0.05);
+                }
+                audioPlayer.volume = v;
+                showToast(`Volume: ${Math.round(v * 100)}%`);
+            });
+        }
+
+        // ============================================================
+        // FULL SCREEN & AUTO-HIDE UI LOGIC
+        // ============================================================
+        const fullScreenBtn = document.getElementById('full-screen-btn');
+        if (fullScreenBtn) {
+            fullScreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => console.log(err));
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                document.body.classList.add('full-screen-mode');
+            } else {
+                document.body.classList.remove('full-screen-mode');
+                document.body.classList.remove('show-ui');
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (document.fullscreenElement) {
+                // Show UI if mouse is on the left third of screen OR top right corner
+                if (e.clientX < window.innerWidth * 0.3 || (e.clientX > window.innerWidth - 300 && e.clientY < 100)) {
+                    document.body.classList.add('show-ui');
+                } else {
+                    document.body.classList.remove('show-ui');
+                }
+            }
+        });
+
+        // ============================================================
         // GLOBAL COVER URL HELPER — routes ALL images through backend
         // This proxy: 1) fetches iTunes artwork, 2) falls back to YT thumb
         // No CORS, no expiry, works from any device on the network!
@@ -659,39 +726,9 @@ const audioPlayer = document.getElementById('audio-player');
             if (typeof showHome === 'function') showHome();
         });
 
-        // Filter button toggle
-        const filterBtn = document.getElementById('filter-btn');
-        const filterPopup = document.getElementById('filter-popup');
-        const filterBtnLabel = document.getElementById('filter-btn-label');
-
-        filterBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            filterPopup.classList.toggle('open');
-        });
-
-        // Close popup on outside click
+        // Close suggestions on outside click
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#filter-popup') && !e.target.closest('#filter-btn')) {
-                filterPopup.classList.remove('open');
-            }
             if (!e.target.closest('#top-bar-wrapper')) hideSuggestions();
-        });
-
-        // Filter chip click — inside popup
-        document.querySelectorAll('.filter-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                activeFilter = chip.dataset.filter;
-                // Update button label
-                const labels = { all: 'All', song: 'Songs', artist: 'Artists', album: 'Albums', video: 'Videos' };
-                filterBtnLabel.textContent = labels[activeFilter] || 'All';
-                filterBtn.classList.toggle('has-filter', activeFilter !== 'all');
-                filterPopup.classList.remove('open'); // close popup after selection
-                // Re-fetch suggestions if typed
-                const q = songSearchInput.value.trim();
-                if (q.length >= 2) fetchSuggestions(q, activeFilter);
-            });
         });
 
         let activeSuggestionIndex = -1;
@@ -1095,7 +1132,7 @@ const audioPlayer = document.getElementById('audio-player');
             // Feature reverted.
         }
 
-        // Queue Logic & Cat SVGs
+        // ── QUEUE SYSTEM ──
         let queueList = [];
         let currentQueueIndex = -1;
         const queueNavBtn = document.getElementById('floating-queue-btn');
@@ -1103,16 +1140,28 @@ const audioPlayer = document.getElementById('audio-player');
         const closeQueueBtn = document.getElementById('close-queue-btn');
         const nextBtn = document.getElementById('next-btn');
         const prevBtn = document.getElementById('prev-btn');
-        
-        queueNavBtn.addEventListener('click', () => {
-            queueNavBtn.classList.toggle('active');
-            queuePanel.classList.toggle('open');
-        });
-        
-        closeQueueBtn.addEventListener('click', () => {
+
+        let queueOpen = false;
+
+        function openQueue() {
+            queueOpen = true;
+            queuePanel.style.transform = 'translateX(0)';
+            queueNavBtn.classList.add('active');
+            renderQueue();
+        }
+
+        function closeQueue() {
+            queueOpen = false;
+            queuePanel.style.transform = 'translateX(100%)';
             queueNavBtn.classList.remove('active');
-            queuePanel.classList.remove('open');
-        });
+        }
+
+        function toggleQueue() {
+            if (queueOpen) closeQueue(); else openQueue();
+        }
+
+        queueNavBtn.addEventListener('click', toggleQueue);
+        closeQueueBtn.addEventListener('click', closeQueue);
 
         const playSVG = ''; // Legacy — black hole uses bh-icon approach
         const pauseSVG = ''; // Legacy — black hole uses bh-icon approach
@@ -1233,35 +1282,8 @@ const audioPlayer = document.getElementById('audio-player');
                     `}
                 `;
                 div.addEventListener('click', () => {
-                    if(idx === currentQueueIndex) {
-                        playPauseBtn.click();
-                        return;
-                    }
-                    
-                    const isNext = (idx === currentQueueIndex + 1);
-                    currentQueueIndex = idx;
-                    renderQueue();
-                    
-                    const song = queueList[idx];
-                    
-                    // Zero latency path if we have prefetched the exact next song
-                    if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
-                        currentVideoId = song.videoId || currentVideoId;
-                        // Immediately play
-                        audioPlayer.src = prefetchedStreamUrl;
-                        audioPlayer.play();
-                        
-                        // Let the search pipeline handle the UI but pass a flag to not fetch stream again
-                        window.prefetchedStreamData = { url: prefetchedStreamUrl, quality: "Prefetched" };
-                        songSearchInput.value = `${song.title} ${song.artist}`;
-                        searchBtn.click();
-                        
-                        prefetchedStreamUrl = null;
-                        prefetchVideoId = null;
-                    } else {
-                        songSearchInput.value = `${song.title} ${song.artist}`;
-                        searchBtn.click();
-                    }
+                    if(idx === currentQueueIndex) { playPauseBtn.click(); return; }
+                    playQueueIndex(idx);
                 });
                 
                 setTimeout(() => { div.style.opacity = '1'; }, 50);
@@ -1272,18 +1294,31 @@ const audioPlayer = document.getElementById('audio-player');
         // ── Reliable queue navigation — no DOM click dependency ──
         function playQueueIndex(idx) {
             if (idx < 0 || idx >= queueList.length) return;
+            const isNext = (idx === currentQueueIndex + 1);
             currentQueueIndex = idx;
             renderQueue();
             const song = queueList[idx];
-            // Stop current audio immediately before starting new one
-            audioPlayer.pause();
-            audioPlayer.src = '';
+            
+            // Handle gapless prefetch handover
+            if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
+                window.prefetchedStreamData = { url: prefetchedStreamUrl, quality: "Prefetched" };
+                audioPlayer.src = prefetchedStreamUrl;
+                audioPlayer.play().catch(e => console.warn("Prefetch play failed:", e));
+                prefetchedStreamUrl = null;
+                prefetchVideoId = null;
+            } else {
+                window.prefetchedStreamData = null;
+                audioPlayer.pause();
+                // Do not clear src abruptly, it breaks Chrome's media pipeline under rapid skips
+            }
+            
             songSearchInput.value = `${song.title} ${song.artist}`;
             searchBtn.click();
         }
 
         // --- PIPELINE ---
         let currentPlaybackToken = 0;
+        let searchAbortController = null;
         
         searchBtn.addEventListener('click', async () => {
             initAudioVisualizer(); // Initialize visualizer on first interaction
@@ -1293,11 +1328,18 @@ const audioPlayer = document.getElementById('audio-player');
             currentPlaybackToken++;
             const myToken = currentPlaybackToken;
 
+            if (searchAbortController) searchAbortController.abort();
+            searchAbortController = new AbortController();
+            const signal = searchAbortController.signal;
+
             showPlayer(); // Switch to player UI when searching
-            // Cancel any ongoing stream refresh + fully reset the audio pipeline
+            // Cancel any ongoing stream refresh
             streamRefreshInProgress = false;
-            audioPlayer.pause();
-            audioPlayer.src = '';
+            
+            // DO NOT pause/clear if we just injected a gapless prefetched stream
+            if (!window.prefetchedStreamData) {
+                audioPlayer.pause();
+            }
 
             // --- SONG TRANSITION ANIMATION ---
             coverArt.classList.remove('cover-changing');
@@ -1312,7 +1354,7 @@ const audioPlayer = document.getElementById('audio-player');
             
             try {
                 // STEP 1: Get song metadata from YouTube (fast)
-                const ytRes = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const ytRes = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal });
                 if (!ytRes.ok) throw new Error("Backend search failed");
                 const songData = await ytRes.json();
                 
@@ -1333,17 +1375,29 @@ const audioPlayer = document.getElementById('audio-player');
                 const rawYtThumb = resolveYtThumb(songData.thumbnail);
                 const coverUrl = getCoverUrl(query, rawYtThumb);
                 coverArt.style.opacity = '0.4';
-                coverArt.src = coverUrl;
-                miniCover.src = coverUrl;
-                backgroundLayer.style.backgroundImage = `url(${coverUrl})`;
+                
+                // Instantly show low-res YouTube thumbnail for snappy UI
+                if (rawYtThumb) {
+                    coverArt.src = rawYtThumb;
+                    miniCover.src = rawYtThumb;
+                    backgroundLayer.style.backgroundImage = `url(${rawYtThumb})`;
+                }
+                
                 coverArt.style.display = 'block';
                 document.getElementById('default-cover-icon').style.display = 'none';
-                coverArt.onload = () => {
+                
+                // Upgrade to HD iTunes cover silently in background
+                const hdImg = new Image();
+                hdImg.onload = () => {
+                    coverArt.src = hdImg.src;
+                    miniCover.src = hdImg.src;
+                    backgroundLayer.style.backgroundImage = `url(${hdImg.src})`;
                     coverArt.style.opacity = '1';
                     coverArt.classList.remove('cover-changing');
                     void coverArt.offsetWidth;
                     coverArt.classList.add('cover-changing');
                 };
+                hdImg.src = coverUrl;
 
                 saveToHistory(songData, rawYtThumb);
 
@@ -1364,25 +1418,30 @@ const audioPlayer = document.getElementById('audio-player');
                 let streamData;
                 let lrc1;
                 
-                if (window.prefetchedStreamData) {
+                // If it was injected by playQueueIndex, it's valid.
+                // If it was lingering from prefetchNextSong but doesn't match the new search, discard it!
+                if (window.prefetchedStreamData && (!prefetchVideoId || prefetchVideoId === currentVideoId)) {
                     streamData = window.prefetchedStreamData;
                     window.prefetchedStreamData = null;
-                    // Must set src even for prefetched — old src was cleared in playQueueIndex
-                    lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`);
-                    
+                    lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal });
                     if (myToken !== currentPlaybackToken) return; // Race condition check
                     
-                    audioPlayer.src = streamData.url;
-                    audioPlayer.play().catch(e => console.warn("Play failed:", e));
+                    // src and play() were already triggered seamlessly in playQueueIndex
+                    // Just ensure it's playing in case of browser autoplay blocks
+                    if (audioPlayer.paused) audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 } else {
                     const [streamRes, lrcRes] = await Promise.all([
-                        fetchStreamUrl(songData.id),
-                        fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`)
+                        fetch(`/api/stream?id=${encodeURIComponent(songData.id)}`, { signal }).then(r => {
+                            if (!r.ok) throw new Error('Stream request failed');
+                            return r.json();
+                        }),
+                        fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal })
                     ]);
                     
                     if (myToken !== currentPlaybackToken) return; // Race condition check
                     
                     streamData = streamRes;
+                    if (!streamData.url) throw new Error(streamData.message || 'No stream URL returned');
                     lrc1 = lrcRes;
                     
                     // Set src — this automatically triggers load. Then play.
@@ -1395,7 +1454,7 @@ const audioPlayer = document.getElementById('audio-player');
                 nextBtn.disabled = false;
                 prevBtn.disabled = false;
                 
-                populateQueue(songData.id);
+                populateQueue(songData.videoId || songData.id);
 
                 // Quality badge
                 if (streamData.quality) {
@@ -1442,6 +1501,7 @@ const audioPlayer = document.getElementById('audio-player');
                 searchBtn.disabled = false;
                 
             } catch (e) {
+                if (e.name === 'AbortError') return; // Ignore aborted fetches from rapid skipping
                 lyricsContainer.innerHTML = `<div class="empty-state" style="margin-top:0;">Error connecting to Audio Server. Make sure the python terminal is open.</div>`;
                 searchBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>';
                 searchBtn.disabled = false;
@@ -1460,7 +1520,7 @@ const audioPlayer = document.getElementById('audio-player');
             playPauseBtn.classList.add('playing');
             coverArtContainer.classList.add('playing');
             document.getElementById('cover-wrapper').classList.add('playing');
-            showCatWidget && showCatWidget();
+            if (typeof window.showCatWidget === 'function') window.showCatWidget();
         });
 
         audioPlayer.addEventListener('pause', () => {
@@ -2500,76 +2560,163 @@ const audioPlayer = document.getElementById('audio-player');
             });
         }
 
-        // ── IMPROVED SMART QUEUE: Show "Now Playing" + "Up Next" labels ──
-        const _origRenderQueue = window._origRenderQueue;
+        // ── PREMIUM QUEUE RENDERER ──
         function renderQueue() {
             const qList = document.getElementById('queue-list');
             qList.innerHTML = '';
+
             if (queueList.length === 0) {
-                qList.innerHTML = '<div class="empty-state" style="font-size:1.2rem;">Queue is empty</div>';
+                qList.innerHTML = `
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:12px;opacity:0.5;">
+                        <svg viewBox="0 0 24 24" style="width:48px;height:48px;fill:white;"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
+                        <div style="font-size:0.95rem;color:rgba(255,255,255,0.6);">Queue is empty</div>
+                        <div style="font-size:0.78rem;color:rgba(255,255,255,0.35);">Play a song to auto-fill</div>
+                    </div>`;
                 return;
             }
-            queueList.forEach((song, idx) => {
-                const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '');
-                const isPlaying = idx === currentQueueIndex;
 
-                if (isPlaying) {
-                    const label = document.createElement('div');
-                    label.className = 'queue-now-playing-label';
-                    label.textContent = '♪ Now Playing';
-                    qList.appendChild(label);
-                } else if (idx === currentQueueIndex + 1) {
-                    const label = document.createElement('div');
-                    label.className = 'queue-up-next-label';
-                    label.textContent = 'Up Next';
-                    qList.appendChild(label);
-                }
+            const nowPlayingSong = queueList[currentQueueIndex];
 
-                const div = document.createElement('div');
-                div.className = `premium-list-item ${isPlaying ? 'now-playing-queue' : ''}`;
-                div.style.transitionDelay = `${idx * 0.04}s`;
-                div.innerHTML = `
-                    <img src="${thumbUrl}" class="queue-cover">
-                    <div class="premium-list-info">
-                        <div class="premium-list-title">${song.title}</div>
-                        <div class="premium-list-artist">${song.artist}</div>
-                    </div>
-                    ${isPlaying ? `
-                        <div style="display:flex;align-items:flex-end;gap:2px;height:20px;margin-right:4px;">
-                            <div style="width:3px;background:var(--accent);border-radius:2px;height:8px;animation:viz-bounce 0.9s ease-in-out infinite;transform-origin:bottom;"></div>
-                            <div style="width:3px;background:var(--accent);border-radius:2px;height:14px;animation:viz-bounce 1.1s ease-in-out infinite 0.1s;transform-origin:bottom;"></div>
-                            <div style="width:3px;background:var(--accent);border-radius:2px;height:20px;animation:viz-bounce 0.8s ease-in-out infinite 0.2s;transform-origin:bottom;"></div>
-                            <div style="width:3px;background:var(--accent);border-radius:2px;height:14px;animation:viz-bounce 1.3s ease-in-out infinite 0.15s;transform-origin:bottom;"></div>
-                        </div>
-                    ` : `
-                        <button class="premium-play-btn">
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    `}
+            // ── NOW PLAYING HERO CARD ──
+            if (nowPlayingSong) {
+                const heroThumb = getCoverUrl(`${nowPlayingSong.title} ${nowPlayingSong.artist}`, nowPlayingSong.cover || '');
+                const hero = document.createElement('div');
+                hero.style.cssText = `
+                    position:relative; border-radius:18px; overflow:hidden;
+                    margin-bottom:28px; cursor:pointer;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
                 `;
-                div.addEventListener('click', () => {
-                    if(idx === currentQueueIndex) { playPauseBtn.click(); return; }
-                    const isNext = (idx === currentQueueIndex + 1);
+                hero.innerHTML = `
+                    <img src="${heroThumb}" style="width:100%;height:180px;object-fit:cover;display:block;border-radius:18px;">
+                    <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);border-radius:18px;"></div>
+                    <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 18px;display:flex;align-items:flex-end;justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent,#ff476d);margin-bottom:4px;">♪ Now Playing</div>
+                            <div style="font-size:1rem;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;">${nowPlayingSong.title}</div>
+                            <div style="font-size:0.8rem;color:rgba(255,255,255,0.65);margin-top:2px;">${nowPlayingSong.artist}</div>
+                        </div>
+                        <div style="display:flex;align-items:flex-end;gap:3px;height:28px;padding-bottom:2px;">
+                            <div style="width:4px;background:var(--accent,#ff476d);border-radius:3px;animation:qEq 0.9s ease-in-out infinite;transform-origin:bottom;"></div>
+                            <div style="width:4px;background:var(--accent,#ff476d);border-radius:3px;animation:qEq 1.2s ease-in-out infinite 0.15s;transform-origin:bottom;"></div>
+                            <div style="width:4px;background:var(--accent,#ff476d);border-radius:3px;animation:qEq 0.75s ease-in-out infinite 0.08s;transform-origin:bottom;"></div>
+                            <div style="width:4px;background:var(--accent,#ff476d);border-radius:3px;animation:qEq 1.05s ease-in-out infinite 0.22s;transform-origin:bottom;"></div>
+                        </div>
+                    </div>
+                `;
+                hero.addEventListener('click', () => playPauseBtn.click());
+                qList.appendChild(hero);
+            }
+
+            // Inject keyframes once
+            if (!document.getElementById('qEq-style')) {
+                const s = document.createElement('style');
+                s.id = 'qEq-style';
+                s.textContent = `
+                    @keyframes qEq {
+                        0%,100%{height:4px} 50%{height:24px}
+                    }
+                    .q-row {
+                        display:flex; align-items:center; gap:12px;
+                        padding:10px 12px; border-radius:14px;
+                        background:rgba(255,255,255,0.04);
+                        border:1px solid rgba(255,255,255,0.06);
+                        margin-bottom:8px; cursor:pointer;
+                        transition: background 0.2s, transform 0.15s, border-color 0.2s;
+                        opacity:0; transform:translateX(18px);
+                    }
+                    .q-row:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.15); transform:translateX(0) scale(1.01);}
+                    .q-row.q-next { border-color:rgba(255,71,109,0.25); background:rgba(255,71,109,0.06); }
+                    .q-cover { width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0; }
+                    .q-info { flex:1; min-width:0; }
+                    .q-title { font-size:0.88rem;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+                    .q-artist { font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+                    .q-remove-btn { opacity:0; background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;padding:4px;border-radius:6px;transition:opacity 0.2s,color 0.2s;flex-shrink:0; }
+                    .q-row:hover .q-remove-btn { opacity:1; }
+                    .q-remove-btn:hover { color:rgba(255,80,80,0.9); }
+                    .q-badge { font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:20px;flex-shrink:0; }
+                    .q-badge-next { background:rgba(255,71,109,0.18);color:var(--accent,#ff476d); }
+                    .q-badge-num { background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.35); }
+                `;
+                document.head.appendChild(s);
+            }
+
+            // ── UP NEXT LABEL ──
+            const upNextSongs = queueList.filter((_, i) => i !== currentQueueIndex);
+            if (upNextSongs.length > 0) {
+                const label = document.createElement('div');
+                label.style.cssText = 'font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:0 4px 10px;';
+                label.textContent = `Up Next · ${upNextSongs.length} song${upNextSongs.length !== 1 ? 's' : ''}`;
+                qList.appendChild(label);
+            }
+
+            // ── SONG ROWS (skip now-playing) ──
+            let upNextCount = 0;
+            queueList.forEach((song, idx) => {
+                if (idx === currentQueueIndex) return; // hero card handles this
+
+                upNextCount++;
+                const isNext = idx === currentQueueIndex + 1;
+                const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '');
+
+                const row = document.createElement('div');
+                row.className = `q-row${isNext ? ' q-next' : ''}`;
+
+                row.innerHTML = `
+                    <img src="${thumbUrl}" class="q-cover" onerror="this.style.background='rgba(255,255,255,0.1)'">
+                    <div class="q-info">
+                        <div class="q-title">${song.title}</div>
+                        <div class="q-artist">${song.artist}</div>
+                    </div>
+                    <span class="q-badge ${isNext ? 'q-badge-next' : 'q-badge-num'}">${isNext ? 'Next' : '#' + (upNextCount)}</span>
+                    <button class="q-remove-btn remove-queue-btn" data-idx="${idx}" title="Remove">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                    </button>
+                `;
+
+                row.addEventListener('click', (e) => {
+                    if (e.target.closest('.remove-queue-btn')) {
+                        e.stopPropagation();
+                        queueList.splice(idx, 1);
+                        if (currentQueueIndex >= idx && currentQueueIndex > 0) currentQueueIndex--;
+                        renderQueue();
+                        return;
+                    }
                     currentQueueIndex = idx;
                     renderQueue();
-                    const song = queueList[idx];
-                    if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
-                        audioPlayer.src = prefetchedStreamUrl;
-                        audioPlayer.play();
-                        window.prefetchedStreamData = { url: prefetchedStreamUrl, quality: "Prefetched" };
-                        songSearchInput.value = `${song.title} ${song.artist}`;
-                        searchBtn.click();
-                        prefetchedStreamUrl = null;
-                        prefetchVideoId = null;
-                    } else {
-                        songSearchInput.value = `${song.title} ${song.artist}`;
-                        searchBtn.click();
-                    }
+                    songSearchInput.value = `${song.title} ${song.artist}`;
+                    searchBtn.click();
                 });
-                setTimeout(() => { div.style.opacity = '1'; }, 50);
-                qList.appendChild(div);
+
+                // Staggered entrance animation
+                setTimeout(() => {
+                    row.style.transition = 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.2,0.8,0.2,1), background 0.2s, border-color 0.2s';
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateX(0)';
+                }, 30 + upNextCount * 45);
+
+                qList.appendChild(row);
             });
+
+            if (upNextSongs.length === 0 && nowPlayingSong) {
+                const end = document.createElement('div');
+                end.style.cssText = 'text-align:center;padding:20px;font-size:0.8rem;color:rgba(255,255,255,0.25);';
+                end.textContent = '— End of queue —';
+                qList.appendChild(end);
+            }
         }
+
+        
+        // Clear Queue Button
+        document.getElementById('clear-queue-btn').addEventListener('click', () => {
+            if(queueList.length <= 1) return;
+            const currentSong = queueList[currentQueueIndex];
+            queueList.splice(0, queueList.length);
+            if(currentSong) {
+                queueList.push(currentSong);
+                currentQueueIndex = 0;
+            }
+            renderQueue();
+        });
 
         // ── YOUTUBE MUSIC ACCOUNT SYNC LOGIC ──
         const syncDot = document.getElementById('sync-status-dot');
@@ -2859,3 +3006,261 @@ const audioPlayer = document.getElementById('audio-player');
                 }
             });
         });
+
+// --- Top Right Controls & Document PiP MiniPlayer Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Volume Control
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeMuteBtn = document.getElementById('volume-mute-btn');
+    if (volumeSlider) {
+        // Initialize volume
+        audioPlayer.volume = 1;
+        
+        volumeSlider.addEventListener('input', (e) => {
+            audioPlayer.volume = e.target.value;
+            if (audioPlayer.volume === 0) {
+                volumeMuteBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+            } else {
+                volumeMuteBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+            }
+        });
+
+        volumeMuteBtn.addEventListener('click', () => {
+            if (audioPlayer.volume > 0) {
+                window.lastVolume = audioPlayer.volume;
+                audioPlayer.volume = 0;
+                volumeSlider.value = 0;
+            } else {
+                audioPlayer.volume = window.lastVolume || 1;
+                volumeSlider.value = audioPlayer.volume;
+            }
+            volumeSlider.dispatchEvent(new Event('input'));
+        });
+    }
+
+    // 2. PiP MiniPlayer
+    const pipBtn = document.getElementById('floating-pip-btn');
+    if (pipBtn) {
+        pipBtn.addEventListener('click', async () => {
+            if (!('documentPictureInPicture' in window)) {
+                alert('MiniPlayer (Document PiP) is not supported in your browser. Please use Chrome or Edge v111+ on Desktop.');
+                return;
+            }
+            
+            if (window.pipWindow) {
+                window.pipWindow.close();
+                return;
+            }
+            
+            try {
+                const pipWindow = await window.documentPictureInPicture.requestWindow({
+                    width: 380,
+                    height: 140,
+                });
+                window.pipWindow = pipWindow;
+                
+                // Copy stylesheets
+                [...document.styleSheets].forEach((styleSheet) => {
+                    try {
+                        const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+                        const style = document.createElement('style');
+                        style.textContent = cssRules;
+                        pipWindow.document.head.appendChild(style);
+                    } catch (e) {
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.type = styleSheet.type;
+                        link.media = styleSheet.media;
+                        link.href = styleSheet.href;
+                        pipWindow.document.head.appendChild(link);
+                    }
+                });
+                
+                const currentCover = document.getElementById('cover-art').src || 'default_cover.jpg';
+                const currentTitle = document.getElementById('track-title').textContent;
+                const currentArtist = document.getElementById('track-artist').textContent;
+
+                pipWindow.document.body.innerHTML = `
+                    <div class="pip-container" id="pip-bg" style="background-image: url('${currentCover}')">
+                        <div class="pip-blur-overlay"></div>
+                        <div class="pip-content">
+                            <div class="pip-top-row">
+                                <img class="pip-cover" id="pip-cover" src="${currentCover}">
+                                <div class="pip-info">
+                                    <div class="pip-title" id="pip-title">${currentTitle}</div>
+                                    <div class="pip-artist" id="pip-artist">${currentArtist}</div>
+                                    <div class="pip-progress-row">
+                                        <span id="pip-curr">0:00</span>
+                                        <div class="pip-progress-bar-container" id="pip-prog-bg">
+                                            <div class="pip-progress-fill" id="pip-prog-fill"></div>
+                                        </div>
+                                        <span id="pip-dur">0:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pip-controls-row">
+                                <div class="pip-left-controls">
+                                    <button class="pip-btn"><svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
+                                </div>
+                                <div class="pip-center-controls">
+                                    <button class="pip-btn" id="pip-prev"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                                    <button class="pip-btn pip-play-btn" id="pip-play">${document.getElementById('audio-player').paused ? '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'}</button>
+                                    <button class="pip-btn" id="pip-next"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+                                </div>
+                                <div class="pip-right-controls">
+                                    <button class="pip-btn"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-6 9H7v-2h7v2zm4-3H7V6h11v2z"/></svg></button>
+                                    <button class="pip-btn"><svg viewBox="0 0 24 24"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const pipDoc = pipWindow.document;
+                pipDoc.getElementById('pip-play').addEventListener('click', () => document.getElementById('play-pause-btn').click());
+                pipDoc.getElementById('pip-prev').addEventListener('click', () => document.getElementById('prev-btn').click());
+                pipDoc.getElementById('pip-next').addEventListener('click', () => document.getElementById('next-btn').click());
+                
+                const pipProgBg = pipDoc.getElementById('pip-prog-bg');
+                pipProgBg.addEventListener('click', (e) => {
+                    const rect = pipProgBg.getBoundingClientRect();
+                    const pos = (e.clientX - rect.left) / rect.width;
+                    document.getElementById('audio-player').currentTime = pos * document.getElementById('audio-player').duration;
+                });
+
+                pipWindow.addEventListener("pagehide", () => {
+                    window.pipWindow = null;
+                });
+                
+            } catch (error) {
+                console.error('PiP failed', error);
+            }
+        });
+    }
+});
+
+// Update PiP window dynamically
+function updatePiPState() {
+    if (!window.pipWindow) return;
+    const pipDoc = window.pipWindow.document;
+    
+    // Update metadata
+    const currentCover = document.getElementById('cover-art').src;
+    pipDoc.getElementById('pip-cover').src = currentCover;
+    pipDoc.getElementById('pip-bg').style.backgroundImage = `url('${currentCover}')`;
+    pipDoc.getElementById('pip-title').textContent = document.getElementById('track-title').textContent;
+    pipDoc.getElementById('pip-artist').textContent = document.getElementById('track-artist').textContent;
+}
+
+function updatePiPPlayback() {
+    if (!window.pipWindow) return;
+    const pipDoc = window.pipWindow.document;
+    const ap = document.getElementById('audio-player');
+    
+    // Update Play/Pause Icon
+    pipDoc.getElementById('pip-play').innerHTML = ap.paused ? 
+        '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' : 
+        '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+}
+
+function updatePiPProgress() {
+    if (!window.pipWindow) return;
+    const pipDoc = window.pipWindow.document;
+    const ap = document.getElementById('audio-player');
+    
+    if (ap.duration) {
+        pipDoc.getElementById('pip-prog-fill').style.width = (ap.currentTime / ap.duration * 100) + '%';
+        pipDoc.getElementById('pip-curr').textContent = formatTime(ap.currentTime);
+        pipDoc.getElementById('pip-dur').textContent = formatTime(ap.duration);
+    }
+}
+
+// Hook into existing events (We need to monkey patch or add listeners where state changes)
+const originalAudioPlayer = document.getElementById('audio-player');
+originalAudioPlayer.addEventListener('timeupdate', updatePiPProgress);
+originalAudioPlayer.addEventListener('play', updatePiPPlayback);
+originalAudioPlayer.addEventListener('pause', updatePiPPlayback);
+
+// Hook into track changes
+const observer = new MutationObserver(() => updatePiPState());
+observer.observe(document.getElementById('track-title'), { childList: true });
+observer.observe(document.getElementById('cover-art'), { attributes: true, attributeFilter: ['src'] });
+
+// Attach gradient update to volume slider
+document.addEventListener('DOMContentLoaded', () => {
+    const vSlider = document.getElementById('volume-slider');
+    if(vSlider) {
+        function updateSliderFill() {
+            const val = (vSlider.value - vSlider.min) / (vSlider.max - vSlider.min) * 100;
+            vSlider.style.background = `linear-gradient(to right, #ffffff ${val}%, rgba(255, 255, 255, 0.2) ${val}%)`;
+        }
+        vSlider.addEventListener('input', updateSliderFill);
+        // initial fill
+        updateSliderFill();
+    }
+});
+
+// --- Web Audio API Optimizer (YouTube Music / Spotify style Sound Enhancement) ---
+let audioCtx;
+let audioSourceNode;
+let isAudioOptimized = false;
+
+function initAudioOptimizer() {
+    if (isAudioOptimized) return;
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        
+        audioCtx = new AudioContext();
+        
+        // Ensure context is resumed (browser autoplay policy)
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const audioEl = document.getElementById('audio-player');
+        // Check if we already created a source for this media element
+        if (audioEl._audioSourceNode) {
+             audioSourceNode = audioEl._audioSourceNode;
+        } else {
+             audioSourceNode = audioCtx.createMediaElementSource(audioEl);
+             audioEl._audioSourceNode = audioSourceNode;
+        }
+
+        // 1. Bass Boost (LowShelf Filter) - adds warmth and punch
+        const bassBoost = audioCtx.createBiquadFilter();
+        bassBoost.type = 'lowshelf';
+        bassBoost.frequency.value = 85; // Hz
+        bassBoost.gain.value = 4.5; // dB boost
+
+        // 2. High Frequency Clarity (HighShelf Filter) - vocal clarity
+        const trebleBoost = audioCtx.createBiquadFilter();
+        trebleBoost.type = 'highshelf';
+        trebleBoost.frequency.value = 8000;
+        trebleBoost.gain.value = 2.5;
+
+        // 3. Dynamic Range Compressor (Punchy & normalized)
+        const compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.value = -24;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 4;
+        compressor.attack.value = 0.005;
+        compressor.release.value = 0.25;
+
+        // Connect the audio pipeline
+        audioSourceNode.connect(bassBoost);
+        bassBoost.connect(trebleBoost);
+        trebleBoost.connect(compressor);
+        compressor.connect(audioCtx.destination);
+
+        isAudioOptimized = true;
+        console.log("Audio Optimizer Initialized! 🎧 Sound quality enhanced.");
+    } catch(e) {
+        console.warn("Audio Optimizer failed to initialize:", e);
+    }
+}
+
+// Initialize audio context on first user interaction to comply with autoplay policies
+document.addEventListener('click', () => { 
+    // if(!isAudioOptimized) initAudioOptimizer(); // Temporarily disabled due to CORS restrictions on YouTube audio
+}, { once: true });

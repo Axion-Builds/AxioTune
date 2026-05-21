@@ -267,6 +267,7 @@
         #left-panel {
             width: 45%; height: 100%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; padding: 40px; padding-top: 80px; padding-left: 100px;
+            transition: padding-left 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         #cover-wrapper { position: relative; margin-bottom: 30px; display: flex; justify-content: center; align-items: center; width: clamp(180px, 50%, 380px); aspect-ratio: 1; }
@@ -327,7 +328,10 @@
             width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: all 0.2s; color: rgba(255,255,255,0.7); backdrop-filter: blur(10px);
         }
-        .btn-icon:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: white; transform: scale(1.1); }
+        .btn-icon:hover:not(:disabled) { 
+            background: rgba(255,255,255,0.1); color: white; transform: scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
+        }
         .btn-icon:active:not(:disabled) { transform: scale(0.95); }
         .btn-icon:disabled { opacity: 0.3; cursor: not-allowed; }
         
@@ -403,8 +407,8 @@
         /* Overlay icon (play/pause) on top of black hole */
         .bh-icon {
             position: absolute; z-index: 3; pointer-events: none;
-            width: 20px; height: 20px; fill: rgba(255,240,200,0.9);
-            filter: drop-shadow(0 0 4px rgba(255,200,80,0.8));
+            width: 22px; height: 22px; fill: rgba(255,255,255,1);
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.8));
             transition: opacity 0.3s;
         }
         /* Particles flying into black hole */
@@ -454,7 +458,10 @@
             100% { transform: rotate(360deg) translateX(0px)  scale(0);   opacity: 0; }
         }
         
-        #prev-btn svg, #next-btn svg { width: 24px; height: 24px; fill: currentColor; }
+        #prev-btn svg, #next-btn svg { 
+            width: 24px; height: 24px; fill: currentColor;
+            filter: drop-shadow(0 0 3px rgba(255,255,255,0.3));
+        }
 
         /* Right Panel - Lyrics */
         #right-panel {
@@ -479,13 +486,30 @@
         .lyric-line:hover { opacity: 0.7; filter: blur(1px); transform: scale(0.99); }
         .lyric-line.active-line { filter: blur(0px); opacity: 1; transform: scale(1); }
 
-        .lyric-word {
-            display: inline-block;
-            background: linear-gradient(to right, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) var(--progress, 0%), rgba(255, 255, 255, 0.3) var(--progress, 0%), rgba(255, 255, 255, 0.3) 100%);
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        @property --progress {
+            syntax: '<percentage>';
+            inherits: false;
+            initial-value: 0%;
         }
 
-        .lyric-word.active { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 30px rgba(255, 255, 255, 0.5)); }
+        .lyric-word {
+            display: inline-block;
+            padding: 0 1px;
+            background: linear-gradient(to right, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) calc(var(--progress, 0%) - 2%), rgba(255, 255, 255, 0.3) calc(var(--progress, 0%) + 2%), rgba(255, 255, 255, 0.3) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            transition: --progress 0.15s ease-out, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.6s ease-out;
+            transform-origin: bottom center;
+            will-change: transform, filter;
+        }
+
+        .lyric-word.active { 
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 25px rgba(255, 255, 255, 0.3)); 
+            transform: scale(1.04) translateY(-1px);
+        }
+
+        .lyric-word.passed {
+            transform: scale(1.04) translateY(-1px);
+        }
 
         .empty-state {
             font-size: 1.5rem; color: rgba(255,255,255,0.6); text-align: left; font-weight: 500;
@@ -533,18 +557,6 @@
         .premium-play-btn svg { width: 16px; height: 16px; fill: currentColor; }
         .premium-list-item:hover .premium-play-btn { opacity: 1; transform: scale(1); }
         .premium-play-btn:hover { background: rgba(255, 71, 109, 0.8); transform: scale(1.1) !important; }
-
-        #floating-queue-btn {
-            position: absolute; top: calc(50% + 200px); left: 40px; z-index: 50;
-            width: 54px; height: 54px; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(255,255,255,0.15);
-            color: rgba(255, 255, 255, 0.7); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center; transition: 0.3s;
-        }
-        #floating-queue-btn svg { width: 24px; height: 24px; fill: currentColor; }
-        #floating-queue-btn:hover { background: rgba(255, 255, 255, 0.12); color: white; transform: scale(1.1); }
-        #floating-queue-btn.active { color: white; background: rgba(255, 71, 109, 0.5); border-color: rgba(255, 71, 109, 0.4); }
         
         #close-queue-btn {
             position: absolute; top: 40px; right: 40px; background: transparent; border: none;
@@ -603,10 +615,17 @@
         }
         .cover-changing { animation: coverPop 0.65s cubic-bezier(0.2,0.8,0.2,1) forwards; }
         .title-changing { animation: titleSlideIn 0.45s cubic-bezier(0.2,0.8,0.2,1) forwards; }
-
-        /* Lyrics Toggle Button */
+        .top-circle-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center;
+            transition: 0.25s; cursor: pointer; backdrop-filter: blur(10px);
+        }
+        .top-circle-btn:hover { background: rgba(255,255,255,0.15); color: white; transform: scale(1.05); }
+        .top-circle-btn svg { width: 16px; height: 16px; fill: currentColor; }
+        
         #lyrics-toggle-btn {
-            position: absolute; top: 20px; right: 20px; z-index: 30;
+            z-index: 30;
             background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
             color: rgba(255,255,255,0.7); border-radius: 20px;
             padding: 7px 14px; font-size: 0.8rem; font-weight: 600;
@@ -618,6 +637,56 @@
         #lyrics-toggle-btn svg { width: 14px; height: 14px; fill: currentColor; }
         #right-panel.lyrics-hidden #lyrics-container { opacity: 0; pointer-events: none; }
         #right-panel.lyrics-hidden { background: transparent; }
+        
+        /* Full Screen Hiding Logic */
+        body.full-screen-mode #side-nav {
+            transform: translateX(-150%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s;
+        }
+        body.full-screen-mode #left-panel {
+            padding-left: 20px;
+        }
+        body.full-screen-mode .floating-side-btn {
+            transform: translateX(-150%) translateY(-50%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s;
+        }
+        body.full-screen-mode #top-bar,
+        body.full-screen-mode #top-right-controls {
+            transform: translateY(-150%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s;
+        }
+        body.full-screen-mode.show-ui #side-nav {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        body.full-screen-mode.show-ui .floating-side-btn {
+            transform: translateX(0) translateY(-50%);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        body.full-screen-mode.show-ui #floating-pip-btn {
+            transform: translateY(-50%);
+        }
+        body.full-screen-mode.show-ui #floating-queue-btn {
+            transform: translateY(-50%);
+        }
+        body.full-screen-mode.show-ui #top-bar,
+        body.full-screen-mode.show-ui #top-right-controls {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        body.full-screen-mode #global-back-btn {
+            display: none !important;
+        }
 
         #home-settings-btn {
             position: absolute; top: 40px; right: 40px; background: rgba(255, 255, 255, 0.05);
@@ -630,12 +699,12 @@
 
         /* Queue Panel CSS */
         #queue-panel {
-            position: absolute; top: 0; right: 0; width: 45%; height: 100%;
-            background: rgba(20, 0, 30, 0.4);
-            backdrop-filter: blur(50px) saturate(200%); -webkit-backdrop-filter: blur(50px) saturate(200%);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 45; padding: 120px 40px 40px 40px;
-            transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: fixed; top: 0; right: 0; width: 420px; height: 100vh;
+            background: rgba(10, 0, 20, 0.75);
+            backdrop-filter: blur(60px) saturate(220%); -webkit-backdrop-filter: blur(60px) saturate(220%);
+            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            z-index: 9000; padding: 80px 32px 40px 32px;
+            transform: translateX(100%); transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
             overflow-y: auto; overflow-x: hidden;
         }
         #queue-panel.open { transform: translateX(0); }
@@ -1102,7 +1171,7 @@
         /* ── Playback Controls Row: Shuffle | Prev | Play | Next | Repeat ── */
         .playback-buttons-row {
             display: flex; align-items: center; justify-content: center;
-            gap: 18px; margin-top: 14px;
+            gap: 18px; margin-top: -2px;
         }
         /* Track title row with inline like button */
         #track-title-row {
@@ -1815,4 +1884,380 @@
                 padding: 100px 20px 120px 20px;
             }
         }
+
+
+/* Top Right Controls (Full Screen Player) */
+#player-top-controls {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 100;
+}
+
+.top-ctrl-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.top-ctrl-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.top-ctrl-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.top-ctrl-btn.active {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Volume Container */
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0 12px 0 0;
+    border-radius: 8px;
+    height: 36px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.volume-container .top-ctrl-btn {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.volume-container .top-ctrl-btn:hover {
+    background: transparent;
+    color: white;
+}
+
+#volume-slider {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+#volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: transform 0.1s;
+}
+
+#volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Picture-in-Picture MiniPlayer specific styles */
+.pip-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: white;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    user-select: none;
+}
+
+.pip-blur-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(30, 40, 45, 0.6);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    z-index: 1;
+}
+
+.pip-content {
+    position: relative;
+    z-index: 2;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.pip-top-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex: 1;
+}
+
+.pip-cover {
+    width: 64px;
+    height: 64px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    object-fit: cover;
+    background: #333;
+}
+
+.pip-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    overflow: hidden;
+}
+
+.pip-title {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+    color: #fff;
+}
+
+.pip-artist {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pip-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.pip-progress-bar-container {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+}
+
+.pip-progress-fill {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 0%;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 2px;
+}
+
+.pip-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.pip-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pip-btn:hover {
+    color: white;
+}
+
+.pip-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.pip-play-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.pip-center-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pip-right-controls {
+    display: flex;
+    gap: 8px;
+}
+
+
+/* Apple Music Style Volume Slider */
+.am-volume-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.am-volume-container:hover {
+    opacity: 1;
+}
+
+.am-volume-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.am-volume-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    opacity: 0.8;
+}
+
+.am-volume-slider-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 20px;
+}
+
+.am-volume-slider-wrapper input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    transition: height 0.1s;
+    position: relative;
+    /* Custom fill effect via linear-gradient handled in JS for cross-browser, or basic CSS for WebKit */
+}
+
+/* Custom filled track color using WebKit specific pseudo-elements */
+.am-volume-slider-wrapper input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: transparent; /* Track bg is on the input itself */
+}
+
+/* Hide thumb normally, show on hover */
+.am-volume-slider-wrapper input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    margin-top: -4px; /* Centers thumb vertically (thumb height / 2 - track height / 2) */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.am-volume-container:hover input[type=range]::-webkit-slider-thumb {
+    opacity: 1;
+}
+
+.am-volume-slider-wrapper input[type=range]:active::-webkit-slider-thumb {
+    transform: scale(1.3);
+}
+
+/* Make it thicc on hover */
+.am-volume-container:hover input[type=range] {
+    height: 6px;
+}
+
+.am-volume-container:hover input[type=range]::-webkit-slider-thumb {
+    margin-top: -3px; 
+}
+
+/* Sidebar PiP button specific styling */
+.nav-btn.pip-sidebar-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+
+/* Animation for Bulge and Glow */
+@keyframes bulgeGlow {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+    50% { transform: scale(1.15); box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+    100% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+/* Floating Side Buttons (Matching Nav Sidebar) */
+.floating-side-btn {
+    position: absolute;
+    left: 40px; /* Aligns center with 44px buttons in sidebar which is at 30px + 10px padding */
+    z-index: 150;
+    /* Width and height inherited from .nav-btn (44px) */
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(30px) saturate(150%); 
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+#floating-pip-btn {
+    top: calc(50% - 210px); /* Equidistant from center as Queue btn */
+}
+
+#floating-queue-btn {
+    top: calc(50% + 210px);
+}
+
+.floating-side-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
 
