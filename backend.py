@@ -434,12 +434,14 @@ async def stream(id: str, refresh: bool = False):
 
 @app.get("/api/proxy_stream")
 async def proxy_stream(request: Request, url: str):
-    headers = {}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
     range_header = request.headers.get("range")
     if range_header:
         headers["Range"] = range_header
         
-    client = httpx.AsyncClient()
+    client = httpx.AsyncClient(follow_redirects=True)
     req = client.build_request("GET", url, headers=headers)
     
     try:
