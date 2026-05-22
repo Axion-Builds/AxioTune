@@ -26,7 +26,7 @@ It uses a custom-built, anti-bot streaming architecture to fetch and play songs 
 
 | Home Screen | Player View |
 | :---: | :---: |
-| ![Home](https://github.com/Axion-Builds/Apple-Music-Clone/blob/main/screenshots/Home.png.png) | ![Player](screenshots/player.png) |
+| ![Home](https://github.com/Axion-Builds/Apple-Music-Clone/blob/main/screenshots/Home.png.png) | ![Player](https://github.com/Axion-Builds/Apple-Music-Clone/blob/main/screenshots/player.png.png) |
 
 | Search & Suggestions | Synced Lyrics |
 | :---: | :---: |
