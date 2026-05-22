@@ -30,7 +30,7 @@ It uses a custom-built, anti-bot streaming architecture to fetch and play songs 
 
 | Search & Suggestions | Synced Lyrics |
 | :---: | :---: |
-| ![Search](shttps://github.com/Axion-Builds/Apple-Music-Clone/blob/main/screenshots/search.png.png) |                                                           ![Lyrics](https://github.com/Axion-Builds/Apple-Music-Clone/blob/main/screenshots/search.png.png) |
+| ![Lyrics](https://github.com/Axion-Builds/Apple-Music-Clone/blob/main/screenshots/lyrics.png.png)                                                                | ![Search](https://github.com/Axion-Builds/Apple-Music-Clone/blob/main/screenshots/search.png.png) 
 
 ---
 
