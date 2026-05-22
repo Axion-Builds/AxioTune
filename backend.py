@@ -374,20 +374,38 @@ async def stream(id: str, refresh: bool = False):
     }
     
     # List of public Piped API instances for fallback
-    PIPED_INSTANCES = [
-        "https://pipedapi.kavin.rocks",
-        "https://pipedapi.syncpundit.io",
-        "https://pipedapi.us.projectsegfau.lt",
-        "https://api.piped.yt",
-        "https://piped-api.lunar.icu"
+    INVIDIOUS_INSTANCES = [
+        "https://inv.thepixora.com",
+        "https://inv.tux.pizza",
+        "https://invidious.nerdvpn.de",
+        "https://invidious.protokolla.fi",
+        "https://inv.bp.projectsegfau.lt",
+        "https://iv.melmac.space"
     ]
 
     async def fetch_stream():
-        # PLAN A: Try yt-dlp first via thread
+        # PLAN A: Async function to verify a single Invidious proxy stream
+        async def fetch_invidious(instance, client):
+            try:
+                proxy_url = f"{instance}/latest_version?id={id}&itag=140&local=true"
+                # Send a HEAD request to check if the instance's proxy is working
+                resp = await client.head(proxy_url, timeout=5.0, follow_redirects=True)
+                if resp.status_code == 200 and 'audio' in resp.headers.get('content-type', ''):
+                    return {
+                        "url": proxy_url,
+                        "quality": "128kbps",
+                        "format_note": "m4a",
+                        "cached": False,
+                        "source": f"invidious ({instance})"
+                    }
+            except Exception:
+                pass
+            return None
+
+        # PLAN B: Try yt-dlp via thread
         def run_ytdlp():
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    # Use music.youtube.com URL - works better with android client for YT Music tracks
                     info = ydl.extract_info(f"https://music.youtube.com/watch?v={id}", download=False)
                     abr = info.get('abr') or info.get('tbr') or 128
                     return {
@@ -401,46 +419,26 @@ async def stream(id: str, refresh: bool = False):
                 print(f"[yt-dlp DEBUG] Exception: {type(e).__name__}: {str(e)[:200]}")
                 return None
 
-        # PLAN B: Async function to fetch from a single piped instance
-        async def fetch_piped(instance, client):
-            try:
-                resp = await client.get(f"{instance}/streams/{id}", timeout=4.0)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    audio_streams = data.get("audioStreams", [])
-                    if audio_streams:
-                        audio_streams.sort(key=lambda x: x.get("bitrate", 0), reverse=True)
-                        best = audio_streams[0]
-                        return {
-                            "url": best["url"],
-                            "quality": f"{int(best.get('bitrate', 128000)/1000)}kbps",
-                            "format_note": best.get('format', 'unknown'),
-                            "cached": False,
-                            "source": f"piped ({instance})"
-                        }
-            except Exception:
-                pass
-            return None
-
-        # Execute yt-dlp first
-        ytdlp_result = await asyncio.to_thread(run_ytdlp)
-        if ytdlp_result:
-            return ytdlp_result
+        print(f"[Stream Engine] Racing Invidious APIs for {id}...")
+        # RACE all Invidious instances concurrently for maximum speed and reliability
+        async with httpx.AsyncClient(verify=False) as client:
+            tasks = [asyncio.create_task(fetch_invidious(inst, client)) for inst in INVIDIOUS_INSTANCES]
             
-        print("[Fallback Alert] yt-dlp failed. Racing Piped APIs...")
-        # If yt-dlp fails, RACE all Piped instances concurrently for maximum speed!
-        async with httpx.AsyncClient() as client:
-            tasks = [asyncio.create_task(fetch_piped(inst, client)) for inst in PIPED_INSTANCES]
-            
-            # As soon as ANY piped instance returns a valid result, return it!
+            # As soon as ANY Invidious instance returns a valid proxy url, return it!
             for future in asyncio.as_completed(tasks):
                 result = await future
                 if result:
-                    # Cancel remaining tasks
                     for t in tasks: t.cancel()
                     return result
 
-        raise HTTPException(status_code=404, detail="All streaming engines (yt-dlp and Piped) failed.")
+        print("[Fallback Alert] Invidious failed. Falling back to yt-dlp...")
+        
+        # Execute yt-dlp as fallback
+        ytdlp_result = await asyncio.to_thread(run_ytdlp)
+        if ytdlp_result:
+            return ytdlp_result
+
+        raise HTTPException(status_code=404, detail="All streaming engines failed.")
 
     try:
         res = await fetch_stream()
