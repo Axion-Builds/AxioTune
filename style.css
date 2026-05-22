@@ -31,17 +31,21 @@
         }
 
         #background-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
             background: linear-gradient(135deg, #1e003b, #440055, #660044);
             background-size: cover; background-position: center;
-            filter: blur(70px) saturate(1.5) brightness(var(--bg-brightness));
-            will-change: transform, filter;
+            filter: blur(40px) saturate(1.5) brightness(var(--bg-brightness));
+            will-change: transform; /* Removed expensive filter will-change */
         }
 
         #background-layer::after {
-            content: ''; position: absolute; top: 20%; left: 20%; right: 20%; bottom: 20%;
-            background: inherit; filter: hue-rotate(40deg) blur(80px); opacity: 0.6;
-            animation: blob-spin 20s infinite linear; border-radius: 50%; transform-origin: 40% 60%;
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(255,100,150,0.05) 0%, transparent 50%);
+            animation: blob-spin 25s infinite linear;
+            transform-origin: 50% 50%;
+            mix-blend-mode: color-dodge;
+            pointer-events: none;
         }
 
         @keyframes ambient-pan {

@@ -1411,18 +1411,18 @@ const audioPlayer = document.getElementById('audio-player');
                 if (rawYtThumb) {
                     coverArt.src = rawYtThumb;
                     miniCover.src = rawYtThumb;
+                    // Keep background layer low-res! Blurring HD images kills GPU performance.
                     backgroundLayer.style.backgroundImage = `url(${rawYtThumb})`;
                 }
                 
                 coverArt.style.display = 'block';
                 document.getElementById('default-cover-icon').style.display = 'none';
                 
-                // Upgrade to HD iTunes cover silently in background
+                // Upgrade to HD iTunes cover silently in background (Only for the actual cover art, NOT the blurred background)
                 const hdImg = new Image();
                 hdImg.onload = () => {
                     coverArt.src = hdImg.src;
                     miniCover.src = hdImg.src;
-                    backgroundLayer.style.backgroundImage = `url(${hdImg.src})`;
                     coverArt.style.opacity = '1';
                     coverArt.classList.remove('cover-changing');
                     void coverArt.offsetWidth;
