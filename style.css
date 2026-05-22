@@ -543,7 +543,6 @@
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
             transition: --progress 0.15s ease-out, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.6s ease-out;
             transform-origin: bottom center;
-            will-change: transform, filter;
         }
 
         .lyric-word.active { 
