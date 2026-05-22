@@ -363,63 +363,87 @@ async def stream(id: str, refresh: bool = False):
         'format': 'bestaudio[ext=webm][abr>=128]/bestaudio[ext=m4a][abr>=128]/bestaudio[abr>=128]/bestaudio/best',
         'quiet': True,
         'no_warnings': True,
+        'socket_timeout': 8,
+        'extractor_retries': 1,
+        # android client bypasses YouTube bot detection WITHOUT needing cookies!
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios'],
+            }
+        },
     }
     
     # List of public Piped API instances for fallback
     PIPED_INSTANCES = [
         "https://pipedapi.kavin.rocks",
         "https://pipedapi.syncpundit.io",
-        "https://pipedapi.us.projectsegfau.lt"
+        "https://pipedapi.us.projectsegfau.lt",
+        "https://api.piped.yt",
+        "https://piped-api.lunar.icu"
     ]
 
-    def fetch_stream():
-        # PLAN A: Try our own yt-dlp first (Fastest on Localhost)
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(f"https://www.youtube.com/watch?v={id}", download=False)
-                url = info['url']
-                quality = info.get('abr', 128)
-                return {
-                    "url": url,
-                    "quality": f"{int(quality)}kbps",
-                    "format_note": info.get('ext', 'unknown'),
-                    "cached": False,
-                    "source": "yt-dlp"
-                }
-        except Exception as e:
-            print(f"[Fallback Alert] yt-dlp failed (likely IP block). Trying Piped API... Error: {e}")
-            pass # Move to fallback
-
-        # PLAN B & C: Fallback to Piped API instances (Bypasses IP blocks on Render/Netlify)
-        for instance in PIPED_INSTANCES:
+    async def fetch_stream():
+        # PLAN A: Try yt-dlp first via thread
+        def run_ytdlp():
             try:
-                # Using httpx synchronously in a thread
-                with httpx.Client() as client:
-                    resp = client.get(f"{instance}/streams/{id}", timeout=5.0)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        # Find the best audio-only stream
-                        audio_streams = data.get("audioStreams", [])
-                        if audio_streams:
-                            # Sort by bitrate descending
-                            audio_streams.sort(key=lambda x: x.get("bitrate", 0), reverse=True)
-                            best_stream = audio_streams[0]
-                            return {
-                                "url": best_stream["url"],
-                                "quality": f"{int(best_stream.get('bitrate', 128000)/1000)}kbps",
-                                "format_note": best_stream.get('format', 'unknown'),
-                                "cached": False,
-                                "source": f"piped ({instance})"
-                            }
-            except Exception as ex:
-                print(f"[Fallback Alert] Piped API {instance} failed. Trying next... Error: {ex}")
-                continue # Try next instance
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    # Use music.youtube.com URL - works better with android client for YT Music tracks
+                    info = ydl.extract_info(f"https://music.youtube.com/watch?v={id}", download=False)
+                    abr = info.get('abr') or info.get('tbr') or 128
+                    return {
+                        "url": info['url'],
+                        "quality": f"{int(abr)}kbps",
+                        "format_note": info.get('ext', 'unknown'),
+                        "cached": False,
+                        "source": "yt-dlp"
+                    }
+            except Exception as e:
+                print(f"[yt-dlp DEBUG] Exception: {type(e).__name__}: {str(e)[:200]}")
+                return None
 
-        # If everything fails
-        raise HTTPException(status_code=404, detail="All streaming engines failed to extract audio.")
+        # PLAN B: Async function to fetch from a single piped instance
+        async def fetch_piped(instance, client):
+            try:
+                resp = await client.get(f"{instance}/streams/{id}", timeout=4.0)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    audio_streams = data.get("audioStreams", [])
+                    if audio_streams:
+                        audio_streams.sort(key=lambda x: x.get("bitrate", 0), reverse=True)
+                        best = audio_streams[0]
+                        return {
+                            "url": best["url"],
+                            "quality": f"{int(best.get('bitrate', 128000)/1000)}kbps",
+                            "format_note": best.get('format', 'unknown'),
+                            "cached": False,
+                            "source": f"piped ({instance})"
+                        }
+            except Exception:
+                pass
+            return None
+
+        # Execute yt-dlp first
+        ytdlp_result = await asyncio.to_thread(run_ytdlp)
+        if ytdlp_result:
+            return ytdlp_result
+            
+        print("[Fallback Alert] yt-dlp failed. Racing Piped APIs...")
+        # If yt-dlp fails, RACE all Piped instances concurrently for maximum speed!
+        async with httpx.AsyncClient() as client:
+            tasks = [asyncio.create_task(fetch_piped(inst, client)) for inst in PIPED_INSTANCES]
+            
+            # As soon as ANY piped instance returns a valid result, return it!
+            for future in asyncio.as_completed(tasks):
+                result = await future
+                if result:
+                    # Cancel remaining tasks
+                    for t in tasks: t.cancel()
+                    return result
+
+        raise HTTPException(status_code=404, detail="All streaming engines (yt-dlp and Piped) failed.")
 
     try:
-        res = await asyncio.to_thread(fetch_stream)
+        res = await fetch_stream()
         
         # Store in cache
         STREAM_CACHE[id] = {
@@ -441,7 +465,7 @@ async def proxy_stream(request: Request, url: str):
     if range_header:
         headers["Range"] = range_header
         
-    client = httpx.AsyncClient(follow_redirects=True)
+    client = httpx.AsyncClient(follow_redirects=True, timeout=10.0)
     req = client.build_request("GET", url, headers=headers)
     
     try:
@@ -505,19 +529,38 @@ async def get_recommendations(videoId: str = ""):
         def fetch_watch_playlist():
             return ytmusic.get_watch_playlist(videoId=videoId, limit=20)
             
-        playlist = await asyncio.to_thread(fetch_watch_playlist)
+        try:
+            playlist = await asyncio.to_thread(fetch_watch_playlist)
+            tracks = playlist.get('tracks', [])
+        except Exception:
+            # FALLBACK for ytmusicapi upstream 'endpoint' bug in watch_playlist
+            def fallback_fetch():
+                song = ytmusic.get_song(videoId)
+                artist = song.get('videoDetails', {}).get('author', '')
+                title = song.get('videoDetails', {}).get('title', '')
+                # Search for similar artist songs to build a radio queue
+                search_query = f"{artist} songs" if artist else title
+                return ytmusic.search(query=search_query, filter="songs", limit=20)
+            tracks = await asyncio.to_thread(fallback_fetch)
         
         recs = []
-        # First item is usually the song itself, skip it if you want, or just include it. We'll skip the first.
-        tracks = playlist.get('tracks', [])
-        for item in tracks[1:]:
+        for item in tracks:
+            vid = item.get('videoId')
+            # Skip the current song itself from recommendations
+            if vid == videoId or not vid:
+                continue
+                
             artist_name = item['artists'][0]['name'] if item.get('artists') else "Unknown"
-            thumbnail = item['thumbnail'][-1]['url'] if item.get('thumbnail') else ""
+            
+            # Handle differences between watch_playlist ('thumbnail') and search ('thumbnails')
+            thumb_list = item.get('thumbnails') or item.get('thumbnail') or []
+            thumbnail = thumb_list[-1]['url'] if thumb_list else ""
+            
             recs.append({
                 "title": item.get('title', 'Unknown'), 
                 "artist": artist_name, 
                 "cover": thumbnail,
-                "videoId": item.get('videoId', '')
+                "videoId": vid
             })
             
         return {"status": "success", "recommendations": recs}

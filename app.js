@@ -1174,13 +1174,29 @@ const audioPlayer = document.getElementById('audio-player');
             if (pauseIcon) pauseIcon.style.display = playing ? 'block' : 'none';
         }
 
-        async function populateQueue(videoId) {
+        async function populateQueue(videoId, append = false) {
             try {
                 const res = await fetch(`/api/recommendations?videoId=${encodeURIComponent(videoId)}`);
                 const data = await res.json();
                 if(data.status === 'success' && data.recommendations.length > 0) {
-                    queueList = data.recommendations;
-                    if(currentQueueIndex === -1) {
+                    if (append) {
+                        const existingIds = new Set(queueList.map(s => s.videoId));
+                        data.recommendations.forEach(s => {
+                            if (!existingIds.has(s.videoId)) {
+                                queueList.push(s);
+                            }
+                        });
+                    } else {
+                        // FIX: Prepend the currently playing song since the backend recommendations omit the seed song
+                        queueList = [
+                            {
+                                videoId: currentVideoId,
+                                title: currentSongMeta ? currentSongMeta.title : 'Unknown',
+                                artist: currentSongMeta ? currentSongMeta.artist : 'Unknown',
+                                cover: currentSongMeta ? currentSongMeta.cover : ''
+                            },
+                            ...data.recommendations
+                        ];
                         currentQueueIndex = 0; 
                     }
                     renderQueue();
@@ -1312,6 +1328,8 @@ const audioPlayer = document.getElementById('audio-player');
                 // Do not clear src abruptly, it breaks Chrome's media pipeline under rapid skips
             }
             
+            // Trigger fast direct playback bypassing search
+            window._forceQueueSong = song;
             songSearchInput.value = `${song.title} ${song.artist}`;
             searchBtn.click();
         }
@@ -1353,10 +1371,23 @@ const audioPlayer = document.getElementById('audio-player');
             lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">🔍 Finding song...</div>';
             
             try {
-                // STEP 1: Get song metadata from YouTube (fast)
-                const ytRes = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal });
-                if (!ytRes.ok) throw new Error("Backend search failed");
-                const songData = await ytRes.json();
+                // STEP 1: Get song metadata (Bypass search if forced from queue)
+                let songData;
+                const isFromQueue = !!window._forceQueueSong;
+                
+                if (isFromQueue) {
+                    songData = {
+                        id: window._forceQueueSong.videoId,
+                        title: window._forceQueueSong.title,
+                        uploader: window._forceQueueSong.artist,
+                        thumbnail: window._forceQueueSong.thumbnail || window._forceQueueSong.cover || ''
+                    };
+                    window._forceQueueSong = null; // consume it
+                } else {
+                    const ytRes = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal });
+                    if (!ytRes.ok) throw new Error("Backend search failed");
+                    songData = await ytRes.json();
+                }
                 
                 if (myToken !== currentPlaybackToken) return; // Race condition check
                 
@@ -1454,7 +1485,8 @@ const audioPlayer = document.getElementById('audio-player');
                 nextBtn.disabled = false;
                 prevBtn.disabled = false;
                 
-                populateQueue(songData.videoId || songData.id);
+                // If it's a manual search, replace the queue. If auto-playing from queue, append to infinite radio!
+                populateQueue(songData.videoId || songData.id, isFromQueue);
 
                 // Quality badge
                 if (streamData.quality) {
