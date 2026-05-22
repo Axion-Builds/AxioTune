@@ -2,7 +2,6 @@
 
 A premium, Apple Music-inspired web music streaming app that streams audio from YouTube Music — built with Python (FastAPI) backend and vanilla JS frontend.
 
-![Preview](default_cover.jpg)
 
 ---
 
