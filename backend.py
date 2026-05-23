@@ -389,7 +389,7 @@ async def stream(id: str, refresh: bool = False):
             try:
                 proxy_url = f"{instance}/latest_version?id={id}&itag=140&local=true"
                 # Send a HEAD request to check if the instance's proxy is working
-                resp = await client.head(proxy_url, timeout=5.0, follow_redirects=True)
+                resp = await client.head(proxy_url, timeout=1.5, follow_redirects=True)
                 if resp.status_code == 200 and 'audio' in resp.headers.get('content-type', ''):
                     return {
                         "url": proxy_url,
