@@ -1,6 +1,6 @@
-# 🎵 Apple Music Clone (Web Player)
+# 🎵 Streamify
 
-Welcome to the **Apple Music Clone**! This is a fully functional, highly optimized, and visually stunning web-based music streaming application built to mimic the premium "Liquid Glass" design language of Apple Music. 
+Welcome to **Streamify**! This is a fully functional, highly optimized, and visually stunning web-based music streaming application built with a premium "Liquid Glass" design language. 
 
 It uses a custom-built, anti-bot streaming architecture to fetch and play songs instantly without any lag or 0:00 playback errors!
 
