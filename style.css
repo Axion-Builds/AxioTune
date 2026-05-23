@@ -26,7 +26,7 @@
 
         #ambient-wrapper {
             position: absolute; top: -30%; left: -30%; width: 160%; height: 160%;
-            animation: ambient-pan 45s infinite alternate cubic-bezier(0.4, 0, 0.6, 1);
+            animation: ambient-pan 20s infinite alternate cubic-bezier(0.4, 0, 0.6, 1);
             z-index: 1;
         }
 
@@ -34,24 +34,25 @@
             position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
             background: linear-gradient(135deg, #1e003b, #440055, #660044);
             background-size: cover; background-position: center;
-            filter: blur(40px) saturate(1.5) brightness(var(--bg-brightness));
-            will-change: transform; /* Removed expensive filter will-change */
+            filter: blur(60px) saturate(1.5) brightness(var(--bg-brightness, 1));
+            transform: translateZ(0); /* Hardware rasterization of the blur */
+            will-change: transform;
         }
 
         #background-layer::after {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 60%, rgba(255,100,150,0.05) 0%, transparent 50%);
-            animation: blob-spin 25s infinite linear;
+            background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.3) 0%, transparent 60%),
+                        radial-gradient(circle at 70% 60%, rgba(255,100,150,0.2) 0%, transparent 60%);
+            animation: blob-spin 12s infinite linear;
             transform-origin: 50% 50%;
-            mix-blend-mode: color-dodge;
             pointer-events: none;
+            will-change: transform;
         }
 
         @keyframes ambient-pan {
-            0% { transform: translate(0%, 0%); }
-            50% { transform: translate(-2%, 2%); }
-            100% { transform: translate(2%, -2%); }
+            0% { transform: translate(0%, 0%) rotate(0deg) scale(1); }
+            50% { transform: translate(-5%, 5%) rotate(3deg) scale(1.1); }
+            100% { transform: translate(5%, -5%) rotate(-3deg) scale(1.05); }
         }
 
         @keyframes blob-spin {
@@ -514,8 +515,8 @@
         /* Right Panel - Lyrics */
         #right-panel {
             width: 55%; height: 100%; position: relative; overflow: hidden;
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-            mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent 100%);
             padding-right: 40px;
         }
 
@@ -832,6 +833,8 @@
         }
 
         #home-screen, #history-screen, #settings-screen, #artist-screen, #album-screen, #library-screen, .vinyl-scroll-container, .dense-grid-container, #lyrics-container {
+            will-change: transform, scroll-position;
+            transform: translateZ(0);
             -webkit-overflow-scrolling: touch;
         }
 
@@ -1058,10 +1061,11 @@
             margin-bottom: 12px; padding-left: 4px;
         }
         .settings-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
             border-radius: 20px; overflow: hidden;
+            backdrop-filter: blur(10px); /* Reduced for scroll performance */
+            -webkit-backdrop-filter: blur(10px);
+            transform: translateZ(0); /* Hardware accelerate container */
         }
         .settings-row {
             display: flex; align-items: center; justify-content: space-between;
@@ -2318,4 +2322,28 @@
     border-color: rgba(255, 255, 255, 0.2);
 }
 
+
+
+/* --- Performance Mode overrides --- */
+body.performance-mode #top-bar,
+body.performance-mode #side-nav,
+body.performance-mode .mobile-bottom-nav,
+body.performance-mode .search-results-modal,
+body.performance-mode .context-menu {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(15, 8, 25, 0.98) !important;
+}
+
+body.disable-animations #background-layer::after {
+    animation: none !important;
+    display: none !important;
+}
+
+/* Fallback for browsers that don't support backdrop-filter */
+@supports not ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+    #top-bar, #side-nav, .mobile-bottom-nav, .search-results-modal, .context-menu {
+        background: rgba(15, 8, 25, 0.98) !important;
+    }
+}
 

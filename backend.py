@@ -205,14 +205,16 @@ async def suggest(q: str, filter: str = "all"):
             
             if r_type == "song":
                 artist = item["artists"][0]["name"] if item.get("artists") else "Unknown"
-                thumb = item["thumbnails"][-1]["url"] if item.get("thumbnails") else ""
+                thumbnails = item.get("thumbnails", [])
+                thumb = thumbnails[-1]["url"] if thumbnails else ""
                 results.append({
                     "type": "song", "title": item["title"], "artist": artist,
-                    "cover": thumb, "videoId": item.get("videoId", ""),
+                    "cover": thumb, "thumbnails": thumbnails, "videoId": item.get("videoId", ""),
                     "query": f"{item['title']} {artist}"
                 })
             elif r_type == "artist":
-                thumb = item["thumbnails"][-1]["url"] if item.get("thumbnails") else ""
+                thumbnails = item.get("thumbnails", [])
+                thumb = thumbnails[-1]["url"] if thumbnails else ""
                 artist_name = item.get("artist")
                 browse_id = item.get("browseId")
                 
@@ -226,23 +228,25 @@ async def suggest(q: str, filter: str = "all"):
                     
                 results.append({
                     "type": "artist", "title": artist_name, "artist": "",
-                    "cover": thumb, "browseId": browse_id or "",
+                    "cover": thumb, "thumbnails": thumbnails, "browseId": browse_id or "",
                     "query": artist_name
                 })
             elif r_type == "album":
                 artist = item["artists"][0]["name"] if item.get("artists") else "Unknown"
-                thumb = item["thumbnails"][-1]["url"] if item.get("thumbnails") else ""
+                thumbnails = item.get("thumbnails", [])
+                thumb = thumbnails[-1]["url"] if thumbnails else ""
                 results.append({
                     "type": "album", "title": item["title"], "artist": artist,
-                    "cover": thumb, "browseId": item.get("browseId", ""),
+                    "cover": thumb, "thumbnails": thumbnails, "browseId": item.get("browseId", ""),
                     "query": f"{item['title']} {artist} album"
                 })
             elif r_type == "video":
                 artist = item["artists"][0]["name"] if item.get("artists") else "Unknown"
-                thumb = item["thumbnails"][-1]["url"] if item.get("thumbnails") else ""
+                thumbnails = item.get("thumbnails", [])
+                thumb = thumbnails[-1]["url"] if thumbnails else ""
                 results.append({
                     "type": "video", "title": item["title"], "artist": artist,
-                    "cover": thumb, "videoId": item.get("videoId", ""),
+                    "cover": thumb, "thumbnails": thumbnails, "videoId": item.get("videoId", ""),
                     "query": f"{item['title']} {artist} official music video"
                 })
 

@@ -2,11 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apple Music Desktop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Primary Meta Tags -->
+    <title>Streamify - Premium Apple Music Clone</title>
+    <meta name="title" content="Streamify - Premium Apple Music Clone">
+    <meta name="description" content="A blazing fast, ad-free Apple Music clone with liquid glass UI, synced lyrics, and instant streaming. Built for music lovers.">
+    <meta name="theme-color" content="#1e003b">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://apple-music-clone-y0sq.onrender.com/">
+    <meta property="og:title" content="Streamify - Premium Apple Music Clone">
+    <meta property="og:description" content="A blazing fast, ad-free Apple Music clone with liquid glass UI, synced lyrics, and instant streaming. Built for music lovers.">
+    <!-- Replace this URL with an actual screenshot link once uploaded to GitHub or Imgur -->
+    <meta property="og:image" content="https://raw.githubusercontent.com/adarshshukla/apple-music-clone/main/screenshots/home.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://apple-music-clone-y0sq.onrender.com/">
+    <meta property="twitter:title" content="Streamify - Premium Apple Music Clone">
+    <meta property="twitter:description" content="A blazing fast, ad-free Apple Music clone with liquid glass UI, synced lyrics, and instant streaming. Built for music lovers.">
+    <meta property="twitter:image" content="https://raw.githubusercontent.com/adarshshukla/apple-music-clone/main/screenshots/home.png">
+
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="performance-mode">
     <div id="ambient-wrapper">
         <div id="background-layer"></div>
     </div>
@@ -560,6 +581,28 @@
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="doubletap-toggle" checked>
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-label">Performance Mode</div>
+                            <div class="settings-row-desc">Disable glass blur for low-end devices</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="performance-mode-toggle">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-label">Background Animations</div>
+                            <div class="settings-row-desc">Liquid blob movement</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="animations-toggle" checked>
                             <span class="toggle-track"></span>
                         </label>
                     </div>

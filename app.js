@@ -27,6 +27,12 @@ const audioPlayer = document.getElementById('audio-player');
         let currentVideoId = null;
         let streamRefreshInProgress = false;
 
+        // Helper function to build srcset for responsive images safely
+        function buildSrcset(thumbnails) {
+            if (!thumbnails || !Array.isArray(thumbnails)) return '';
+            return thumbnails.map(t => `${t.url} ${t.width}w`).join(', ');
+        }
+
         // ── NEW FEATURE STATE ──
         // Shuffle / Repeat
         let isShuffled = false;
@@ -2085,7 +2091,7 @@ const audioPlayer = document.getElementById('audio-player');
                     row.className = 'sr-song-row';
                     row.style.animationDelay = `${delay}s`; delay += 0.055;
                     row.innerHTML = `
-                        <img class="sr-song-cover" src="${coverUrl}" loading="lazy">
+                        <img class="sr-song-cover" src="${coverUrl}" loading="lazy" decoding="async" ${s.thumbnails ? `srcset="${buildSrcset(s.thumbnails)}" sizes="50px"` : ''}>
                         <div class="sr-song-info">
                             <div class="sr-song-title">${s.title}</div>
                             <div class="sr-song-artist">${s.artist}</div>
@@ -2121,7 +2127,7 @@ const audioPlayer = document.getElementById('audio-player');
                     row.className = 'sr-song-row';
                     row.style.animationDelay = `${delay}s`; delay += 0.055;
                     row.innerHTML = `
-                        <img class="sr-song-cover" src="${coverUrl}" loading="lazy" style="border-radius:8px;">
+                        <img class="sr-song-cover" src="${coverUrl}" loading="lazy" decoding="async" style="border-radius:8px;" ${v.thumbnails ? `srcset="${buildSrcset(v.thumbnails)}" sizes="50px"` : ''}>
                         <div class="sr-song-info">
                             <div class="sr-song-title">${v.title}</div>
                             <div class="sr-song-artist">${v.artist}</div>
@@ -2157,7 +2163,7 @@ const audioPlayer = document.getElementById('audio-player');
                     card.className = 'sr-card album';
                     card.style.animationDelay = `${delay}s`; delay += 0.06;
                     card.innerHTML = `
-                        <img class="sr-card-cover" src="${coverUrl}" loading="lazy">
+                        <img class="sr-card-cover" src="${coverUrl}" loading="lazy" decoding="async" ${a.thumbnails ? `srcset="${buildSrcset(a.thumbnails)}" sizes="140px"` : ''}>
                         <div class="sr-card-name">${a.title}</div>
                         <div class="sr-card-sub">${a.artist}</div>`;
                     card.addEventListener('click', () => {
@@ -2184,7 +2190,7 @@ const audioPlayer = document.getElementById('audio-player');
                     card.className = 'sr-card artist';
                     card.style.animationDelay = `${delay}s`; delay += 0.06;
                     card.innerHTML = `
-                        <img class="sr-card-cover" src="${coverUrl}" loading="lazy">
+                        <img class="sr-card-cover" src="${coverUrl}" loading="lazy" decoding="async" ${ar.thumbnails ? `srcset="${buildSrcset(ar.thumbnails)}" sizes="140px"` : ''}>
                         <div class="sr-card-name">${ar.title}</div>`;
                     card.addEventListener('click', () => {
                         if (ar.browseId) showArtistPage(ar.browseId);
@@ -3296,3 +3302,48 @@ function initAudioOptimizer() {
 document.addEventListener('click', () => { 
     // if(!isAudioOptimized) initAudioOptimizer(); // Temporarily disabled due to CORS restrictions on YouTube audio
 }, { once: true });
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Performance Mode
+    const perfToggle = document.getElementById('performance-mode-toggle');
+    if (perfToggle) {
+        const perfVal = localStorage.getItem('apple_performance_mode');
+        const isPerf = perfVal === null ? true : perfVal === 'true';
+        perfToggle.checked = isPerf;
+        if (isPerf) {
+            document.body.classList.add('performance-mode');
+        } else {
+            document.body.classList.remove('performance-mode');
+        }
+        
+        perfToggle.addEventListener('change', (e) => {
+            localStorage.setItem('apple_performance_mode', e.target.checked);
+            if (e.target.checked) {
+                document.body.classList.add('performance-mode');
+            } else {
+                document.body.classList.remove('performance-mode');
+            }
+        });
+    }
+
+    // Animations
+    const animToggle = document.getElementById('animations-toggle');
+    if (animToggle) {
+        // Default to true if not set
+        const animVal = localStorage.getItem('apple_animations');
+        const isAnim = animVal === null ? true : animVal === 'true';
+        animToggle.checked = isAnim;
+        if (!isAnim) document.body.classList.add('disable-animations');
+        
+        animToggle.addEventListener('change', (e) => {
+            localStorage.setItem('apple_animations', e.target.checked);
+            if (!e.target.checked) {
+                document.body.classList.add('disable-animations');
+            } else {
+                document.body.classList.remove('disable-animations');
+            }
+        });
+    }
+});
