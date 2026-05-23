@@ -1,4 +1,4 @@
-# 🎵 Streamify
+# 🎵 Streamify - https://apple-music-clone-y0sq.onrender.com
 
 Welcome to **Streamify**! This is a fully functional, highly optimized, and visually stunning web-based music streaming application built with a premium "Liquid Glass" design language. 
 
