@@ -26,11 +26,11 @@ It uses a custom-built, anti-bot streaming architecture to fetch and play songs 
 
 | Home Screen | Player View |
 | :---: | :---: |
-| ![Home](https://github.com/Axion-Builds/AxioTune/blob/main/screenshots/Home.png.png) | ![Player](screenshots/player.png) |
+| ![Home]() | ![Player](screenshots/player.png) |
 
 | Search & Suggestions | Synced Lyrics |
 | :---: | :---: |
-| ![Search](screenshots/search.png) | ![Lyrics](https://github.com/Axion-Builds/AxioTune/blob/main/screenshots/lyrics.png.png) |
+| ![Search](screenshots/search.png) | ![Lyrics]() |
 
 ---
 
