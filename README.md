@@ -30,7 +30,7 @@ It uses a custom-built, anti-bot streaming architecture to fetch and play songs 
 
 | Search & Suggestions | Synced Lyrics |
 | :---: | :---: |
-| ![Search](screenshots/search.png) | ![Lyrics](screenshots/lyrics.png) |
+| ![Search](screenshots/search.png) | ![Lyrics](https://github.com/Axion-Builds/AxioTune/blob/main/screenshots/lyrics.png.png) |
 
 ---
 
