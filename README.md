@@ -1,11 +1,11 @@
-# 🎵 Streamify
+# 🎵 Axiotune - https://axiotune.onrender.com/
 
-Welcome to **Streamify**! This is a fully functional, highly optimized, and visually stunning web-based music streaming application built with a premium "Liquid Glass" design language. 
+Welcome to **AxioTune**! This is a fully functional, highly optimized, and visually stunning web-based music streaming application built with a premium "Liquid Glass" design language. 
 
 It uses a custom-built, anti-bot streaming architecture to fetch and play songs instantly without any lag or 0:00 playback errors!
 
 ### 🚀 Live Demo
-**Try it out here:** [https://apple-music-clone-y0sq.onrender.com](https://apple-music-clone-y0sq.onrender.com)
+**Try it out here:** [https://axiotune.onrender.com/](https://axiotune.onrender.com/)
 
 ---
 
