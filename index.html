@@ -5,15 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <!-- Primary Meta Tags -->
-    <title>Streamify - Premium Music Streaming</title>
-    <meta name="title" content="Streamify - Premium Music Streaming">
+    <link rel="icon" href="logo.png">
+    <title>AxioTune - Premium Music Streaming</title>
+    <meta name="title" content="AxioTune - Premium Music Streaming">
     <meta name="description" content="A blazing fast, ad-free premium music streaming platform with liquid glass UI, synced lyrics, and instant playback. Built for music lovers.">
     <meta name="theme-color" content="#1e003b">
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://apple-music-clone-y0sq.onrender.com/">
-    <meta property="og:title" content="Streamify - Premium Music Streaming">
+    <meta property="og:title" content="AxioTune - Premium Music Streaming">
     <meta property="og:description" content="A blazing fast, ad-free premium music streaming platform with liquid glass UI, synced lyrics, and instant playback. Built for music lovers.">
     <!-- Replace this URL with an actual screenshot link once uploaded to GitHub or Imgur -->
     <meta property="og:image" content="https://raw.githubusercontent.com/adarshshukla/apple-music-clone/main/screenshots/home.png">
@@ -21,13 +22,61 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://apple-music-clone-y0sq.onrender.com/">
-    <meta property="twitter:title" content="Streamify - Premium Music Streaming">
+    <meta property="twitter:title" content="AxioTune - Premium Music Streaming">
     <meta property="twitter:description" content="A blazing fast, ad-free premium music streaming platform with liquid glass UI, synced lyrics, and instant playback. Built for music lovers.">
     <meta property="twitter:image" content="https://raw.githubusercontent.com/adarshshukla/apple-music-clone/main/screenshots/home.png">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body class="performance-mode">
+    <!-- Intro Splash Screen -->
+    <div id="intro-splash-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 999999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease;">
+        <video id="intro-video" src="intro.mp4" muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <!-- Fallback text if video is missing -->
+        <div id="intro-fallback" style="position: absolute; color: white; font-size: 1.5rem; font-weight: bold; font-family: 'Inter', sans-serif; display: none;">Axiotune</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const splash = document.getElementById('intro-splash-screen');
+            const video = document.getElementById('intro-video');
+            const fallback = document.getElementById('intro-fallback');
+            let isIntroDone = false;
+
+            function hideSplash() {
+                if(isIntroDone) return;
+                isIntroDone = true;
+                splash.style.opacity = '0';
+                splash.style.visibility = 'hidden';
+                setTimeout(() => splash.remove(), 500); // Remove from DOM after fade out
+            }
+
+            video.addEventListener('ended', hideSplash);
+            video.addEventListener('error', () => {
+                // If intro.mp4 is missing or fails to load, show text and hide after 2s
+                fallback.style.display = 'block';
+                video.style.display = 'none';
+                setTimeout(hideSplash, 2000);
+            });
+
+            // Fallback in case video takes too long or bugs out (max 5s limit)
+            setTimeout(hideSplash, 5000);
+
+            // Attempt to play
+            video.play().catch(e => {
+                // Autoplay blocked or video missing
+                fallback.style.display = 'block';
+                video.style.display = 'none';
+                setTimeout(hideSplash, 2000);
+            });
+        });
+    </script>
+
+    <div id="macos-wallpaper"></div>
     <div id="ambient-wrapper">
         <div id="background-layer"></div>
     </div>
@@ -39,15 +88,13 @@
             <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
         </button>
         <div id="top-bar">
-            <svg style="width: 20px; height: 20px; fill: rgba(255,255,255,0.5); margin-right: 12px; flex-shrink: 0;" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
             <input type="text" id="song-search" placeholder="Search songs, artists, albums..." autocomplete="off" />
             <button id="clear-search-btn" title="Clear" style="display:none; background:transparent; border:none; color:rgba(255,255,255,0.5); cursor:pointer; padding:0 5px;">
                 <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
             </button>
-            <button id="search-btn" title="Stream">
-                <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
-            </button>
         </div>
+        <!-- Hidden button to keep app.js from throwing errors -->
+        <button id="search-btn" style="display:none;"></button>
         <!-- Filter removed as requested -->
         <!-- Live Suggestions Dropdown -->
         <div id="search-suggestions"></div>
@@ -94,15 +141,45 @@
     <!-- Home Screen with 3D Vinyl Gallery -->
     <!-- Home Screen -->
     <div id="home-screen" class="screen-view active-screen">
-        <button id="home-settings-btn" title="Settings">
-            <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
-        </button>
+        <div class="download-dropdown-container" id="home-settings-container" style="display: flex; gap: 12px; align-items: center;">
+            <button id="dark-mode-btn" title="Toggle Dark Mode" onclick="toggleDarkMode()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;">
+                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+            </button>
+            <div style="position: relative;">
+                <button id="download-app-btn" title="Download App" onclick="toggleDownloadMenu(event)">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                </button>
+                <div id="download-dropdown-menu" class="hidden-dropdown">
+                    <button id="pwa-install-btn" onclick="installPWA()">💻 Install for Desktop</button>
+                    <button onclick="showMobileInstallAlert()">📱 Get Mobile App</button>
+                </div>
+            </div>
+        </div>
         <h1 class="home-greeting">Listen Now</h1>
-        
+
         <div class="home-section" id="jump-back-in-section" style="display:none;">
             <h2 class="section-title">Jump Back In</h2>
             <div class="dense-grid-container" id="jump-back-in-container">
                 <!-- Populated from History -->
+            </div>
+        </div>
+
+        <!-- Your Taste Mix -->
+        <div class="home-section" id="home-taste-mix-section" style="display:none; margin-bottom:30px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <div style="background: linear-gradient(135deg,#ff2d55,#af52de); padding:6px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;">✦ AI Mix</div>
+                <h2 class="section-title" style="margin:0;">Your Taste Mix</h2>
+            </div>
+            <div class="dense-grid-container" id="home-taste-mix-container"></div>
+        </div>
+
+        <!-- Dynamic Because You Listened To Rows -->
+        <div id="home-because-rows-container"></div>
+
+        <div class="home-section" id="home-top-artists-section" style="display:none; margin-bottom:40px; margin-top:30px;">
+            <h2 class="section-title" style="letter-spacing: 4px; text-transform: uppercase; text-align: center; font-size: 1.4rem;">A R T I S T S</h2>
+            <div class="artist-scalloped-row" id="home-top-artists-container">
+                <!-- Populated dynamically -->
             </div>
         </div>
 
@@ -125,16 +202,15 @@
 
         <!-- Dynamic Sections -->
         <div id="dynamic-sections"></div>
-    </div>
+    </div> <!-- Close home-screen -->
 
-    <!-- Player Screen -->
     <div id="player-screen" class="screen-view hidden-screen">
-
+        <div id="cinematic-bg"></div>
 
         <!-- Left Panel -->
         <div id="left-panel">
             <div id="cover-wrapper">
-                <div id="cover-art-container" style="position:relative;">
+                <div id="cover-art-container">
                     <img src="default_cover.jpg" id="default-cover-icon" alt="Default Cover" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 1;">
                     <img id="cover-art" src="" alt="Album Cover" crossorigin="anonymous">
                     <!-- 3-dot overlay on cover in full-screen player -->
@@ -144,13 +220,13 @@
                         </button>
                     </div>
                 </div>
-            </div>
+            </div> <!-- Closes cover-wrapper -->
             
             <!-- Song Name, Artist, and Playback Controls directly under the cover -->
             <div id="player-controls">
                 <div id="track-info">
                     <div id="track-title-row">
-                        <div id="track-title">Streamify</div>
+                        <div id="track-title">AxioTune</div>
                         <button id="like-btn" class="ctrl-btn like-inline" title="Like">
                             <svg viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></svg>
                         </button>
@@ -214,24 +290,26 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Right Panel (Lyrics) -->
         <div id="right-panel">
-            <div id="top-right-controls" style="position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 15px; z-index: 50;">
-                <button id="full-screen-btn" class="top-circle-btn" title="Full Screen">
-                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-                </button>
-                <button id="listen-together-btn" class="top-circle-btn" title="Listen Together (Coming Soon)">
-                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                </button>
-                <button id="lyrics-toggle-btn" class="lyrics-on" title="Toggle Lyrics">
-                    <svg viewBox="0 0 24 24"><path d="M3 18h12v-2H3v2zm0-5h12v-2H3v2zm0-7v2h12V6H3zm13 9.5L21.5 12 16 8.5v9z"/></svg>
-                    <span id="lyrics-btn-label">Lyrics ON</span>
-                </button>
-            </div>
             <div id="lyrics-container">
                 <div class="empty-state">Type a song in the top-left to stream.</div>
             </div>
+        </div>
+
+        <!-- Top-right controls: ALWAYS visible, outside right-panel -->
+        <div id="top-right-controls">
+            <button id="full-screen-btn" class="top-circle-btn" title="Full Screen">
+                <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+            </button>
+            <button id="listen-together-btn" class="top-circle-btn" title="Listen Together (Coming Soon)">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </button>
+            <button id="lyrics-toggle-btn" class="lyrics-on" title="Toggle Lyrics">
+                <svg viewBox="0 0 24 24"><path d="M3 18h12v-2H3v2zm0-5h12v-2H3v2zm0-7v2h12V6H3zm13 9.5L21.5 12 16 8.5v9z"/></svg>
+                <span id="lyrics-btn-label">Lyrics ON</span>
+            </button>
         </div>
 
         <!-- Queue Panel — position:fixed, fully self-contained -->
@@ -278,7 +356,9 @@
             <!-- Tabs -->
             <div class="lib-tabs">
                 <button class="lib-tab active" data-tab="liked">Liked Songs</button>
+                <button class="lib-tab" data-tab="artists">Artists</button>
                 <button class="lib-tab" data-tab="playlists">Playlists</button>
+                <button class="lib-tab" data-tab="downloads">Downloads</button>
             </div>
 
             <!-- Liked Songs Tab -->
@@ -288,17 +368,69 @@
                 </div>
             </div>
 
+            <!-- Followed Artists Tab -->
+            <div id="lib-artists-panel" class="lib-panel" style="display:none;">
+                <div id="artists-list" class="grid-layout">
+                    <div class="empty-state lib-empty" style="grid-column: 1/-1;">No artists yet.<br><span>Like songs to automatically save artists.</span></div>
+                </div>
+            </div>
+
             <!-- Playlists Tab -->
             <div id="lib-playlists-panel" class="lib-panel" style="display:none;">
-                <button id="new-playlist-btn">
-                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                    New Playlist
-                </button>
-                <div id="playlists-list">
-                    <div class="empty-state lib-empty">No playlists yet.<br><span>Create one above and add songs!</span></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                    <div style="display:flex; align-items:center; background: rgba(255,255,255,0.05); border-radius: 20px; padding: 4px 12px; border: 1px solid rgba(255,255,255,0.1);">
+                        <input type="text" id="new-playlist-input" placeholder="New Playlist..." style="background:transparent;border:none;color:white;outline:none;font-size:0.95rem;width:140px;">
+                        <button id="create-playlist-btn" style="background:transparent;border:none;color:var(--accent);cursor:pointer;padding:4px;display:flex;">
+                            <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="playlists-list" class="grid-layout">
+                    <div class="empty-state lib-empty" style="grid-column: 1/-1;">No playlists yet.<br><span>Create one above and add songs!</span></div>
+                </div>
+            </div>
+
+            <!-- Downloads Tab -->
+            <div id="lib-downloads-panel" class="lib-panel" style="display:none;">
+                <div id="downloaded-songs-list">
+                    <div class="empty-state lib-empty">No downloaded songs.<br><span>Like or add songs to a playlist to auto-download them.</span></div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Full Playlist Screen -->
+    <div id="playlist-full-screen" class="screen-view hidden-screen">
+        <div class="playlist-hero-bg" id="playlist-hero-bg"></div>
+        <div class="playlist-hero-overlay"></div>
+        <div class="playlist-content-scroll">
+            <div class="playlist-nav">
+                <button onclick="showScreen('library-screen');" class="playlist-back-btn">
+                    <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+            </div>
+            
+            <div class="playlist-header-modern">
+                <div class="playlist-art-container">
+                    <div id="playlist-screen-art" class="playlist-modern-art"></div>
+                </div>
+                <div class="playlist-meta-modern">
+                    <div class="playlist-type-badge">PLAYLIST</div>
+                    <h1 id="playlist-screen-name" class="playlist-title-modern">Playlist</h1>
+                    <p id="playlist-screen-count" class="playlist-subtitle-modern">0 songs</p>
+                    <div class="playlist-actions-modern">
+                        <button id="pl-screen-play-all-btn" class="modern-play-btn">
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Play All
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="playlist-tracks-container" id="playlist-screen-tracks">
+                <!-- Tracks go here -->
+            </div>
+        </div>
+    </div>
 
         <!-- Artist Screen -->
         <div id="artist-screen" class="screen-view hidden-screen">
@@ -329,7 +461,7 @@
             <!-- Results Grid -->
             <div id="search-results-body">
                 <div id="search-loading-state" class="sr-loading">
-                    <div class="sr-spinner"></div>
+                    <div class="premium-glass-loader"></div>
                     <p>Searching the universe...</p>
                 </div>
                 <div id="search-results-content"></div>
@@ -681,7 +813,7 @@
     <div id="mini-player" class="hidden-mini">
         <img id="mini-cover" src="default_cover.jpg" alt="Mini Cover" crossorigin="anonymous">
         <div id="mini-info">
-            <div id="mini-title">Streamify</div>
+            <div id="mini-title">AxioTune</div>
             <div id="mini-artist">Ready to stream</div>
         </div>
         <div id="mini-controls">
@@ -695,39 +827,30 @@
     </div>
 
     <!-- Add to Playlist Popup -->
-    <div id="add-to-playlist-popup">
-        <button class="popup-close" id="close-playlist-popup">
-            <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-        <div class="popup-title">Add to Playlist</div>
-        <div id="popup-playlists-list"></div>
+    <div id="add-to-playlist-popup" class="add-to-playlist-popup">
+        <div class="popup-inner">
+            <div class="popup-header">
+                <h3>Add to Playlist</h3>
+                <button id="close-playlist-popup">✕</button>
+            </div>
+            <!-- Create new playlist inline -->
+            <div style="display:flex; align-items:center; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
+                <input type="text" id="popup-new-playlist-input" placeholder="New Playlist..." style="background:transparent;border:none;color:white;outline:none;font-size:0.95rem;width:100%;">
+                <button id="popup-create-playlist-btn" style="background:transparent;border:none;color:var(--accent);cursor:pointer;padding:4px;display:flex;">
+                    <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                </button>
+            </div>
+            <div id="popup-playlists-list" class="popup-playlists-list"></div>
+        </div>
     </div>
+
+    <!-- Download Progress UI Container -->
+    <div id="download-progress-container" style="position:fixed;bottom:90px;left:20px;z-index:9999;display:flex;flex-direction:column;gap:8px; pointer-events:none;"></div>
+
     <!-- Crossfade Overlay -->
     <div id="crossfade-overlay"></div>
 
     <img id="ghost-cover" src="" alt="Ghost">
-
-    <!-- Playlist Detail Modal -->
-    <div id="playlist-detail-modal">
-        <div class="playlist-modal-inner">
-            <div class="playlist-modal-header">
-                <div id="playlist-modal-art"></div>
-                <div class="playlist-modal-meta">
-                    <div class="playlist-modal-name" id="playlist-modal-name">Playlist</div>
-                    <div class="playlist-modal-count" id="playlist-modal-count">0 songs</div>
-                    <div class="playlist-modal-actions">
-                        <button class="pl-play-all-btn" id="pl-play-all-btn">
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Play All
-                        </button>
-                    </div>
-                </div>
-                <button class="playlist-modal-close" id="playlist-modal-close">
-                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                </button>
-            </div>
-            <div class="playlist-modal-tracks" id="playlist-modal-tracks"></div>
-        </div>
-    </div>
 
     <!-- Global Song Context Menu -->
     <div id="song-context-menu" class="hidden-context-menu">
@@ -738,6 +861,14 @@
         <button class="context-btn" data-action="add-to-queue">
             <svg viewBox="0 0 24 24"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg>
             Add to Queue
+        </button>
+        <button class="context-btn" data-action="add-to-playlist">
+            <svg viewBox="0 0 24 24"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg>
+            Add to Playlist
+        </button>
+        <button class="context-btn" data-action="download">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download
         </button>
         <button class="context-btn" data-action="like">
             <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -752,6 +883,16 @@
             <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
             Share
         </button>
+    </div>
     <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker failed: ', err));
+            });
+        }
+    </script>
 </body>
 </html>

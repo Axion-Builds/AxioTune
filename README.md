@@ -1,4 +1,4 @@
-# 🎵 Axi⌀Tune - https://apple-music-clone-y0sq.onrender.com
+# 🎵 Streamify
 
 Welcome to **Streamify**! This is a fully functional, highly optimized, and visually stunning web-based music streaming application built with a premium "Liquid Glass" design language. 
 
@@ -26,11 +26,11 @@ It uses a custom-built, anti-bot streaming architecture to fetch and play songs 
 
 | Home Screen | Player View |
 | :---: | :---: |
-| ![Home]() | ![Player](screenshots/player.png) |
+| ![Home](screenshots/home.png) | ![Player](screenshots/player.png) |
 
 | Search & Suggestions | Synced Lyrics |
 | :---: | :---: |
-| ![Search](screenshots/search.png) | ![Lyrics]() |
+| ![Search](screenshots/search.png) | ![Lyrics](screenshots/lyrics.png) |
 
 ---
 
