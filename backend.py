@@ -530,6 +530,34 @@ async def stream(id: str, refresh: bool = False):
                             }
                 except Exception:
                     continue
+
+        # --- FALLBACK 2: PIPED API ---
+        print(f"[Fallback] Invidious failed for {id}, trying Piped APIs...")
+        PIPED_INSTANCES = [
+            "https://pipedapi.kavin.rocks",
+            "https://pipedapi.tokhmi.xyz",
+            "https://pipedapi.syncpundit.io",
+            "https://pi.ggtyler.dev"
+        ]
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            for instance in PIPED_INSTANCES:
+                try:
+                    r = await client.get(f"{instance}/streams/{id}")
+                    if r.status_code == 200:
+                        data = r.json()
+                        audio_streams = data.get('audioStreams', [])
+                        if audio_streams:
+                            audio_streams.sort(key=lambda x: int(x.get('bitrate', 0)), reverse=True)
+                            best = audio_streams[0]
+                            return {
+                                "url": best['url'],
+                                "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
+                                "format_note": best.get('mimeType', 'webm'),
+                                "cached": False,
+                                "source": f"piped ({instance})"
+                            }
+                except Exception:
+                    continue
                     
         raise HTTPException(status_code=404, detail="Stream failed on all sources.")
 
