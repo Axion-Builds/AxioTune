@@ -470,13 +470,19 @@ async def stream(id: str, refresh: bool = False):
         'no_warnings': True,
         'socket_timeout': 8,
         'extractor_retries': 1,
-        # android client bypasses YouTube bot detection WITHOUT needing cookies!
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'ios'],
-            }
-        },
     }
+    
+    # Inject cookies to bypass aggressive datacenter IP blocks on Render
+    try:
+        if os.path.exists(AUTH_FILE):
+            with open(AUTH_FILE, "r", encoding="utf-8") as f:
+                auth_data = json.load(f)
+                cookie_str = auth_data.get("Cookie", "")
+                if cookie_str:
+                    ydl_opts['http_headers'] = {'Cookie': cookie_str}
+    except Exception:
+        pass
+
     
     # List of public Piped API instances for fallback
     INVIDIOUS_INSTANCES = [
@@ -973,15 +979,10 @@ async def download_song(id: str, title: str):
         stream_url = STREAM_CACHE[id]["url"]
     else:
         ydl_opts = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio',
             'quiet': True,
             'no_warnings': True,
             'socket_timeout': 8,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['android', 'ios'],
-                }
-            }
         }
         def get_url():
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -1209,8 +1210,18 @@ async def download_mp3(id: str, title: str = "Song"):
         'quiet': True,
         'no_warnings': True,
         'socket_timeout': 8,
-        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
     }
+    
+    try:
+        if os.path.exists(AUTH_FILE):
+            with open(AUTH_FILE, "r", encoding="utf-8") as f:
+                auth_data = json.load(f)
+                cookie_str = auth_data.get("Cookie", "")
+                if cookie_str:
+                    ydl_opts['http_headers'] = {'Cookie': cookie_str}
+    except Exception:
+        pass
+        
     loop = asyncio.get_running_loop()
     try:
         def fetch():

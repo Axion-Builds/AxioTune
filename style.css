@@ -2643,24 +2643,12 @@ h1, h2, h3, h4, h5, h6,
     pointer-events: none;
     filter: blur(15px) brightness(0.6) saturate(130%);
     will-change: transform;
-    /* The entry zoom/pan animation */
     animation: macos-enter 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, macos-breathe 25s ease-in-out 1.5s infinite alternate;
     transition: opacity 1s ease-in-out;
 }
 
 body.song-playing #macos-wallpaper {
-    position: fixed;
-    top: -15%; left: -15%; width: 130vw; height: 130vh;
-    background-image: url('macos-bg2.jpg');
-    background-size: cover;
-    background-position: center;
-    z-index: 0;
-    pointer-events: none;
-    filter: blur(15px) brightness(0.6) saturate(130%);
-    will-change: transform;
-    /* The entry zoom/pan animation */
-    animation: macos-enter 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, macos-breathe 25s ease-in-out 1.5s infinite alternate;
-    transition: opacity 1s ease-in-out;
+    display: none !important;
 }
 
 @keyframes macos-enter {
@@ -3220,6 +3208,7 @@ body.song-playing #ambient-wrapper {
     padding: 0;
     opacity: 0;
 }
+
 
 
 

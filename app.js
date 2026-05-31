@@ -1865,7 +1865,7 @@ const audioPlayer = document.getElementById('audio-player');
                 document.getElementById('mini-track-artist').textContent = song.artist;
                 coverArt.src = song.cover;
                 miniCover.src = song.cover;
-                backgroundLayer.style.backgroundImage = `url(${song.cover})`;
+                backgroundLayer.style.backgroundImage = `url("${song.cover}")`;
                 document.body.classList.add('song-playing');
                 
                 // Clear old lyrics
@@ -1977,7 +1977,7 @@ const audioPlayer = document.getElementById('audio-player');
                     coverArt.src = rawYtThumb;
                     miniCover.src = rawYtThumb;
                     // Keep background layer low-res! Blurring HD images kills GPU performance.
-                    backgroundLayer.style.backgroundImage = `url(${rawYtThumb})`;
+                    backgroundLayer.style.backgroundImage = `url("${rawYtThumb}")`;
                     document.body.classList.add('song-playing');
                 }
                 updateMediaSession(songData.title, songData.uploader, rawYtThumb || 'default_cover.jpg');
@@ -3533,27 +3533,36 @@ const audioPlayer = document.getElementById('audio-player');
                     @keyframes qEq {
                         0%,100%{height:4px} 50%{height:24px}
                     }
+                    @keyframes q-row-enter {
+                        to { opacity: 1; transform: translateX(0); }
+                    }
                     .q-row {
                         display:flex; align-items:center; gap:12px;
-                        padding:10px 12px; border-radius:14px;
-                        background:rgba(255,255,255,0.04);
-                        border:1px solid rgba(255,255,255,0.06);
-                        margin-bottom:8px; cursor:pointer;
-                        transition: background 0.2s, transform 0.15s, border-color 0.2s;
-                        opacity:0; transform:translateX(18px);
+                        padding:12px 14px; border-radius:16px;
+                        background:rgba(255,255,255,0.03);
+                        border:1px solid rgba(255,255,255,0.05);
+                        margin-bottom:8px; cursor:grab;
+                        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                        transition: background 0.2s, transform 0.2s, border-color 0.2s, box-shadow 0.2s, margin-top 0.2s;
+                        opacity:0; transform:translateX(20px);
+                        will-change: transform, opacity;
+                        animation: q-row-enter 0.45s cubic-bezier(0.2,0.8,0.2,1) forwards;
                     }
-                    .q-row:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.15); transform:translateX(0) scale(1.01);}
+                    .q-row:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.12); transform:translateX(-4px) scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 10; position:relative; }
+                    .q-row:active { cursor: grabbing; }
                     .q-row.q-next { border-color:rgba(255,71,109,0.25); background:rgba(255,71,109,0.06); }
-                    .q-cover { width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0; }
+                    .q-row.dragging { opacity: 0.4 !important; transform: scale(0.98) !important; background: rgba(255,255,255,0.02); border-style: dashed; }
+                    .q-row.drag-over { border-top: 2px solid var(--accent, #ff476d) !important; margin-top: 12px; padding-top: 14px; background: linear-gradient(to bottom, rgba(255,71,109,0.1) 0%, transparent 40%); }
+                    .q-cover { width:46px;height:46px;border-radius:10px;object-fit:cover;flex-shrink:0; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
                     .q-info { flex:1; min-width:0; }
-                    .q-title { font-size:0.88rem;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-                    .q-artist { font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-                    .q-remove-btn { opacity:0; background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;padding:4px;border-radius:6px;transition:opacity 0.2s,color 0.2s;flex-shrink:0; }
+                    .q-title { font-size:0.92rem;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; letter-spacing: 0.02em; }
+                    .q-artist { font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+                    .q-remove-btn { opacity:0; background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;padding:6px;border-radius:8px;transition:opacity 0.2s,color 0.2s, background 0.2s;flex-shrink:0; }
                     .q-row:hover .q-remove-btn { opacity:1; }
-                    .q-remove-btn:hover { color:rgba(255,80,80,0.9); }
-                    .q-badge { font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:20px;flex-shrink:0; }
-                    .q-badge-next { background:rgba(255,71,109,0.18);color:var(--accent,#ff476d); }
-                    .q-badge-num { background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.35); }
+                    .q-remove-btn:hover { color:white; background:rgba(255,80,80,0.6); }
+                    .q-badge { font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:20px;flex-shrink:0; }
+                    .q-badge-next { background:rgba(255,71,109,0.18);color:var(--accent,#ff476d); box-shadow: 0 2px 8px rgba(255,71,109,0.2); }
+                    .q-badge-num { background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4); }
                 `;
                 document.head.appendChild(s);
             }
@@ -3578,6 +3587,8 @@ const audioPlayer = document.getElementById('audio-player');
 
                 const row = document.createElement('div');
                 row.className = `q-row${isNext ? ' q-next' : ''}`;
+                row.draggable = true;
+                row.style.animationDelay = `${20 + upNextCount * 45}ms`;
 
                 row.innerHTML = `
                     <img src="${thumbUrl}" class="q-cover" onerror="this.style.background='rgba(255,255,255,0.1)'">
@@ -3590,6 +3601,59 @@ const audioPlayer = document.getElementById('audio-player');
                         <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
                     </button>
                 `;
+
+                // Drag and Drop Events
+                row.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', idx);
+                    setTimeout(() => row.classList.add('dragging'), 0);
+                });
+                row.addEventListener('dragend', () => {
+                    row.classList.remove('dragging');
+                    document.querySelectorAll('.q-row').forEach(r => r.classList.remove('drag-over'));
+                });
+                row.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    const rect = row.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    if (e.clientY < midY) {
+                        row.classList.add('drag-over');
+                    } else {
+                        row.classList.remove('drag-over');
+                        if (row.nextElementSibling && row.nextElementSibling.classList.contains('q-row')) {
+                            row.nextElementSibling.classList.add('drag-over');
+                        }
+                    }
+                });
+                row.addEventListener('dragleave', () => {
+                    row.classList.remove('drag-over');
+                });
+                row.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    row.classList.remove('drag-over');
+                    const draggedIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                    if (isNaN(draggedIdx) || draggedIdx === idx) return;
+
+                    const rect = row.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    let targetIdx = idx;
+                    if (e.clientY > midY) targetIdx += 1;
+
+                    const item = queueList.splice(draggedIdx, 1)[0];
+                    if (targetIdx > draggedIdx) targetIdx--; 
+                    queueList.splice(targetIdx, 0, item);
+
+                    if (currentQueueIndex === draggedIdx) {
+                        currentQueueIndex = targetIdx;
+                    } else if (currentQueueIndex > draggedIdx && currentQueueIndex <= targetIdx) {
+                        currentQueueIndex--;
+                    } else if (currentQueueIndex < draggedIdx && currentQueueIndex >= targetIdx) {
+                        currentQueueIndex++;
+                    }
+                    
+                    renderQueue();
+                });
 
                 row.addEventListener('click', (e) => {
                     if (e.target.closest('.remove-queue-btn')) {
@@ -3605,13 +3669,6 @@ const audioPlayer = document.getElementById('audio-player');
                     }
                     playQueueIndex(idx);
                 });
-
-                // Staggered entrance animation
-                setTimeout(() => {
-                    row.style.transition = 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.2,0.8,0.2,1), background 0.2s, border-color 0.2s';
-                    row.style.opacity = '1';
-                    row.style.transform = 'translateX(0)';
-                }, 30 + upNextCount * 45);
 
                 qList.appendChild(row);
             });
