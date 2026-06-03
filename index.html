@@ -81,6 +81,14 @@
         <div id="background-layer"></div>
     </div>
     
+    <!-- Party Banner -->
+    <div id="party-banner" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:10000; background:rgba(255,40,100,0.85); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); color:white; padding:12px; text-align:center; font-weight:600; font-size:14px; box-shadow:0 4px 15px rgba(0,0,0,0.3); pointer-events:auto; transition:transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); transform:translateY(-100%);">
+        <span style="margin-right:8px; font-size:1.1em;">🎧</span> 
+        <span id="party-role-text">Listening Together - You are the Host</span>
+        <button id="leave-party-btn" class="apple-btn" style="padding:4px 12px; margin-left:15px; font-size:12px; border-radius:20px;">Leave Party</button>
+    </div>
+
+    
     <!-- Top Search Bar + Filter Button + Suggestions -->
     <div id="top-bar-wrapper">
         <!-- Back Button — LEFT of search bar -->
@@ -142,8 +150,8 @@
     <!-- Home Screen -->
     <div id="home-screen" class="screen-view active-screen">
         <div class="download-dropdown-container" id="home-settings-container" style="display: flex; gap: 12px; align-items: center;">
-            <button id="dark-mode-btn" title="Toggle Dark Mode" onclick="toggleDarkMode()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;">
-                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+            <button id="dark-mode-btn" title="Toggle Theme" onclick="cycleTheme()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;">
+                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path id="theme-icon-path" d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
             </button>
             <div style="position: relative;">
                 <button id="download-app-btn" title="Download App" onclick="toggleDownloadMenu(event)">
@@ -209,10 +217,11 @@
 
         <!-- Left Panel -->
         <div id="left-panel">
+            <canvas id="visualizer-canvas"></canvas>
             <div id="cover-wrapper">
                 <div id="cover-art-container">
                     <img src="default_cover.jpg" id="default-cover-icon" alt="Default Cover" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 1;">
-                    <img id="cover-art" src="" alt="Album Cover" crossorigin="anonymous">
+                    <img id="cover-art" src="" alt="Album Cover" >
                     <!-- 3-dot overlay on cover in full-screen player -->
                     <div id="cover-options-overlay">
                         <button id="cover-options-btn" onclick="openSongContextMenuFromPlayer(event)" title="More options">
@@ -243,6 +252,7 @@
                 </div>
                 
                 <div class="playback-buttons-row">
+
                     <button id="shuffle-btn" class="ctrl-btn" title="Shuffle">
                         <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
                     </button>
@@ -303,6 +313,12 @@
             <button id="full-screen-btn" class="top-circle-btn" title="Full Screen">
                 <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
             </button>
+            <button id="spatial-audio-btn" class="top-circle-btn" title="Spatial Audio / Concert Hall Effect (OFF)">
+                  <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/><path d="M16.5 10V7c2.76 0 5 2.24 5 5h-2c0-1.66-1.34-3-3-3zM16.5 3v2c4.97 0 9 4.03 9 9h-2c0-3.86-3.14-7-7-7z"/></svg>
+              </button>
+              <button id="spatial-8d-btn" class="top-circle-btn" title="8D Surround Audio (OFF)">
+                  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+              </button>
             <button id="listen-together-btn" class="top-circle-btn" title="Listen Together (Coming Soon)">
                 <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </button>
@@ -471,6 +487,26 @@
         <!-- Settings Screen -->
         <div id="settings-screen" class="screen-view hidden-screen">
             <h1>⚙️ Settings</h1>
+
+            <!-- PARTY MODE -->
+            <div class="settings-section">
+                <div class="settings-section-title">🎧 Listen Together (Party Mode)</div>
+                <div class="settings-card" style="padding: 20px;">
+                    <div style="font-size:0.95rem; font-weight:500; margin-bottom:15px;">
+                        Host a party to listen to music with friends in perfectly synced real-time. Only you can control the music.
+                    </div>
+                    <button id="start-party-btn" class="apple-btn" style="width:100%; justify-content:center;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                        Start Listening Party
+                    </button>
+                    <div id="party-link-container" style="display:none; margin-top:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
+                        <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:8px;">Share this link with your friends:</div>
+                        <input type="text" id="party-link-input" readonly style="width:100%; padding:8px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; font-size:0.85rem; text-align:center; outline:none; margin-bottom:8px;">
+                        <button id="copy-party-link-btn" class="apple-btn" style="width:100%; justify-content:center; background:rgba(255,255,255,0.1);">Copy Link</button>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- YOUTUBE MUSIC SYNC -->
             <div class="settings-section" id="ytm-sync-section">
@@ -807,11 +843,11 @@
             </div>
         </div>
 
-        <audio id="audio-player"></audio>
+        <audio id="audio-player" ></audio>
 
     <!-- Mini Player Pill -->
     <div id="mini-player" class="hidden-mini">
-        <img id="mini-cover" src="default_cover.jpg" alt="Mini Cover" crossorigin="anonymous">
+        <img id="mini-cover" src="default_cover.jpg" alt="Mini Cover" >
         <div id="mini-info">
             <div id="mini-title">AxioTune</div>
             <div id="mini-artist">Ready to stream</div>

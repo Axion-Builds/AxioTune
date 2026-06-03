@@ -1,10 +1,18 @@
-const CACHE_NAME = 'axiotune-v1';
+const CACHE_NAME = 'axiotune-v3';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/style.css',
     '/app.js',
-    '/loading_logo.png'
+    '/manifest.json',
+    '/logo.png',
+    '/loading_logo.png',
+    '/cursor.png',
+    '/cursor.svg',
+    '/cursor_transparent.png',
+    '/macos-bg.jpg',
+    '/macos-bg2.jpg',
+    '/default_cover.jpg'
 ];
 
 self.addEventListener('install', (event) => {

@@ -86,14 +86,11 @@ const audioPlayer = document.getElementById('audio-player');
             });
         }
 
-        // ── Offline Mode Handler ──
+        // ── Offline Mode ──
         function updateNetworkStatus() {
             if (!navigator.onLine) {
-                document.body.classList.add('offline-mode');
-                showToast('You are offline. Showing downloaded songs.');
-                // Force to Library -> Downloads
-                showScreen('library-screen');
-                document.querySelector('.lib-tab[data-tab="local"]')?.click();
+                showToast('Device is offline. Using local cache.');
+                // Removed aggressive redirects that break local testing
             } else {
                 document.body.classList.remove('offline-mode');
                 showToast('Back online!');
@@ -102,6 +99,8 @@ const audioPlayer = document.getElementById('audio-player');
         window.addEventListener('online', updateNetworkStatus);
         window.addEventListener('offline', updateNetworkStatus);
         
+        // Initial check on load
+        setTimeout(updateNetworkStatus, 500);
         let lyricsData = [];
         let wordElements = [];
         let lineElements = [];
@@ -1737,7 +1736,7 @@ const audioPlayer = document.getElementById('audio-player');
                 prefetchVideoId = null;
                 window.prefetchedStreamData = null;
                 const streamData = await fetchStreamUrl(currentVideoId, true);
-                audioPlayer.src = streamData.url;
+                audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
                 audioPlayer.load();
                 if (savedTime > 0) {
                     audioPlayer.currentTime = Math.min(savedTime, audioPlayer.duration || savedTime);
@@ -1884,7 +1883,7 @@ const audioPlayer = document.getElementById('audio-player');
             // Handle gapless prefetch handover
             if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
                 window.prefetchedStreamData = { url: prefetchedStreamUrl, quality: "Prefetched" };
-                audioPlayer.src = prefetchedStreamUrl;
+                audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(prefetchedStreamUrl);
                 audioPlayer.play().catch(e => console.warn("Prefetch play failed:", e));
                 prefetchedStreamUrl = null;
                 prefetchVideoId = null;
@@ -1905,6 +1904,13 @@ const audioPlayer = document.getElementById('audio-player');
         let searchAbortController = null;
         
         searchBtn.addEventListener('click', async () => {
+            if (!SpatialAudioEngine.isInitialized) {
+                SpatialAudioEngine.init();
+            }
+            if (SpatialAudioEngine.audioCtx && SpatialAudioEngine.audioCtx.state === 'suspended') {
+                SpatialAudioEngine.audioCtx.resume();
+            }
+
             initAudioVisualizer(); // Initialize visualizer on first interaction
             const query = songSearchInput.value.trim();
             if (!query) return;
@@ -1978,8 +1984,10 @@ const audioPlayer = document.getElementById('audio-player');
                     miniCover.src = rawYtThumb;
                     // Keep background layer low-res! Blurring HD images kills GPU performance.
                     backgroundLayer.style.backgroundImage = `url("${rawYtThumb}")`;
-                    document.body.classList.add('song-playing');
                 }
+
+                // We ALWAYS add song-playing so the ambient-wrapper becomes visible
+                document.body.classList.add('song-playing');
                 updateMediaSession(songData.title, songData.uploader, rawYtThumb || 'default_cover.jpg');
                 
                 coverArt.style.display = 'block';
@@ -1990,6 +1998,10 @@ const audioPlayer = document.getElementById('audio-player');
                 hdImg.onload = () => {
                     coverArt.src = hdImg.src;
                     miniCover.src = hdImg.src;
+                    // If no raw thumb was available, fallback to using HD cover for background
+                    if (!rawYtThumb) {
+                        backgroundLayer.style.backgroundImage = `url("${hdImg.src}")`;
+                    }
                     updateMediaSession(songData.title, songData.uploader, hdImg.src);
                     coverArt.style.opacity = '1';
                     coverArt.classList.remove('cover-changing');
@@ -2002,6 +2014,8 @@ const audioPlayer = document.getElementById('audio-player');
 
                 // Update currentSongMeta and sync Like button UI
                 currentSongMeta = {
+                    id: songData.id || songData.videoId || currentVideoId,
+                    videoId: songData.videoId || songData.id || currentVideoId,
                     title: songData.title,
                     artist: songData.uploader,
                     cover: songData.thumbnail || ''
@@ -2017,10 +2031,29 @@ const audioPlayer = document.getElementById('audio-player');
                 let streamData;
                 let lrc1;
                 
+                // Check Offline Database FIRST
+                let localSong = null;
+                try {
+                    const downloadedSongs = await getDownloadedSongs();
+                    localSong = downloadedSongs.find(s => s.id === songData.id);
+                } catch(e) { console.error("Offline DB read error:", e); }
+
+                if (localSong && localSong.blob) {
+                    streamData = { url: URL.createObjectURL(localSong.blob), quality: 'Offline HD' };
+                    try {
+                        lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal });
+                    } catch(e) {
+                        lrc1 = { json: async () => [] };
+                    }
+                    if (myToken !== currentPlaybackToken) return;
+                    audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
+                    audioPlayer.play().catch(e => console.warn("Play failed:", e));
+                }
                 // If it was injected by playQueueIndex, it's valid.
                 // If it was lingering from prefetchNextSong but doesn't match the new search, discard it!
-                if (window.prefetchedStreamData && (!prefetchVideoId || prefetchVideoId === currentVideoId)) {
+                else if (window.prefetchedStreamData && (!prefetchVideoId || prefetchVideoId === currentVideoId)) {
                     streamData = window.prefetchedStreamData;
+                    audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(window.prefetchedStreamData.url);
                     window.prefetchedStreamData = null;
                     lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal });
                     if (myToken !== currentPlaybackToken) return; // Race condition check
@@ -2044,7 +2077,7 @@ const audioPlayer = document.getElementById('audio-player');
                     lrc1 = lrcRes;
                     
                     // Set src — this automatically triggers load. Then play.
-                    audioPlayer.src = streamData.url;
+                    audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
                     audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 }
 
@@ -2492,7 +2525,10 @@ const audioPlayer = document.getElementById('audio-player');
                 }
             } catch(e) {
                 console.error("Failed to load home feeds", e);
-                document.getElementById('dynamic-sections').innerHTML = '<div class="empty-state">Network error fetching feeds.</div>';
+                const dyn = document.getElementById('dynamic-sections');
+                if (dyn) {
+                    dyn.innerHTML = '<div class="empty-state">Network error fetching feeds. Ensure backend is running.</div>';
+                }
             }
         }
 
@@ -2561,6 +2597,17 @@ const audioPlayer = document.getElementById('audio-player');
                 }
             });
 
+            // Also include explicitly followed artists with high priority
+            const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
+            followed.forEach(fa => {
+                if (!artistMap[fa.name]) {
+                    artistMap[fa.name] = { name: fa.name, cover: fa.thumb, count: 500, browseId: fa.browseId };
+                } else {
+                    artistMap[fa.name].count += 500;
+                    artistMap[fa.name].browseId = fa.browseId;
+                }
+            });
+
             const artists = Object.values(artistMap).sort((a, b) => b.count - a.count);
             if (artists.length === 0) return;
             
@@ -2576,7 +2623,7 @@ const audioPlayer = document.getElementById('audio-player');
                     <img src="${coverUrl}" crossorigin="anonymous" alt="${artist.name}" title="${artist.name}">
                     <div class="artist-scalloped-name">${artist.name}</div>
                 `;
-                card.onclick = () => showArtistPage(artist.name);
+                card.onclick = () => showArtistPage(artist.browseId || artist.name);
                 container.appendChild(card);
             });
         }
@@ -4490,30 +4537,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
     }
 });
 
-window.installPWA = async function() {
-    if (!window.deferredPrompt) {
-        alert("To install AxioTune on desktop:\n1. Look at the top right of your browser's address bar.\n2. Click the 'Install' icon (it looks like a screen with a downward arrow or a '+' sign).\n3. Click 'Install'.\n\nIf you don't see it, it might already be installed!");
-        return;
-    }
-    // Show the install prompt
-    window.deferredPrompt.prompt();
-    // Wait for the user to respond to the prompt
-    const { outcome } = await window.deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-    // We've used the prompt, and can't use it again, throw it away
-    window.deferredPrompt = null;
-    if(window.toggleDownloadMenu) window.toggleDownloadMenu();
-    
-    // Hide the install button if it exists
-    const installBtn = document.getElementById('pwa-install-btn');
-    if (installBtn) {
-        installBtn.style.display = 'none';
-    }
-};
-
-
-
-
 // Download Menu Logic
 window.toggleDownloadMenu = function(e) {
     if(e) e.stopPropagation();
@@ -4523,14 +4546,275 @@ window.toggleDownloadMenu = function(e) {
     }
 };
 
-window.showMobileInstallAlert = function() {
-    window.toggleDownloadMenu();
-    // Change this link to your direct APK download link or GitHub releases page later
+window.showMobileInstallAlert = function() { window.toggleDownloadMenu(); window.open('https://github.com/adarshshukla/apple-music-clone/releases', '_blank'); };
+
+window.installPWA = async function() { if(!window.deferredPrompt) return; window.deferredPrompt.prompt(); await window.deferredPrompt.userChoice; window.deferredPrompt = null; };
+
+
+
+/* =========================================================================
+   LISTEN TOGETHER / PARTY MODE (Strict Sync)
+   ========================================================================= */
+const PartyEngine = {
+    ws: null,
+    roomId: null,
+    isHost: false,
+    clientId: Math.random().toString(36).substring(2, 10),
+    lastBroadcastTime: 0,
+    
+    init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const partyId = urlParams.get('party');
+        
+        if (partyId) {
+            this.roomId = partyId;
+            this.isHost = false;
+            this.connect();
+        }
+
+        document.getElementById('start-party-btn')?.addEventListener('click', () => {
+            this.roomId = 'PARTY_' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            this.isHost = true;
+            this.connect();
+        });
+    },
+
+    connect() {
+        console.log('Party engine connecting...');
+    }
+};
+
+// Start the engine
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => PartyEngine.init(), 1000);
+});
+
+/* =========================================================================
+   SPATIAL AUDIO ENGINE (Concert Hall Effect)
+   ========================================================================= */
+const SpatialAudioEngine = {
+    isActive: false,
+    is8DActive: false,
+    isInitialized: false,
+    audioCtx: null,
+    sourceNode: null,
+    wetGain: null,
+    dryGain: null,
+    bassEq: null,
+    trebleEq: null,
+    spatialHighpass: null,
+    spatialMix: null,
+    splitter: null,
+    merger: null,
+    haasDelay: null,
+    roomDelay: null,
+    roomFeedback: null,
+    roomFilter: null,
+    analyser: null,
+    eightDPanner: null,
+    eightDLoopId: null,
+
+    init() {
+        if (this.isInitialized) return;
+        
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioCtx = new AudioContext();
+            
+            // Connect original audio element
+            this.sourceNode = this.audioCtx.createMediaElementSource(audioPlayer);
+
+            // Analyser for Visualizer
+            this.analyser = this.audioCtx.createAnalyser();
+            this.analyser.fftSize = 1024;
+            this.analyser.smoothingTimeConstant = 0.8;
+
+            // 8D Audio Panner
+            this.eightDPanner = this.audioCtx.createStereoPanner();
+            this.eightDPanner.pan.value = 0; // Centered initially
+
+            // Master wet/dry
+            this.wetGain = this.audioCtx.createGain();
+            this.dryGain = this.audioCtx.createGain();
+
+            // 1. Psychoacoustic EQ (Cinematic Bass + Air)
+            this.bassEq = this.audioCtx.createBiquadFilter();
+            this.bassEq.type = 'lowshelf';
+            this.bassEq.frequency.value = 80;
+            this.bassEq.gain.value = 5;
+
+            this.trebleEq = this.audioCtx.createBiquadFilter();
+            this.trebleEq.type = 'highshelf';
+            this.trebleEq.frequency.value = 10000;
+            this.trebleEq.gain.value = 4;
+
+            // 2. Crossover Highpass
+            this.spatialHighpass = this.audioCtx.createBiquadFilter();
+            this.spatialHighpass.type = 'highpass';
+            this.spatialHighpass.frequency.value = 300;
+
+            // 3. Haas Delay
+            this.splitter = this.audioCtx.createChannelSplitter(2);
+            this.merger = this.audioCtx.createChannelMerger(2);
+            this.haasDelay = this.audioCtx.createDelay();
+            this.haasDelay.delayTime.value = 0.020;
+
+            // 4. Echo
+            this.roomDelay = this.audioCtx.createDelay();
+            this.roomDelay.delayTime.value = 0.070;
+            this.roomFeedback = this.audioCtx.createGain();
+            this.roomFeedback.gain.value = 0.2;
+            this.roomFilter = this.audioCtx.createBiquadFilter();
+            this.roomFilter.type = 'lowpass';
+            this.roomFilter.frequency.value = 3000;
+
+            this.spatialMix = this.audioCtx.createGain();
+            this.spatialMix.gain.value = 0.6;
+
+            // ROUTING:
+            // Source -> Analyser -> Dry/Wet Splits
+            this.sourceNode.connect(this.analyser);
+
+            // Dry Path
+            this.analyser.connect(this.dryGain);
+            
+            // Path to Destination: 8D Panner sits just before destination!
+            this.dryGain.connect(this.eightDPanner);
+            this.eightDPanner.connect(this.audioCtx.destination);
+
+            // Wet Path
+            this.analyser.connect(this.bassEq);
+            this.bassEq.connect(this.trebleEq);
+
+            // Direct EQ
+            this.trebleEq.connect(this.wetGain);
+
+            // Delay Path
+            this.trebleEq.connect(this.spatialHighpass);
+            
+            this.spatialHighpass.connect(this.splitter);
+            this.splitter.connect(this.merger, 0, 0); 
+            this.splitter.connect(this.haasDelay, 1);
+            this.haasDelay.connect(this.merger, 0, 1);
+
+            this.spatialHighpass.connect(this.roomDelay);
+            this.roomDelay.connect(this.roomFilter);
+            this.roomFilter.connect(this.roomFeedback);
+            this.roomFeedback.connect(this.roomDelay);
+
+            this.merger.connect(this.spatialMix);
+            this.roomFilter.connect(this.spatialMix);
+            
+            this.spatialMix.connect(this.wetGain);
+            
+            // Wet path also goes through 8D Panner
+            this.wetGain.connect(this.eightDPanner);
+
+            // Initial State
+            this.dryGain.gain.value = 1.0;
+            this.wetGain.gain.value = 0.0;
+            
+            this.isInitialized = true;
+            console.log("3D Spatial Audio Engine (with Analyser & 8D) Initialized");
+
+        } catch (e) {
+            console.error("Failed to initialize Spatial Audio", e);
+        }
+    },
+
+    toggle() {
+        if (!this.isInitialized) this.init();
+        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+        const btn = document.getElementById('spatial-audio-btn');
+        this.isActive = !this.isActive;
+
+        if (this.isActive) {
+            this.dryGain.gain.setTargetAtTime(0.0, this.audioCtx.currentTime, 0.5); 
+            this.wetGain.gain.setTargetAtTime(1.0, this.audioCtx.currentTime, 0.5); 
+            btn.style.color = '#ff476d';
+            btn.style.transform = 'scale(1.1)';
+            setTimeout(() => btn.style.transform = '', 200);
+            showToast('Spatial Audio: ON (3D Cinema)');
+        } else {
+            this.dryGain.gain.setTargetAtTime(1.0, this.audioCtx.currentTime, 0.5);
+            this.wetGain.gain.setTargetAtTime(0.0, this.audioCtx.currentTime, 0.5);
+            btn.style.color = '';
+            showToast('Spatial Audio: OFF');
+        }
+    },
+
+    toggle8D() {
+        if (!this.isInitialized) this.init();
+        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+        const btn = document.getElementById('spatial-8d-btn');
+        this.is8DActive = !this.is8DActive;
+
+        if (this.is8DActive) {
+            btn.style.color = '#00e5ff'; // Cyan for 8D
+            btn.style.transform = 'scale(1.1)';
+            setTimeout(() => btn.style.transform = '', 200);
+            showToast('8D Audio: ON (Rotating)');
+            
+            let startTime = this.audioCtx.currentTime;
+            const orbitSpeed = 0.4; // Speed of rotation
+            
+            const loop = () => {
+                if (!this.is8DActive) return;
+                const elapsed = this.audioCtx.currentTime - startTime;
+                const panValue = Math.sin(elapsed * orbitSpeed);
+                this.eightDPanner.pan.setValueAtTime(panValue, this.audioCtx.currentTime);
+                this.eightDLoopId = requestAnimationFrame(loop);
+            };
+            loop();
+        } else {
+            btn.style.color = '';
+            showToast('8D Audio: OFF');
+            cancelAnimationFrame(this.eightDLoopId);
+            this.eightDPanner.pan.setTargetAtTime(0, this.audioCtx.currentTime, 0.5); // Center smoothly
+        }
+    }
+};
+
+// Visualizer Logic
+let visualizerCanvas = document.getElementById('visualizer-canvas');
+let visualizerCtx = visualizerCanvas ? visualizerCanvas.getContext('2d') : null;
+
+function resizeVisualizer() {
+    visualizerCanvas = document.getElementById('visualizer-canvas');
+    if (!visualizerCanvas) return;
+    visualizerCtx = visualizerCanvas.getContext('2d');
+    visualizerCanvas.width = visualizerCanvas.clientWidth;
+    visualizerCanvas.height = visualizerCanvas.clientHeight;
+}
+window.addEventListener('resize', resizeVisualizer);
+
+// Visualizer completely removed for maximum dynamic wallpaper performance.
+
+document.getElementById('spatial-audio-btn')?.addEventListener('click', () => {
+    SpatialAudioEngine.toggle();
+});
+
+document.getElementById('spatial-8d-btn')?.addEventListener('click', () => {
+    SpatialAudioEngine.toggle8D();
+});
+
+window.toggleDownloadMenu = function(e) {
+    const menu = document.getElementById('download-dropdown-menu');
+    if (menu.classList.contains('hidden-dropdown')) {
+        menu.classList.remove('hidden-dropdown');
+    } else {
+        menu.classList.add('hidden-dropdown');
+    }
+    e.stopPropagation();
+};
+
+window.downloadAppFor = function(os) {
     const githubReleasesLink = 'https://github.com/adarshshukla/apple-music-clone/releases';
     window.open(githubReleasesLink, '_blank');
 };
 
-// Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('download-dropdown-menu');
     const btn = document.getElementById('download-app-btn');
@@ -4540,7 +4824,51 @@ document.addEventListener('click', (e) => {
         }
     }
 });
-// URL Parsing for Shared Songs
+
+let currentTheme = localStorage.getItem('app_theme') || 'dynamic';
+applyTheme(currentTheme);
+
+function applyTheme(theme) {
+    document.body.classList.remove('theme-dynamic', 'theme-static', 'pitch-black-mode');
+    document.documentElement.classList.remove('pitch-black-mode');
+    const btn = document.getElementById('dark-mode-btn');
+    const iconPath = document.getElementById('theme-icon-path');
+    if (!btn || !iconPath) return;
+
+    if (theme === 'static') {
+        document.body.classList.add('theme-static');
+        btn.style.background = 'rgba(255, 152, 0, 0.15)'; 
+        btn.style.color = '#ff9800';
+        iconPath.setAttribute('d', 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'); 
+        btn.title = "Static Wallpaper (YT Music Style)";
+    } else if (theme === 'dark') {
+        document.body.classList.add('pitch-black-mode');
+        document.documentElement.classList.add('pitch-black-mode');
+        btn.style.background = 'rgba(255, 71, 109, 0.15)'; 
+        btn.style.color = '#ff476d';
+        iconPath.setAttribute('d', 'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z'); 
+        btn.title = "Pitch Black Mode";
+    } else {
+        document.body.classList.add('theme-dynamic');
+        btn.style.background = 'rgba(255, 255, 255, 0.05)';
+        btn.style.color = 'rgba(255,255,255,0.6)';
+        iconPath.setAttribute('d', 'M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z'); 
+        btn.title = "Dynamic Wallpaper (Apple Music Style)";
+    }
+}
+
+window.cycleTheme = function() {
+    if (currentTheme === 'dynamic') {
+        currentTheme = 'static';
+    } else if (currentTheme === 'static') {
+        currentTheme = 'dark';
+    } else {
+        currentTheme = 'dynamic';
+    }
+    localStorage.setItem('app_theme', currentTheme);
+    applyTheme(currentTheme);
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sharedSongId = urlParams.get('s');
@@ -4556,7 +4884,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         title: data.title,
                         artist: data.uploader || 'Unknown Artist',
                         cover: data.thumbnail || '',
-                        query: `${data.title} ${data.uploader}`,
+                        query: data.title + ' ' + (data.uploader || ''),
                         id: data.id,
                         videoId: data.id
                     };
@@ -4569,16 +4897,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-function toggleDarkMode() {
-    document.body.classList.toggle('pitch-black-mode');
-    document.documentElement.classList.toggle('pitch-black-mode');
-    const btn = document.getElementById('dark-mode-btn');
-    if(document.body.classList.contains('pitch-black-mode')) {
-        btn.style.background = 'rgba(255, 71, 109, 0.2)';
-        btn.style.color = '#ff476d';
-    } else {
-        btn.style.background = 'rgba(255, 255, 255, 0.05)';
-        btn.style.color = 'rgba(255,255,255,0.6)';
-    }
-}
 

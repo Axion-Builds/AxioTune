@@ -48,7 +48,7 @@
             position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
             background: linear-gradient(135deg, #1e003b, #440055, #660044);
             background-size: cover; background-position: center;
-            filter: blur(60px) saturate(1.5) brightness(var(--bg-brightness, 1));
+            filter: blur(60px) saturate(1.5) brightness(var(--bg-brightness, 0.5));
             transform: translateZ(0); /* Hardware rasterization of the blur */
             will-change: transform;
         }
@@ -542,7 +542,7 @@
         }
 
         .lyric-word.active { 
-            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 25px rgba(255, 255, 255, 0.3)); 
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.1); 
             transform: scale(1.04) translateY(-1px);
         }
 
@@ -774,9 +774,8 @@
         /* Queue Panel CSS */
         #queue-panel {
             position: fixed; top: 0; right: 0; width: 420px; height: 100vh;
-            background: rgba(10, 0, 20, 0.75);
-            backdrop-filter: blur(60px) saturate(220%); -webkit-backdrop-filter: blur(60px) saturate(220%);
-            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(10, 0, 20, 0.95);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
             z-index: 9000; padding: 80px 32px 40px 32px;
             transform: translateX(100%); transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
             overflow-y: auto; overflow-x: hidden;
@@ -3212,3 +3211,89 @@ body.song-playing #ambient-wrapper {
 
 
 
+
+/* =========================================
+   GLOBAL SMOOTHNESS & ANIMATION UPGRADE 
+   ========================================= */
+
+body:not(.performance-mode) * {
+    /* Smooth out standard state changes (hover, focus, colors) */
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-duration: 0.3s;
+    transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Explicit exclusion for things that need instant snappy updates or hardware constraints */
+body:not(.performance-mode) #progress-bar,
+body:not(.performance-mode) #progress-bar *,
+body:not(.performance-mode) .lrc-word,
+body:not(.performance-mode) .now-playing-active {
+    transition-duration: 0.1s !important;
+}
+
+/* Apple-like Spring Button Presses */
+body:not(.performance-mode) button:active,
+body:not(.performance-mode) .sr-card:active,
+body:not(.performance-mode) .artist-circle-card:active,
+body:not(.performance-mode) .sr-song-row:active,
+body:not(.performance-mode) .mood-chip:active,
+body:not(.performance-mode) .lib-tab:active {
+    transform: scale(0.96) !important;
+    transition-duration: 0.1s !important;
+}
+
+/* Player UI Expand/Collapse Smoothness */
+body:not(.performance-mode) #player-screen {
+    transition: transform 0.6s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.5s ease-out;
+}
+
+body:not(.performance-mode) #player-screen.active {
+    transform: translateY(0) scale(1) !important;
+}
+
+/* Enhanced Glass Glows on Hover */
+body:not(.performance-mode) .sr-card:hover,
+body:not(.performance-mode) .premium-list-item:hover,
+body:not(.performance-mode) .sr-song-row:hover {
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Elegant Page Fade-Ins */
+@keyframes softFadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+body:not(.performance-mode) .screen.active {
+    animation: softFadeInUp 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Fix cover art transition in player */
+body:not(.performance-mode) #cover-art.cover-changing {
+    animation: coverChangeAnim 0.6s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+#visualizer-canvas { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.8; mix-blend-mode: screen; filter: blur(2px); }
+
+
+/* --- THEME: STATIC (YouTube Music Style) --- */
+body.theme-static #ambient-wrapper {
+    animation: none !important;
+}
+body.theme-static #ambient-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.85) 100%) !important;
+    z-index: 1;
+    pointer-events: none;
+}
+body.theme-static #background-layer::after {
+    animation: none !important;
+    display: none !important;
+}
+body.theme-static #background-layer {
+    filter: blur(160px) saturate(2.5) brightness(0.5) !important;
+    transform: scale(1.5) translateZ(0) !important;
+}

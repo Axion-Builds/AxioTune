@@ -3,3 +3,4 @@ uvicorn
 yt-dlp
 httpx
 ytmusicapi
+websockets
