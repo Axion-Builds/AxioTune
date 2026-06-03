@@ -5,7 +5,7 @@ Welcome to **AxioTune**! This is a state-of-the-art, feature-rich, and visually 
 With built-in 3D Spatial Audio, real-time synced lyrics, and native app installation support, AxioTune is built to rival top-tier streaming platforms.
 
 ### 🚀 Live Demo
-**Try it out here:** [https://apple-music-clone-y0sq.onrender.com](https://apple-music-clone-y0sq.onrender.com) *(Note: Render spins down inactive instances, so it might take 30-50 seconds to load initially)*
+**Try it out here:** [https://axiotune.onrender.com](hhttps://axiotune.onrender.com) *(Note: Render spins down inactive instances, so it might take 30-50 seconds to load initially)*
 
 ---
 
