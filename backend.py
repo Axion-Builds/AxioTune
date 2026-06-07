@@ -521,7 +521,8 @@ async def stream(id: str, refresh: bool = False):
         
         # --- FALLBACK: INVIDIOUS API ---
         print(f"[Fallback] yt-dlp failed for {id}, trying Invidious APIs...")
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        async with httpx.AsyncClient(timeout=4.0, headers=headers, follow_redirects=True) as client:
             for instance in INVIDIOUS_INSTANCES:
                 try:
                     r = await client.get(f"{instance}/api/v1/videos/{id}")
@@ -555,7 +556,8 @@ async def stream(id: str, refresh: bool = False):
             "https://piped-api.garudalinux.org",
             "https://pipedapi.drgns.space"
         ]
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        async with httpx.AsyncClient(timeout=4.0, headers=headers, follow_redirects=True) as client:
             for instance in PIPED_INSTANCES:
                 try:
                     r = await client.get(f"{instance}/streams/{id}")
