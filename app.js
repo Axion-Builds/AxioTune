@@ -1736,7 +1736,7 @@ const audioPlayer = document.getElementById('audio-player');
                 prefetchVideoId = null;
                 window.prefetchedStreamData = null;
                 const streamData = await fetchStreamUrl(currentVideoId, true);
-                audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
+                audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
                 audioPlayer.load();
                 if (savedTime > 0) {
                     audioPlayer.currentTime = Math.min(savedTime, audioPlayer.duration || savedTime);
@@ -1883,7 +1883,7 @@ const audioPlayer = document.getElementById('audio-player');
             // Handle gapless prefetch handover
             if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
                 window.prefetchedStreamData = { url: prefetchedStreamUrl, quality: "Prefetched" };
-                audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(prefetchedStreamUrl);
+                audioPlayer.src = window.prefetchedStreamData && window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(prefetchedStreamUrl);
                 audioPlayer.play().catch(e => console.warn("Prefetch play failed:", e));
                 prefetchedStreamUrl = null;
                 prefetchVideoId = null;
@@ -2046,14 +2046,14 @@ const audioPlayer = document.getElementById('audio-player');
                         lrc1 = { json: async () => [] };
                     }
                     if (myToken !== currentPlaybackToken) return;
-                    audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
+                    audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
                     audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 }
                 // If it was injected by playQueueIndex, it's valid.
                 // If it was lingering from prefetchNextSong but doesn't match the new search, discard it!
                 else if (window.prefetchedStreamData && (!prefetchVideoId || prefetchVideoId === currentVideoId)) {
                     streamData = window.prefetchedStreamData;
-                    audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(window.prefetchedStreamData.url);
+                    audioPlayer.src = window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(window.prefetchedStreamData.url);
                     window.prefetchedStreamData = null;
                     lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal });
                     if (myToken !== currentPlaybackToken) return; // Race condition check
@@ -2077,7 +2077,7 @@ const audioPlayer = document.getElementById('audio-player');
                     lrc1 = lrcRes;
                     
                     // Set src — this automatically triggers load. Then play.
-                    audioPlayer.src = '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
+                    audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
                     audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 }
 

@@ -463,7 +463,8 @@ async def stream(id: str, refresh: bool = False):
                 "url": cached["url"],
                 "quality": cached["quality"],
                 "format_note": cached["format_note"],
-                "cached": True
+                "cached": True,
+                "requires_proxy": cached.get("requires_proxy", True)
             }
 
     ydl_opts = {
@@ -508,7 +509,8 @@ async def stream(id: str, refresh: bool = False):
                         "quality": f"{int(abr)}kbps",
                         "format_note": info.get('ext', 'unknown'),
                         "cached": False,
-                        "source": "yt-dlp"
+                        "source": "yt-dlp",
+                        "requires_proxy": True
                     }
             except Exception as e:
                 print(f"[yt-dlp DEBUG] Exception: {type(e).__name__}: {str(e)[:200]}")
@@ -535,7 +537,8 @@ async def stream(id: str, refresh: bool = False):
                                 "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
                                 "format_note": best.get('container', 'webm'),
                                 "cached": False,
-                                "source": f"invidious ({instance})"
+                                "source": f"invidious ({instance})",
+                                "requires_proxy": False
                             }
                 except Exception:
                     continue
@@ -546,7 +549,11 @@ async def stream(id: str, refresh: bool = False):
             "https://pipedapi.kavin.rocks",
             "https://pipedapi.tokhmi.xyz",
             "https://pipedapi.syncpundit.io",
-            "https://pi.ggtyler.dev"
+            "https://pi.ggtyler.dev",
+            "https://pipedapi.adminforge.de",
+            "https://piped-api.lunar.icu",
+            "https://piped-api.garudalinux.org",
+            "https://pipedapi.drgns.space"
         ]
         async with httpx.AsyncClient(timeout=4.0) as client:
             for instance in PIPED_INSTANCES:
@@ -563,7 +570,8 @@ async def stream(id: str, refresh: bool = False):
                                 "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
                                 "format_note": best.get('mimeType', 'webm'),
                                 "cached": False,
-                                "source": f"piped ({instance})"
+                                "source": f"piped ({instance})",
+                                "requires_proxy": False
                             }
                 except Exception:
                     continue
@@ -578,7 +586,8 @@ async def stream(id: str, refresh: bool = False):
             "url": res["url"],
             "quality": res["quality"],
             "format_note": res["format_note"],
-            "cached_at": now
+            "cached_at": now,
+            "requires_proxy": res.get("requires_proxy", True)
         }
         return res
     except Exception as e:
