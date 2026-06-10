@@ -1481,11 +1481,12 @@ class PartyManager:
     def __init__(self):
         self.rooms: Dict[str, Dict[str, Any]] = {}
 
-    async def connect(self, room_id: str, client_id: str, websocket: WebSocket, is_host: bool):
+    async def connect(self, room_id: str, client_id: str, websocket: WebSocket, is_host: bool, username: str):
         await websocket.accept()
         if room_id not in self.rooms:
-            self.rooms[room_id] = {"host": None, "connections": {}, "state": {}}
+            self.rooms[room_id] = {"host": None, "connections": {}, "state": {}, "usernames": {}}
         self.rooms[room_id]["connections"][client_id] = websocket
+        self.rooms[room_id]["usernames"][client_id] = username
         if is_host:
             self.rooms[room_id]["host"] = client_id
         if not is_host and self.rooms[room_id]["state"]:
@@ -1493,19 +1494,55 @@ class PartyManager:
                 await websocket.send_text(json.dumps(self.rooms[room_id]["state"]))
             except Exception:
                 pass
+        
+        # Broadcast join notification
+        user_count = len(self.rooms[room_id]["connections"])
+        join_msg = {
+            "action": "system",
+            "type": "join",
+            "username": username,
+            "clientId": client_id,
+            "userCount": user_count,
+            "message": f"{username} joined the party"
+        }
+        await self.broadcast(room_id, join_msg, client_id)
 
-    def disconnect(self, room_id: str, client_id: str):
+    async def disconnect(self, room_id: str, client_id: str):
         if room_id in self.rooms:
+            username = self.rooms[room_id]["usernames"].get(client_id, "Someone")
             if client_id in self.rooms[room_id]["connections"]:
                 del self.rooms[room_id]["connections"][client_id]
+            if client_id in self.rooms[room_id]["usernames"]:
+                del self.rooms[room_id]["usernames"][client_id]
             if self.rooms[room_id]["host"] == client_id:
                 self.rooms[room_id]["host"] = None
+            
+            user_count = len(self.rooms[room_id]["connections"])
             if not self.rooms[room_id]["connections"]:
                 del self.rooms[room_id]
+            else:
+                # Broadcast leave notification
+                leave_msg = {
+                    "action": "system",
+                    "type": "leave",
+                    "username": username,
+                    "clientId": client_id,
+                    "userCount": user_count,
+                    "message": f"{username} left the party"
+                }
+                dead_connections = []
+                for cid, connection in self.rooms[room_id]["connections"].items():
+                    try:
+                        await connection.send_text(json.dumps(leave_msg))
+                    except Exception:
+                        dead_connections.append(cid)
+                for dead in dead_connections:
+                    await self.disconnect(room_id, dead)
 
     async def broadcast(self, room_id: str, message: dict, sender_id: str):
         if room_id in self.rooms:
-            if self.rooms[room_id]["host"] == sender_id:
+            # Only host can save the playback state
+            if self.rooms[room_id]["host"] == sender_id and message.get("action") in ["play", "pause", "seek", "sync"]:
                 self.rooms[room_id]["state"] = message
             dead_connections = []
             for client_id, connection in self.rooms[room_id]["connections"].items():
@@ -1515,25 +1552,30 @@ class PartyManager:
                     except Exception:
                         dead_connections.append(client_id)
             for dead in dead_connections:
-                self.disconnect(room_id, dead)
+                await self.disconnect(room_id, dead)
 
 party_manager = PartyManager()
 
 @app.websocket("/ws/party/{room_id}/{client_id}")
-async def party_endpoint(websocket: WebSocket, room_id: str, client_id: str, role: str = "listener"):
+async def party_endpoint(websocket: WebSocket, room_id: str, client_id: str, role: str = "listener", username: str = "Anonymous"):
     is_host = (role == "host")
-    await party_manager.connect(room_id, client_id, websocket, is_host)
+    await party_manager.connect(room_id, client_id, websocket, is_host, username)
     try:
         while True:
             data = await websocket.receive_text()
             try:
                 message = json.loads(data)
-                if party_manager.rooms[room_id]["host"] == client_id:
+                action = message.get("action")
+                # Chat message - broadcast to all
+                if action == "chat":
+                    await party_manager.broadcast(room_id, message, client_id)
+                # Playback sync events - only host can broadcast
+                elif party_manager.rooms[room_id]["host"] == client_id:
                     await party_manager.broadcast(room_id, message, client_id)
             except json.JSONDecodeError:
                 pass
     except WebSocketDisconnect:
-        party_manager.disconnect(room_id, client_id)
+        await party_manager.disconnect(room_id, client_id)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

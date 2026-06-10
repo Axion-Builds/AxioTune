@@ -1717,12 +1717,55 @@ const audioPlayer = document.getElementById('audio-player');
         let prefetchVideoId = null;
 
         async function fetchStreamUrl(videoId, refresh = false) {
-            const refreshParam = refresh ? '&refresh=true' : '';
-            const res = await fetch(`/api/stream?id=${encodeURIComponent(videoId)}${refreshParam}`);
-            if (!res.ok) throw new Error('Stream request failed');
-            const data = await res.json();
-            if (!data.url) throw new Error(data.message || 'No stream URL returned');
-            return data;
+            // ULTIMATE FIX: Fetch directly from client browser to bypass Render IP Cloudflare block!
+            const PIPED_INSTANCES = [
+                "https://pipedapi.kavin.rocks",
+                "https://pi.ggtyler.dev",
+                "https://pipedapi.adminforge.de",
+                "https://pipedapi.tokhmi.xyz",
+                "https://pipedapi.syncpundit.io",
+                "https://piped-api.lunar.icu",
+                "https://piped-api.garudalinux.org",
+                "https://pipedapi.drgns.space"
+            ];
+            
+            // Fast parallel fetch with 2s timeout
+            const fetchWithTimeout = async (instance) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                try {
+                    const res = await fetch(`${instance}/streams/${videoId}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (!res.ok) throw new Error("HTTP error");
+                    const data = await res.json();
+                    if (data.audioStreams && data.audioStreams.length > 0) {
+                        data.audioStreams.sort((a, b) => b.bitrate - a.bitrate);
+                        return {
+                            url: data.audioStreams[0].url,
+                            requires_proxy: false // Browser can play this directly
+                        };
+                    }
+                    throw new Error("No streams");
+                } catch (e) {
+                    throw e;
+                }
+            };
+
+            try {
+                // Try all piped instances simultaneously, first one to succeed wins!
+                // Max wait time is ~2 seconds, preventing browser autoplay blocks.
+                const result = await Promise.any(PIPED_INSTANCES.map(inst => fetchWithTimeout(inst)));
+                console.log("Success with Piped client fetch!");
+                return result;
+            } catch (e) {
+                console.warn("All client fetches failed, falling back to Render backend...");
+                const refreshParam = refresh ? '&refresh=true' : '';
+                const res = await fetch(`/api/stream?id=${encodeURIComponent(videoId)}${refreshParam}`);
+                if (!res.ok) throw new Error('Stream request failed');
+                const data = await res.json();
+                if (!data.url) throw new Error(data.message || 'No stream URL returned');
+                return data;
+            }
         }
 
         async function refreshCurrentStream(shouldResume = true) {
@@ -2782,9 +2825,11 @@ const audioPlayer = document.getElementById('audio-player');
                 if (id === showId) {
                     el.classList.remove('hidden-screen');
                     el.classList.add('active-screen');
+                    document.body.classList.add(id + '-active');
                 } else {
                     el.classList.remove('active-screen');
                     el.classList.add('hidden-screen');
+                    document.body.classList.remove(id + '-active');
                 }
             });
             document.getElementById('queue-panel').classList.remove('open');
@@ -4560,27 +4605,446 @@ const PartyEngine = {
     roomId: null,
     isHost: false,
     clientId: Math.random().toString(36).substring(2, 10),
-    lastBroadcastTime: 0,
-    
+    username: '',
+    isSyncingFromHost: false,
+    syncInterval: null,
+    reconnectAttempts: 0,
+    maxReconnectAttempts: 5,
+    unreadCount: 0,
+
     init() {
         const urlParams = new URLSearchParams(window.location.search);
         const partyId = urlParams.get('party');
         
-        if (partyId) {
-            this.roomId = partyId;
-            this.isHost = false;
-            this.connect();
-        }
+        // Modal Event Listeners
+        const listenTogetherBtn = document.getElementById('listen-together-btn');
+        const settingsStartPartyBtn = document.getElementById('start-party-btn');
+        const closePartyModalBtn = document.getElementById('close-party-modal-btn');
+        const modalStartPartyBtn = document.getElementById('modal-start-party-btn');
+        const modalLeavePartyBtn = document.getElementById('modal-leave-party-btn');
+        const modalCopyLinkBtn = document.getElementById('modal-copy-link-btn');
 
-        document.getElementById('start-party-btn')?.addEventListener('click', () => {
-            this.roomId = 'PARTY_' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        // Pre-fill username from localStorage
+        const savedName = localStorage.getItem('party_username') || '';
+        document.getElementById('party-username-input').value = savedName;
+
+        // Open modal
+        const openModal = () => {
+            document.getElementById('listen-together-modal').classList.remove('hidden-modal');
+            this.updateModalUI();
+        };
+
+        listenTogetherBtn?.addEventListener('click', openModal);
+        settingsStartPartyBtn?.addEventListener('click', openModal);
+
+        // Close modal
+        closePartyModalBtn?.addEventListener('click', () => {
+            document.getElementById('listen-together-modal').classList.add('hidden-modal');
+        });
+
+        // Start Party (Host)
+        modalStartPartyBtn?.addEventListener('click', () => {
+            const nameInput = document.getElementById('party-username-input').value.trim();
+            if (!nameInput) {
+                showToast('Please enter your name first');
+                return;
+            }
+            this.username = nameInput;
+            localStorage.setItem('party_username', nameInput);
+            
+            if (!this.roomId) {
+                this.roomId = 'PARTY_' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            }
             this.isHost = true;
             this.connect();
         });
+
+        // Leave Party
+        modalLeavePartyBtn?.addEventListener('click', () => {
+            this.leave();
+        });
+
+        // Copy Link
+        modalCopyLinkBtn?.addEventListener('click', () => {
+            const linkInput = document.getElementById('modal-party-link-input');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(linkInput.value);
+            showToast('Room link copied to clipboard!');
+        });
+
+        // Chat Button toggle
+        document.getElementById('party-chat-btn')?.addEventListener('click', () => {
+            const panel = document.getElementById('party-chat-panel');
+            panel.classList.toggle('chat-panel-collapsed');
+            if (!panel.classList.contains('chat-panel-collapsed')) {
+                this.unreadCount = 0;
+                document.getElementById('chat-badge').style.display = 'none';
+                document.getElementById('chat-input-box').focus();
+            }
+        });
+
+        // Close Chat panel
+        document.getElementById('close-chat-btn')?.addEventListener('click', () => {
+            document.getElementById('party-chat-panel').classList.add('chat-panel-collapsed');
+        });
+
+        // Send Chat message
+        const sendMsg = () => {
+            const box = document.getElementById('chat-input-box');
+            const text = box.value.trim();
+            if (!text) return;
+            box.value = '';
+            this.sendChatMessage(text);
+        };
+        document.getElementById('send-chat-btn')?.addEventListener('click', sendMsg);
+        document.getElementById('chat-input-box')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMsg();
+        });
+
+        // Automatically prompt name if url has partyId
+        if (partyId) {
+            this.roomId = partyId;
+            this.isHost = false;
+            setTimeout(() => {
+                openModal();
+                showToast('You have been invited to join a party!');
+            }, 1500);
+        }
+
+        // Setup Player Sync Event Listeners (Host Only triggers broadcast)
+        audioPlayer.addEventListener('play', () => {
+            if (this.roomId && this.isHost && !this.isSyncingFromHost) {
+                this.broadcastState('play');
+            }
+        });
+        audioPlayer.addEventListener('pause', () => {
+            if (this.roomId && this.isHost && !this.isSyncingFromHost) {
+                this.broadcastState('pause');
+            }
+        });
+        audioPlayer.addEventListener('seeked', () => {
+            if (this.roomId && this.isHost && !this.isSyncingFromHost) {
+                this.broadcastState('seek');
+            }
+        });
+    },
+
+    updateModalUI() {
+        const userContainer = document.getElementById('party-username-container');
+        const startBtn = document.getElementById('modal-start-party-btn');
+        const infoContainer = document.getElementById('modal-party-info-container');
+        
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            userContainer.style.display = 'none';
+            startBtn.style.display = 'none';
+            infoContainer.style.display = 'block';
+            
+            document.getElementById('modal-party-id-text').textContent = this.roomId;
+            document.getElementById('modal-party-role-text').textContent = this.isHost ? 'Host' : 'Guest';
+            
+            const joinUrl = window.location.origin + window.location.pathname + '?party=' + this.roomId;
+            document.getElementById('modal-party-link-input').value = joinUrl;
+        } else {
+            userContainer.style.display = 'block';
+            startBtn.style.display = 'block';
+            infoContainer.style.display = 'none';
+            startBtn.textContent = this.isHost ? 'Resume Hosting' : 'Host Private Session';
+        }
     },
 
     connect() {
-        console.log('Party engine connecting...');
+        if (this.ws) {
+            try { this.ws.close(); } catch(e) {}
+        }
+        
+        console.log(`PartyEngine: Connecting to room ${this.roomId} as ${this.isHost ? 'host' : 'listener'}...`);
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/party/${this.roomId}/${this.clientId}?role=${this.isHost ? 'host' : 'listener'}&username=${encodeURIComponent(this.username)}`;
+        
+        this.ws = new WebSocket(wsUrl);
+        
+        this.ws.onopen = () => {
+            console.log('PartyEngine: Connected to WebSocket server');
+            this.reconnectAttempts = 0;
+            this.updateModalUI();
+            showToast(this.isHost ? `Hosting room ${this.roomId}` : `Joined room ${this.roomId}`);
+            
+            // Show Chat button
+            document.getElementById('party-chat-btn').style.display = 'flex';
+            document.getElementById('party-chat-btn').classList.remove('hidden-chat-btn');
+            
+            // Clear old messages and append system joined message
+            document.getElementById('chat-messages-container').innerHTML = '';
+            this.appendSystemMessage(`Connected to room: ${this.roomId}`);
+            
+            // Update mobile settings start-party-btn UI
+            const settingsBtn = document.getElementById('start-party-btn');
+            if (settingsBtn) {
+                settingsBtn.innerHTML = '⚡ View Party Details';
+                settingsBtn.style.background = 'rgba(0, 255, 150, 0.15)';
+                settingsBtn.style.color = '#00ff96';
+            }
+
+            // If listener, lock controls and show locked badge
+            if (!this.isHost) {
+                document.body.classList.add('party-listener-active');
+                this.addLockedBadge();
+            } else {
+                // If host, start periodic sync broadcast
+                this.startSyncLoop();
+            }
+        };
+        
+        this.ws.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                this.handleMessage(message);
+            } catch(e) {
+                console.error("Error parsing party message:", e);
+            }
+        };
+        
+        this.ws.onerror = (err) => {
+            console.error('PartyEngine: WebSocket error:', err);
+        };
+        
+        this.ws.onclose = () => {
+            console.log('PartyEngine: WebSocket closed');
+            this.stopSyncLoop();
+            
+            // Hide chat panel & chat button
+            document.getElementById('party-chat-panel').classList.add('chat-panel-collapsed');
+            document.getElementById('party-chat-btn').style.display = 'none';
+            document.getElementById('party-chat-btn').classList.add('hidden-chat-btn');
+            document.body.classList.remove('party-listener-active');
+            this.removeLockedBadge();
+            
+            // Reconnect logic if we didn't voluntarily leave
+            if (this.roomId && this.reconnectAttempts < this.maxReconnectAttempts) {
+                this.reconnectAttempts++;
+                this.appendSystemMessage("Connection lost. Reconnecting...");
+                setTimeout(() => this.connect(), 3000);
+            } else {
+                this.updateModalUI();
+                const settingsBtn = document.getElementById('start-party-btn');
+                if (settingsBtn) {
+                    settingsBtn.innerHTML = `
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                        Start Listening Party
+                    `;
+                    settingsBtn.style.background = '';
+                    settingsBtn.style.color = '';
+                }
+            }
+        };
+    },
+
+    leave() {
+        this.roomId = null;
+        this.reconnectAttempts = 999; // prevent auto-reconnect
+        if (this.ws) {
+            try { this.ws.close(); } catch(e) {}
+        }
+        showToast('Left the listening party');
+        document.getElementById('listen-together-modal').classList.add('hidden-modal');
+        // Clear url params
+        const url = new URL(window.location);
+        url.searchParams.delete('party');
+        window.history.pushState({}, '', url);
+    },
+
+    broadcastState(action) {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        
+        const payload = {
+            action: action,
+            videoId: currentVideoId,
+            currentTime: audioPlayer.currentTime,
+            isPlaying: !audioPlayer.paused,
+            timestamp: Date.now(),
+            songJson: currentSongMeta ? JSON.stringify(currentSongMeta) : null
+        };
+        
+        try {
+            this.ws.send(JSON.stringify(payload));
+        } catch(e) {
+            console.error("Failed to broadcast state:", e);
+        }
+    },
+
+    startSyncLoop() {
+        this.stopSyncLoop();
+        this.syncInterval = setInterval(() => {
+            if (isSongLoaded && !audioPlayer.paused) {
+                this.broadcastState('sync');
+            }
+        }, 2000);
+    },
+
+    stopSyncLoop() {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+            this.syncInterval = null;
+        }
+    },
+
+    handleMessage(message) {
+        if (message.action === 'system') {
+            this.appendSystemMessage(message.message);
+            if (message.userCount !== undefined) {
+                document.getElementById('modal-party-listeners-count').textContent = message.userCount;
+            }
+            return;
+        }
+        
+        if (message.action === 'chat') {
+            this.appendChatMessage(message.username, message.text, false);
+            return;
+        }
+        
+        // Listeners handle host playback commands
+        if (!this.isHost) {
+            this.syncPlayer(message);
+        }
+    },
+
+    async syncPlayer(message) {
+        this.isSyncingFromHost = true;
+        
+        try {
+            // 1. Song check
+            if (message.videoId && message.videoId !== currentVideoId) {
+                console.log(`PartyEngine: Loading new song from host: ${message.videoId}`);
+                if (message.songJson) {
+                    // Directly load stream bypassing search
+                    const song = JSON.parse(message.songJson);
+                    window._forceQueueSong = {
+                        videoId: message.videoId,
+                        title: song.title,
+                        artist: song.artist,
+                        thumbnail: song.cover || song.thumbnail || ''
+                    };
+                    songSearchInput.value = song.title + ' ' + song.artist;
+                    searchBtn.click();
+                }
+            }
+
+            // 2. Playback state check
+            if (message.action === 'pause' || !message.isPlaying) {
+                if (!audioPlayer.paused) {
+                    audioPlayer.pause();
+                    setPlayPauseUI(false);
+                }
+            } else if (message.action === 'play' || message.isPlaying) {
+                if (audioPlayer.paused) {
+                    await audioPlayer.play().catch(() => {});
+                    setPlayPauseUI(true);
+                }
+            }
+
+            // 3. Current time / Seek check
+            if (message.currentTime !== undefined) {
+                const networkLatency = (Date.now() - message.timestamp) / 1000.0;
+                // Cap sanity latency to 3s in case clocks are slightly desynced
+                const safeLatency = Math.min(3, Math.max(0, networkLatency));
+                const targetTime = message.currentTime + (message.isPlaying ? safeLatency : 0);
+                
+                const timeDiff = Math.abs(audioPlayer.currentTime - targetTime);
+                // Seek if desynced by more than 250 milliseconds
+                if (timeDiff > 0.25) {
+                    console.log(`PartyEngine: Desync detected: ${timeDiff.toFixed(3)}s. Seeking to ${targetTime.toFixed(2)}s`);
+                    audioPlayer.currentTime = targetTime;
+                }
+            }
+        } catch(e) {
+            console.error("Error syncing player state:", e);
+        } finally {
+            // Yield execution to allow events to process before clearing sync flag
+            setTimeout(() => {
+                this.isSyncingFromHost = false;
+            }, 150);
+        }
+    },
+
+    sendChatMessage(text) {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        
+        const payload = {
+            action: "chat",
+            username: this.username,
+            text: text,
+            timestamp: Date.now()
+        };
+        
+        try {
+            this.ws.send(JSON.stringify(payload));
+            this.appendChatMessage(this.username, text, true);
+        } catch(e) {
+            console.error("Failed to send chat:", e);
+        }
+    },
+
+    appendSystemMessage(text) {
+        const container = document.getElementById('chat-messages-container');
+        if (!container) return;
+        
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-msg msg-system';
+        msgDiv.innerHTML = `<div class="msg-bubble">${text}</div>`;
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+    },
+
+    appendChatMessage(sender, text, isSelf) {
+        const container = document.getElementById('chat-messages-container');
+        if (!container) return;
+        
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-msg ${isSelf ? 'msg-self' : 'msg-other'}`;
+        
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        msgDiv.innerHTML = `
+            <div class="msg-meta">${isSelf ? 'You' : sender} • ${timeStr}</div>
+            <div class="msg-bubble">${this.escapeHTML(text)}</div>
+        `;
+        
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+
+        // Play alert / Increment unread count
+        if (!isSelf) {
+            const panel = document.getElementById('party-chat-panel');
+            if (panel.classList.contains('chat-panel-collapsed')) {
+                this.unreadCount++;
+                const badge = document.getElementById('chat-badge');
+                badge.textContent = this.unreadCount;
+                badge.style.display = 'flex';
+            }
+        }
+    },
+
+    addLockedBadge() {
+        this.removeLockedBadge();
+        const badge = document.createElement('div');
+        badge.className = 'guest-locked-badge';
+        badge.id = 'party-locked-badge';
+        badge.innerHTML = `<span class="pulse-dot" style="background:#ff2d55; box-shadow: 0 0 10px #ff2d55;"></span> Synced to Host`;
+        
+        const trackTitleRow = document.getElementById('track-title-row');
+        if (trackTitleRow) {
+            trackTitleRow.parentElement.insertBefore(badge, trackTitleRow);
+        }
+    },
+
+    removeLockedBadge() {
+        document.getElementById('party-locked-badge')?.remove();
+    },
+
+    escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        );
     }
 };
 
