@@ -2106,9 +2106,8 @@ const audioPlayer = document.getElementById('audio-player');
                     if (audioPlayer.paused) audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 } else {
                     const [streamRes, lrcRes] = await Promise.all([
-                        fetch(`/api/stream?id=${encodeURIComponent(songData.id)}`, { signal }).then(r => {
-                            if (!r.ok) throw new Error('Stream request failed');
-                            return r.json();
+                        fetchStreamUrl(songData.id).catch(e => {
+                            throw new Error('Stream request failed');
                         }),
                         fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal })
                     ]);
