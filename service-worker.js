@@ -1,9 +1,9 @@
-const CACHE_NAME = 'axiotune-v3';
+const CACHE_NAME = 'axiotune-v4';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
-    '/style.css',
-    '/app.js',
+    '/style_v3.css',
+    '/app_v3.js',
     '/manifest.json',
     '/logo.png',
     '/loading_logo.png',
