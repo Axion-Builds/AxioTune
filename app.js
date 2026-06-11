@@ -1732,7 +1732,7 @@ const audioPlayer = document.getElementById('audio-player');
             // Fast parallel fetch with 2s timeout
             const fetchWithTimeout = async (instance) => {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
                 try {
                     const res = await fetch(`${instance}/streams/${videoId}`, { signal: controller.signal });
                     clearTimeout(timeoutId);
@@ -5359,5 +5359,99 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+// ── 3D Cover Art Tilt on Hover ──
+(function () {
+    const container = document.getElementById('cover-art-container');
+    if (!container) return;
 
+    container.addEventListener('mousemove', (e) => {
+        const rect = container.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width / 2);   // -1 to 1
+        const dy = (e.clientY - cy) / (rect.height / 2);  // -1 to 1
+        const tiltX = dy * -10;   // tilt up/down max 10deg
+        const tiltY = dx * 10;    // tilt left/right max 10deg
+        container.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.03)`;
+    });
 
+    container.addEventListener('mouseleave', () => {
+        container.style.transform = '';
+        container.style.transition = 'transform 0.5s cubic-bezier(0.2,0.8,0.2,1)';
+        setTimeout(() => { container.style.transition = ''; }, 500);
+    });
+
+    container.addEventListener('mouseenter', () => {
+        container.style.transition = 'none';
+    });
+})();
+
+// ── Re-trigger screen-enter animation when switching screens ──
+(function () {
+    const screens = document.querySelectorAll(
+        '#home-screen, #history-screen, #settings-screen, #artist-screen, #album-screen, #library-screen, #player-screen'
+    );
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+            const el = m.target;
+            if (m.attributeName === 'style' || m.attributeName === 'class') {
+                const isVisible = el.style.display !== 'none' &&
+                    !el.classList.contains('hidden') &&
+                    getComputedStyle(el).display !== 'none';
+                if (isVisible) {
+                    el.style.animation = 'none';
+                    el.offsetWidth; // reflow
+                    el.style.animation = '';
+                }
+            }
+        });
+    });
+    screens.forEach(s => observer.observe(s, { attributes: true }));
+})();
+
+// ── 3D Cover Art Tilt on Hover ──
+(function () {
+    var container = document.getElementById('cover-art-container');
+    if (!container) return;
+    container.addEventListener('mousemove', function(e) {
+        var rect = container.getBoundingClientRect();
+        var dx = (e.clientX - (rect.left + rect.width/2)) / (rect.width/2);
+        var dy = (e.clientY - (rect.top + rect.height/2)) / (rect.height/2);
+        container.style.transform = 'perspective(800px) rotateX(' + (dy * -10) + 'deg) rotateY(' + (dx * 10) + 'deg) scale(1.03)';
+    });
+    container.addEventListener('mouseleave', function() {
+        container.style.transition = 'transform 0.5s cubic-bezier(0.2,0.8,0.2,1)';
+        container.style.transform = '';
+        setTimeout(function() { container.style.transition = ''; }, 500);
+    });
+    container.addEventListener('mouseenter', function() { container.style.transition = 'none'; });
+})();
+
+// ── Voice Search (Mic Button) ──
+(function () {
+    var micBtn = document.getElementById('mic-btn');
+    var searchInput = document.getElementById('song-search');
+    if (!micBtn || !searchInput) return;
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { micBtn.style.display = 'none'; return; }
+    var recognition = new SR();
+    recognition.lang = 'en-IN';
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    var isListening = false;
+    micBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (isListening) { recognition.stop(); return; }
+        recognition.start();
+    });
+    recognition.onstart = function() { isListening = true; micBtn.classList.add('listening'); searchInput.placeholder = 'Listening...'; };
+    recognition.onresult = function(event) {
+        searchInput.value = event.results[0][0].transcript;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    recognition.onend = function() {
+        isListening = false; micBtn.classList.remove('listening'); searchInput.placeholder = 'Search songs, artists, albums...';
+        if (searchInput.value.trim()) searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    };
+    recognition.onerror = function() { isListening = false; micBtn.classList.remove('listening'); searchInput.placeholder = 'Search songs, artists, albums...'; };
+})();

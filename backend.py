@@ -216,7 +216,9 @@ async def get_cover(q: str = "", yt_thumb: str = ""):
                 except Exception:
                     pass
 
-    # Last resort: serve default cover
+    # Last resort: redirect to youtube thumbnail directly so user's browser loads it!
+    if yt_thumb and is_valid_yt_thumb(yt_thumb):
+        return RedirectResponse(url=yt_thumb, status_code=302)
     return FileResponse("default_cover.jpg")
 
 # Live search suggestions — returns songs, artists, albums mixed
