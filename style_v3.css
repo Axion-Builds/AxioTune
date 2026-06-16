@@ -22,7 +22,6 @@
             /* Removed heavy radial gradients to fix GPU scroll lag */
             font-family: var(--font-family);
             color: white; -webkit-font-smoothing: antialiased;
-            cursor: url('cat_cursor.png'), auto;
             transition: background 0.5s ease;
         }
 
@@ -40,7 +39,7 @@
         }
 
         .nav-btn, .lyric-line, .vinyl-card, #search-btn, #progress-container, .queue-item, #close-queue-btn, #home-settings-btn, .btn-icon {
-            cursor: url('cat_cursor.png'), pointer !important;
+            cursor: pointer !important;
         }
 
         #ambient-wrapper {
@@ -56,8 +55,8 @@
             filter: blur(60px) saturate(1.5) brightness(var(--bg-brightness, 0.5));
             transform: translateZ(0); /* Hardware rasterization of the blur */
             will-change: transform;
-            /* FIX: Smooth 1.5s crossfade when album art color changes */
-            transition: background-image 1.5s ease, background 1.5s ease;
+            /* FIX: Removed background-image transition because animating heavy blurs destroys GPU performance and causes extreme lag when switching songs */
+            transition: opacity 0.8s ease;
         }
 
         #background-layer::after {
@@ -375,9 +374,9 @@
             border-radius: 20px;
             background: radial-gradient(
                 circle at var(--gx, 50%) var(--gy, 50%),
-                rgba(255,255,255,0.18) 0%,
-                rgba(255,255,255,0.04) 40%,
-                transparent 70%
+                rgba(255,255,255,0.05) 0%,
+                rgba(255,255,255,0.01) 30%,
+                transparent 50%
             );
             pointer-events: none;
             z-index: 10;
@@ -407,31 +406,22 @@
         #track-artist { font-size: 1.05rem; color: rgba(255,255,255,0.55); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
 
         #progress-container {
-            width: 100%; height: 5px; background: rgba(255,255,255,0.12);
-            border-radius: 3px; cursor: pointer; position: relative;
+            width: 100%; height: 4px; background: rgba(255,255,255,0.2);
+            border-radius: 4px; cursor: pointer; position: relative;
             transition: height 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        #progress-container:hover { height: 7px; }
+        #progress-container:hover { height: 6px; }
         #progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 50%, var(--accent3) 100%);
-            border-radius: 3px; width: 0%;
+            background: #ffffff;
+            border-radius: 4px; width: 0%;
             pointer-events: none;
-            box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.7), 0 0 24px rgba(var(--accent2-rgb), 0.3);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
             position: relative;
             transition: width 0.1s linear;
         }
         #progress-paw {
-            position: absolute; top: 50%; right: -7px; transform: translateY(-50%);
-            width: 14px; height: 14px;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.9), 0 0 20px rgba(var(--accent2-rgb), 0.5);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        #progress-container:hover #progress-paw {
-            transform: translateY(-50%) scale(1.3);
-            box-shadow: 0 0 16px rgba(var(--accent-rgb), 1), 0 0 32px rgba(var(--accent2-rgb), 0.7);
+            display: none !important;
         }
         
         .time-display {
@@ -652,24 +642,65 @@
         .lyric-word {
             display: inline-block;
             padding: 0 1px;
-            background: linear-gradient(
-                to right,
-                rgba(255, 255, 255, 1) 0%,
-                rgba(255, 255, 255, 1) calc(var(--progress, 0%) - 2%),
-                rgba(255, 255, 255, 0.3) calc(var(--progress, 0%) + 2%),
-                rgba(255, 255, 255, 0.3) 100%
-            );
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-            transition: --progress 0.15s ease-out, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            color: rgba(255, 255, 255, 0.25);
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.25);
+            transition: color 0.3s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
             transform-origin: bottom center;
         }
 
         .lyric-word.active { 
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0.95) 0%,
+                rgba(255, 255, 255, 0.95) calc(var(--progress, 0%) - 15%),
+                rgba(255, 255, 255, 0.25) calc(var(--progress, 0%) + 15%),
+                rgba(255, 255, 255, 0.25) 100%
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
             transform: scale(1.04) translateY(-1px);
+            transition: --progress 0.15s ease-out, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         .lyric-word.passed {
+            color: rgba(255, 255, 255, 0.95);
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.95);
+            background: none;
             transform: scale(1.04) translateY(-1px);
+            transition: color 0.3s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .instrumental-line {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            opacity: 0.5;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            height: 40px; /* give it some space */
+        }
+
+        .instrumental-dots {
+            display: flex;
+            gap: 12px;
+            font-size: 2.5rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .active-line.instrumental-line {
+            opacity: 1;
+        }
+
+        .active-line .instrumental-dots span {
+            animation: pulse-dot 1.5s infinite alternate ease-in-out;
+        }
+        
+        .active-line .instrumental-dots span:nth-child(2) { animation-delay: 0.5s; }
+        .active-line .instrumental-dots span:nth-child(3) { animation-delay: 1s; }
+
+        @keyframes pulse-dot {
+            0% { opacity: 0.3; transform: scale(0.8); text-shadow: none; }
+            100% { opacity: 1; transform: scale(1.2); text-shadow: 0 0 15px rgba(255, 255, 255, 0.9); }
         }
 
         .empty-state {
@@ -919,26 +950,95 @@
 
         /* Queue Panel CSS */
         #queue-panel {
-            position: fixed; top: 0; right: 0; width: 420px; height: 100vh;
-            background: rgba(10, 0, 20, 0.95);
-            border-left: 1px solid rgba(255, 255, 255, 0.08);
-            z-index: 9000; padding: 80px 32px 40px 32px;
-            transform: translateX(100%); transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
-            overflow-y: auto; overflow-x: hidden;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 460px;
+            height: calc(100vh - 40px);
+            border-radius: 40px;
+            z-index: 99999;
+            padding: 30px 28px 40px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transform: translate3d(120%, 0, 0);
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease, background 0.5s ease;
+            box-sizing: border-box;
+            will-change: transform;
+
+            /* Solid sleek background for sliding phase (ZERO GPU LAG) */
+            background: linear-gradient(135deg, rgba(15, 32, 67, 0.85) 0%, rgba(5, 10, 24, 0.95) 50%, rgba(25, 10, 48, 0.9) 100%);
+            background-size: 200% 200%;
+            animation: liquidFluid 15s ease infinite;
+
+            border: 1px solid rgba(255, 255, 255, 0.08);
+
+            /* Inner highlights for physical volume */
+            box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.1), 
+                        -10px 15px 40px rgba(0, 0, 0, 0.6);
         }
-        #queue-panel.open { transform: translateX(0); }
+        #queue-panel.open { transform: translate3d(0, 0, 0); }
+        
+        /* The heavy glass effect is only applied AFTER it stops moving */
+        #queue-panel.glassy {
+            background: linear-gradient(135deg, rgba(15, 32, 67, 0.45) 0%, rgba(5, 10, 24, 0.65) 50%, rgba(25, 10, 48, 0.5) 100%);
+            backdrop-filter: blur(30px) saturate(220%) brightness(110%);
+            -webkit-backdrop-filter: blur(30px) saturate(220%) brightness(110%);
+        }
+
+        /* Focus Mode: Fade out and shift lyrics left when queue is open */
+        body.queue-active #lyrics-container {
+            opacity: 0.15;
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity;
+        }
+
+        #lyrics-wrapper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: transform;
+            backface-visibility: hidden;
+            transform: translate3d(0, 0, 0);
+        }
+
+        body.queue-active #lyrics-wrapper {
+            transform: translate3d(-15vw, 0, 0);
+        }
+
+        #queue-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        #queue-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #queue-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        #queue-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        @keyframes liquidFluid {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
         .queue-item {
             display: flex; align-items: center; gap: 15px; padding: 12px; border-radius: 12px;
             background: rgba(255, 255, 255, 0.05); margin-bottom: 12px;
             border: 1px solid transparent;
-            transition: background 0.3s, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s, box-shadow 0.3s, border-color 0.3s;
-            opacity: 0; transform: translateX(50px);
+            transition: background 0.3s, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s, border-color 0.3s;
+            opacity: 0; transform: translateX(50px) translateZ(0);
+            will-change: transform, opacity, background-color;
         }
         .queue-item.visible:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(-6px) scale(1.01);
-            box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.25), 0 6px 20px rgba(0, 0, 0, 0.4);
+            background: rgba(255, 255, 255, 0.12);
+            /* TRICK: Removed box-shadow and scale to prevent heavy backdrop-filter repaints */
+            transform: translateX(-4px) translateZ(0); 
             border-color: rgba(var(--accent-rgb), 0.35);
         }
         .queue-item.active-queue { border-left: 3px solid #ff476d; background: rgba(255, 71, 109, 0.15); border-color: rgba(255, 71, 109, 0.2); }
@@ -2126,7 +2226,8 @@ body.offline-mode .offline-hide {
         
         .sr-song-row:hover .song-options-btn,
         .tracklist-item:hover .song-options-btn,
-        .dense-card:hover .song-options-btn {
+        .dense-card:hover .song-options-btn,
+        .premium-list-item:hover .song-options-btn {
             opacity: 1;
             pointer-events: auto;
         }
@@ -2738,6 +2839,7 @@ body.disable-animations #background-layer::after {
 #home-settings-container {
     position: absolute; top: 40px; right: 40px; z-index: 20;
 }
+
 #download-app-btn {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%;
@@ -3671,6 +3773,10 @@ body.player-screen-active #top-bar-wrapper:focus-within {
     /* 7. Queue Panel */
     #queue-panel {
         width: 100% !important;
+        height: 100vh !important;
+        top: 0 !important;
+        right: 0 !important;
+        border-radius: 0 !important;
         padding: 80px 15px 100px 15px !important;
     }
     

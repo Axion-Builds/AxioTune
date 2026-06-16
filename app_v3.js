@@ -3,11 +3,190 @@ window.onunhandledrejection = function(event) { console.error('Promise Rejection
 window._localNetworkIp = null;
 fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});
 
-const audioPlayer = document.getElementById('audio-player');
+// --- YOUTUBE IFRAME API MOCK AUDIO PLAYER ---
+let ytPlayer;
+const audioPlayer = {
+    _src: '',
+    _queuedVid: null,
+    _volume: 1,
+    _playbackRate: 1,
+    paused: true,
+    readyState: 0,
+    error: null,
+    listeners: {},
+    _mode: 'yt',
+    _realAudio: new Audio(),
+    initRealAudio: function() {
+        if (this._realAudioInitialized) return;
+        this._realAudioInitialized = true;
+        const events = ['play', 'pause', 'timeupdate', 'ended', 'waiting', 'playing'];
+        events.forEach(e => {
+            this._realAudio.addEventListener(e, () => {
+                if (this._mode === 'local') {
+                    if (e === 'play' || e === 'playing') this.paused = false;
+                    if (e === 'pause' || e === 'ended') this.paused = true;
+                    this.dispatchEvent(e);
+                }
+            });
+        });
+    },
+    addEventListener: function(event, callback) {
+        if (!this.listeners[event]) this.listeners[event] = [];
+        this.listeners[event].push(callback);
+    },
+    dispatchEvent: function(event) {
+        if (this.listeners[event]) {
+            this.listeners[event].forEach(cb => cb());
+        }
+    },
+    play: async function() {
+        if (this._mode === 'local') {
+            await this._realAudio.play().catch(e => console.warn('Local audio play error', e));
+            this.paused = false;
+            return Promise.resolve();
+        }
+        if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+        this.paused = false;
+        this.dispatchEvent('play');
+        return Promise.resolve();
+    },
+    pause: function() {
+        if (this._mode === 'local') {
+            this._realAudio.pause();
+            this.paused = true;
+            return;
+        }
+        if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+        this.paused = true;
+        this.dispatchEvent('pause');
+    },
+    load: function() { /* no-op */ },
+    set src(val) {
+        this.initRealAudio();
+        this._src = val;
+        let vid = val;
+        
+        // Handle local downloaded files or blob URLs directly with HTMLAudioElement
+        if (val && (val.startsWith('/') || val.startsWith('blob:'))) {
+            this._mode = 'local';
+            if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+            this._realAudio.src = val;
+            this._realAudio.load();
+            this.paused = true;
+            return;
+        }
+        
+        this._mode = 'yt';
+        this._realAudio.pause();
+
+        if (val && val.includes('proxy_stream')) {
+            try {
+                vid = decodeURIComponent(val.split('url=')[1]);
+                if (vid.includes('http')) {
+                    // if it's a full http URL (e.g. from yt-dlp fallback), we extract video ID if possible
+                    if (vid.includes('v=')) vid = vid.split('v=')[1].split('&')[0];
+                    else if (vid.includes('youtu.be/')) vid = vid.split('youtu.be/')[1].split('?')[0];
+                }
+            } catch(e){}
+        }
+        if (vid && vid.includes('http')) return; // Ignore full urls
+        
+        if (ytPlayer && ytPlayer.loadVideoById && vid) {
+            ytPlayer.loadVideoById(vid);
+            this.paused = false;
+            this.dispatchEvent('play');
+        } else if (vid) {
+            this._queuedVid = vid;
+        }
+    },
+    get src() { return this._src; },
+    get currentTime() { 
+        if (this._mode === 'local') return this._realAudio.currentTime;
+        return ytPlayer && ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0; 
+    },
+    set currentTime(val) { 
+        if (this._mode === 'local') { this._realAudio.currentTime = val; return; }
+        if (ytPlayer && ytPlayer.seekTo) ytPlayer.seekTo(val, true); 
+    },
+    get duration() { 
+        if (this._mode === 'local') return this._realAudio.duration || 0;
+        return ytPlayer && ytPlayer.getDuration ? ytPlayer.getDuration() : 0; 
+    },
+    get volume() { return this._volume; },
+    set volume(val) {
+        this._volume = val;
+        this._realAudio.volume = val;
+        if (ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(val * 100);
+    },
+    get playbackRate() { return this._playbackRate; },
+    set playbackRate(val) {
+        this._playbackRate = val;
+        this._realAudio.playbackRate = val;
+        if (ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(val);
+    }
+};
+
+window.onYouTubeIframeAPIReady = function() {
+    ytPlayer = new YT.Player('youtube-player', {
+        height: '1',
+        width: '1',
+        videoId: '',
+        playerVars: {
+            'playsinline': 1,
+            'controls': 0,
+            'disablekb': 1,
+            'autoplay': 1
+        },
+        events: {
+            'onReady': () => { 
+                audioPlayer.readyState = 4; 
+                if (audioPlayer._queuedVid) {
+                    ytPlayer.loadVideoById(audioPlayer._queuedVid);
+                    audioPlayer.paused = false;
+                    audioPlayer.dispatchEvent('play');
+                    audioPlayer._queuedVid = null;
+                }
+            },
+            'onStateChange': onPlayerStateChange,
+            'onError': () => { audioPlayer.dispatchEvent('error'); }
+        }
+    });
+};
+if (window.YT && window.YT.Player) {
+    window.onYouTubeIframeAPIReady();
+}
+
+let timeupdateInterval;
+function onPlayerStateChange(event) {
+    if (event.data == YT.PlayerState.PLAYING) {
+        audioPlayer.paused = false;
+        audioPlayer.dispatchEvent('play');
+        audioPlayer.dispatchEvent('loadedmetadata');
+        clearInterval(timeupdateInterval);
+        timeupdateInterval = setInterval(() => { audioPlayer.dispatchEvent('timeupdate'); }, 250);
+    } else if (event.data == YT.PlayerState.PAUSED) {
+        audioPlayer.paused = true;
+        audioPlayer.dispatchEvent('pause');
+        clearInterval(timeupdateInterval);
+    } else if (event.data == YT.PlayerState.ENDED) {
+        audioPlayer.paused = true;
+        audioPlayer.dispatchEvent('ended');
+        clearInterval(timeupdateInterval);
+    } else if (event.data == YT.PlayerState.BUFFERING) {
+        audioPlayer.dispatchEvent('stalled');
+    }
+}
+// ------------------------------------------
         const playPauseBtn = document.getElementById('play-pause-btn');
         const songSearchInput = document.getElementById('song-search');
         const searchBtn = document.getElementById('search-btn');
         const lyricsContainer = document.getElementById('lyrics-container');
+        
+        // Wrap lyrics container for horizontal sliding (Focus Mode trick) without fighting JS Y-transforms
+        const lyricsWrapper = document.createElement('div');
+        lyricsWrapper.id = 'lyrics-wrapper';
+        lyricsContainer.parentNode.insertBefore(lyricsWrapper, lyricsContainer);
+        lyricsWrapper.appendChild(lyricsContainer);
         const coverArt = document.getElementById('cover-art');
         const coverArtContainer = document.getElementById('cover-art-container');
         const backgroundLayer = document.getElementById('background-layer');
@@ -30,7 +209,7 @@ const audioPlayer = document.getElementById('audio-player');
         const qPanel = document.getElementById('queue-panel');
         if (qPanel) document.body.appendChild(qPanel);
 
-        // ── IndexedDB Offline Storage Setup ──
+        // â”€â”€ IndexedDB Offline Storage Setup â”€â”€
         let db;
         const dbPromise = new Promise((resolve, reject) => {
             const request = indexedDB.open('AxioTuneDB', 1);
@@ -86,7 +265,7 @@ const audioPlayer = document.getElementById('audio-player');
         }
         
         // Remove downloaded song
-        async function removeDownloadedSong(id) {
+        async function deleteDownloadedSong(id) {
             await dbPromise;
             return new Promise((resolve, reject) => {
                 const tx = db.transaction('downloads', 'readwrite');
@@ -99,8 +278,9 @@ const audioPlayer = document.getElementById('audio-player');
                 tx.onerror = () => reject(tx.error);
             });
         }
+        window.deleteDownloadedSong = deleteDownloadedSong;
 
-        // ── Offline Mode ──
+        // â”€â”€ Offline Mode â”€â”€
         function updateNetworkStatus() {
             if (!navigator.onLine) {
                 showToast('Device is offline. Using local cache.');
@@ -132,7 +312,7 @@ const audioPlayer = document.getElementById('audio-player');
             return thumbnails.map(t => `${t.url} ${t.width}w`).join(', ');
         }
 
-        // ── NEW FEATURE STATE ──
+        // â”€â”€ NEW FEATURE STATE â”€â”€
         // Shuffle / Repeat
         let isShuffled = false;
         let repeatMode = 0; // 0=off, 1=all, 2=one
@@ -254,7 +434,6 @@ const audioPlayer = document.getElementById('audio-player');
 
         // Like button click
         document.getElementById('like-btn')?.addEventListener('click', () => toggleLike());
-        document.getElementById('mini-like-btn')?.addEventListener('click', () => toggleLike());
         
         document.getElementById('download-btn')?.addEventListener('click', () => {
             if (!currentSongMeta || !currentSongMeta.id) return;
@@ -262,7 +441,7 @@ const audioPlayer = document.getElementById('audio-player');
             window.location.href = `/api/download?id=${currentSongMeta.id}&title=${encodeURIComponent(currentSongMeta.title)}`;
         });
 
-        // ── SHUFFLE ──
+        // â”€â”€ SHUFFLE â”€â”€
         const shuffleBtn = document.getElementById('shuffle-btn');
         shuffleBtn?.addEventListener('click', () => {
             isShuffled = !isShuffled;
@@ -287,7 +466,7 @@ const audioPlayer = document.getElementById('audio-player');
             }
         });
 
-        // ── REPEAT ──
+        // â”€â”€ REPEAT â”€â”€
         const repeatBtn = document.getElementById('repeat-btn');
         const repeatSVG_off = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
         const repeatSVG_all = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
@@ -300,7 +479,7 @@ const audioPlayer = document.getElementById('audio-player');
             else { repeatBtn.classList.add('active', 'repeat-one'); repeatBtn.innerHTML = repeatSVG_one; showToast('Repeat ONE'); }
         });
 
-        // ── TOAST NOTIFICATION ──
+        // â”€â”€ TOAST NOTIFICATION â”€â”€
         function showToast(msg) {
             let t = document.getElementById('toast-notif');
             if (!t) {
@@ -315,7 +494,7 @@ const audioPlayer = document.getElementById('audio-player');
             t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2000);
         }
 
-        // ── LIBRARY SCREEN LOGIC ──
+        // â”€â”€ LIBRARY SCREEN LOGIC â”€â”€
         function showLibrary() {
             if(playerScreen.classList.contains('active-screen') && isSongLoaded) {
                 triggerFlipAnimation(coverArtContainer, miniCover, () => { coverArtContainer.style.opacity = '1'; });
@@ -370,7 +549,7 @@ const audioPlayer = document.getElementById('audio-player');
                             <div class="premium-list-title">${song.title}</div>
                             <div class="premium-list-subtitle">${song.artist}</div>
                         </div>
-                        <button class="song-options-btn" onclick="event.stopPropagation(); removeDownloadedSong('${song.id}');">
+                        <button class="song-options-btn" onclick="event.stopPropagation(); window.deleteDownloadedSong('${song.id}');">
                             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         </button>
                     </div>`;
@@ -387,11 +566,11 @@ const audioPlayer = document.getElementById('audio-player');
             const song = songs.find(s => s.id === id);
             if(!song) return;
             
-            queue = songs.map(s => ({
+            queueList = songs.map(s => ({
                 ...s,
                 localUrl: window._downloadedCache[s.id] || URL.createObjectURL(s.blob)
             }));
-            const index = queue.findIndex(s => s.id === id);
+            const index = queueList.findIndex(s => s.id === id);
             currentQueueIndex = Math.max(0, index);
             renderQueue();
             
@@ -419,7 +598,7 @@ const audioPlayer = document.getElementById('audio-player');
             followedArtists.forEach(artist => {
                 html += `
                     <div class="artist-circle-card" onclick="openArtist('${artist.browseId}')">
-                        <img src="${artist.thumb}" crossorigin="anonymous" alt="${artist.name}">
+                        <img src="${artist.thumb}" alt="${artist.name}">
                         <div class="artist-name">${artist.name}</div>
                     </div>
                 `;
@@ -433,17 +612,17 @@ const audioPlayer = document.getElementById('audio-player');
             if(!container) return;
             const liked = getLikedSongs();
             if (liked.length === 0) {
-                container.innerHTML = '<div class="empty-state lib-empty">No liked songs yet.<br><span>Tap ♥ while a song plays to save it here.</span></div>';
+                container.innerHTML = '<div class="empty-state lib-empty">No liked songs yet.<br><span>Tap â™¥ while a song plays to save it here.</span></div>';
                 return;
             }
             container.innerHTML = '';
             liked.forEach((song, idx) => {
-                const coverUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '');
+                const coverUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
                 const row = document.createElement('div');
                 row.className = 'liked-song-row';
                 row.style.animationDelay = `${idx * 0.04}s`;
                 row.innerHTML = `
-                    <img src="${coverUrl}" crossorigin="anonymous">
+                    <img src="${coverUrl}">
                     <div class="liked-song-info">
                         <div class="liked-song-title">${song.title}</div>
                         <div class="liked-song-artist">${song.artist}</div>
@@ -506,7 +685,7 @@ const audioPlayer = document.getElementById('audio-player');
                 card.style.animationDelay = `${idx * 0.05}s`;
                 card.innerHTML = `
                     <div class="artist-card-img-wrapper" style="width: 100%; aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <img src="${coverUrl}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous">
+                        <img src="${coverUrl}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <div class="artist-card-name" style="font-weight: 600; font-size: 1rem; color: white; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${artist.name}</div>
                     <div class="artist-card-count" style="font-size: 0.8rem; color: rgba(255,255,255,0.6); text-align: center; margin-top: 4px;">${artist.count} song${artist.count !== 1 ? 's' : ''}</div>
@@ -528,7 +707,7 @@ const audioPlayer = document.getElementById('audio-player');
             container.innerHTML = '';
             playlists.forEach((pl, plIdx) => {
                 // Build mosaic thumbnail from up to 4 songs
-                const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || ''));
+                const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId));
                 let thumbHtml = '';
                 if (covers.length >= 4) {
                     thumbHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:60px;height:60px;border-radius:10px;overflow:hidden;">${covers.map(c => `<img src="${c}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='default_cover.jpg'">`).join('')}</div>`;
@@ -565,7 +744,7 @@ const audioPlayer = document.getElementById('audio-player');
             });
         }
 
-        // ═══ PLAYLIST FULL PAGE ═══
+        // â•â•â• PLAYLIST FULL PAGE â•â•â•
         function openPlaylistPage(plIdx) {
             const pl = getPlaylists()[plIdx];
             if (!pl) return;
@@ -578,10 +757,10 @@ const audioPlayer = document.getElementById('audio-player');
             const tracksEl = document.getElementById('playlist-screen-tracks');
 
             nameEl.textContent = pl.name;
-            countEl.textContent = `${pl.songs.length} song${pl.songs.length !== 1 ? 's' : ''}  •  Your Playlist`;
+            countEl.textContent = `${pl.songs.length} song${pl.songs.length !== 1 ? 's' : ''}  â€¢  Your Playlist`;
 
             // Build mosaic art or use custom cover
-            const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || ''));
+            const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId));
             let mainCover = '';
             
             if (pl.customCover) {
@@ -641,7 +820,7 @@ const audioPlayer = document.getElementById('audio-player');
                 tracksEl.innerHTML = '<div class="empty-state" style="margin-top:30px;">No songs yet.<br><span>Add songs from the 3-dot menu on any track.</span></div>';
             } else {
                 pl.songs.forEach((song, sIdx) => {
-                    const coverUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '');
+                    const coverUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
                     const row = document.createElement('div');
                     row.className = 'playlist-track-row';
                     row.innerHTML = `
@@ -663,7 +842,7 @@ const audioPlayer = document.getElementById('audio-player');
                         window._forceQueueSong = { videoId: song.videoId, title: song.title, artist: song.artist, cover: song.cover };
                         songSearchInput.value = `${song.title} ${song.artist}`;
                         searchBtn.click();
-                        showToast(`▶ Playing from ${pl.name}`);
+                        showToast(`â–¶ Playing from ${pl.name}`);
                     });
                     tracksEl.appendChild(row);
                 });
@@ -681,7 +860,7 @@ const audioPlayer = document.getElementById('audio-player');
                     window._forceQueueSong = { videoId: first.videoId, title: first.title, artist: first.artist, cover: first.cover };
                     songSearchInput.value = `${first.title} ${first.artist}`;
                     searchBtn.click();
-                    showToast(`▶ Playing ${pl.name}`);
+                    showToast(`â–¶ Playing ${pl.name}`);
                 };
             }
 
@@ -784,7 +963,7 @@ const audioPlayer = document.getElementById('audio-player');
         currentY = targetY = rightPanel.offsetHeight / 2;
         lyricsContainer.style.transform = `translateY(${currentY}px)`;
 
-        // Handle ENTER key in search — show results page first
+        // Handle ENTER key in search â€” show results page first
         songSearchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -798,16 +977,42 @@ const audioPlayer = document.getElementById('audio-player');
         // ============================================================
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            if (e.key === 'ArrowUp') {
+            
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (playPauseBtn && !playPauseBtn.disabled) playPauseBtn.click();
+            } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 let v = Math.min(1, audioPlayer.volume + 0.05);
                 audioPlayer.volume = v;
                 showToast(`Volume: ${Math.round(v * 100)}%`);
+                if (window.updateVolumeUI) window.updateVolumeUI(v);
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 let v = Math.max(0, audioPlayer.volume - 0.05);
                 audioPlayer.volume = v;
                 showToast(`Volume: ${Math.round(v * 100)}%`);
+                if (window.updateVolumeUI) window.updateVolumeUI(v);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (nextBtn && !nextBtn.disabled) nextBtn.click();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (prevBtn && !prevBtn.disabled) prevBtn.click();
+            } else if (e.key.toLowerCase() === 'l') {
+                e.preventDefault();
+                const lyricsBtn = document.getElementById('lyrics-btn');
+                if (lyricsBtn) lyricsBtn.click();
+            } else if (e.key.toLowerCase() === 'q') {
+                e.preventDefault();
+                const queuePanel = document.getElementById('queue-panel');
+                const queueNavBtn = document.getElementById('floating-queue-btn');
+                const closeQueueBtn = document.getElementById('close-queue-btn');
+                if (queuePanel && queuePanel.classList.contains('active')) {
+                    if (closeQueueBtn) closeQueueBtn.click();
+                } else {
+                    if (queueNavBtn) queueNavBtn.click();
+                }
             }
         });
 
@@ -861,21 +1066,41 @@ const audioPlayer = document.getElementById('audio-player');
         });
 
         // ============================================================
-        // GLOBAL COVER URL HELPER — routes ALL images through backend
+        // GLOBAL COVER URL HELPER â€” routes ALL images through backend
         // This proxy: 1) fetches iTunes artwork, 2) falls back to YT thumb
         // No CORS, no expiry, works from any device on the network!
         // ============================================================
-        function resolveYtThumb(ytThumb) {
+        function resolveYtThumb(ytThumb, size='large') {
             if (!ytThumb || typeof ytThumb !== 'string') return '';
             if (ytThumb.includes('/api/cover')) return ''; // Avoid double proxying
+            
+            if (ytThumb.includes('lh3.googleusercontent.com') && ytThumb.includes('=')) {
+                // If the original URL is already provided by backend, it's the largest available.
+                // We only resize for small/medium to save bandwidth. For large, use a standard high-res size!
+                const base = ytThumb.split('=')[0];
+                if (size === 'small') return base + '=w60-h60-l90-rj';
+                if (size === 'medium') return base + '=w120-h120-l90-rj';
+                if (size === 'large') return base + '=w600-h600-l90-rj';
+            }
             return ytThumb;
         }
 
-        function getCoverUrl(query, ytThumb) {
-            const params = new URLSearchParams();
-            if (query) params.set('q', query);
+        function getCoverUrl(query, ytThumb, vid, isPlayerScreen = false) {
             const thumb = resolveYtThumb(ytThumb);
-            if (thumb) params.set('yt_thumb', thumb);
+            
+            // MASSIVE SPEED BOOST & BUG FIX: Bypass backend completely if we have a direct Google image.
+            // This prevents iTunes from returning the wrong album cover for obscure songs ("poster problem").
+            if (thumb && thumb.startsWith('http')) {
+                return thumb;
+            }
+            
+            const params = new URLSearchParams();
+            if (query && (isPlayerScreen || !vid)) {
+                params.set('q', query);
+            }
+            if (thumb && thumb.startsWith('http')) params.set('yt_thumb', thumb);
+            if (vid) params.set('vid', vid);
+            
             return `/api/cover?${params.toString()}`;
         }
 
@@ -883,8 +1108,12 @@ const audioPlayer = document.getElementById('audio-player');
             const title = entry.title || '';
             const artist = entry.artist || '';
             const query = `${title} ${artist}`.trim();
-            const thumb = resolveYtThumb(entry.cover) || resolveYtThumb(entry.ytThumb) || '';
-            return getCoverUrl(query, thumb);
+            let thumb = resolveYtThumb(entry.cover) || resolveYtThumb(entry.ytThumb) || '';
+            const videoId = entry.videoId || entry.id;
+            if (!thumb && videoId) {
+                thumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            }
+            return getCoverUrl(query, thumb, videoId);
         }
 
         document.addEventListener('error', (e) => {
@@ -924,7 +1153,7 @@ const audioPlayer = document.getElementById('audio-player');
         }
 
         // ============================================================
-        // SETTINGS ENGINE — All settings, fully working, persisted
+        // SETTINGS ENGINE â€” All settings, fully working, persisted
         // ============================================================
         const SETTINGS_KEY = 'app_settings_v1';
         const DEFAULT_SETTINGS = {
@@ -986,7 +1215,7 @@ const audioPlayer = document.getElementById('audio-player');
                 if (s.cardLayout !== 'vinyl') c.classList.add(`layout-${s.cardLayout}`);
             });
             // Volume normalize via Web Audio
-            if (s.normalizeVolume && !gainNode) {
+            if (false && s.normalizeVolume && !gainNode) {
                 try {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const source = audioContext.createMediaElementSource(audioPlayer);
@@ -1012,7 +1241,7 @@ const audioPlayer = document.getElementById('audio-player');
             const aqs = document.getElementById('audio-quality-select');
             if (aqs) aqs.value = s.audioQuality;
             const spd = document.getElementById('speed-slider');
-            if (spd) { spd.value = s.playbackSpeed; document.getElementById('speed-label').textContent = (s.playbackSpeed/100).toFixed(2).replace('.00','').replace('.25','¼').replace('.50','½').replace('.75','¾') + 'x'; }
+            if (spd) { spd.value = s.playbackSpeed; document.getElementById('speed-label').textContent = (s.playbackSpeed/100).toFixed(2).replace('.00','').replace('.25','Â¼').replace('.50','Â½').replace('.75','Â¾') + 'x'; }
             const cfs = document.getElementById('crossfade-slider');
             if (cfs) { cfs.value = s.crossfade; document.getElementById('crossfade-label').textContent = s.crossfade + 's'; }
             const apt = document.getElementById('autoplay-toggle');
@@ -1196,7 +1425,7 @@ const audioPlayer = document.getElementById('audio-player');
         let suggestDebounce = null;
         let isSelectingSuggestion = false;
 
-        // ── Global Back Button ──
+        // â”€â”€ Global Back Button â”€â”€
         const globalBackBtn = document.getElementById('global-back-btn');
         const screenHistory = []; // Track screen navigation history
 
@@ -1211,7 +1440,7 @@ const audioPlayer = document.getElementById('audio-player');
                 // Fallback raw switch
                 if (typeof showScreenExcept === 'function') { showScreenExcept(prev); return; }
             }
-            // No history — go home
+            // No history â€” go home
             if (typeof showHome === 'function') showHome();
         });
 
@@ -1247,9 +1476,9 @@ const audioPlayer = document.getElementById('audio-player');
                 item.style.animationDelay = `${i * 30}ms`;
 
                 const coverClass = r.type === 'artist' ? 'suggest-cover artist-cover' : 'suggest-cover';
-                const coverSrc = r.cover ? getCoverUrl(r.query, r.cover) : 'default_cover.jpg';
+                const coverSrc = r.cover ? getCoverUrl(r.query, r.cover, r.id || r.videoId) : 'default_cover.jpg';
                 const badgeClass = `suggest-badge badge-${r.type}`;
-                const badgeLabel = r.type === 'video' ? '🎬 Video' : r.type === 'artist' ? '👤 Artist' : r.type === 'album' ? '💿 Album' : '🎵 Song';
+                const badgeLabel = r.type === 'video' ? 'ðŸŽ¬ Video' : r.type === 'artist' ? 'ðŸ‘¤ Artist' : r.type === 'album' ? 'ðŸ’¿ Album' : 'ðŸŽµ Song';
                 const artistLine = r.artist ? `<div class="suggest-artist">${r.artist}</div>` : '';
 
                 item.innerHTML = `
@@ -1389,7 +1618,7 @@ const audioPlayer = document.getElementById('audio-player');
         });
 
         // Haptic on key buttons
-        ['play-pause-btn','next-btn','prev-btn','mini-play-pause-btn'].forEach(id => {
+        ['play-pause-btn','next-btn','prev-btn','mini-play-pause-btn','mini-next-btn'].forEach(id => {
             document.getElementById(id)?.addEventListener('click', () => {
                 if (appSettings.haptic && navigator.vibrate) navigator.vibrate(15);
             });
@@ -1493,9 +1722,15 @@ const audioPlayer = document.getElementById('audio-player');
             showPlayer();
         });
         
-        miniPlayPauseBtn.addEventListener('click', () => {
+        miniPlayPauseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (audioPlayer.paused) audioPlayer.play();
             else audioPlayer.pause();
+        });
+
+        document.getElementById('mini-next-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('next-btn')?.click();
         });
 
         function showHome() {
@@ -1538,7 +1773,7 @@ const audioPlayer = document.getElementById('audio-player');
 
         // --- HISTORY LOGIC ---
         function saveToHistory(songData, rawYtThumb) {
-            if (appSettings.incognito) return; // Incognito mode — skip saving
+            if (appSettings.incognito) return; // Incognito mode â€” skip saving
             let history = JSON.parse(localStorage.getItem('music_history_full') || '[]');
             const thumb = resolveYtThumb(rawYtThumb) || resolveYtThumb(songData.thumbnail) || '';
             const newEntry = {
@@ -1623,9 +1858,10 @@ const audioPlayer = document.getElementById('audio-player');
             // Feature reverted.
         }
 
-        // ── QUEUE SYSTEM ──
+        // â”€â”€ QUEUE SYSTEM â”€â”€
         let queueList = [];
         let currentQueueIndex = -1;
+        let queueRenderLimit = 10;
         const queueNavBtn = document.getElementById('floating-queue-btn');
         const queuePanel = document.getElementById('queue-panel');
         const closeQueueBtn = document.getElementById('close-queue-btn');
@@ -1636,15 +1872,27 @@ const audioPlayer = document.getElementById('audio-player');
 
         function openQueue() {
             queueOpen = true;
-            queuePanel.style.transform = 'translateX(0)';
+            queuePanel.classList.add('open');
             queueNavBtn.classList.add('active');
+            document.body.classList.add('queue-active');
+            // TRICK: Delay heavy glass effect until after slide animation completes to guarantee 0 lag
+            setTimeout(() => {
+                if (queueOpen) queuePanel.classList.add('glassy');
+            }, 500);
             renderQueue();
         }
 
         function closeQueue() {
             queueOpen = false;
-            queuePanel.style.transform = 'translateX(100%)';
+            queuePanel.classList.remove('open');
             queueNavBtn.classList.remove('active');
+            document.body.classList.remove('queue-active');
+            
+            // TRICK: Don't drop the blur instantly. Let it slide out first, then remove it.
+            // Sudden removal of backdrop-filter causes a 1-frame pipeline rebuild jerk.
+            setTimeout(() => {
+                if (!queueOpen) queuePanel.classList.remove('glassy');
+            }, 800);
         }
 
         let queueCloseTimer = null;
@@ -1677,8 +1925,8 @@ const audioPlayer = document.getElementById('audio-player');
             }
         });
 
-        const playSVG = ''; // Legacy — black hole uses bh-icon approach
-        const pauseSVG = ''; // Legacy — black hole uses bh-icon approach
+        const playSVG = ''; // Legacy â€” black hole uses bh-icon approach
+        const pauseSVG = ''; // Legacy â€” black hole uses bh-icon approach
 
         // Black hole icon toggle helper
         function setBhIcon(playing) {
@@ -1689,40 +1937,40 @@ const audioPlayer = document.getElementById('audio-player');
         }
 
         async function populateQueue(videoId, append = false) {
+            if (!append) {
+                queueRenderLimit = 10;
+                // Instantly update queue with the playing song to prevent stale queue bugs
+                queueList = [{
+                    videoId: currentVideoId || videoId,
+                    title: currentSongMeta ? currentSongMeta.title : 'Unknown',
+                    artist: currentSongMeta ? currentSongMeta.artist : 'Unknown',
+                    cover: currentSongMeta ? currentSongMeta.cover : ''
+                }];
+                currentQueueIndex = 0;
+                renderQueue();
+            }
+            
             try {
                 const res = await fetch(`/api/recommendations?videoId=${encodeURIComponent(videoId)}`);
                 const data = await res.json();
-                if(data.status === 'success' && data.recommendations.length > 0) {
-                    if (append) {
-                        const existingIds = new Set(queueList.map(s => s.videoId));
-                        data.recommendations.forEach(s => {
-                            if (!existingIds.has(s.videoId)) {
-                                queueList.push(s);
-                            }
-                        });
-                    } else {
-                        // FIX: Prepend the currently playing song since the backend recommendations omit the seed song
-                        queueList = [
-                            {
-                                videoId: currentVideoId,
-                                title: currentSongMeta ? currentSongMeta.title : 'Unknown',
-                                artist: currentSongMeta ? currentSongMeta.artist : 'Unknown',
-                                cover: currentSongMeta ? currentSongMeta.cover : ''
-                            },
-                            ...data.recommendations
-                        ];
-                        currentQueueIndex = 0; 
-                    }
+                if(data.status === 'success' && data.recommendations && data.recommendations.length > 0) {
+                    const existingIds = new Set(queueList.map(s => s.videoId));
+                    data.recommendations.forEach(s => {
+                        if (!existingIds.has(s.videoId)) {
+                            queueList.push(s);
+                        }
+                    });
                     renderQueue();
                     prefetchNextSong(); // Start prefetching the next song for zero latency
                 }
-            } catch(e) {}
+            } catch(e) { console.error('Failed to populate queue:', e); }
         }
         
         window.playTrackFromList = function(songJsonStr) {
             try {
                 const song = JSON.parse(songJsonStr.replace(/&quot;/g, '"'));
-//                 songSearchInput.value = `${song.title} ${song.artist}`;
+                songSearchInput.value = `${song.title} ${song.artist || song.uploader || ''}`.trim();
+                window._forceQueueSong = { videoId: song.videoId || song.id, title: song.title, artist: song.artist || song.uploader || 'Unknown', thumbnail: song.cover || song.thumbnail };
                 searchBtn.click();
             } catch(e) { console.error(e); }
         };
@@ -1732,54 +1980,7 @@ const audioPlayer = document.getElementById('audio-player');
 
         async function fetchStreamUrl(videoId, refresh = false) {
             // ULTIMATE FIX: Fetch directly from client browser to bypass Render IP Cloudflare block!
-            const PIPED_INSTANCES = [
-                "https://pipedapi.kavin.rocks",
-                "https://pi.ggtyler.dev",
-                "https://pipedapi.adminforge.de",
-                "https://pipedapi.tokhmi.xyz",
-                "https://pipedapi.syncpundit.io",
-                "https://piped-api.lunar.icu",
-                "https://piped-api.garudalinux.org",
-                "https://pipedapi.drgns.space"
-            ];
-            
-            // Fast parallel fetch with 2s timeout
-            const fetchWithTimeout = async (instance) => {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000);
-                try {
-                    const res = await fetch(`${instance}/streams/${videoId}`, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (!res.ok) throw new Error("HTTP error");
-                    const data = await res.json();
-                    if (data.audioStreams && data.audioStreams.length > 0) {
-                        data.audioStreams.sort((a, b) => b.bitrate - a.bitrate);
-                        return {
-                            url: data.audioStreams[0].url,
-                            requires_proxy: false // Browser can play this directly
-                        };
-                    }
-                    throw new Error("No streams");
-                } catch (e) {
-                    throw e;
-                }
-            };
-
-            try {
-                // Try all piped instances simultaneously, first one to succeed wins!
-                // Max wait time is ~2 seconds, preventing browser autoplay blocks.
-                const result = await Promise.any(PIPED_INSTANCES.map(inst => fetchWithTimeout(inst)));
-                console.log("Success with Piped client fetch!");
-                return result;
-            } catch (e) {
-                console.warn("All client fetches failed, falling back to Render backend...");
-                const refreshParam = refresh ? '&refresh=true' : '';
-                const res = await fetch(`/api/stream?id=${encodeURIComponent(videoId)}${refreshParam}`);
-                if (!res.ok) throw new Error('Stream request failed');
-                const data = await res.json();
-                if (!data.url) throw new Error(data.message || 'No stream URL returned');
-                return data;
-            }
+            return { url: videoId, requires_proxy: false };
         }
 
         async function refreshCurrentStream(shouldResume = true) {
@@ -1805,7 +2006,7 @@ const audioPlayer = document.getElementById('audio-player');
                 return true;
             } catch (e) {
                 console.warn('Stream refresh failed:', e);
-                showToast('Could not refresh stream — try searching again');
+                showToast('Could not refresh stream â€” try searching again');
                 return false;
             } finally {
                 streamRefreshInProgress = false;
@@ -1825,7 +2026,7 @@ const audioPlayer = document.getElementById('audio-player');
             }
         }
 
-        // 🎬 CINEMATIC CARDS UPDATER 🎬
+        // ðŸŽ¬ CINEMATIC CARDS UPDATER ðŸŽ¬
         window.updateCinematicCards = function() {
             const prevContainer = document.getElementById('cinematic-prev');
             const nextContainer = document.getElementById('cinematic-next');
@@ -1843,7 +2044,7 @@ const audioPlayer = document.getElementById('audio-player');
             // Prev Card
             if (currentQueueIndex > 0) {
                 const prevSong = queueList[currentQueueIndex - 1];
-                prevImg.src = getCoverUrl(`${prevSong.title} ${prevSong.artist}`, prevSong.cover || '');
+                prevImg.src = getCoverUrl(`${prevSong.title} ${prevSong.artist}`, prevSong.cover || '', prevSong.id || prevSong.videoId);
                 prevContainer.style.opacity = '';
                 prevContainer.onclick = () => playQueueIndex(currentQueueIndex - 1);
             } else {
@@ -1854,7 +2055,7 @@ const audioPlayer = document.getElementById('audio-player');
             // Next Card
             if (currentQueueIndex < queueList.length - 1) {
                 const nextSong = queueList[currentQueueIndex + 1];
-                nextImg.src = getCoverUrl(`${nextSong.title} ${nextSong.artist}`, nextSong.cover || '');
+                nextImg.src = getCoverUrl(`${nextSong.title} ${nextSong.artist}`, nextSong.cover || '', nextSong.id || nextSong.videoId);
                 nextContainer.style.opacity = '';
                 nextContainer.onclick = () => playQueueIndex(currentQueueIndex + 1);
             } else {
@@ -1872,7 +2073,7 @@ const audioPlayer = document.getElementById('audio-player');
                 return;
             }
             queueList.forEach((song, idx) => {
-                const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '');
+                const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
 
                 const div = document.createElement('div');
                 div.className = `premium-list-item ${idx === currentQueueIndex ? 'playing' : ''}`;
@@ -1903,7 +2104,90 @@ const audioPlayer = document.getElementById('audio-player');
             });
         }
 
-        // ── Reliable queue navigation — no DOM click dependency ──
+        // —— Background Tasks for Queue Playback (Asynchronous to prevent autoplay blocks) ——
+        async function fetchLyricsForQueueSong(title, artist, videoId) {
+            const query = title + ' ' + artist;
+            const cleanTitle = title.split('(')[0].split('[')[0].split('|')[0].trim();
+            const cleanArtist = artist.replace(/VEVO|Official|Topic|Music/gi, '').trim();
+            
+            try {
+                // Try 1: Syncing lyrics
+                let lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`);
+                let bestMatch = null;
+                if (lrc1.ok) {
+                    let lrcData = await lrc1.json();
+                    if (lrcData && lrcData.length > 0) bestMatch = lrcData.find(item => item.syncedLyrics);
+                }
+
+                // Try 2: Clean Title + Clean Artist
+                if (!bestMatch) {
+                    const lrc2 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle + ' ' + cleanArtist)}`);
+                    if (lrc2.ok) {
+                        let lrcData = await lrc2.json();
+                        if (lrcData && lrcData.length > 0) bestMatch = lrcData.find(item => item.syncedLyrics);
+                    }
+                }
+
+                // Try 3: Just clean title
+                if (!bestMatch) {
+                    const lrc3 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`);
+                    if (lrc3.ok) {
+                        let lrcData = await lrc3.json();
+                        if (lrcData && lrcData.length > 0) bestMatch = lrcData.find(item => item.syncedLyrics);
+                    }
+                }
+
+                // Check if current video ID hasn't changed in the meantime (race condition check)
+                if (currentVideoId !== videoId) return;
+
+                // Render Lyrics if found
+                if (bestMatch && bestMatch.syncedLyrics) {
+                    lyricsData = convertLrcToJson(bestMatch.syncedLyrics);
+                    renderLyrics();
+                } else {
+                    // Fallback to YouTube Plain Text Lyrics via Backend
+                    try {
+                        const ytRes = await fetch(`/api/lyrics?videoId=${videoId}`);
+                        const ytData = await ytRes.json();
+                        if (currentVideoId !== videoId) return;
+                        if (ytData.status === 'success' && ytData.lyrics) {
+                            lyricsContainer.innerHTML = `<div style="padding: 0 20px 100px 20px; font-size: 1.5rem; line-height: 2; color: rgba(255,255,255,0.7); white-space: pre-wrap; font-weight: 500; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">${ytData.lyrics}</div>`;
+                        } else {
+                            lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+                        }
+                    } catch (err) {
+                        if (currentVideoId !== videoId) return;
+                        lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+                    }
+                }
+            } catch (lrcErr) {
+                if (currentVideoId !== videoId) return;
+                lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">Lyrics Database overloaded.<br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+            }
+        }
+
+        async function fetchHdCoverForQueueSong(title, artist, videoId, rawYtThumb) {
+            const actualSongQuery = `${title} ${artist}`;
+            const coverUrl = getCoverUrl(actualSongQuery, rawYtThumb, videoId, true);
+            
+            const hdImg = new Image();
+            hdImg.onload = () => {
+                if (currentVideoId === videoId) {
+                    delete coverArt.dataset.fallbackDone;
+                    delete miniCover.dataset.fallbackDone;
+                    coverArt.src = hdImg.src;
+                    miniCover.src = hdImg.src;
+                    updateMediaSession(title, artist, hdImg.src);
+                    
+                    coverArt.classList.remove('cover-changing');
+                    void coverArt.offsetWidth;
+                    coverArt.classList.add('cover-changing');
+                }
+            };
+            hdImg.src = coverUrl;
+        }
+
+        // —— Reliable queue navigation ——
         function playQueueIndex(idx) {
             if (idx < 0 || idx >= queueList.length) return;
             const isNext = (idx === currentQueueIndex + 1);
@@ -1917,8 +2201,10 @@ const audioPlayer = document.getElementById('audio-player');
                 currentSongMeta = song;
                 document.getElementById('track-title').textContent = song.title;
                 document.getElementById('track-artist').textContent = song.artist;
-                document.getElementById('mini-track-title').textContent = song.title;
-                document.getElementById('mini-track-artist').textContent = song.artist;
+                miniTitle.textContent = song.title;
+                miniArtist.textContent = song.artist;
+                delete coverArt.dataset.fallbackDone;
+                delete miniCover.dataset.fallbackDone;
                 coverArt.src = song.cover;
                 miniCover.src = song.cover;
                 backgroundLayer.style.backgroundImage = `url("${song.cover}")`;
@@ -1937,23 +2223,94 @@ const audioPlayer = document.getElementById('audio-player');
                 return;
             }
             
-            // Handle gapless prefetch handover
+            // YouTube Playback Pipeline Bypass (Fully synchronous track loading to ensure reliable background autoplay)
+            isSongLoaded = true;
+            currentVideoId = song.videoId;
+            currentSongMeta = {
+                id: song.videoId,
+                videoId: song.videoId,
+                title: song.title,
+                artist: song.artist,
+                cover: song.cover || ''
+            };
+            
+            // Enable control buttons
+            playPauseBtn.disabled = false;
+            nextBtn.disabled = false;
+            prevBtn.disabled = false;
+
+            // UI Text Update
+            document.getElementById('track-title').textContent = song.title;
+            document.getElementById('track-artist').textContent = song.artist;
+            miniTitle.textContent = song.title;
+            miniArtist.textContent = song.artist;
+
+            // Cover Art Update - Instantly fallback to YouTube thumbnail if cover is missing
+            const rawYtThumb = song.cover || `https://img.youtube.com/vi/${song.videoId}/hqdefault.jpg`;
+            
+            delete coverArt.dataset.fallbackDone;
+            delete miniCover.dataset.fallbackDone;
+            coverArt.src = rawYtThumb;
+            miniCover.src = resolveYtThumb(rawYtThumb, 'small') || rawYtThumb;
+            backgroundLayer.style.backgroundImage = `url("${resolveYtThumb(rawYtThumb, 'small') || rawYtThumb}")`;
+            
+            coverArt.style.display = 'block';
+            const defaultCoverIcon = document.getElementById('default-cover-icon');
+            if (defaultCoverIcon) defaultCoverIcon.style.display = 'none';
+
+            // Show changing transition animations
+            coverArt.classList.remove('cover-changing');
+            trackTitleEl.classList.remove('title-changing');
+            void coverArt.offsetWidth; // force reflow
+            coverArt.classList.add('cover-changing');
+            trackTitleEl.classList.add('title-changing');
+            
+            document.body.classList.add('song-playing');
+            
+            // Update Media Session
+            updateMediaSession(song.title, song.artist, rawYtThumb);
+
+            // Sync Like/Favorite UI
+            setLikeUI(isSongLiked(song.title, song.artist));
+
+            // Save to Local History
+            saveToHistory({
+                id: song.videoId,
+                title: song.title,
+                uploader: song.artist,
+                thumbnail: song.cover || ''
+            }, rawYtThumb);
+
+            // Clear old lyrics
+            lyricsData = [];
+            wordElements = [];
+            lineElements = [];
+            lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;"><div class="premium-glass-loader"></div><div>Syncing lyrics...</div></div>';
+
+            // 1. Handover prefetched gapless stream if available, otherwise set src directly
             if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
                 window.prefetchedStreamData = { url: prefetchedStreamUrl, quality: "Prefetched" };
-                audioPlayer.src = window.prefetchedStreamData && window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(prefetchedStreamUrl);
-                audioPlayer.play().catch(e => console.warn("Prefetch play failed:", e));
+                audioPlayer.src = window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(prefetchedStreamUrl);
                 prefetchedStreamUrl = null;
                 prefetchVideoId = null;
             } else {
                 window.prefetchedStreamData = null;
-                audioPlayer.pause();
-                // Do not clear src abruptly, it breaks Chrome's media pipeline under rapid skips
+                audioPlayer.src = song.videoId; // This synchronously calls ytPlayer.loadVideoById in the setter
             }
-            
-            // Trigger fast direct playback bypassing search
-            window._forceQueueSong = song;
-            songSearchInput.value = song.title + ' ' + song.artist;
-            searchBtn.click();
+
+            // 2. Play immediately
+            audioPlayer.play().catch(e => console.warn("Queue play failed:", e));
+
+            // 3. Asynchronously fetch higher resolution iTunes cover art
+            fetchHdCoverForQueueSong(song.title, song.artist, song.videoId, rawYtThumb);
+
+            // 4. Asynchronously fetch recommendations for infinite radio / next track queueing
+            populateQueue(song.videoId, true);
+
+            // 5. Asynchronously fetch & render lyrics
+            fetchLyricsForQueueSong(song.title, song.artist, song.videoId);
+
+            showPlayer();
         }
 
         // --- PIPELINE ---
@@ -1961,14 +2318,8 @@ const audioPlayer = document.getElementById('audio-player');
         let searchAbortController = null;
         
         searchBtn.addEventListener('click', async () => {
-            if (!SpatialAudioEngine.isInitialized) {
-                SpatialAudioEngine.init();
-            }
-            if (SpatialAudioEngine.audioCtx && SpatialAudioEngine.audioCtx.state === 'suspended') {
-                SpatialAudioEngine.audioCtx.resume();
-            }
+            // Audio visualizer and spatial audio removed.
 
-            initAudioVisualizer(); // Initialize visualizer on first interaction
             const query = songSearchInput.value.trim();
             if (!query) return;
 
@@ -2030,17 +2381,19 @@ const audioPlayer = document.getElementById('audio-player');
                 trackTitleEl.classList.add('title-changing');
 
                 // Set cover immediately (show spinner-style blur while loading)
-                const rawYtThumb = resolveYtThumb(songData.thumbnail);
+                const rawYtThumb = resolveYtThumb(songData.thumbnail, 'large');
                 const actualSongQuery = `${songData.title} ${songData.uploader}`;
-                const coverUrl = getCoverUrl(actualSongQuery, rawYtThumb, true);
+                const coverUrl = getCoverUrl(actualSongQuery, rawYtThumb, currentVideoId, true);
                 
                 
-                // Instantly show low-res YouTube thumbnail for snappy UI
+                // Instantly show YouTube thumbnail for snappy UI
                 if (rawYtThumb) {
+                    delete coverArt.dataset.fallbackDone;
+                    delete miniCover.dataset.fallbackDone;
                     coverArt.src = rawYtThumb;
-                    miniCover.src = rawYtThumb;
+                    miniCover.src = resolveYtThumb(songData.thumbnail, 'small');
                     // Keep background layer low-res! Blurring HD images kills GPU performance.
-                    backgroundLayer.style.backgroundImage = `url("${rawYtThumb}")`;
+                    backgroundLayer.style.backgroundImage = `url("${resolveYtThumb(songData.thumbnail, 'small')}")`;
                 }
 
                 // We ALWAYS add song-playing so the ambient-wrapper becomes visible
@@ -2053,6 +2406,8 @@ const audioPlayer = document.getElementById('audio-player');
                 // Upgrade to HD iTunes cover silently in background (Only for the actual cover art, NOT the blurred background)
                 const hdImg = new Image();
                 hdImg.onload = () => {
+                    delete coverArt.dataset.fallbackDone;
+                    delete miniCover.dataset.fallbackDone;
                     coverArt.src = hdImg.src;
                     miniCover.src = hdImg.src;
                     // If no raw thumb was available, fallback to using HD cover for background
@@ -2149,13 +2504,13 @@ const audioPlayer = document.getElementById('audio-player');
                 if (streamData.quality) {
                     const badge = document.createElement('div');
                     badge.style.cssText = 'position:fixed;top:20px;right:80px;background:rgba(var(--accent-rgb),0.85);color:white;padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;z-index:9999;backdrop-filter:blur(10px);transition:opacity 1s;';
-                    badge.textContent = `🎵 ${streamData.quality}`;
+                    badge.textContent = `ðŸŽµ ${streamData.quality}`;
                     document.body.appendChild(badge);
                     setTimeout(() => { badge.style.opacity = '0'; setTimeout(() => badge.remove(), 1000); }, 3000);
                 }
 
                 // STEP 3: Now process lyrics (already fetched in parallel)
-                lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">🎵 Syncing lyrics...</div>';
+                lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">ðŸŽµ Syncing lyrics...</div>';
                 try {
                     let bestMatch = null;
                     let lrcData = await lrc1.json();
@@ -2180,7 +2535,18 @@ const audioPlayer = document.getElementById('audio-player');
                         lyricsData = convertLrcToJson(bestMatch.syncedLyrics);
                         renderLyrics();
                     } else {
-                        lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No synced lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+                        // Fallback to YouTube Plain Text Lyrics via Backend
+                        try {
+                            const ytRes = await fetch(`/api/lyrics?videoId=${songData.id || songData.videoId}`);
+                            const ytData = await ytRes.json();
+                            if (ytData.status === 'success' && ytData.lyrics) {
+                                lyricsContainer.innerHTML = `<div style="padding: 0 20px 100px 20px; font-size: 1.5rem; line-height: 2; color: rgba(255,255,255,0.7); white-space: pre-wrap; font-weight: 500; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">${ytData.lyrics}</div>`;
+                            } else {
+                                lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+                            }
+                        } catch (err) {
+                            lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+                        }
                     }
                 } catch (lrcErr) {
                     lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">Lyrics Database overloaded.<br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
@@ -2334,12 +2700,25 @@ const audioPlayer = document.getElementById('audio-player');
             });
 
             const converted = [];
+            
+            // Inject Intro Instrumental if lyrics start after 4 seconds
+            if (parsedData.length > 0 && parsedData[0].start > 4) {
+                converted.push({
+                    start: 0,
+                    end: parsedData[0].start - 0.5,
+                    words: [],
+                    isInstrumental: true
+                });
+            }
+
             for (let i = 0; i < parsedData.length; i++) {
                 const current = parsedData[i];
                 let endTime = (i < parsedData.length - 1) ? parsedData[i + 1].start : current.start + 5;
+                let originalNextStart = (i < parsedData.length - 1) ? parsedData[i + 1].start : null;
+                
                 if (endTime - current.start > 6) endTime = current.start + 6;
                 
-                const lineData = { start: current.start, end: endTime, words: [] };
+                const lineData = { start: current.start, end: endTime, words: [], isInstrumental: false };
                 const words = current.text.split(' ');
                 const wordDuration = (endTime - current.start) / words.length;
                 
@@ -2351,6 +2730,16 @@ const audioPlayer = document.getElementById('audio-player');
                     });
                 });
                 converted.push(lineData);
+
+                // Inject Instrumental Gap if gap is larger than 3 seconds
+                if (originalNextStart && (originalNextStart - endTime > 3)) {
+                    converted.push({
+                        start: endTime + 0.5,
+                        end: originalNextStart - 0.5,
+                        words: [],
+                        isInstrumental: true
+                    });
+                }
             }
             return converted;
         }
@@ -2370,16 +2759,21 @@ const audioPlayer = document.getElementById('audio-player');
                     if (audioPlayer.paused) audioPlayer.play();
                 });
 
-                line.words.forEach((word) => {
-                    const wordSpan = document.createElement('span');
-                    wordSpan.className = 'lyric-word';
-                    wordSpan.textContent = word.text;
-                    wordSpan.dataset.start = word.start;
-                    wordSpan.dataset.end = word.end;
-                    lineDiv.appendChild(wordSpan);
-                    lineDiv.appendChild(document.createTextNode(' '));
-                    wordElements.push({ el: wordSpan, start: word.start, end: word.end, state: 'future' });
-                });
+                if (line.isInstrumental) {
+                    lineDiv.classList.add('instrumental-line');
+                    lineDiv.innerHTML = '<span class="instrumental-dots"><span>&bull;</span><span>&bull;</span><span>&bull;</span></span>';
+                } else {
+                    line.words.forEach((word) => {
+                        const wordSpan = document.createElement('span');
+                        wordSpan.className = 'lyric-word';
+                        wordSpan.textContent = word.text;
+                        wordSpan.dataset.start = word.start;
+                        wordSpan.dataset.end = word.end;
+                        lineDiv.appendChild(wordSpan);
+                        lineDiv.appendChild(document.createTextNode(' '));
+                        wordElements.push({ el: wordSpan, start: word.start, end: word.end, state: 'future' });
+                    });
+                }
 
                 lyricsContainer.appendChild(lineDiv);
                 lineElements.push({ el: lineDiv, start: line.start, end: line.end });
@@ -2392,13 +2786,14 @@ const audioPlayer = document.getElementById('audio-player');
 
         function animationLoop() {
             if (!window._appTabHidden) {
+                // Focus Mode: We let it scroll, but CSS will fade it out to prevent lag
                 if (!audioPlayer.paused) processLyricsFrame();
                 else if (Math.abs(targetY - currentY) > 0.1) lerpScroll();
             }
             requestAnimationFrame(animationLoop);
         }
 
-        function processLyricsFrame() {
+        function processLyricsFrame(e) {
             const time = audioPlayer.currentTime;
             let currentLineIndex = -1;
 
@@ -2419,18 +2814,22 @@ const audioPlayer = document.getElementById('audio-player');
                 if (time >= lineElements[i].start) currentLineIndex = i;
             }
 
-            if (activeLineIndex !== currentLineIndex) {
-                if (activeLineIndex !== -1 && lineElements[activeLineIndex]) lineElements[activeLineIndex].el.classList.remove('active-line');
-                if (currentLineIndex !== -1 && lineElements[currentLineIndex]) lineElements[currentLineIndex].el.classList.add('active-line');
-                activeLineIndex = currentLineIndex;
-            }
+            const isResize = e && e.type === 'resize';
+            if (activeLineIndex !== currentLineIndex || isResize) {
+                if (activeLineIndex !== currentLineIndex) {
+                    if (activeLineIndex !== -1 && lineElements[activeLineIndex]) lineElements[activeLineIndex].el.classList.remove('active-line');
+                    if (currentLineIndex !== -1 && lineElements[currentLineIndex]) lineElements[currentLineIndex].el.classList.add('active-line');
+                    activeLineIndex = currentLineIndex;
+                }
 
-            const panelHeight = rightPanel.offsetHeight;
-            if (activeLineIndex !== -1 && lineElements[activeLineIndex]) {
-                targetY = (panelHeight / 2) - (lineElements[activeLineIndex].el.offsetHeight / 2) - lineElements[activeLineIndex].el.offsetTop;
-            } else if (lineElements.length > 0) {
-                targetY = (panelHeight / 2) - (lineElements[0].el.offsetHeight / 2) - lineElements[0].el.offsetTop;
-            } else targetY = panelHeight / 2;
+                // Only calculate layout when the line changes or window resizes to prevent massive layout thrashing
+                const panelHeight = rightPanel.offsetHeight;
+                if (activeLineIndex !== -1 && lineElements[activeLineIndex]) {
+                    targetY = (panelHeight / 2) - (lineElements[activeLineIndex].el.offsetHeight / 2) - lineElements[activeLineIndex].el.offsetTop;
+                } else if (lineElements.length > 0) {
+                    targetY = (panelHeight / 2) - (lineElements[0].el.offsetHeight / 2) - lineElements[0].el.offsetTop;
+                } else targetY = panelHeight / 2;
+            }
 
             lerpScroll();
         }
@@ -2576,7 +2975,7 @@ const audioPlayer = document.getElementById('audio-player');
                                     const sectionId = 'trend-' + Math.random().toString(36).slice(2);
                                     dynamicContainer.insertAdjacentHTML('beforeend', `
                                         <div class="home-section">
-                                            <h2 class="section-title">🔥 ${q}</h2>
+                                            <h2 class="section-title">ðŸ”¥ ${q}</h2>
                                             <div class="dense-grid-container" id="${sectionId}"></div>
                                         </div>`);
                                     populateDenseGrid(sectionId, [{ title: tData.title, artist: tData.uploader, cover: tData.thumbnail, query: q }]);
@@ -2585,7 +2984,7 @@ const audioPlayer = document.getElementById('audio-player');
                         } catch(e2) { /* ignore */ }
                     }
                     if (!dynamicContainer.innerHTML.trim()) {
-                        dynamicContainer.innerHTML = '<div class="empty-state" style="opacity:0.5; font-size:0.9rem;">Sync your YouTube Music account in ⚙️ Settings to see personalized recommendations.</div>';
+                        dynamicContainer.innerHTML = '<div class="empty-state" style="opacity:0.5; font-size:0.9rem;">Sync your YouTube Music account in âš™ï¸ Settings to see personalized recommendations.</div>';
                     }
                 }
             } catch(e) {
@@ -2604,10 +3003,13 @@ const audioPlayer = document.getElementById('audio-player');
             entries.forEach((item, idx) => {
                 const title = item.title || item.name || 'Unknown Title';
                 const subtitle = item.artist || item.uploader || 'Unknown Artist';
-                const rawThumb = item.cover || item.thumbnail || item.thumb || '';
-                // Use backend cover proxy for reliable images
-                const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb);
                 const videoId = item.videoId || item.id;
+                let rawThumb = item.cover || item.thumbnail || item.thumb || '';
+                if (!rawThumb && videoId) {
+                    rawThumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                }
+                // Use backend cover proxy for reliable images
+                const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
                 const query = `${title} ${subtitle}`;
                 
                 const card = document.createElement('div');
@@ -2615,7 +3017,7 @@ const audioPlayer = document.getElementById('audio-player');
                 card.style.animationDelay = `${idx * 0.03}s`;
                 card.setAttribute('data-query', query);
                 card.innerHTML = `
-                    <img src="${thumb}" crossorigin="anonymous" alt="" class="dense-card-cover" loading="lazy" decoding="async" onerror="this.src='default_cover.jpg'">
+                    <img src="${thumb}" alt="" class="dense-card-cover" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/api/cover'">
                     <div class="dense-card-info">
                         <div class="dense-card-title">${title}</div>
                         <div class="dense-card-artist">${subtitle}</div>
@@ -2685,7 +3087,7 @@ const audioPlayer = document.getElementById('audio-player');
                 card.style.animation = `slideUpFadeIn 0.5s ease forwards`;
                 card.style.animationDelay = `${idx * 0.05}s`;
                 card.innerHTML = `
-                    <img src="${coverUrl}" crossorigin="anonymous" alt="${artist.name}" title="${artist.name}">
+                    <img src="${coverUrl}" alt="${artist.name}" title="${artist.name}">
                     <div class="artist-scalloped-name">${artist.name}</div>
                 `;
                 card.onclick = () => showArtistPage(artist.browseId || artist.name);
@@ -2693,7 +3095,7 @@ const audioPlayer = document.getElementById('audio-player');
             });
         }
 
-        // ═══ SMART RECOMMENDATION ENGINE ═══
+        // â•â•â• SMART RECOMMENDATION ENGINE â•â•â•
         // 1) Taste Mix: picks 5 diverse songs from history, fetches recs for each, shuffles all together
         // 2) Because Rows: 3 separate "Because you listened to X" rows from different songs
 
@@ -2724,7 +3126,7 @@ const audioPlayer = document.getElementById('audio-player');
                         data.recommendations.forEach(s => {
                             if (!seenIds.has(s.videoId)) {
                                 seenIds.add(s.videoId);
-                                allRecs.push({ videoId: s.videoId, title: s.title, artist: s.artist, cover: s.thumbnail, type: 'song' });
+                                allRecs.push({ videoId: s.videoId, title: s.title, artist: s.artist, cover: s.cover || s.thumbnail || '', type: 'song' });
                             }
                         });
                     }
@@ -2769,7 +3171,7 @@ const audioPlayer = document.getElementById('audio-player');
                     sectionEl.style.marginBottom = '28px';
                     sectionEl.innerHTML = `
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-                            <img src="${getCoverUrl(song.title + ' ' + song.artist, song.cover || '')}" 
+                            <img src="${getCoverUrl(song.title + ' ' + song.artist, song.cover || '', song.videoId)}" 
                                  style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;" 
                                  onerror="this.src='default_cover.jpg'" alt="">
                             <div>
@@ -2782,7 +3184,7 @@ const audioPlayer = document.getElementById('audio-player');
                     rowsContainer.appendChild(sectionEl);
 
                     populateDenseGrid(rowId, data.recommendations.map(s => ({
-                        videoId: s.videoId, title: s.title, artist: s.artist, cover: s.thumbnail, type: 'song'
+                        videoId: s.videoId, title: s.title, artist: s.artist, cover: s.cover || s.thumbnail || '', type: 'song'
                     })));
                 } catch(e) {}
             }
@@ -2797,7 +3199,7 @@ const audioPlayer = document.getElementById('audio-player');
                 const artist = entry.artist || 'Unknown Artist';
                 const query = `${title} ${artist}`;
                 
-                // Use backend proxy — iTunes first, then YouTube thumb, never black!
+                // Use backend proxy â€” iTunes first, then YouTube thumb, never black!
                 const coverUrl = getEntryCoverUrl(entry);
 
                 const card = document.createElement("d" + "iv");
@@ -2854,14 +3256,14 @@ const audioPlayer = document.getElementById('audio-player');
                     document.body.classList.remove(id + '-active');
                 }
             });
-            document.getElementById('queue-panel').classList.remove('open');
+            if (typeof closeQueue === 'function') closeQueue();
         }
         window.showScreen = showScreenExcept;
         const showScreen = showScreenExcept;
 
-        // ═══════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // SEARCH RESULTS PAGE
-        // ═══════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         let srAllResults = { songs: [], videos: [], albums: [], artists: [] };
         let srActiveCategory = 'all';
 
@@ -2909,18 +3311,18 @@ const audioPlayer = document.getElementById('audio-player');
 
             const total = songs.length + videos.length + albums.length + artists.length;
             if (total === 0) {
-                contentEl.innerHTML = `<div class="sr-empty"><span>🔍</span>No results found.<br>Try a different search term.</div>`;
+                contentEl.innerHTML = `<div class="sr-empty"><span>ðŸ”</span>No results found.<br>Try a different search term.</div>`;
                 return;
             }
 
             let delay = 0;
 
-            // 🎵 SONGS & TOP RESULT 🎵
+            // ðŸŽµ SONGS & TOP RESULT ðŸŽµ
             if (songs.length > 0) {
                 if (cat === 'all') {
                     // Top Result + Stacked layout
                     const headerHtml = `<div class="section-header">
-                        <div class="sr-section-title" style="margin:0;">🎵 Top Results & Songs</div>
+                        <div class="sr-section-title" style="margin:0;">ðŸŽµ Top Results & Songs</div>
                         <button class="see-all-btn" onclick="document.querySelector('.sr-tab[data-cat=\\'song\\']').click()">See All</button>
                     </div>`;
                     contentEl.insertAdjacentHTML('beforeend', headerHtml);
@@ -2935,7 +3337,7 @@ const audioPlayer = document.getElementById('audio-player');
                     topCard.innerHTML = `
                         <img src="${topSong.cover || 'default_cover.jpg'}" alt="${topSong.title.replace(/"/g, '&quot;')}">
                         <div class="sr-top-title">${topSong.title}</div>
-                        <div class="sr-top-type">Song • ${topSong.artist}</div>
+                        <div class="sr-top-type">Song â€¢ ${topSong.artist}</div>
                         <button class="sr-top-play" onclick="event.stopPropagation(); playSong('${topSong.videoId}', '${JSON.stringify(topSong).replace(/"/g, '&quot;')}', this)">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                         </button>
@@ -2997,12 +3399,12 @@ const audioPlayer = document.getElementById('audio-player');
                 }
             }
 
-            // 🎵 VIDEOS & TOP RESULT 🎵
+            // ðŸŽµ VIDEOS & TOP RESULT ðŸŽµ
             if (videos.length > 0) {
                 if (cat === 'all') {
                     // Top Result + Stacked layout
                     const headerHtml = `<div class="section-header">
-                        <div class="sr-section-title" style="margin:0;">🎬 Top Video & More</div>
+                        <div class="sr-section-title" style="margin:0;">ðŸŽ¬ Top Video & More</div>
                         <button class="see-all-btn" onclick="document.querySelector('.sr-tab[data-cat=\\'video\\']').click()">See All</button>
                     </div>`;
                     contentEl.insertAdjacentHTML('beforeend', headerHtml);
@@ -3083,11 +3485,11 @@ const audioPlayer = document.getElementById('audio-player');
                 }
             }
 
-            // 🎵 ALBUMS 🎵
+            // ðŸŽµ ALBUMS ðŸŽµ
             if (albums.length > 0) {
                 if (cat === 'all') {
                     const headerHtml = `<div class="section-header">
-                        <div class="sr-section-title" style="margin:0;">💿 Albums</div>
+                        <div class="sr-section-title" style="margin:0;">ðŸ’¿ Albums</div>
                         <button class="see-all-btn" onclick="document.querySelector('.sr-tab[data-cat=\\'album\\']').click()">See All</button>
                     </div>`;
                     contentEl.insertAdjacentHTML('beforeend', headerHtml);
@@ -3111,11 +3513,11 @@ const audioPlayer = document.getElementById('audio-player');
                 contentEl.appendChild(grid);
             }
 
-            // 🎵 ARTISTS 🎵
+            // ðŸŽµ ARTISTS ðŸŽµ
             if (artists.length > 0) {
                 if (cat === 'all') {
                     const headerHtml = `<div class="section-header">
-                        <div class="sr-section-title" style="margin:0;">🎤 Artists</div>
+                        <div class="sr-section-title" style="margin:0;">ðŸŽ¤ Artists</div>
                         <button class="see-all-btn" onclick="document.querySelector('.sr-tab[data-cat=\\'artist\\']').click()">See All</button>
                     </div>`;
                     contentEl.insertAdjacentHTML('beforeend', headerHtml);
@@ -3196,13 +3598,13 @@ const audioPlayer = document.getElementById('audio-player');
                 if (data.status === 'success' && data.artist) {
                     const artist = data.artist;
                     const thumb = artist.thumbnails && artist.thumbnails.length > 0 ? getCoverUrl(artist.name, artist.thumbnails[artist.thumbnails.length-1].url) : 'default_cover.jpg';
-                    const subs = artist.subscribers ? ` • ${artist.subscribers}` : '';
+                    const subs = artist.subscribers ? ` â€¢ ${artist.subscribers}` : '';
                     
                     let html = `
                         <div class="hero-banner">
                             <div class="hero-bg" style="background-image: url('${thumb}')"></div>
                             <div class="hero-content">
-                                <img src="${thumb}" alt="${artist.name}" class="hero-avatar anim-pop" crossorigin="anonymous">
+                                <img src="${thumb}" alt="${artist.name}" class="hero-avatar anim-pop">
                                 <div class="hero-info">
                                     <h1 class="anim-slide-up" style="animation-delay: 0.1s">${artist.name}</h1>
                                     <p class="anim-slide-up" style="animation-delay: 0.2s">Artist${subs}</p>
@@ -3225,14 +3627,14 @@ const audioPlayer = document.getElementById('audio-player');
                         }
                         html += `<div class="page-section"><div class="section-header"><h2 class="anim-slide-up" style="animation-delay: 0.4s">Top Songs</h2>${seeAllBtn}</div><div class="tracklist-container" id="artist-songs-container">`;
                         artist.songs.results.forEach((song, idx) => {
-                            const songThumb = song.thumbnails && song.thumbnails.length > 0 ? getCoverUrl(song.title, song.thumbnails[song.thumbnails.length-1].url) : 'default_cover.jpg';
+                            const songThumb = song.thumbnails && song.thumbnails.length > 0 ? getCoverUrl(song.title, song.thumbnails[song.thumbnails.length-1].url, song.id || song.videoId) : 'default_cover.jpg';
                             const songJson = JSON.stringify({title: song.title, artist: artist.name}).replace(/"/g, '&quot;');
                             if(idx === 0) firstSongJson = songJson;
                             const delay = 0.4 + (idx * 0.05);
                             html += `
                                 <div class="tracklist-item anim-slide-up" style="animation-delay: ${delay}s" onclick="playTrackFromList('${songJson}')">
                                     <div class="tracklist-index">${idx + 1}</div>
-                                    <img src="${songThumb}" crossorigin="anonymous">
+                                    <img src="${songThumb}">
                                     <div class="tracklist-info">
                                         <div class="tracklist-title">${song.title}</div>
                                         <div class="tracklist-artist">${artist.name}</div>
@@ -3250,12 +3652,12 @@ const audioPlayer = document.getElementById('audio-player');
                     if (artist.albums && artist.albums.results && artist.albums.results.length > 0) {
                         html += `<div class="page-section"><h2 class="anim-slide-up" style="animation-delay: 0.8s">Albums</h2><div class="vinyl-scroll-container anim-slide-up" style="animation-delay: 0.9s">`;
                         artist.albums.results.forEach(album => {
-                            const albThumb = album.thumbnails && album.thumbnails.length > 0 ? getCoverUrl(album.title, album.thumbnails[album.thumbnails.length-1].url) : 'default_cover.jpg';
+                            const albThumb = album.thumbnails && album.thumbnails.length > 0 ? getCoverUrl(album.title, album.thumbnails[album.thumbnails.length-1].url, album.browseId) : 'default_cover.jpg';
                             html += `
                                 <div class="vinyl-card" onclick="showAlbumPage('${album.browseId}')">
                                     <div class="vinyl-cover-wrapper">
                                         <div class="vinyl-disc"></div>
-                                        <img src="${albThumb}" class="vinyl-cover" crossorigin="anonymous">
+                                        <img src="${albThumb}" class="vinyl-cover">
                                     </div>
                                     <div class="vinyl-info">${album.title}<br><span>${album.year || artist.name}</span></div>
                                 </div>
@@ -3294,17 +3696,17 @@ const audioPlayer = document.getElementById('audio-player');
                 
                 if (data.status === 'success' && data.album) {
                     const album = data.album;
-                    const thumb = album.thumbnails && album.thumbnails.length > 0 ? getCoverUrl(album.title, album.thumbnails[album.thumbnails.length-1].url) : 'default_cover.jpg';
+                    const thumb = album.thumbnails && album.thumbnails.length > 0 ? getCoverUrl(album.title, album.thumbnails[album.thumbnails.length-1].url, browseId) : 'default_cover.jpg';
                     const artistName = album.artists && album.artists.length > 0 ? album.artists[0].name : 'Unknown Artist';
                     
                     let html = `
                         <div class="hero-banner">
                             <div class="hero-bg" style="background-image: url('${thumb}')"></div>
                             <div class="hero-content">
-                                <img src="${thumb}" alt="${album.title}" class="hero-album-cover anim-pop" crossorigin="anonymous">
+                                <img src="${thumb}" alt="${album.title}" class="hero-album-cover anim-pop">
                                 <div class="hero-info">
                                     <h1 class="anim-slide-up" style="animation-delay: 0.1s">${album.title}</h1>
-                                    <p class="anim-slide-up" style="animation-delay: 0.2s">${artistName} • ${album.year || ''} • ${album.trackCount || 0} tracks</p>
+                                    <p class="anim-slide-up" style="animation-delay: 0.2s">${artistName} â€¢ ${album.year || ''} â€¢ ${album.trackCount || 0} tracks</p>
                                     <div class="apple-btn-row anim-slide-up" style="animation-delay: 0.3s">
                                         <button class="apple-btn apple-play-btn" onclick="playFirstTrack()"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Play</button>
                                         <button class="apple-btn apple-shuffle-btn" onclick="playFirstTrack()"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10.59,9.17L5.41,4,4,5.41l5.17,5.17,1.42-1.41zM14.5,4l2.04,2.04L4,18.59,5.41,20l12.55-12.55L20,9.5V4h-5.5zm.33,9.41l-1.41,1.41,3.13,3.13L14.5,20H20v-5.5l-2.04,2.04-3.13-3.13z"/></svg> Shuffle</button>
@@ -3382,9 +3784,9 @@ const audioPlayer = document.getElementById('audio-player');
                 if (data.status === 'success' && data.playlist) {
                     const pl = data.playlist;
                     nameEl.textContent = pl.title;
-                    countEl.textContent = `${pl.trackCount || pl.tracks?.length || 0} songs  •  Community Playlist`;
+                    countEl.textContent = `${pl.trackCount || pl.tracks?.length || 0} songs  â€¢  Community Playlist`;
 
-                    const thumb = pl.thumbnails && pl.thumbnails.length > 0 ? getCoverUrl(pl.title, pl.thumbnails[pl.thumbnails.length-1].url) : 'default_cover.jpg';
+                    const thumb = pl.thumbnails && pl.thumbnails.length > 0 ? getCoverUrl(pl.title, pl.thumbnails[pl.thumbnails.length-1].url, playlistId) : 'default_cover.jpg';
                     artEl.innerHTML = `<img src="${thumb}" onerror="this.src='default_cover.jpg'">`;
 
                     if (thumb) {
@@ -3399,7 +3801,7 @@ const audioPlayer = document.getElementById('audio-player');
                     } else {
                         pl.tracks.forEach((track, sIdx) => {
                             const trackArtist = track.artists && track.artists.length > 0 ? track.artists[0].name : 'Unknown Artist';
-                            const trackThumb = track.thumbnails && track.thumbnails.length > 0 ? getCoverUrl(track.title, track.thumbnails[track.thumbnails.length-1].url) : 'default_cover.jpg';
+                            const trackThumb = track.thumbnails && track.thumbnails.length > 0 ? getCoverUrl(track.title, track.thumbnails[track.thumbnails.length-1].url, track.id || track.videoId) : 'default_cover.jpg';
                             const row = document.createElement('div');
                             row.className = 'playlist-track-row';
                             row.innerHTML = `
@@ -3423,7 +3825,7 @@ const audioPlayer = document.getElementById('audio-player');
                                 window._forceQueueSong = { videoId: track.videoId, title: track.title, artist: trackArtist, cover: trackThumb };
                                 songSearchInput.value = `${track.title} ${trackArtist}`;
                                 searchBtn.click();
-                                showToast(`▶ Playing from ${pl.title}`);
+                                showToast(`â–¶ Playing from ${pl.title}`);
                             });
                             tracksEl.appendChild(row);
                         });
@@ -3444,7 +3846,7 @@ const audioPlayer = document.getElementById('audio-player');
                                 window._forceQueueSong = { videoId: first.videoId, title: first.title, artist: firstArtist, cover: firstThumb };
                                 songSearchInput.value = `${first.title} ${firstArtist}`;
                                 searchBtn.click();
-                                showToast(`▶ Playing ${pl.title}`);
+                                showToast(`â–¶ Playing ${pl.title}`);
                             };
                         }
                     }
@@ -3475,7 +3877,7 @@ const audioPlayer = document.getElementById('audio-player');
             } catch(e) { console.error(e); }
         };
 
-        // ── COVER ART FLOAT ANIMATION ──
+        // â”€â”€ COVER ART FLOAT ANIMATION â”€â”€
         const coverWrapper = document.getElementById('cover-wrapper');
         audioPlayer.addEventListener('play', () => {
             if (coverWrapper) coverWrapper.classList.add('now-playing-active');
@@ -3487,7 +3889,7 @@ const audioPlayer = document.getElementById('audio-player');
             if (coverWrapper) coverWrapper.classList.remove('now-playing-active');
         });
 
-        // ── MOOD RADIO SYSTEM ──
+        // â”€â”€ MOOD RADIO SYSTEM â”€â”€
         let activeMoodChip = null;
 
         document.querySelectorAll('.mood-chip').forEach(chip => {
@@ -3514,7 +3916,7 @@ const audioPlayer = document.getElementById('audio-player');
                     chip.classList.remove('loading');
                     if (data.status === 'success' && data.tracks && data.tracks.length > 0) {
                         populateVinylContainer('mood-radio-container', data.tracks);
-                        showToast(`📻 ${mood} Radio loaded!`);
+                        showToast(`ðŸ“» ${mood} Radio loaded!`);
                     } else {
                         container.innerHTML = '<div class="empty-state">Nothing found. Try another mood!</div>';
                     }
@@ -3525,7 +3927,7 @@ const audioPlayer = document.getElementById('audio-player');
             });
         });
 
-        // ── PLAYLIST DETAIL MODAL ──
+        // â”€â”€ PLAYLIST DETAIL MODAL â”€â”€
         let currentPlaylistIndex = -1;
         function openPlaylistModal(plIdx) {
             const playlists = getPlaylists();
@@ -3538,7 +3940,7 @@ const audioPlayer = document.getElementById('audio-player');
 
             // Build cover mosaic
             const artEl = document.getElementById('playlist-screen-art');
-            const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || ''));
+            const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId));
             if (covers.length >= 4) {
                 const imgs = covers.map(c => `<img src="${c}" loading="lazy" style="width:50%;height:50%;object-fit:cover;">`).join('');
                 artEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%;">${imgs}</div>`;
@@ -3589,9 +3991,9 @@ const audioPlayer = document.getElementById('audio-player');
             showScreen('playlist-full-screen');
         }
 
-        // renderPlaylists is defined at line 485 — no duplicate needed here
+        // renderPlaylists is defined at line 485 â€” no duplicate needed here
 
-        // ── PREMIUM QUEUE RENDERER ──
+        // â”€â”€ PREMIUM QUEUE RENDERER â”€â”€
         function renderQueue() {
             if (typeof updateCinematicCards === 'function') updateCinematicCards();
             const qList = document.getElementById('queue-list');
@@ -3609,9 +4011,9 @@ const audioPlayer = document.getElementById('audio-player');
 
             const nowPlayingSong = queueList[currentQueueIndex];
 
-            // ── NOW PLAYING HERO CARD ──
+            // â”€â”€ NOW PLAYING HERO CARD â”€â”€
             if (nowPlayingSong) {
-                const heroThumb = getCoverUrl(`${nowPlayingSong.title} ${nowPlayingSong.artist}`, nowPlayingSong.cover || '');
+                const heroThumb = getCoverUrl(`${nowPlayingSong.title} ${nowPlayingSong.artist}`, nowPlayingSong.cover || '', nowPlayingSong.id || nowPlayingSong.videoId);
                 const hero = document.createElement('div');
                 hero.style.cssText = `
                     position:relative; border-radius:18px; overflow:hidden;
@@ -3623,7 +4025,7 @@ const audioPlayer = document.getElementById('audio-player');
                     <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);border-radius:18px;"></div>
                     <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 18px;display:flex;align-items:flex-end;justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent,#ff476d);margin-bottom:4px;">♪ Now Playing</div>
+                            <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent,#ff476d);margin-bottom:4px;">â™ª Now Playing</div>
                             <div style="font-size:1.1rem;line-height:1.3;font-weight:700;color:white;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:280px;margin-bottom:4px;">${nowPlayingSong.title}</div>
                             <div style="font-size:0.85rem;color:rgba(255,255,255,0.7);">${nowPlayingSong.artist}</div>
                         </div>
@@ -3681,23 +4083,28 @@ const audioPlayer = document.getElementById('audio-player');
                 document.head.appendChild(s);
             }
 
-            // ── UP NEXT LABEL ──
-            const upNextSongs = queueList.filter((_, i) => i !== currentQueueIndex);
+            // â”€â”€ UP NEXT LABEL â”€â”€
+            const upNextSongs = queueList.filter((_, i) => i > currentQueueIndex);
             if (upNextSongs.length > 0) {
                 const label = document.createElement('div');
                 label.style.cssText = 'font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:0 4px 10px;';
-                label.textContent = `Up Next · ${upNextSongs.length} song${upNextSongs.length !== 1 ? 's' : ''}`;
+                label.textContent = `Up Next Â· ${upNextSongs.length} song${upNextSongs.length !== 1 ? 's' : ''}`;
                 qList.appendChild(label);
             }
 
-            // ── SONG ROWS (skip now-playing) ──
+            // â”€â”€ SONG ROWS (skip now-playing) â”€â”€
             let upNextCount = 0;
-            queueList.forEach((song, idx) => {
-                if (idx === currentQueueIndex) return; // hero card handles this
+            for (let idx = 0; idx < queueList.length; idx++) {
+                if (idx === currentQueueIndex) continue; // hero card handles this
+                
+                // PERFORMANCE FIX: Only render 5 previous songs and queueRenderLimit upcoming songs
+                // Rendering 500 backdrop-filtered elements freezes the UI!
+                if (idx < currentQueueIndex - 5 || idx > currentQueueIndex + queueRenderLimit) continue;
 
+                const song = queueList[idx];
                 upNextCount++;
                 const isNext = idx === currentQueueIndex + 1;
-                const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '');
+                const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
 
                 const row = document.createElement('div');
                 row.className = `q-row${isNext ? ' q-next' : ''}`;
@@ -3785,12 +4192,26 @@ const audioPlayer = document.getElementById('audio-player');
                 });
 
                 qList.appendChild(row);
-            });
+            }
 
-            if (upNextSongs.length === 0 && nowPlayingSong) {
+            if (currentQueueIndex + queueRenderLimit < queueList.length - 1) {
+                const btnRow = document.createElement('div');
+                btnRow.style.cssText = 'display:flex; justify-content:center; padding: 20px 0; margin-bottom: 20px;';
+                const loadBtn = document.createElement('button');
+                loadBtn.textContent = 'Load More (' + (queueList.length - 1 - (currentQueueIndex + queueRenderLimit)) + ' more)';
+                loadBtn.style.cssText = 'background: rgba(255,255,255,0.1); color: white; border: none; padding: 10px 24px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); font-weight: 600; font-size: 0.9rem; transition: background 0.2s;';
+                loadBtn.onmouseover = () => loadBtn.style.background = 'rgba(255,255,255,0.2)';
+                loadBtn.onmouseleave = () => loadBtn.style.background = 'rgba(255,255,255,0.1)';
+                loadBtn.onclick = () => {
+                    queueRenderLimit += 20;
+                    renderQueue();
+                };
+                btnRow.appendChild(loadBtn);
+                qList.appendChild(btnRow);
+            } else if (upNextSongs.length === 0 && nowPlayingSong) {
                 const end = document.createElement('div');
                 end.style.cssText = 'text-align:center;padding:20px;font-size:0.8rem;color:rgba(255,255,255,0.25);';
-                end.textContent = '— End of queue —';
+                end.textContent = 'â€” End of queue â€”';
                 qList.appendChild(end);
             }
         }
@@ -3808,7 +4229,7 @@ const audioPlayer = document.getElementById('audio-player');
             renderQueue();
         });
 
-        // ── YOUTUBE MUSIC ACCOUNT SYNC LOGIC ──
+        // â”€â”€ YOUTUBE MUSIC ACCOUNT SYNC LOGIC â”€â”€
         const syncDot = document.getElementById('sync-status-dot');
         const syncText = document.getElementById('sync-status-text');
         const syncForm = document.getElementById('sync-form-container');
@@ -3870,13 +4291,13 @@ const audioPlayer = document.getElementById('audio-player');
         syncBtn?.addEventListener('click', async () => {
             const headersVal = syncHeadersInput?.value?.strip ? syncHeadersInput.value.strip() : syncHeadersInput?.value?.trim();
             if (!headersVal) {
-                showToast("❌ Please paste your raw browser headers first!");
+                showToast("âŒ Please paste your raw browser headers first!");
                 return;
             }
 
             syncBtn.disabled = true;
             const originalText = syncBtn.textContent;
-            syncBtn.textContent = '⚡ Syncing account...';
+            syncBtn.textContent = 'âš¡ Syncing account...';
 
             try {
                 const res = await fetch('/api/sync', {
@@ -3894,10 +4315,10 @@ const audioPlayer = document.getElementById('audio-player');
                     loadTrendingFeeds(); // Reload personalized home sections
                     showToast("Library Synced Successfully!");
                 } else {
-                    showToast("❌ Sync failed: " + (data.message || "Invalid headers."));
+                    showToast("âŒ Sync failed: " + (data.message || "Invalid headers."));
                 }
             } catch(e) {
-                showToast("❌ Network error while syncing.");
+                showToast("âŒ Network error while syncing.");
             } finally {
                 syncBtn.disabled = false;
                 syncBtn.textContent = originalText;
@@ -3910,15 +4331,15 @@ const audioPlayer = document.getElementById('audio-player');
             try {
                 const res = await fetch('/api/unsync', { method: 'POST' });
                 const data = await res.json();
-                showToast("☁️ Account Disconnected!");
+                showToast("â˜ï¸ Account Disconnected!");
                 await checkSyncStatus();
                 loadTrendingFeeds(); // Reload standard trending feed
             } catch(e) {
-                showToast("❌ Failed to disconnect account.");
+                showToast("âŒ Failed to disconnect account.");
             }
         });
 
-        // ── 1-CLICK BOOKMARKLET REDIRECT HANDLER ──
+        // â”€â”€ 1-CLICK BOOKMARKLET REDIRECT HANDLER â”€â”€
         if (window.location.hash.startsWith('#sync_cookie=')) {
             const cookieVal = decodeURIComponent(window.location.hash.replace('#sync_cookie=', ''));
             window.history.replaceState("", document.title, window.location.pathname + window.location.search);
@@ -3943,7 +4364,7 @@ const audioPlayer = document.getElementById('audio-player');
             overlay.style.padding = '20px';
             
             overlay.innerHTML = `
-                <div style="font-size: 3.5rem; margin-bottom: 24px;">⚡</div>
+                <div style="font-size: 3.5rem; margin-bottom: 24px;">âš¡</div>
                 <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 12px; letter-spacing:-0.5px;">Syncing with YouTube Music...</div>
                 <div style="font-size: 0.95rem; color: rgba(255,255,255,0.6);" id="sync-overlay-status">Verifying secure credentials...</div>
             `;
@@ -3961,14 +4382,14 @@ const audioPlayer = document.getElementById('audio-player');
                     localStorage.setItem('ytm_sync_trigger', Date.now());
                     
                     overlay.innerHTML = `
-                        <div style="font-size: 3.5rem; margin-bottom: 24px;">🎉</div>
+                        <div style="font-size: 3.5rem; margin-bottom: 24px;">ðŸŽ‰</div>
                         <div style="font-size: 1.6rem; font-weight: 700; color: #28cd41; margin-bottom: 12px; letter-spacing:-0.5px;">Sync Successful!</div>
                         <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">Your personalized YouTube Music feed, playlists, and liked songs have been successfully loaded.</div>
                         <button onclick="window.close();" style="padding: 12px 28px; background: #28cd41; color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer; box-shadow: 0 4px 15px rgba(40,205,65,0.3);">Close This Tab</button>
                     `;
                 } else {
                     overlay.innerHTML = `
-                        <div style="font-size: 3.5rem; margin-bottom: 24px;">❌</div>
+                        <div style="font-size: 3.5rem; margin-bottom: 24px;">âŒ</div>
                         <div style="font-size: 1.6rem; font-weight: 700; color: #ff476d; margin-bottom: 12px; letter-spacing:-0.5px;">Sync Failed</div>
                         <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">${data.message}</div>
                         <button onclick="document.body.removeChild(this.parentNode);" style="padding: 12px 28px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer;">Go to Streamer</button>
@@ -3977,7 +4398,7 @@ const audioPlayer = document.getElementById('audio-player');
             })
             .catch(err => {
                 overlay.innerHTML = `
-                    <div style="font-size: 3.5rem; margin-bottom: 24px;">❌</div>
+                    <div style="font-size: 3.5rem; margin-bottom: 24px;">âŒ</div>
                     <div style="font-size: 1.6rem; font-weight: 700; color: #ff476d; margin-bottom: 12px; letter-spacing:-0.5px;">Connection Error</div>
                     <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">Could not communicate with the local server. Make sure Apple Music Streamer is running.</div>
                     <button onclick="document.body.removeChild(this.parentNode);" style="padding: 12px 28px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer;">Close</button>
@@ -4023,11 +4444,11 @@ const audioPlayer = document.getElementById('audio-player');
                 checkSyncStatus();
                 loadTrendingFeeds();
                 renderPlaylists();
-                showToast("☁️ YouTube Music account synced successfully!");
+                showToast("â˜ï¸ YouTube Music account synced successfully!");
             }
         });
 
-        // ── Song Context Menu Logic ──
+        // â”€â”€ Song Context Menu Logic â”€â”€
         const contextMenu = document.getElementById('song-context-menu');
         let currentContextQuery = null;
 
@@ -4233,7 +4654,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                                 <div class="pip-center-controls">
                                     <button class="pip-btn" id="pip-prev"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-                                    <button class="pip-btn pip-play-btn" id="pip-play">${document.getElementById('audio-player').paused ? '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'}</button>
+                                    <button class="pip-btn pip-play-btn" id="pip-play">${audioPlayer.paused ? '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'}</button>
                                     <button class="pip-btn" id="pip-next"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
                                 </div>
                                 <div class="pip-right-controls">
@@ -4254,7 +4675,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pipProgBg.addEventListener('click', (e) => {
                     const rect = pipProgBg.getBoundingClientRect();
                     const pos = (e.clientX - rect.left) / rect.width;
-                    document.getElementById('audio-player').currentTime = pos * document.getElementById('audio-player').duration;
+                    audioPlayer.currentTime = pos * audioPlayer.duration;
                 });
 
                 pipWindow.addEventListener("pagehide", () => {
@@ -4284,7 +4705,7 @@ function updatePiPState() {
 function updatePiPPlayback() {
     if (!window.pipWindow) return;
     const pipDoc = window.pipWindow.document;
-    const ap = document.getElementById('audio-player');
+    const ap = audioPlayer;
     
     // Update Play/Pause Icon
     pipDoc.getElementById('pip-play').innerHTML = ap.paused ? 
@@ -4295,7 +4716,7 @@ function updatePiPPlayback() {
 function updatePiPProgress() {
     if (!window.pipWindow) return;
     const pipDoc = window.pipWindow.document;
-    const ap = document.getElementById('audio-player');
+    const ap = audioPlayer;
     
     if (ap.duration) {
         pipDoc.getElementById('pip-prog-fill').style.width = (ap.currentTime / ap.duration * 100) + '%';
@@ -4305,7 +4726,7 @@ function updatePiPProgress() {
 }
 
 // Hook into existing events (We need to monkey patch or add listeners where state changes)
-const originalAudioPlayer = document.getElementById('audio-player');
+const originalAudioPlayer = audioPlayer;
 originalAudioPlayer.addEventListener('timeupdate', updatePiPProgress);
 originalAudioPlayer.addEventListener('play', updatePiPPlayback);
 originalAudioPlayer.addEventListener('pause', updatePiPPlayback);
@@ -4383,7 +4804,7 @@ function initAudioOptimizer() {
         compressor.connect(audioCtx.destination);
 
         isAudioOptimized = true;
-        console.log("Audio Optimizer Initialized! 🎧 Sound quality enhanced.");
+        console.log("Audio Optimizer Initialized! ðŸŽ§ Sound quality enhanced.");
     } catch(e) {
         console.warn("Audio Optimizer failed to initialize:", e);
     }
@@ -4488,7 +4909,7 @@ window.loadLibraryArtists = function() {
     followedArtists.forEach(artist => {
         html += `
             <div class="artist-circle-card" onclick="openArtist('${artist.browseId}')">
-                <img src="${artist.thumb}" crossorigin="anonymous" alt="${artist.name}">
+                <img src="${artist.thumb}" alt="${artist.name}">
                 <div class="artist-name">${artist.name}</div>
             </div>
         `;
@@ -4549,12 +4970,12 @@ window.fetchArtistAllSongs = async function(browseId, artistName) {
         if (data.status === 'success' && data.playlist && data.playlist.tracks) {
             let html = '<div class="sr-card-grid">';
             data.playlist.tracks.forEach((song, idx) => {
-                const songThumb = song.thumbnails && song.thumbnails.length > 0 ? getCoverUrl(song.title, song.thumbnails[song.thumbnails.length-1].url) : 'default_cover.jpg';
+                const songThumb = song.thumbnails && song.thumbnails.length > 0 ? getCoverUrl(song.title, song.thumbnails[song.thumbnails.length-1].url, song.id || song.videoId) : 'default_cover.jpg';
                 const songJson = JSON.stringify({title: song.title, artist: artistName}).replace(/"/g, '&quot;');
                 
                 html += `
                     <div class="sr-card album anim-slide-up" style="animation-delay: ${0.05 + (Math.min(idx, 20) * 0.05)}s" onclick="playSong('${song.videoId}', '${songJson}', this)">
-                        <img src="${songThumb}" class="sr-card-cover" crossorigin="anonymous" alt="${song.title}">
+                        <img src="${songThumb}" class="sr-card-cover" alt="${song.title}">
                         <div class="sr-card-name">${song.title}</div>
                         <div class="sr-card-sub">${artistName}</div>
                     </div>
@@ -4809,7 +5230,7 @@ const PartyEngine = {
             // Update mobile settings start-party-btn UI
             const settingsBtn = document.getElementById('start-party-btn');
             if (settingsBtn) {
-                settingsBtn.innerHTML = '⚡ View Party Details';
+                settingsBtn.innerHTML = 'âš¡ View Party Details';
                 settingsBtn.style.background = 'rgba(0, 255, 150, 0.15)';
                 settingsBtn.style.color = '#00ff96';
             }
@@ -5079,7 +5500,7 @@ const PartyEngine = {
         
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         msgDiv.innerHTML = `
-            <div class="msg-meta">${isSelf ? 'You' : sender} • ${timeStr}</div>
+            <div class="msg-meta">${isSelf ? 'You' : sender} â€¢ ${timeStr}</div>
             <div class="msg-bubble">${this.escapeHTML(text)}</div>
         `;
         
@@ -5130,203 +5551,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* =========================================================================
    SPATIAL AUDIO ENGINE (Concert Hall Effect)
    ========================================================================= */
-const SpatialAudioEngine = {
-    isActive: false,
-    is8DActive: false,
-    isInitialized: false,
-    audioCtx: null,
-    sourceNode: null,
-    wetGain: null,
-    dryGain: null,
-    bassEq: null,
-    trebleEq: null,
-    spatialHighpass: null,
-    spatialMix: null,
-    splitter: null,
-    merger: null,
-    haasDelay: null,
-    roomDelay: null,
-    roomFeedback: null,
-    roomFilter: null,
-    analyser: null,
-    eightDPanner: null,
-    eightDLoopId: null,
 
-    init() {
-        if (this.isInitialized) return;
-        
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.audioCtx = new AudioContext();
-            
-            // Connect original audio element
-            this.sourceNode = this.audioCtx.createMediaElementSource(audioPlayer);
-
-            // Analyser for Visualizer
-            this.analyser = this.audioCtx.createAnalyser();
-            this.analyser.fftSize = 1024;
-            this.analyser.smoothingTimeConstant = 0.8;
-
-            // 8D Audio Panner
-            this.eightDPanner = this.audioCtx.createStereoPanner();
-            this.eightDPanner.pan.value = 0; // Centered initially
-
-            // Master wet/dry
-            this.wetGain = this.audioCtx.createGain();
-            this.dryGain = this.audioCtx.createGain();
-
-            // 1. Psychoacoustic EQ (Cinematic Bass + Air)
-            this.bassEq = this.audioCtx.createBiquadFilter();
-            this.bassEq.type = 'lowshelf';
-            this.bassEq.frequency.value = 80;
-            this.bassEq.gain.value = 5;
-
-            this.trebleEq = this.audioCtx.createBiquadFilter();
-            this.trebleEq.type = 'highshelf';
-            this.trebleEq.frequency.value = 10000;
-            this.trebleEq.gain.value = 4;
-
-            // 2. Crossover Highpass
-            this.spatialHighpass = this.audioCtx.createBiquadFilter();
-            this.spatialHighpass.type = 'highpass';
-            this.spatialHighpass.frequency.value = 300;
-
-            // 3. Haas Delay
-            this.splitter = this.audioCtx.createChannelSplitter(2);
-            this.merger = this.audioCtx.createChannelMerger(2);
-            this.haasDelay = this.audioCtx.createDelay();
-            this.haasDelay.delayTime.value = 0.020;
-
-            // 4. Echo
-            this.roomDelay = this.audioCtx.createDelay();
-            this.roomDelay.delayTime.value = 0.070;
-            this.roomFeedback = this.audioCtx.createGain();
-            this.roomFeedback.gain.value = 0.2;
-            this.roomFilter = this.audioCtx.createBiquadFilter();
-            this.roomFilter.type = 'lowpass';
-            this.roomFilter.frequency.value = 3000;
-
-            this.spatialMix = this.audioCtx.createGain();
-            this.spatialMix.gain.value = 0.6;
-
-            // ROUTING:
-            // Source -> Analyser -> Dry/Wet Splits
-            this.sourceNode.connect(this.analyser);
-
-            // Dry Path
-            this.analyser.connect(this.dryGain);
-            
-            // Path to Destination: 8D Panner sits just before destination!
-            this.dryGain.connect(this.eightDPanner);
-            this.eightDPanner.connect(this.audioCtx.destination);
-
-            // Wet Path
-            this.analyser.connect(this.bassEq);
-            this.bassEq.connect(this.trebleEq);
-
-            // Direct EQ
-            this.trebleEq.connect(this.wetGain);
-
-            // Delay Path
-            this.trebleEq.connect(this.spatialHighpass);
-            
-            this.spatialHighpass.connect(this.splitter);
-            this.splitter.connect(this.merger, 0, 0); 
-            this.splitter.connect(this.haasDelay, 1);
-            this.haasDelay.connect(this.merger, 0, 1);
-
-            this.spatialHighpass.connect(this.roomDelay);
-            this.roomDelay.connect(this.roomFilter);
-            this.roomFilter.connect(this.roomFeedback);
-            this.roomFeedback.connect(this.roomDelay);
-
-            this.merger.connect(this.spatialMix);
-            this.roomFilter.connect(this.spatialMix);
-            
-            this.spatialMix.connect(this.wetGain);
-            
-            // Wet path also goes through 8D Panner
-            this.wetGain.connect(this.eightDPanner);
-
-            // Initial State
-            this.dryGain.gain.value = 1.0;
-            this.wetGain.gain.value = 0.0;
-            
-            this.isInitialized = true;
-            console.log("3D Spatial Audio Engine (with Analyser & 8D) Initialized");
-
-        } catch (e) {
-            console.error("Failed to initialize Spatial Audio", e);
-        }
-    },
-
-    toggle() {
-        if (!this.isInitialized) this.init();
-        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
-
-        const btn = document.getElementById('spatial-audio-btn');
-        this.isActive = !this.isActive;
-
-        if (this.isActive) {
-            this.dryGain.gain.setTargetAtTime(0.0, this.audioCtx.currentTime, 0.5); 
-            this.wetGain.gain.setTargetAtTime(1.0, this.audioCtx.currentTime, 0.5); 
-            btn.style.color = '#ff476d';
-            btn.style.transform = 'scale(1.1)';
-            setTimeout(() => btn.style.transform = '', 200);
-            showToast('Spatial Audio: ON (3D Cinema)');
-        } else {
-            this.dryGain.gain.setTargetAtTime(1.0, this.audioCtx.currentTime, 0.5);
-            this.wetGain.gain.setTargetAtTime(0.0, this.audioCtx.currentTime, 0.5);
-            btn.style.color = '';
-            showToast('Spatial Audio: OFF');
-        }
-    },
-
-    toggle8D() {
-        if (!this.isInitialized) this.init();
-        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
-
-        const btn = document.getElementById('spatial-8d-btn');
-        this.is8DActive = !this.is8DActive;
-
-        if (this.is8DActive) {
-            btn.style.color = '#00e5ff'; // Cyan for 8D
-            btn.style.transform = 'scale(1.1)';
-            setTimeout(() => btn.style.transform = '', 200);
-            showToast('8D Audio: ON (Rotating)');
-            
-            let startTime = this.audioCtx.currentTime;
-            const orbitSpeed = 0.4; // Speed of rotation
-            
-            const loop = () => {
-                if (!this.is8DActive) return;
-                const elapsed = this.audioCtx.currentTime - startTime;
-                const panValue = Math.sin(elapsed * orbitSpeed);
-                this.eightDPanner.pan.setValueAtTime(panValue, this.audioCtx.currentTime);
-                this.eightDLoopId = requestAnimationFrame(loop);
-            };
-            loop();
-        } else {
-            btn.style.color = '';
-            showToast('8D Audio: OFF');
-            cancelAnimationFrame(this.eightDLoopId);
-            this.eightDPanner.pan.setTargetAtTime(0, this.audioCtx.currentTime, 0.5); // Center smoothly
-        }
-    }
-};
-
-// Visualizer Logic
-let visualizerCanvas = document.getElementById('visualizer-canvas');
-let visualizerCtx = visualizerCanvas ? visualizerCanvas.getContext('2d') : null;
-
-function resizeVisualizer() {
-    visualizerCanvas = document.getElementById('visualizer-canvas');
-    if (!visualizerCanvas) return;
-    visualizerCtx = visualizerCanvas.getContext('2d');
-    visualizerCanvas.width = visualizerCanvas.clientWidth;
-    visualizerCanvas.height = visualizerCanvas.clientHeight;
-}
-window.addEventListener('resize', resizeVisualizer);
 
 // Visualizer completely removed for maximum dynamic wallpaper performance.
 
@@ -5435,7 +5660,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// ── 3D Cover Art Tilt + Glare ──
+// â”€â”€ 3D Cover Art Tilt + Glare â”€â”€
 (function () {
     const container = document.getElementById('cover-art-container');
     const coverWrapper = document.getElementById('cover-wrapper');
@@ -5454,7 +5679,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const dx = (e.clientX - cx) / (rect.width / 2);
         const dy = (e.clientY - cy) / (rect.height / 2);
 
-        container.style.transform = `perspective(800px) rotateX(${dy * -10}deg) rotateY(${dx * 10}deg) scale(1.04)`;
+        container.style.transform = `perspective(800px) rotateX(${dy * -18}deg) rotateY(${dx * 18}deg) scale(1.04)`;
 
         // Move glare to mouse position
         const gx = ((e.clientX - rect.left) / rect.width) * 100;
@@ -5474,14 +5699,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 })();
 
-// ── Page Visibility Optimization (stop wasted rAF when tab is hidden) ──
+// â”€â”€ Page Visibility Optimization (stop wasted rAF when tab is hidden) â”€â”€
 (function() {
     let rafId = null;
     // Patch requestAnimationFrame to track the animation loop ID
     // We just listen to visibility and pause/resume the audio-derived loops via a flag
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-            // Tab hidden — audio still plays but we don't need to render lyrics frames
+            // Tab hidden â€” audio still plays but we don't need to render lyrics frames
             window._appTabHidden = true;
         } else {
             window._appTabHidden = false;
@@ -5489,7 +5714,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 })();
 
-// ── Voice Search (Mic Button) ──
+// â”€â”€ Voice Search (Mic Button) â”€â”€
 (function () {
     const micBtn = document.getElementById('mic-btn');
     const searchInput = document.getElementById('song-search');
@@ -5517,3 +5742,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     recognition.onerror = () => { isListening = false; micBtn.classList.remove('listening'); searchInput.placeholder = 'Search songs, artists, albums...'; };
 })();
+

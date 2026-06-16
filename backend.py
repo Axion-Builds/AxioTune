@@ -153,18 +153,29 @@ def is_valid_yt_thumb(url: str) -> bool:
     return True
 
 
+def extract_yt_video_id(url: str) -> str:
+    if not url:
+        return ""
+    match = re.search(r'/vi(?:_webp)?/([^/?#]+)', url)
+    if match:
+        return match.group(1)
+    return ""
+
+
 @app.get("/api/cover")
-async def get_cover(q: str = "", yt_thumb: str = ""):
+async def get_cover(q: str = "", yt_thumb: str = "", vid: str = ""):
     """
     Fetches album artwork proxied through our server with disk caching.
     1. Checks disk cache first.
     2. Tries iTunes API (best quality, never expires, no CORS) and caches result.
-    3. Falls back to proxying YouTube thumbnail and caches result.
+    3. Falls back to proxying YouTube thumbnail (highest quality available) and caches result.
     4. Falls back to default_cover.jpg
     """
     cache_key = ""
     if q:
         cache_key = hashlib.md5(f"q_{q}".encode('utf-8')).hexdigest()
+    elif vid:
+        cache_key = hashlib.md5(f"vid_{vid}".encode('utf-8')).hexdigest()
     elif yt_thumb:
         cache_key = hashlib.md5(f"thumb_{yt_thumb}".encode('utf-8')).hexdigest()
 
@@ -180,21 +191,8 @@ async def get_cover(q: str = "", yt_thumb: str = ""):
     # Add User-Agent to prevent 403 Forbidden from iTunes and Google APIs
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     
-    async with httpx.AsyncClient(timeout=2.0, headers=headers) as client:
-        # First try to use the provided YouTube thumbnail if available (much faster, no rate limits)
-        if yt_thumb and is_valid_yt_thumb(yt_thumb):
-            try:
-                img_r = await client.get(yt_thumb)
-                if img_r.status_code == 200:
-                    if cache_key:
-                        with open(cache_path, "wb") as f:
-                            f.write(img_r.content)
-                    return Response(content=img_r.content, media_type="image/jpeg",
-                                    headers={"Cache-Control": "public, max-age=86400"})
-            except Exception:
-                pass
-
-        # If no yt_thumb or it failed, fallback to iTunes API
+    async with httpx.AsyncClient(timeout=3.0, headers=headers) as client:
+        # First try to use the iTunes API if q is provided (best quality square artwork)
         if q:
             term = clean_cover_search_term(q)
             if term:
@@ -203,22 +201,55 @@ async def get_cover(q: str = "", yt_thumb: str = ""):
                         "https://itunes.apple.com/search",
                         params={"term": term, "entity": "song", "limit": 1}
                     )
-                    data = r.json()
-                    if data.get("results"):
-                        art_url = data["results"][0]["artworkUrl100"].replace("100x100bb", "600x600bb")
-                        img_r = await client.get(art_url)
-                        if img_r.status_code == 200:
-                            if cache_key:
-                                with open(cache_path, "wb") as f:
-                                    f.write(img_r.content)
-                            return Response(content=img_r.content, media_type="image/jpeg",
-                                            headers={"Cache-Control": "public, max-age=31536000"})
+                    if r.status_code == 200:
+                        data = r.json()
+                        if data.get("results"):
+                            art_url = data["results"][0]["artworkUrl100"].replace("100x100bb", "600x600bb")
+                            img_r = await client.get(art_url)
+                            if img_r.status_code == 200:
+                                if cache_key:
+                                    with open(cache_path, "wb") as f:
+                                        f.write(img_r.content)
+                                return Response(content=img_r.content, media_type="image/jpeg",
+                                                headers={"Cache-Control": "public, max-age=31536000"})
                 except Exception:
                     pass
 
-    # Last resort: redirect to youtube thumbnail directly so user's browser loads it!
-    if yt_thumb and is_valid_yt_thumb(yt_thumb):
-        return RedirectResponse(url=yt_thumb, status_code=302)
+        # If iTunes API lookup failed or q was empty, fallback to downloading YouTube thumbnail
+        yt_urls = []
+        target_vid = extract_yt_video_id(yt_thumb) if yt_thumb and is_valid_yt_thumb(yt_thumb) else vid
+
+        if target_vid:
+            # Try higher resolution options first, fallback to hqdefault which is always present
+            yt_urls.extend([
+                f"https://img.youtube.com/vi/{target_vid}/maxresdefault.jpg",
+                f"https://img.youtube.com/vi/{target_vid}/sddefault.jpg",
+                f"https://img.youtube.com/vi/{target_vid}/hqdefault.jpg",
+                f"https://img.youtube.com/vi/{target_vid}/mqdefault.jpg",
+                f"https://img.youtube.com/vi/{target_vid}/default.jpg"
+            ])
+            
+        if yt_thumb and is_valid_yt_thumb(yt_thumb):
+            yt_urls.append(yt_thumb)
+
+        for url in yt_urls:
+            try:
+                img_r = await client.get(url)
+                if img_r.status_code == 200:
+                    if cache_key:
+                        with open(cache_path, "wb") as f:
+                            f.write(img_r.content)
+                    return Response(content=img_r.content, media_type="image/jpeg",
+                                    headers={"Cache-Control": "public, max-age=31536000" if q else "public, max-age=86400"})
+            except Exception:
+                continue
+
+    # Absolute ultimate fallback to prevent broken images and CORS errors
+    if os.path.exists("default_cover.jpg"):
+        return FileResponse("default_cover.jpg", media_type="image/jpeg")
+        
+    return Response(status_code=404)
+        
     return FileResponse("default_cover.jpg")
 
 # Live search suggestions — returns songs, artists, albums mixed
@@ -453,7 +484,6 @@ async def search(q: str):
         
     raise HTTPException(status_code=404, detail="No results found")
 
-# Endpoint to extract the raw live streaming audio URL from YouTube
 @app.get("/api/stream")
 async def stream(id: str, refresh: bool = False):
     # Check cache first (skip when client requests a fresh URL)
@@ -465,8 +495,7 @@ async def stream(id: str, refresh: bool = False):
                 "url": cached["url"],
                 "quality": cached["quality"],
                 "format_note": cached["format_note"],
-                "cached": True,
-                "requires_proxy": cached.get("requires_proxy", True)
+                "cached": True
             }
 
     ydl_opts = {
@@ -476,6 +505,12 @@ async def stream(id: str, refresh: bool = False):
         'no_warnings': True,
         'socket_timeout': 8,
         'extractor_retries': 1,
+        # android client bypasses YouTube bot detection WITHOUT needing cookies!
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios'],
+            }
+        },
     }
     
     # Inject cookies to bypass aggressive datacenter IP blocks on Render
@@ -486,6 +521,7 @@ async def stream(id: str, refresh: bool = False):
                 cookie_str = auth_data.get("Cookie", "")
                 if cookie_str:
                     ydl_opts['http_headers'] = {'Cookie': cookie_str}
+                    ydl_opts['extractor_args']['youtube']['player_client'] = ['web']
     except Exception:
         pass
 
@@ -511,8 +547,7 @@ async def stream(id: str, refresh: bool = False):
                         "quality": f"{int(abr)}kbps",
                         "format_note": info.get('ext', 'unknown'),
                         "cached": False,
-                        "source": "yt-dlp",
-                        "requires_proxy": True
+                        "source": "yt-dlp"
                     }
             except Exception as e:
                 print(f"[yt-dlp DEBUG] Exception: {type(e).__name__}: {str(e)[:200]}")
@@ -523,8 +558,7 @@ async def stream(id: str, refresh: bool = False):
         
         # --- FALLBACK: INVIDIOUS API ---
         print(f"[Fallback] yt-dlp failed for {id}, trying Invidious APIs...")
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-        async with httpx.AsyncClient(timeout=4.0, headers=headers, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             for instance in INVIDIOUS_INSTANCES:
                 try:
                     r = await client.get(f"{instance}/api/v1/videos/{id}")
@@ -540,8 +574,7 @@ async def stream(id: str, refresh: bool = False):
                                 "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
                                 "format_note": best.get('container', 'webm'),
                                 "cached": False,
-                                "source": f"invidious ({instance})",
-                                "requires_proxy": False
+                                "source": f"invidious ({instance})"
                             }
                 except Exception:
                     continue
@@ -552,14 +585,9 @@ async def stream(id: str, refresh: bool = False):
             "https://pipedapi.kavin.rocks",
             "https://pipedapi.tokhmi.xyz",
             "https://pipedapi.syncpundit.io",
-            "https://pi.ggtyler.dev",
-            "https://pipedapi.adminforge.de",
-            "https://piped-api.lunar.icu",
-            "https://piped-api.garudalinux.org",
-            "https://pipedapi.drgns.space"
+            "https://pi.ggtyler.dev"
         ]
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-        async with httpx.AsyncClient(timeout=4.0, headers=headers, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             for instance in PIPED_INSTANCES:
                 try:
                     r = await client.get(f"{instance}/streams/{id}")
@@ -574,8 +602,7 @@ async def stream(id: str, refresh: bool = False):
                                 "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
                                 "format_note": best.get('mimeType', 'webm'),
                                 "cached": False,
-                                "source": f"piped ({instance})",
-                                "requires_proxy": False
+                                "source": f"piped ({instance})"
                             }
                 except Exception:
                     continue
@@ -590,8 +617,7 @@ async def stream(id: str, refresh: bool = False):
             "url": res["url"],
             "quality": res["quality"],
             "format_note": res["format_note"],
-            "cached_at": now,
-            "requires_proxy": res.get("requires_proxy", True)
+            "cached_at": now
         }
         return res
     except Exception as e:
@@ -640,6 +666,8 @@ async def proxy_stream(request: Request, url: str):
         media_type=response_headers.get("Content-Type", "audio/webm")
     )
 
+
+# Endpoint to extract the raw live streaming audio URL from YouTube
 @app.get("/api/trending")
 async def get_trending():
     try:
@@ -1027,7 +1055,7 @@ async def download_song(id: str, title: str):
 
     encoded_filename = urllib.parse.quote(filename)
     headers = {
-        "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
+        "Content-Disposition": f"inline; filename*=UTF-8''{encoded_filename}",
         "Content-Type": "audio/mp4"
     }
     return StreamingResponse(fetch_and_stream(), headers=headers)
@@ -1578,6 +1606,20 @@ async def party_endpoint(websocket: WebSocket, room_id: str, client_id: str, rol
                 pass
     except WebSocketDisconnect:
         await party_manager.disconnect(room_id, client_id)
+
+import socket
+
+@app.get("/api/ip")
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return {"ip": IP}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
