@@ -510,12 +510,6 @@ async def stream(id: str, refresh: bool = False):
         'no_warnings': True,
         'socket_timeout': 8,
         'extractor_retries': 1,
-        # android client bypasses YouTube bot detection WITHOUT needing cookies!
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'ios'],
-            }
-        },
     }
     
     # Inject cookies to bypass aggressive datacenter IP blocks on Render
@@ -526,7 +520,7 @@ async def stream(id: str, refresh: bool = False):
                 cookie_str = auth_data.get("Cookie", "")
                 if cookie_str:
                     ydl_opts['http_headers'] = {'Cookie': cookie_str}
-                    ydl_opts['extractor_args']['youtube']['player_client'] = ['web']
+                    ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web', 'tv']}}
     except Exception:
         pass
 
