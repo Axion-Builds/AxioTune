@@ -28,48 +28,357 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_v3.css?v=34">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=87">
     <link rel="manifest" href="manifest.json">
-</head>
-<body class="performance-mode">
-    <!-- Intro Splash Screen -->
-    <div id="intro-splash-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 999999; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s ease-in-out;">
-        <video id="intro-video" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-            <source src="intro.mp4.mp4" type="video/mp4">
-        </video>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
+<body class="">
+    <!-- ═══════════════════════════════════════════════════════════
+         INTRO SPLASH SCREEN — CSS Motion Graphic
+    ═══════════════════════════════════════════════════════════ -->
+    <style>
+        /* ── Intro wrapper ───────────────────────────────────────── */
+        #intro-splash-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            overflow: hidden;
+            background: #04020c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #intro-splash-screen.fade-out { opacity: 0; pointer-events: none; }
+
+        /* ── Deep gradient base ──────────────────────────────────── */
+        .intro-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 120% 80% at 50% 60%,
+                #0f0529 0%,
+                #060118 50%,
+                #000009 100%);
+        }
+
+        /* ── Animated nebula orbs ────────────────────────────────── */
+        .intro-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0;
+            animation: orb-appear 1.4s forwards ease-out;
+        }
+        .intro-orb-1 {
+            width: 55vw; height: 55vw;
+            top: -10%; left: -12%;
+            background: radial-gradient(circle, #5b0fff 0%, #1a006e 60%, transparent 100%);
+            animation-delay: 0.1s;
+            animation-duration: 1.6s;
+        }
+        .intro-orb-2 {
+            width: 50vw; height: 50vw;
+            bottom: -10%; right: -10%;
+            background: radial-gradient(circle, #00c2ff 0%, #004a8f 55%, transparent 100%);
+            animation-delay: 0.3s;
+            animation-duration: 1.6s;
+        }
+        .intro-orb-3 {
+            width: 40vw; height: 40vw;
+            top: 35%; left: 30%;
+            background: radial-gradient(circle, #ff8c00 0%, #7a2600 55%, transparent 100%);
+            opacity: 0;
+            animation: orb-pulse 2s 0.6s forwards ease-out;
+        }
+        .intro-orb-4 {
+            width: 30vw; height: 30vw;
+            top: 5%; right: 5%;
+            background: radial-gradient(circle, #00ffcc 0%, #006655 60%, transparent 100%);
+            animation-delay: 0.5s;
+        }
+        @keyframes orb-appear {
+            0% { opacity: 0; transform: scale(0.7); }
+            100% { opacity: 0.55; transform: scale(1); }
+        }
+        @keyframes orb-pulse {
+            0% { opacity: 0; transform: scale(0.5); }
+            60% { opacity: 0.35; transform: scale(1.1); }
+            100% { opacity: 0.22; transform: scale(1); }
+        }
+
+        /* ── Particle grid (dot mesh) ────────────────────────────── */
+        .intro-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px);
+            background-size: 38px 38px;
+            opacity: 0;
+            animation: grid-in 1.2s 0.4s forwards ease-out;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+        }
+        @keyframes grid-in {
+            to { opacity: 0.12; }
+        }
+
+        /* ── Horizontal scan line ────────────────────────────────── */
+        .intro-scan {
+            position: absolute;
+            left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #00c2ff 30%, #a855f7 70%, transparent 100%);
+            top: -2px;
+            opacity: 0;
+            animation: scan-sweep 1.8s 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+            filter: blur(0.5px);
+            box-shadow: 0 0 18px 6px rgba(0,194,255,0.5);
+        }
+        @keyframes scan-sweep {
+            0% { top: -2px; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* ── Center logo content ─────────────────────────────────── */
+        .intro-center {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            text-align: center;
+        }
+
+        /* ── Logo icon — animated sound-wave ring ────────────────── */
+        .intro-logo-ring {
+            width: 88px; height: 88px;
+            position: relative;
+            margin-bottom: 28px;
+            opacity: 0;
+            animation: logo-pop 0.8s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes logo-pop {
+            0% { opacity: 0; transform: scale(0.3) rotate(-30deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        .intro-logo-ring svg {
+            width: 100%; height: 100%;
+            filter: drop-shadow(0 0 18px #a855f7) drop-shadow(0 0 8px #00c2ff);
+        }
+        /* Pulsing ring behind the icon */
+        .intro-logo-ring::before,
+        .intro-logo-ring::after {
+            content: '';
+            position: absolute;
+            inset: -14px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(168,85,247,0.5);
+            opacity: 0;
+            animation: ring-expand 2.4s 1.6s infinite ease-out;
+        }
+        .intro-logo-ring::after {
+            inset: -28px;
+            border-color: rgba(0,194,255,0.3);
+            animation-delay: 2.2s;
+        }
+        @keyframes ring-expand {
+            0% { opacity: 0.7; transform: scale(0.9); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        /* ── Brand name ──────────────────────────────────────────── */
+        .intro-brand {
+            font-family: 'Clash Display', 'Outfit', sans-serif;
+            font-size: clamp(2.6rem, 8vw, 4.2rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            color: #fff;
+            opacity: 0;
+            animation: text-rise 0.9s 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            background: linear-gradient(135deg, #ffffff 0%, #c0aaff 45%, #00c2ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 24px rgba(168,85,247,0.5));
+        }
+        @keyframes text-rise {
+            0% { opacity: 0; transform: translateY(28px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Tagline ─────────────────────────────────────────────── */
+        .intro-tagline {
+            margin-top: 10px;
+            font-family: 'Outfit', 'Inter', sans-serif;
+            font-size: clamp(0.75rem, 2.2vw, 1rem);
+            font-weight: 400;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            opacity: 0;
+            animation: text-rise 0.9s 1.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* ── Loading bar ─────────────────────────────────────────── */
+        .intro-loader-track {
+            margin-top: 52px;
+            width: clamp(140px, 30vw, 220px);
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            opacity: 0;
+            animation: text-rise 0.6s 1.7s ease forwards;
+        }
+        .intro-loader-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #a855f7, #00c2ff, #ffa500);
+            background-size: 200% 100%;
+            animation:
+                loader-fill 2.2s 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+                loader-shimmer 1.5s 1.8s linear infinite;
+            box-shadow: 0 0 12px 2px rgba(168,85,247,0.6);
+        }
+        @keyframes loader-fill {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        @keyframes loader-shimmer {
+            0% { background-position: 200% center; }
+            100% { background-position: -200% center; }
+        }
+
+        /* ── Floating music notes (decorative) ──────────────────── */
+        .intro-note {
+            position: absolute;
+            font-size: 1.4rem;
+            opacity: 0;
+            pointer-events: none;
+            animation: note-float 3s ease-in-out forwards;
+            filter: blur(0.5px);
+        }
+        .n1 { left: 12%; bottom: 20%; color: #a855f7; animation-delay: 1.4s; }
+        .n2 { right: 14%; bottom: 28%; color: #00c2ff; animation-delay: 1.7s; font-size: 1rem; }
+        .n3 { left: 22%; top: 22%; color: #ffa500; animation-delay: 2.0s; font-size: 1.1rem; }
+        .n4 { right: 22%; top: 18%; color: #a855f7; animation-delay: 1.9s; font-size: 0.9rem; }
+        @keyframes note-float {
+            0% { opacity: 0; transform: translateY(20px) rotate(-10deg); }
+            30% { opacity: 0.7; }
+            100% { opacity: 0; transform: translateY(-60px) rotate(15deg); }
+        }
+
+        /* ── Corner accent lines ─────────────────────────────────── */
+        .intro-corner {
+            position: absolute;
+            width: 48px; height: 48px;
+            opacity: 0;
+            animation: corner-in 0.6s 0.8s ease forwards;
+        }
+        .intro-corner.tl { top: 24px; left: 24px; border-top: 1.5px solid rgba(168,85,247,0.6); border-left: 1.5px solid rgba(168,85,247,0.6); }
+        .intro-corner.tr { top: 24px; right: 24px; border-top: 1.5px solid rgba(0,194,255,0.6); border-right: 1.5px solid rgba(0,194,255,0.6); }
+        .intro-corner.bl { bottom: 24px; left: 24px; border-bottom: 1.5px solid rgba(0,194,255,0.6); border-left: 1.5px solid rgba(0,194,255,0.6); }
+        .intro-corner.br { bottom: 24px; right: 24px; border-bottom: 1.5px solid rgba(168,85,247,0.6); border-right: 1.5px solid rgba(168,85,247,0.6); }
+        @keyframes corner-in {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+
+    <div id="intro-splash-screen">
+        <!-- Background layers -->
+        <div class="intro-bg"></div>
+        <div class="intro-orb intro-orb-1"></div>
+        <div class="intro-orb intro-orb-2"></div>
+        <div class="intro-orb intro-orb-3"></div>
+        <div class="intro-orb intro-orb-4"></div>
+        <div class="intro-grid"></div>
+        <div class="intro-scan"></div>
+
+        <!-- Corner decorations -->
+        <div class="intro-corner tl"></div>
+        <div class="intro-corner tr"></div>
+        <div class="intro-corner bl"></div>
+        <div class="intro-corner br"></div>
+
+        <!-- Floating notes -->
+        <span class="intro-note n1">♪</span>
+        <span class="intro-note n2">♫</span>
+        <span class="intro-note n3">♩</span>
+        <span class="intro-note n4">♬</span>
+
+        <!-- Main logo content -->
+        <div class="intro-center">
+            <div class="intro-logo-ring">
+                <!-- Stylised waveform / music icon SVG -->
+                <svg viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="44" cy="44" r="40" stroke="url(#g1)" stroke-width="1.5" opacity="0.5"/>
+                    <rect x="18" y="36" width="5" height="16" rx="2.5" fill="url(#g2)"/>
+                    <rect x="28" y="28" width="5" height="32" rx="2.5" fill="url(#g2)"/>
+                    <rect x="38" y="22" width="5" height="44" rx="2.5" fill="url(#g2)"/>
+                    <rect x="48" y="30" width="5" height="28" rx="2.5" fill="url(#g2)"/>
+                    <rect x="58" y="38" width="5" height="12" rx="2.5" fill="url(#g2)"/>
+                    <defs>
+                        <linearGradient id="g1" x1="4" y1="4" x2="84" y2="84" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#a855f7"/>
+                            <stop offset="1" stop-color="#00c2ff"/>
+                        </linearGradient>
+                        <linearGradient id="g2" x1="0" y1="0" x2="0" y2="88" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#a855f7"/>
+                            <stop offset="0.5" stop-color="#00c2ff"/>
+                            <stop offset="1" stop-color="#ffa500"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="intro-brand">AxioTune</div>
+            <div class="intro-tagline">Premium Music Experience</div>
+            <div class="intro-loader-track">
+                <div class="intro-loader-fill"></div>
+            </div>
+        </div>
     </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const video = document.getElementById('intro-video');
+        (function() {
             const splash = document.getElementById('intro-splash-screen');
-            if(video) {
-                video.onended = () => {
-                    splash.style.opacity = '0';
-                    setTimeout(() => splash.remove(), 800);
-                };
-                // Fallback timeout in case video fails to play/load
+            // Total animation duration: ~4.1s (loader finishes at 1.8+2.2=4.0s)
+            // Add a tiny pause then fade out
+            const INTRO_DURATION = 4400;
+            const fadeOut = () => {
+                if (!splash || !splash.parentNode) return;
+                splash.classList.add('fade-out');
                 setTimeout(() => {
-                    if(splash && splash.parentNode) {
-                        splash.style.opacity = '0';
-                        setTimeout(() => splash.remove(), 800);
-                    }
-                }, 5000);
-            } else {
-                splash.remove();
-            }
-        });
+                    if (splash && splash.parentNode) splash.remove();
+                }, 1050);
+            };
+            setTimeout(fadeOut, INTRO_DURATION);
+        })();
     </script>
 
-    <div id="macos-wallpaper"></div>
-    <div id="ambient-wrapper">
-        <div id="background-layer"></div>
+    <!-- CSS Aurora Background (Replaces Heavy Canvas) -->
+    <div id="css-aurora-container">
+        <div class="aurora-orb orb-1"></div>
+        <div class="aurora-orb orb-2"></div>
+        <div class="aurora-orb orb-3"></div>
+        <div class="aurora-orb orb-4"></div>
+        <div class="aurora-orb orb-5"></div>
     </div>
+
+    <div id="macos-wallpaper"></div>
+    <div id="background-layer"></div>
     
     <!-- Party Banner -->
     <div id="party-banner" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:10000; background:rgba(255,40,100,0.85); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); color:white; padding:12px; text-align:center; font-weight:600; font-size:14px; box-shadow:0 4px 15px rgba(0,0,0,0.3); pointer-events:auto; transition:transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); transform:translateY(-100%);">
@@ -78,8 +387,60 @@
         <button id="leave-party-btn" class="apple-btn" style="padding:4px 12px; margin-left:15px; font-size:12px; border-radius:20px;">Leave Party</button>
     </div>
 
-    
-    <!-- Top Search Bar + Filter Button + Suggestions -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PC STICKY LIQUID GLASS HEADER (desktop only, hidden on mobile)
+    ═══════════════════════════════════════════════════════════ -->
+    <header id="pc-sticky-header">
+        <!-- Glass background layers -->
+        <div class="pch-glass-bg"></div>
+        <div class="pch-border-line"></div>
+
+        <!-- LEFT: AxioTune Logo (clone — original stays in home-screen for mobile) -->
+        <div class="pch-logo" id="pch-logo-wrap" title="AxioTune">
+            <div class="axio-word-wrap">
+                <span class="axio-letter">A</span>
+                <span class="axio-letter">X</span>
+                <span class="axio-letter">I</span>
+                <span class="axio-letter axio-special"><span class="axio-special-inner">Ø</span></span>
+                <span class="axio-letter">T</span>
+                <span class="axio-letter">U</span>
+                <span class="axio-letter">N</span>
+                <span class="axio-letter">E</span>
+            </div>
+        </div>
+
+        <!-- CENTER: Search bar -->
+        <div class="pch-search-wrap">
+            <div class="pch-search-pill" id="pch-search-pill">
+                <svg class="pch-search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input
+                    type="text"
+                    id="pch-search-input"
+                    placeholder="Search songs, artists, albums..."
+                    autocomplete="off"
+                />
+            </div>
+        </div>
+
+        <!-- RIGHT: Action buttons -->
+        <div class="pch-actions">
+            <!-- Theme toggle -->
+            <button class="pch-action-btn" title="Toggle Theme" onclick="cycleTheme()">
+                <svg viewBox="0 0 24 24"><path id="pch-theme-icon" d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
+            </button>
+            <!-- Download -->
+            <button class="pch-action-btn" title="Download App" onclick="toggleDownloadMenu(event)">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            </button>
+            <!-- Profile -->
+            <button class="pch-action-btn pch-profile-btn" title="Profile">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Top Search Bar + Filter Button + Suggestions (still used for logic) -->
     <div id="top-bar-wrapper">
         <!-- Back Button — LEFT of search bar -->
         <button id="global-back-btn" title="Go Back" style="pointer-events:auto;">
@@ -137,6 +498,20 @@
     <!-- Home Screen with 3D Vinyl Gallery -->
     <!-- Home Screen -->
     <div id="home-screen" class="screen-view active-screen">
+        <!-- AXIØTUNE Holographic Logo -->
+        <div id="axiotune-logo" title="AXIØTUNE">
+            <div class="axio-word-wrap">
+                <span class="axio-letter">A</span>
+                <span class="axio-letter">X</span>
+                <span class="axio-letter">I</span>
+                <span class="axio-letter axio-special"><span class="axio-special-inner">Ø</span></span>
+                <span class="axio-letter">T</span>
+                <span class="axio-letter">U</span>
+                <span class="axio-letter">N</span>
+                <span class="axio-letter">E</span>
+            </div>
+        </div>
+
         <div class="download-dropdown-container" id="home-settings-container" style="display: flex; gap: 12px; align-items: center;">
             <button id="dark-mode-btn" title="Toggle Theme" onclick="cycleTheme()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;">
                 <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path id="theme-icon-path" d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
@@ -160,7 +535,7 @@
 
         <div class="home-section" id="jump-back-in-section" style="display:none;">
             <h2 class="section-title">Jump Back In</h2>
-            <div class="dense-grid-container" id="jump-back-in-container">
+            <div class="art-grid-container" id="jump-back-in-container">
                 <!-- Populated from History -->
             </div>
         </div>
@@ -171,7 +546,7 @@
                 <div style="background: linear-gradient(135deg,#ff2d55,#af52de); padding:6px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;">✦ AI Mix</div>
                 <h2 class="section-title" style="margin:0;">Your Taste Mix</h2>
             </div>
-            <div class="dense-grid-container" id="home-taste-mix-container"></div>
+            <div class="cinematic-scroll-container" id="home-taste-mix-container"></div>
         </div>
 
         <!-- Dynamic Dynamic Because You Listened To Rows -->
@@ -207,16 +582,13 @@
 
     <div id="player-screen" class="screen-view hidden-screen">
         <div id="cinematic-bg"></div>
-        <button id="minimize-player-btn" class="top-circle-btn" style="position: absolute; top: 20px; left: 20px; z-index: 100;" title="Minimize Player" onclick="document.getElementById('global-back-btn').click()">
-            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
-        </button>
 
         <!-- Left Panel -->
         <div id="left-panel">
             <div id="cover-wrapper">
                 <div id="cover-art-container">
                     <img src="default_cover.jpg" id="default-cover-icon" alt="Default Cover" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 1;">
-                    <img id="cover-art" src="" alt="Album Cover" >
+                    <img id="cover-art" src="" alt="Album Cover" onerror="this.onerror=null; this.src='default_cover.jpg';">
                     <!-- 3-dot overlay on cover in full-screen player -->
                     <div id="cover-options-overlay">
                         <button id="cover-options-btn" onclick="openSongContextMenuFromPlayer(event)" title="More options">
@@ -231,9 +603,7 @@
                 <div id="track-info">
                     <div id="track-title-row">
                         <div id="track-title">AxioTune</div>
-                        <button id="like-btn" class="ctrl-btn like-inline" title="Like">
-                            <svg viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></svg>
-                        </button>
+                        
                     </div>
                     <div id="track-artist">Ready to stream</div>
                 </div>
@@ -252,35 +622,16 @@
                         <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
                     </button>
                     <button id="prev-btn" class="btn-icon" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                        <svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" fill="currentColor"/></svg>
                     </button>
                     <button id="play-pause-btn" class="btn-icon" disabled>
-                        <div class="bh-wrapper">
-                            <!-- Outer glow -->
-                            <div class="bh-glow"></div>
-                            <!-- Accretion disk -->
-                            <div class="bh-disk"></div>
-                            <!-- Photon ring shimmer -->
-                            <div class="bh-photon"></div>
-                            <!-- Inner ring -->
-                            <div class="bh-ring"></div>
-                            <!-- Event horizon (black center) -->
-                            <div class="bh-core"></div>
-                            <!-- Infalling particles -->
-                            <div class="bh-particle"></div>
-                            <div class="bh-particle"></div>
-                            <div class="bh-particle"></div>
-                            <!-- Play/Pause icon overlay -->
-                            <svg class="bh-icon bh-play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            <svg class="bh-icon bh-pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                        </div>
+                        <svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24" style="display:none;"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></svg>
                     </button>
                     <button id="next-btn" class="btn-icon" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                        <svg viewBox="0 0 24 24"><path d="M13 6v12l8.5-6L13 6zm-.5 6L4 6v12l8.5-6z" fill="currentColor"/></svg>
                     </button>
-                    <button id="repeat-btn" class="ctrl-btn" title="Repeat">
-                        <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
-                    </button>
+                    <button id="like-btn" class="ctrl-btn" title="Like"><svg viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></svg></button>
                 </div>
                 
                 <div class="bottom-extra-controls" style="display:none !important; align-items:center; justify-content:center; margin-top: 5px; width: 100%;">
@@ -311,9 +662,6 @@
             <button id="full-screen-btn" class="top-circle-btn" title="Full Screen">
                 <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
             </button>
-            <button id="spatial-8d-btn" class="top-circle-btn" title="8D Surround Audio (OFF)">
-                  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-              </button>
             <button id="listen-together-btn" class="top-circle-btn" title="Listen Together">
                 <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </button>
@@ -323,19 +671,7 @@
             </button>
         </div>
 
-        <!-- Queue Panel — position:fixed, fully self-contained -->
-        <div id="queue-panel">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                <h2 style="margin:0; font-size:1.2rem; font-weight:700; color:white;">Up Next 🐾</h2>
-                <div style="display:flex; gap:12px; align-items:center;">
-                    <button id="clear-queue-btn" style="background:transparent; border:none; color:rgba(255,255,255,0.45); cursor:pointer; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 8px;">Clear</button>
-                    <button id="close-queue-btn" style="background:rgba(255,255,255,0.08); border:none; color:white; cursor:pointer; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
-                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                    </button>
-                </div>
-            </div>
-            <div id="queue-list"></div>
-        </div>
+
     </div> <!-- Close player-screen here -->
 
 
@@ -468,6 +804,24 @@
         <!-- Settings Screen -->
         <div id="settings-screen" class="screen-view hidden-screen">
             <h1>⚙️ Settings</h1>
+
+            <!-- LYRICS SETTINGS -->
+            <div class="settings-section">
+                <div class="settings-section-title">✨ Lyrics Appearance</div>
+                <div class="settings-card" style="padding: 20px;">
+                    <div style="font-size:0.95rem; font-weight:500; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>Glow Intensity</span>
+                        <span id="glow-intensity-val" style="color:var(--accent); font-weight:700;">Medium</span>
+                    </div>
+                    <div class="am-volume-slider-wrapper" style="width: 100%; margin-bottom: 5px;">
+                        <input type="range" id="lyrics-glow-slider" min="0" max="8" step="1" value="2" style="width: 100%;">
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:rgba(255,255,255,0.4); margin-top: 8px;">
+                        <span>None</span>
+                        <span>Max</span>
+                    </div>
+                </div>
+            </div>
 
             <!-- PARTY MODE -->
             <div class="settings-section">
@@ -682,6 +1036,21 @@
                             <option value="Georgia, serif">Serif</option>
                             <option value="'Courier New', monospace">Monospace</option>
                             <option value="'Arial Rounded MT Bold', sans-serif">Rounded</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-label">Main Title Font</div>
+                            <div class="settings-row-desc">Aesthetic font for player title</div>
+                        </div>
+                        <select class="settings-select" id="title-font-select">
+                            <option value="Outfit">Outfit (Modern)</option>
+                            <option value="Playfair Display">Playfair (Elegant Serif)</option>
+                            <option value="Cinzel">Cinzel (Cinematic)</option>
+                            <option value="Pacifico">Pacifico (Vibe)</option>
+                            <option value="Bebas Neue">Bebas Neue (Bold)</option>
+                            <option value="Syncopate">Syncopate (Wide)</option>
+                            <option value="Cormorant Garamond">Cormorant (Classic)</option>
                         </select>
                     </div>
                     <div class="settings-row">
@@ -990,7 +1359,38 @@
         </div>
     </div>
 
-<script src="app_v3.js?v=39"></script>
+    <!-- Queue Bottom Sheet — body level so it works on all screens -->
+    <div id="queue-panel">
+        <div id="queue-drag-handle">
+            <div id="queue-handle-pill"></div>
+        </div>
+        <div id="queue-header">
+            <div id="queue-header-left">
+                <svg viewBox="0 0 24 24" id="queue-header-icon"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
+                <span id="queue-header-title">Up Next</span>
+            </div>
+            <div id="queue-header-right">
+                <button id="queue-shuffle-btn" class="queue-control-btn" title="Shuffle">
+                    <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+                </button>
+                <button id="queue-repeat-btn" class="queue-control-btn" title="Repeat">
+                    <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+                </button>
+                <button id="queue-autoplay-btn" class="queue-control-btn" title="Autoplay">
+                    <svg viewBox="0 0 24 24"><path d="M18.6 6.62c-1.44 0-2.8.76-3.77 2.02-.96-1.26-2.33-2.02-3.77-2.02-2.6 0-4.72 2.11-4.72 4.71s2.12 4.71 4.72 4.71c1.44 0 2.8-.76 3.77-2.02.96 1.26 2.33 2.02 3.77 2.02 2.6 0 4.72-2.11 4.72-4.71s-2.12-4.71-4.72-4.71zm-7.54 7.54c-1.56 0-2.83-1.27-2.83-2.83 0-1.56 1.27-2.83 2.83-2.83 1.56 0 2.83 1.27 2.83 2.83 0 1.56-1.27 2.83-2.83 2.83zm7.54 0c-1.56 0-2.83-1.27-2.83-2.83 0-1.56 1.27-2.83 2.83-2.83 1.56 0 2.83 1.27 2.83 2.83 0 1.56-1.27 2.83-2.83 2.83z"/></svg>
+                </button>
+                <div class="queue-divider"></div>
+                <button id="queue-header-clear-btn">Clear</button>
+                <button id="close-queue-btn">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+        </div>
+        <div id="queue-list"></div>
+    </div>
+    <div id="queue-backdrop"></div>
+
+    <script src="app_v3.js?v=87"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -1002,3 +1402,11 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+

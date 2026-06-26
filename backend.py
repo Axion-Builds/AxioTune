@@ -236,6 +236,10 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = ""):
             try:
                 img_r = await client.get(url)
                 if img_r.status_code == 200:
+                    # YouTube returns a 120x90 grey placeholder (~1KB) if maxres/sd are missing
+                    if len(img_r.content) < 2000 and ("maxresdefault" in url or "sddefault" in url):
+                        continue
+                        
                     if cache_key:
                         with open(cache_path, "wb") as f:
                             f.write(img_r.content)
@@ -495,6 +499,7 @@ async def stream(id: str, refresh: bool = False):
                 "url": cached["url"],
                 "quality": cached["quality"],
                 "format_note": cached["format_note"],
+                "duration": cached.get("duration", 0),
                 "cached": True
             }
 
@@ -546,6 +551,7 @@ async def stream(id: str, refresh: bool = False):
                         "url": info['url'],
                         "quality": f"{int(abr)}kbps",
                         "format_note": info.get('ext', 'unknown'),
+                        "duration": info.get('duration', 0),
                         "cached": False,
                         "source": "yt-dlp"
                     }
@@ -573,6 +579,7 @@ async def stream(id: str, refresh: bool = False):
                                 "url": best['url'],
                                 "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
                                 "format_note": best.get('container', 'webm'),
+                                "duration": data.get('lengthSeconds', 0),
                                 "cached": False,
                                 "source": f"invidious ({instance})"
                             }
@@ -601,6 +608,7 @@ async def stream(id: str, refresh: bool = False):
                                 "url": best['url'],
                                 "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
                                 "format_note": best.get('mimeType', 'webm'),
+                                "duration": data.get('duration', 0),
                                 "cached": False,
                                 "source": f"piped ({instance})"
                             }
@@ -617,7 +625,8 @@ async def stream(id: str, refresh: bool = False):
             "url": res["url"],
             "quality": res["quality"],
             "format_note": res["format_note"],
-            "cached_at": now
+            "duration": res.get("duration", 0),
+            "cached_at": time.time()
         }
         return res
     except Exception as e:
@@ -1296,210 +1305,7 @@ async def download_mp3(id: str, title: str = "Song"):
         headers={"Content-Disposition": f'attachment; filename="{safe_title}.{ext}"'}
     )
 
-@app.get("/api/library/playlists")
-def get_playlists():
-    conn = get_db()
-    pl_rows = conn.execute("SELECT * FROM playlists ORDER BY timestamp DESC").fetchall()
-    playlists = []
-    for row in pl_rows:
-        pl = dict(row)
-        tracks = conn.execute("SELECT * FROM playlist_tracks WHERE playlist_id = ? ORDER BY position ASC", (pl['id'],)).fetchall()
-        pl['songs'] = [{"id": t['video_id'], "title": t['title'], "artist": t['artist'], "cover": t['cover'], "query": f"{t['title']} {t['artist']}"} for t in tracks]
-        playlists.append(pl)
-    conn.close()
-    return {"status": "success", "playlists": playlists}
 
-@app.post("/api/library/playlists")
-def create_playlist(pl: DBPlaylist):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO playlists (name) VALUES (?)", (pl.name,))
-    conn.commit()
-    pl_id = cursor.lastrowid
-    conn.close()
-    return {"status": "success", "id": pl_id, "name": pl.name}
-
-@app.delete("/api/library/playlists/{pl_id}")
-def delete_playlist(pl_id: int):
-    conn = get_db()
-    conn.execute("DELETE FROM playlists WHERE id = ?", (pl_id,))
-    conn.execute("DELETE FROM playlist_tracks WHERE playlist_id = ?", (pl_id,))
-    conn.commit()
-    conn.close()
-    return {"status": "success"}
-
-@app.post("/api/library/playlists/{pl_id}/tracks")
-def add_playlist_track(pl_id: int, song: DBSong):
-    conn = get_db()
-    exists = conn.execute("SELECT video_id FROM playlist_tracks WHERE playlist_id = ? AND video_id = ?", (pl_id, song.video_id)).fetchone()
-    if exists:
-        conn.close()
-        return {"status": "exists"}
-        
-    pos = conn.execute("SELECT MAX(position) as m FROM playlist_tracks WHERE playlist_id = ?", (pl_id,)).fetchone()['m']
-    pos = 0 if pos is None else pos + 1
-    conn.execute("INSERT INTO playlist_tracks (playlist_id, video_id, title, artist, cover, position) VALUES (?, ?, ?, ?, ?, ?)",
-                 (pl_id, song.video_id, song.title, song.artist, song.cover, pos))
-    conn.commit()
-    conn.close()
-    return {"status": "success"}
-
-@app.delete("/api/library/playlists/{pl_id}/tracks/{video_id}")
-def remove_playlist_track(pl_id: int, video_id: str):
-    conn = get_db()
-    conn.execute("DELETE FROM playlist_tracks WHERE playlist_id = ? AND video_id = ?", (pl_id, video_id))
-    conn.commit()
-    conn.close()
-    return {"status": "success"}
-
-@app.post("/api/sync_library")
-async def sync_library():
-    if not ytmusic:
-        return {"status": "error", "message": "Not authenticated. Sync YouTube Music first."}
-    
-    def do_sync():
-        conn = get_db()
-        cursor = conn.cursor()
-        try:
-            liked = ytmusic.get_liked_songs(limit=200)
-            if 'tracks' in liked:
-                for song in liked['tracks']:
-                    vid = song.get('videoId')
-                    if not vid: continue
-                    title = song.get('title', 'Unknown')
-                    artist = ", ".join([a['name'] for a in song.get('artists', [])])
-                    cover = song['thumbnails'][-1]['url'] if song.get('thumbnails') else ''
-                    cursor.execute("INSERT OR IGNORE INTO liked_songs (video_id, title, artist, cover) VALUES (?, ?, ?, ?)", (vid, title, artist, cover))
-        except Exception as e:
-            print("Error syncing likes", e)
-            
-        try:
-            library_playlists = ytmusic.get_library_playlists(limit=20)
-            for pl in library_playlists:
-                pl_id = pl.get('playlistId')
-                title = pl.get('title', 'Unknown')
-                if not pl_id: continue
-                
-                cursor.execute("SELECT id FROM playlists WHERE name = ?", (title,))
-                existing_pl = cursor.fetchone()
-                if not existing_pl:
-                    cursor.execute("INSERT INTO playlists (name) VALUES (?)", (title,))
-                    local_pl_id = cursor.lastrowid
-                else:
-                    local_pl_id = existing_pl['id']
-                    
-                pl_tracks = ytmusic.get_playlist(pl_id, limit=100).get('tracks', [])
-                for i, track in enumerate(pl_tracks):
-                    vid = track.get('videoId')
-                    if not vid: continue
-                    ttitle = track.get('title', 'Unknown')
-                    tartist = ", ".join([a['name'] for a in track.get('artists', [])])
-                    tcover = track['thumbnails'][-1]['url'] if track.get('thumbnails') else ''
-                    cursor.execute("INSERT OR IGNORE INTO playlist_tracks (playlist_id, video_id, title, artist, cover, position) VALUES (?, ?, ?, ?, ?, ?)",
-                                   (local_pl_id, vid, ttitle, tartist, tcover, i))
-        except Exception as e:
-            print("Error syncing playlists", e)
-            
-        conn.commit()
-        conn.close()
-        
-    await asyncio.to_thread(do_sync)
-    return {"status": "success"}
-
-@app.get("/api/artist_from_song")
-async def get_artist_from_song(id: str):
-    if not ytmusic:
-        return {"status": "error"}
-    try:
-        def fetch():
-            wp = ytmusic.get_watch_playlist(videoId=id, limit=1)
-            if 'tracks' in wp and len(wp['tracks']) > 0:
-                for a in wp['tracks'][0].get('artists', []):
-                    if 'id' in a and a['id']:
-                        return a['id']
-            return None
-        browse_id = await asyncio.to_thread(fetch)
-        if browse_id:
-            return {"status": "success", "browseId": browse_id}
-        return {"status": "error", "message": "Artist not found"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@app.get("/api/radio")
-async def get_radio(mood: str):
-    try:
-        search_res = await asyncio.to_thread(lambda: ytmusic.search(f"{mood} hits songs", filter="playlists", limit=1))
-        if not search_res:
-            return {"status": "error", "message": "Radio not found"}
-        
-        pl_id = search_res[0]['browseId']
-        pl = await asyncio.to_thread(lambda: ytmusic.get_playlist(pl_id, limit=50))
-        
-        results = []
-        for t in pl.get('tracks', []):
-            if not t.get('videoId'): continue
-            results.append({
-                "id": t['videoId'],
-                "title": t['title'],
-                "artist": ", ".join([a['name'] for a in t.get('artists', [])]) if t.get('artists') else 'Unknown',
-                "cover": t['thumbnails'][-1]['url'] if t.get('thumbnails') else '',
-                "query": f"{t['title']} {', '.join([a['name'] for a in t.get('artists', [])]) if t.get('artists') else ''}"
-            })
-            
-        import random
-        random.shuffle(results)
-        return {"status": "success", "tracks": results}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@app.get("/api/download_mp3")
-async def download_mp3(id: str, title: str = "Song"):
-    ydl_opts = {
-        'format': 'bestaudio[ext=webm][abr>=128]/bestaudio[ext=m4a][abr>=128]/bestaudio/best',
-        'quiet': True,
-        'no_warnings': True,
-        'socket_timeout': 8,
-    }
-    
-    try:
-        if os.path.exists(AUTH_FILE):
-            with open(AUTH_FILE, "r", encoding="utf-8") as f:
-                auth_data = json.load(f)
-                cookie_str = auth_data.get("Cookie", "")
-                if cookie_str:
-                    ydl_opts['http_headers'] = {'Cookie': cookie_str}
-    except Exception:
-        pass
-        
-    loop = asyncio.get_running_loop()
-    try:
-        def fetch():
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                return ydl.extract_info(f"https://www.youtube.com/watch?v={id}", download=False)
-        info = await loop.run_in_executor(executor, fetch)
-        url = info['url']
-        ext = info.get('ext', 'webm')
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-        
-    client = httpx.AsyncClient(timeout=httpx.Timeout(10.0, read=None))
-    req = client.build_request("GET", url)
-    r = await client.send(req, stream=True)
-    
-    async def stream_generator():
-        try:
-            async for chunk in r.aiter_bytes(chunk_size=65536):
-                yield chunk
-        finally:
-            await r.aclose()
-            await client.aclose()
-            
-    safe_title = "".join(c for c in title if c.isalnum() or c in " _-").strip()
-    return StreamingResponse(
-        stream_generator(), 
-        media_type=f"audio/{ext}",
-        headers={"Content-Disposition": f'attachment; filename="{safe_title}.{ext}"'}
-    )
 
 # =========================================================================
 # LISTEN TOGETHER / PARTY MODE (WebSockets)

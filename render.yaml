@@ -1,9 +1,7 @@
 services:
   - type: web
     name: apple-music-streamer
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python backend.py
+    env: docker
     envVars:
       - key: PORT
-        value: 8000
+        value: 7860

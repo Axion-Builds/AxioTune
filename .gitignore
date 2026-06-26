@@ -1,0 +1,25 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Sensitive auth/cookie files — NEVER commit these!
+headers_auth.json
+test_auth.json
+test_auth2.json
+
+# Cache directories
+.cover_cache/
+
+# Debug/test output files
+search_out.json
+test.js
+search_play.py
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp

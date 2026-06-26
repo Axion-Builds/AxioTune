@@ -1,9 +1,7 @@
 let _errCnt=0; window.onerror=function(m,u,l){if(++_errCnt>5)return false;console.error(m,l);let e=document.createElement('div');e.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);background:red;color:white;padding:10px;z-index:999999;border-radius:8px;font-size:12px;';e.textContent='Err: '+m+' (L'+l+')';document.body.appendChild(e);setTimeout(()=>e.remove(),5000);return false;};
 window.onunhandledrejection = function(event) { console.error('Promise Rejection: ', event.reason); };
 window._localNetworkIp = null;
-fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});
-
-// --- YOUTUBE IFRAME API MOCK AUDIO PLAYER ---
+fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});// --- YOUTUBE IFRAME API MOCK AUDIO PLAYER ---
 let ytPlayer;
 const audioPlayer = {
     _src: '',
@@ -15,6 +13,7 @@ const audioPlayer = {
     error: null,
     listeners: {},
     _mode: 'yt',
+    _proxyDuration: 0,
     _realAudio: new Audio(),
     initRealAudio: function() {
         if (this._realAudioInitialized) return;
@@ -34,9 +33,15 @@ const audioPlayer = {
         if (!this.listeners[event]) this.listeners[event] = [];
         this.listeners[event].push(callback);
     },
-    dispatchEvent: function(event) {
-        if (this.listeners[event]) {
-            this.listeners[event].forEach(cb => cb());
+    dispatchEvent: function(evt, data) {
+        if (this.listeners[evt]) {
+            this.listeners[evt].forEach(cb => {
+                try {
+                    cb(data);
+                } catch(e) {
+                    console.error('Error in listener for', evt, e);
+                }
+            });
         }
     },
     play: async function() {
@@ -108,8 +113,8 @@ const audioPlayer = {
         if (this._mode === 'local') { this._realAudio.currentTime = val; return; }
         if (ytPlayer && ytPlayer.seekTo) ytPlayer.seekTo(val, true); 
     },
-    get duration() { 
-        if (this._mode === 'local') return this._realAudio.duration || 0;
+    get duration() {
+        if (this._mode === 'local') return this._realAudio.duration || this._proxyDuration || 0;
         return ytPlayer && ytPlayer.getDuration ? ytPlayer.getDuration() : 0; 
     },
     get volume() { return this._volume; },
@@ -152,12 +157,31 @@ window.onYouTubeIframeAPIReady = function() {
         }
     });
 };
+
+// Scroll Listener for Top Bar
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.screen-view').forEach(screen => {
+        let topBarScrollTimeout;
+        screen.addEventListener('scroll', () => {
+            if (!screen.classList.contains('active-screen')) return;
+            const topBar = document.getElementById('top-bar-wrapper');
+            if (topBar) {
+                if (topBarScrollTimeout) return;
+                topBarScrollTimeout = requestAnimationFrame(() => {
+                    topBar.style.transform = `translateY(px)`;
+                    topBarScrollTimeout = null;
+                });
+            }
+        }, {passive: true});
+    });
+});
 if (window.YT && window.YT.Player) {
     window.onYouTubeIframeAPIReady();
 }
 
 let timeupdateInterval;
 function onPlayerStateChange(event) {
+    if (audioPlayer._mode !== 'yt') return;
     if (event.data == YT.PlayerState.PLAYING) {
         audioPlayer.paused = false;
         audioPlayer.dispatchEvent('play');
@@ -204,10 +228,9 @@ function onPlayerStateChange(event) {
         // Fix z-index stacking context issue by moving controls to root
         const topControls = document.getElementById('top-right-controls');
         if (topControls) document.body.appendChild(topControls);
-        
-        // Also move queue panel to root so it can overlay topControls
-        const qPanel = document.getElementById('queue-panel');
-        if (qPanel) document.body.appendChild(qPanel);
+
+        // queue-panel is now placed directly at body level in HTML — no move needed
+
 
         // â”€â”€ IndexedDB Offline Storage Setup â”€â”€
         let db;
@@ -464,6 +487,7 @@ function onPlayerStateChange(event) {
                 renderQueue();
                 showToast('Shuffle OFF');
             }
+            if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
         });
 
         // â”€â”€ REPEAT â”€â”€
@@ -477,6 +501,7 @@ function onPlayerStateChange(event) {
             if (repeatMode === 0) { repeatBtn.innerHTML = repeatSVG_off; showToast('Repeat OFF'); }
             else if (repeatMode === 1) { repeatBtn.classList.add('active'); repeatBtn.innerHTML = repeatSVG_all; showToast('Repeat ALL'); }
             else { repeatBtn.classList.add('active', 'repeat-one'); repeatBtn.innerHTML = repeatSVG_one; showToast('Repeat ONE'); }
+            if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
         });
 
         // â”€â”€ TOAST NOTIFICATION â”€â”€
@@ -612,7 +637,7 @@ function onPlayerStateChange(event) {
             if(!container) return;
             const liked = getLikedSongs();
             if (liked.length === 0) {
-                container.innerHTML = '<div class="empty-state lib-empty">No liked songs yet.<br><span>Tap â™¥ while a song plays to save it here.</span></div>';
+                container.innerHTML = '<div class="empty-state lib-empty">No liked songs yet.<br><span>Tap ♥ while a song plays to save it here.</span></div>';
                 return;
             }
             container.innerHTML = '';
@@ -622,7 +647,6 @@ function onPlayerStateChange(event) {
                 row.className = 'liked-song-row';
                 row.style.animationDelay = `${idx * 0.04}s`;
                 row.innerHTML = `
-                    <img src="${coverUrl}">
                     <div class="liked-song-info">
                         <div class="liked-song-title">${song.title}</div>
                         <div class="liked-song-artist">${song.artist}</div>
@@ -972,6 +996,43 @@ function onPlayerStateChange(event) {
             }
         });
 
+        // ── PC Sticky Header Search Bridge ──────────────────────────
+        // Mirror #pch-search-input â†’ #song-search so all existing
+        // live-suggestions, Enter-to-search, and clear logic still work.
+        const pchInput = document.getElementById('pch-search-input');
+        if (pchInput) {
+            // Typing in header search â†’ sync to real input + fire its 'input' event
+            pchInput.addEventListener('input', () => {
+                songSearchInput.value = pchInput.value;
+                songSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                // Show clear button in real bar (for logic compatibility)
+                const clr = document.getElementById('clear-search-btn');
+                if (clr) clr.style.display = pchInput.value ? '' : 'none';
+            });
+            // Enter in header search â†’ trigger search results page
+            pchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const q = pchInput.value.trim();
+                    if (q) showSearchResultsPage(q);
+                }
+                // Escape clears both
+                if (e.key === 'Escape') {
+                    pchInput.value = '';
+                    songSearchInput.value = '';
+                    songSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    pchInput.blur();
+                }
+            });
+            // Keep both inputs in sync if real search changes programmatically
+            const origOnInput = songSearchInput.oninput;
+            songSearchInput.addEventListener('input', () => {
+                if (document.activeElement !== pchInput) {
+                    pchInput.value = songSearchInput.value;
+                }
+            });
+        }
+
         // ============================================================
         // VOLUME CONTROLS (Keyboard & Scroll)
         // ============================================================
@@ -1088,10 +1149,15 @@ function onPlayerStateChange(event) {
         function getCoverUrl(query, ytThumb, vid, isPlayerScreen = false) {
             const thumb = resolveYtThumb(ytThumb);
             
-            // MASSIVE SPEED BOOST & BUG FIX: Bypass backend completely if we have a direct Google image.
-            // This prevents iTunes from returning the wrong album cover for obscure songs ("poster problem").
             if (thumb && thumb.startsWith('http')) {
-                return thumb;
+                if (!isPlayerScreen) {
+                    return thumb; // Fast loading for lists
+                }
+                // For player screen, proxy the image to bypass Canvas CORS constraints
+                const params = new URLSearchParams();
+                params.set('yt_thumb', thumb);
+                if (vid) params.set('vid', vid);
+                return `/api/cover?${params.toString()}`;
             }
             
             const params = new URLSearchParams();
@@ -1162,7 +1228,7 @@ function onPlayerStateChange(event) {
             audioQuality: 'hq', playbackSpeed: 100, crossfade: 3,
             autoplay: true, sleepTimerMins: 0,
             normalizeVolume: false, lyricsFontSize: 'clamp(1.2rem,2.5vw,2.2rem)',
-            lyricsFont: 'inherit', lyricsStyle: 'bold',
+            lyricsFont: 'inherit', titleFont: 'Outfit', lyricsStyle: 'bold',
             miniPlayerStyle: 'pill', doubleTapSeek: true,
             catCursor: true, haptic: true, incognito: false
         };
@@ -1186,6 +1252,8 @@ function onPlayerStateChange(event) {
             root.style.setProperty('--bg-brightness', s.bgBrightness / 100);
             // Glass blur
             root.style.setProperty('--glass-blur', s.glassBlur);
+            // Title font
+            root.style.setProperty('--title-font', s.titleFont);
             // Lyrics font size & family & style
             root.style.setProperty('--lyrics-font-size', s.lyricsFontSize);
             root.style.setProperty('--lyrics-font-family', s.lyricsFont);
@@ -1313,6 +1381,7 @@ function onPlayerStateChange(event) {
             document.getElementById('autoplay-toggle')?.addEventListener('change', (e) => {
                 appSettings.autoplay = e.target.checked;
                 saveSettings(appSettings);
+                if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
             });
             // Normalize
             document.getElementById('normalize-toggle')?.addEventListener('change', (e) => {
@@ -1339,11 +1408,11 @@ function onPlayerStateChange(event) {
                         }, 200);
                     }
                 }, 1000);
-                display.textContent = `Sleeping in ${mins}:00`;
+                display.textContent = 'Sleeping in :00';
             });
-            // Lyrics size
-            document.getElementById('lyrics-size-select')?.addEventListener('change', (e) => {
-                appSettings.lyricsFontSize = e.target.value;
+            // Title font
+            document.getElementById('title-font-select')?.addEventListener('change', (e) => {
+                appSettings.titleFont = e.target.value;
                 saveSettings(appSettings); applySettings(appSettings);
             });
             // Lyrics font
@@ -1643,37 +1712,40 @@ function onPlayerStateChange(event) {
                     if (onComplete) onComplete();
                     return;
                 }
-                const fromRect = fromEl.getBoundingClientRect();
                 
-                // Force destination screen to active state temporarily for perfect measurement
+                // --- BATCH READS 1 (Current State) ---
+                const fromRect = fromEl.getBoundingClientRect();
+                const fromRadius = window.getComputedStyle(fromEl).borderRadius || '14px';
+                
                 const toScreen = toEl.closest('.screen-view');
-                let screenWasHidden = false;
-                let screenOriginalTransition = '';
-                if (toScreen && toScreen.classList.contains('hidden-screen')) {
-                    screenWasHidden = true;
-                    screenOriginalTransition = toScreen.style.transition;
+                const screenWasHidden = toScreen && toScreen.classList.contains('hidden-screen');
+                const screenOriginalTransition = toScreen ? toScreen.style.transition : '';
+                
+                const wasHidden = miniPlayer.classList.contains('hidden-mini');
+                
+                // --- BATCH WRITES 1 (Setup Target State) ---
+                if (screenWasHidden) {
                     toScreen.style.transition = 'none';
                     toScreen.classList.remove('hidden-screen');
                     toScreen.classList.add('active-screen');
                 }
-                
-                const wasHidden = miniPlayer.classList.contains('hidden-mini');
                 if (wasHidden) {
                     miniPlayer.style.transition = 'none';
                     miniPlayer.classList.remove('hidden-mini');
                 }
                 
+                // --- BATCH READS 2 (Target State) - FORCES 1 LAYOUT ---
                 const toRect = toEl.getBoundingClientRect();
+                const toRadius = window.getComputedStyle(toEl).borderRadius || '14px';
                 
+                // --- BATCH WRITES 2 (Revert & Prepare Animation) ---
                 if (wasHidden) {
                     miniPlayer.classList.add('hidden-mini');
                     miniPlayer.style.transition = '';
                 }
-                
                 if (screenWasHidden) {
                     toScreen.classList.remove('active-screen');
                     toScreen.classList.add('hidden-screen');
-                    toScreen.offsetHeight; // force reflow
                     toScreen.style.transition = screenOriginalTransition;
                 }
                 
@@ -1683,24 +1755,24 @@ function onPlayerStateChange(event) {
                 ghostCover.style.top = `${fromRect.top}px`;
                 ghostCover.style.width = `${fromRect.width}px`;
                 ghostCover.style.height = `${fromRect.height}px`;
-                ghostCover.style.borderRadius = window.getComputedStyle(fromEl).borderRadius;
+                ghostCover.style.borderRadius = fromRadius;
                 ghostCover.style.opacity = '1';
                 
-                // Hide actual elements immediately without transition trailing
                 fromEl.style.transition = 'none';
                 toEl.style.transition = 'none';
                 fromEl.style.opacity = '0';
                 toEl.style.opacity = '0';
                 
-                ghostCover.offsetHeight; // force reflow
+                // --- FORCES 2ND LAYOUT (Commit initial coords) ---
+                ghostCover.offsetHeight; 
                 
-                // Match the 0.85s screen transition for perfectly synchronized movement
+                // --- BATCH WRITES 3 (Trigger Animation) ---
                 ghostCover.style.transition = 'all 0.85s cubic-bezier(0.33, 1, 0.68, 1)';
                 ghostCover.style.left = `${toRect.left}px`;
                 ghostCover.style.top = `${toRect.top}px`;
                 ghostCover.style.width = `${toRect.width}px`;
                 ghostCover.style.height = `${toRect.height}px`;
-                ghostCover.style.borderRadius = window.getComputedStyle(toEl).borderRadius;
+                ghostCover.style.borderRadius = toRadius;
                 
                 setTimeout(() => {
                     ghostCover.style.opacity = '0';
@@ -1750,6 +1822,7 @@ function onPlayerStateChange(event) {
             miniPlayer.classList.add('hidden-mini');
             showScreenExcept('player-screen');
         }
+        window.showPlayer = showPlayer;
 
         function showHistory() {
             if(playerScreen.classList.contains('active-screen') && isSongLoaded) {
@@ -1864,6 +1937,7 @@ function onPlayerStateChange(event) {
         let queueRenderLimit = 10;
         const queueNavBtn = document.getElementById('floating-queue-btn');
         const queuePanel = document.getElementById('queue-panel');
+        const queueBackdrop = document.getElementById('queue-backdrop');
         const closeQueueBtn = document.getElementById('close-queue-btn');
         const nextBtn = document.getElementById('next-btn');
         const prevBtn = document.getElementById('prev-btn');
@@ -1873,26 +1947,21 @@ function onPlayerStateChange(event) {
         function openQueue() {
             queueOpen = true;
             queuePanel.classList.add('open');
+            queueBackdrop.classList.add('open');
             queueNavBtn.classList.add('active');
             document.body.classList.add('queue-active');
-            // TRICK: Delay heavy glass effect until after slide animation completes to guarantee 0 lag
-            setTimeout(() => {
-                if (queueOpen) queuePanel.classList.add('glassy');
-            }, 500);
             renderQueue();
+            if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
         }
 
         function closeQueue() {
             queueOpen = false;
             queuePanel.classList.remove('open');
+            queueBackdrop.classList.remove('open');
             queueNavBtn.classList.remove('active');
             document.body.classList.remove('queue-active');
-            
-            // TRICK: Don't drop the blur instantly. Let it slide out first, then remove it.
-            // Sudden removal of backdrop-filter causes a 1-frame pipeline rebuild jerk.
-            setTimeout(() => {
-                if (!queueOpen) queuePanel.classList.remove('glassy');
-            }, 800);
+            queuePanel.style.transform = '';
+            if (queueBackdrop) queueBackdrop.style.background = '';
         }
 
         let queueCloseTimer = null;
@@ -1901,32 +1970,60 @@ function onPlayerStateChange(event) {
             if (queueOpen) closeQueue(); else openQueue();
         }
 
-        queueNavBtn.addEventListener('click', toggleQueue);
-        queueNavBtn.addEventListener('mouseenter', () => {
-            clearTimeout(queueCloseTimer);
-            openQueue();
-        });
-        queueNavBtn.addEventListener('mouseleave', () => {
-            queueCloseTimer = setTimeout(() => {
-                if (!queuePanel.matches(':hover')) closeQueue();
-            }, 300);
-        });
+        queueNavBtn?.addEventListener('click', toggleQueue);
+        const topRightQueueBtn = document.getElementById('top-right-queue-btn');
+        if (topRightQueueBtn) topRightQueueBtn.addEventListener('click', toggleQueue);
         
         closeQueueBtn.addEventListener('click', closeQueue);
         
-        queuePanel.addEventListener('mouseenter', () => clearTimeout(queueCloseTimer));
-        queuePanel.addEventListener('mouseleave', () => {
-            queueCloseTimer = setTimeout(closeQueue, 400);
-        });
+        // Close when clicking backdrop
+        queueBackdrop.addEventListener('click', closeQueue);
         
         document.addEventListener('click', (e) => {
-            if (queueOpen && !queuePanel.contains(e.target) && !queueNavBtn.contains(e.target)) {
+            if (queueOpen && !queuePanel.contains(e.target) && !queueNavBtn.contains(e.target) && !queueBackdrop.contains(e.target)) {
                 closeQueue();
             }
         });
 
         const playSVG = ''; // Legacy â€” black hole uses bh-icon approach
         const pauseSVG = ''; // Legacy â€” black hole uses bh-icon approach
+
+        // ── Drag-to-close gesture ──
+        const dragHandle = document.getElementById('queue-drag-handle');
+        if (dragHandle) {
+            let dragStartY = 0;
+            let isDragging = false;
+
+            dragHandle.addEventListener('pointerdown', (e) => {
+                isDragging = true;
+                dragStartY = e.clientY;
+                queuePanel.style.transition = 'none';
+                dragHandle.setPointerCapture(e.pointerId);
+            });
+
+            dragHandle.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                const delta = Math.max(0, e.clientY - dragStartY);
+                queuePanel.style.transform = `translateY(${delta}px)`;
+                const opacity = Math.max(0, 0.55 - (delta / window.innerHeight));
+                if (queueBackdrop) queueBackdrop.style.background = `rgba(0,0,0,${opacity})`;
+            });
+
+            dragHandle.addEventListener('pointerup', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                queuePanel.style.transition = '';
+                const delta = e.clientY - dragStartY;
+                if (delta > 120) {
+                    queuePanel.style.transform = '';
+                    if (queueBackdrop) queueBackdrop.style.background = '';
+                    closeQueue();
+                } else {
+                    queuePanel.style.transform = '';
+                    if (queueBackdrop) queueBackdrop.style.background = '';
+                }
+            });
+        }
 
         // Black hole icon toggle helper
         function setBhIcon(playing) {
@@ -1979,8 +2076,9 @@ function onPlayerStateChange(event) {
         let prefetchVideoId = null;
 
         async function fetchStreamUrl(videoId, refresh = false) {
-            // ULTIMATE FIX: Fetch directly from client browser to bypass Render IP Cloudflare block!
-            return { url: videoId, requires_proxy: false };
+            const res = await fetch(`/api/stream?id=${encodeURIComponent(videoId)}${refresh ? '&refresh=true' : ''}`);
+            if (!res.ok) throw new Error('Stream request failed');
+            return await res.json();
         }
 
         async function refreshCurrentStream(shouldResume = true) {
@@ -2064,46 +2162,6 @@ function onPlayerStateChange(event) {
             }
         };
 
-        function renderQueue() {
-            if (typeof updateCinematicCards === 'function') updateCinematicCards();
-            const qList = document.getElementById('queue-list');
-            qList.innerHTML = '';
-            if (queueList.length === 0) {
-                qList.innerHTML = '<div class="empty-state" style="font-size:1.2rem;">Queue is empty</div>';
-                return;
-            }
-            queueList.forEach((song, idx) => {
-                const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
-
-                const div = document.createElement('div');
-                div.className = `premium-list-item ${idx === currentQueueIndex ? 'playing' : ''}`;
-                div.style.transitionDelay = `${idx * 0.05}s`;
-                div.innerHTML = `
-                    <img src="${thumbUrl}" class="queue-cover">
-                    <div class="premium-list-info">
-                        <div class="premium-list-title">${song.title}</div>
-                        <div class="premium-list-artist">${song.artist}</div>
-                    </div>
-                    ${idx === currentQueueIndex ? `
-                        <div class="premium-play-btn" style="opacity:1; transform:scale(1); background:rgba(255, 71, 109, 0.8);">
-                            <svg viewBox="0 0 24 24" style="width:12px; height:12px;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                        </div>
-                    ` : `
-                        <button class="premium-play-btn">
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    `}
-                `;
-                div.addEventListener('click', () => {
-                    if(idx === currentQueueIndex) { playPauseBtn.click(); return; }
-                    playQueueIndex(idx);
-                });
-                
-                setTimeout(() => { div.style.opacity = '1'; }, 50);
-                qList.appendChild(div);
-            });
-        }
-
         // —— Background Tasks for Queue Playback (Asynchronous to prevent autoplay blocks) ——
         async function fetchLyricsForQueueSong(title, artist, videoId) {
             const query = title + ' ' + artist;
@@ -2171,10 +2229,13 @@ function onPlayerStateChange(event) {
             const coverUrl = getCoverUrl(actualSongQuery, rawYtThumb, videoId, true);
             
             const hdImg = new Image();
-            hdImg.onload = () => {
+            hdImg.crossOrigin = 'Anonymous';
+            hdImg.src = coverUrl;
+            hdImg.decode().then(() => {
                 if (currentVideoId === videoId) {
                     delete coverArt.dataset.fallbackDone;
                     delete miniCover.dataset.fallbackDone;
+                    coverArt.setAttribute('crossorigin', 'anonymous');
                     coverArt.src = hdImg.src;
                     miniCover.src = hdImg.src;
                     updateMediaSession(title, artist, hdImg.src);
@@ -2182,9 +2243,11 @@ function onPlayerStateChange(event) {
                     coverArt.classList.remove('cover-changing');
                     void coverArt.offsetWidth;
                     coverArt.classList.add('cover-changing');
+                    
+                    const bgLayer = document.getElementById('background-layer');
+                    if (bgLayer) bgLayer.style.backgroundImage = `url(${hdImg.src})`;
                 }
-            };
-            hdImg.src = coverUrl;
+            }).catch(e => console.warn("Failed to decode HD cover for queue", e));
         }
 
         // —— Reliable queue navigation ——
@@ -2194,6 +2257,13 @@ function onPlayerStateChange(event) {
             currentQueueIndex = idx;
             renderQueue();
             const song = queueList[idx];
+
+            // Auto-open player screen ONLY for the first song played in the session
+            if (!window.hasPlayedFirstSong) {
+                window.hasPlayedFirstSong = true;
+                if (typeof showPlayer === 'function') showPlayer();
+                else if (window.showPlayer) window.showPlayer();
+            }
             
             if (song.localUrl) {
                 // Local File Pipeline Bypass
@@ -2207,7 +2277,7 @@ function onPlayerStateChange(event) {
                 delete miniCover.dataset.fallbackDone;
                 coverArt.src = song.cover;
                 miniCover.src = song.cover;
-                backgroundLayer.style.backgroundImage = `url("${song.cover}")`;
+                miniCover.src = song.cover;
                 document.body.classList.add('song-playing');
                 
                 // Clear old lyrics
@@ -2219,7 +2289,6 @@ function onPlayerStateChange(event) {
                 audioPlayer.src = song.localUrl;
                 audioPlayer.play().catch(e => console.log('Local play error:', e));
                 setPlayPauseUI(true);
-                showPlayer();
                 return;
             }
             
@@ -2250,9 +2319,14 @@ function onPlayerStateChange(event) {
             
             delete coverArt.dataset.fallbackDone;
             delete miniCover.dataset.fallbackDone;
+            coverArt.removeAttribute('crossorigin');
             coverArt.src = rawYtThumb;
-            miniCover.src = resolveYtThumb(rawYtThumb, 'small') || rawYtThumb;
-            backgroundLayer.style.backgroundImage = `url("${resolveYtThumb(rawYtThumb, 'small') || rawYtThumb}")`;
+            const smallThumb = resolveYtThumb(rawYtThumb, 'small') || rawYtThumb;
+            miniCover.src = smallThumb;
+            
+            const bgImg = new Image();
+            bgImg.src = smallThumb;
+            bgImg.decode().catch(() => {});
             
             coverArt.style.display = 'block';
             const defaultCoverIcon = document.getElementById('default-cover-icon');
@@ -2310,7 +2384,6 @@ function onPlayerStateChange(event) {
             // 5. Asynchronously fetch & render lyrics
             fetchLyricsForQueueSong(song.title, song.artist, song.videoId);
 
-            showPlayer();
         }
 
         // --- PIPELINE ---
@@ -2323,14 +2396,21 @@ function onPlayerStateChange(event) {
             const query = songSearchInput.value.trim();
             if (!query) return;
 
+            // Auto-open player screen ONLY for the first song played in the session
+            if (!window.hasPlayedFirstSong) {
+                window.hasPlayedFirstSong = true;
+                if (typeof showPlayer === 'function') showPlayer();
+                else if (window.showPlayer) window.showPlayer();
+            }
+
             currentPlaybackToken++;
             const myToken = currentPlaybackToken;
 
             if (searchAbortController) searchAbortController.abort();
             searchAbortController = new AbortController();
             const signal = searchAbortController.signal;
+            songSearchInput.value = ''; // Immediately clear so it doesn't stay populated
 
-            showPlayer(); // Switch to player UI when searching
             // Cancel any ongoing stream refresh
             streamRefreshInProgress = false;
             
@@ -2390,10 +2470,16 @@ function onPlayerStateChange(event) {
                 if (rawYtThumb) {
                     delete coverArt.dataset.fallbackDone;
                     delete miniCover.dataset.fallbackDone;
+                    coverArt.removeAttribute('crossorigin');
                     coverArt.src = rawYtThumb;
-                    miniCover.src = resolveYtThumb(songData.thumbnail, 'small');
-                    // Keep background layer low-res! Blurring HD images kills GPU performance.
-                    backgroundLayer.style.backgroundImage = `url("${resolveYtThumb(songData.thumbnail, 'small')}")`;
+                    
+                    const smallThumb = resolveYtThumb(songData.thumbnail, 'small');
+                    miniCover.src = smallThumb;
+                    
+                    const bgImg = new Image();
+                    bgImg.crossOrigin = 'Anonymous';
+                    bgImg.src = smallThumb;
+                    bgImg.decode().catch(() => {});
                 }
 
                 // We ALWAYS add song-playing so the ambient-wrapper becomes visible
@@ -2405,22 +2491,25 @@ function onPlayerStateChange(event) {
                 
                 // Upgrade to HD iTunes cover silently in background (Only for the actual cover art, NOT the blurred background)
                 const hdImg = new Image();
-                hdImg.onload = () => {
+                hdImg.crossOrigin = 'Anonymous';
+                hdImg.src = coverUrl;
+                hdImg.decode().then(() => {
                     delete coverArt.dataset.fallbackDone;
                     delete miniCover.dataset.fallbackDone;
+                    coverArt.setAttribute('crossorigin', 'anonymous');
                     coverArt.src = hdImg.src;
                     miniCover.src = hdImg.src;
-                    // If no raw thumb was available, fallback to using HD cover for background
-                    if (!rawYtThumb) {
-                        backgroundLayer.style.backgroundImage = `url("${hdImg.src}")`;
-                    }
+                    // (Background is now dynamically drawn via canvas)
                     updateMediaSession(songData.title, songData.uploader, hdImg.src);
                     
                     coverArt.classList.remove('cover-changing');
                     void coverArt.offsetWidth;
                     coverArt.classList.add('cover-changing');
-                };
-                hdImg.src = coverUrl;
+                    
+                    const bgLayer = document.getElementById('background-layer');
+                    if (bgLayer) bgLayer.style.backgroundImage = `url(${songData.thumbnail ? resolveYtThumb(songData.thumbnail, 'small') : hdImg.src})`;
+                    const activeScreen = document.querySelector('.screen-view.active-screen');
+                }).catch(e => console.warn("Failed to decode HD cover", e));
 
                 saveToHistory(songData, rawYtThumb);
 
@@ -2465,6 +2554,7 @@ function onPlayerStateChange(event) {
                 // If it was lingering from prefetchNextSong but doesn't match the new search, discard it!
                 else if (window.prefetchedStreamData && (!prefetchVideoId || prefetchVideoId === currentVideoId)) {
                     streamData = window.prefetchedStreamData;
+                    audioPlayer._proxyDuration = streamData.duration || 0;
                     audioPlayer.src = window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(window.prefetchedStreamData.url);
                     window.prefetchedStreamData = null;
                     lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal });
@@ -2483,6 +2573,8 @@ function onPlayerStateChange(event) {
                     
                     if (myToken !== currentPlaybackToken) return;
                     if (!streamData.url) throw new Error(streamData.message || 'No stream URL returned');
+                    
+                    audioPlayer._proxyDuration = streamData.duration || 0;
                     
                     // Set src and play IMMEDIATELY
                     audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
@@ -2579,6 +2671,16 @@ function onPlayerStateChange(event) {
             coverArtContainer.classList.add('playing');
             document.getElementById('cover-wrapper').classList.add('playing');
             if (typeof window.showCatWidget === 'function') window.showCatWidget();
+            
+            // Auto-open player screen ONLY for the first song played in the session
+            if (!window.hasPlayedFirstSong) {
+                window.hasPlayedFirstSong = true;
+                if (typeof window.showPlayer === 'function') {
+                    window.showPlayer();
+                } else if (typeof showPlayer === 'function') {
+                    showPlayer();
+                }
+            }
         });
 
         audioPlayer.addEventListener('pause', () => {
@@ -2676,9 +2778,10 @@ function onPlayerStateChange(event) {
         }
 
         function updateProgressUI() {
+            currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
             if (!audioPlayer.duration) return;
             progressBar.style.width = `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`;
-            currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+            durationEl.textContent = formatTime(audioPlayer.duration);
         }
 
         function convertLrcToJson(lrcText) {
@@ -2750,6 +2853,7 @@ function onPlayerStateChange(event) {
 
             if (lyricsData.length === 0) return;
 
+            const frag = document.createDocumentFragment();
             lyricsData.forEach((line, lineIdx) => {
                 const lineDiv = document.createElement('div');
                 lineDiv.className = 'lyric-line';
@@ -2758,6 +2862,8 @@ function onPlayerStateChange(event) {
                     audioPlayer.currentTime = line.start;
                     if (audioPlayer.paused) audioPlayer.play();
                 });
+
+                const lineWords = [];
 
                 if (line.isInstrumental) {
                     lineDiv.classList.add('instrumental-line');
@@ -2771,13 +2877,16 @@ function onPlayerStateChange(event) {
                         wordSpan.dataset.end = word.end;
                         lineDiv.appendChild(wordSpan);
                         lineDiv.appendChild(document.createTextNode(' '));
-                        wordElements.push({ el: wordSpan, start: word.start, end: word.end, state: 'future' });
+                        const wData = { el: wordSpan, start: word.start, end: word.end, state: 'future' };
+                        wordElements.push(wData);
+                        lineWords.push(wData);
                     });
                 }
 
-                lyricsContainer.appendChild(lineDiv);
-                lineElements.push({ el: lineDiv, start: line.start, end: line.end });
+                frag.appendChild(lineDiv);
+                lineElements.push({ el: lineDiv, start: line.start, end: line.end, words: lineWords });
             });
+            lyricsContainer.appendChild(frag);
             
             requestAnimationFrame(processLyricsFrame);
         }
@@ -2797,29 +2906,45 @@ function onPlayerStateChange(event) {
             const time = audioPlayer.currentTime;
             let currentLineIndex = -1;
 
-            for (let i = 0; i < wordElements.length; i++) {
-                const w = wordElements[i];
-                if (time < w.start) {
-                    if (w.state !== 'future') { w.el.className = 'lyric-word'; w.el.style.setProperty('--progress', '0%'); w.state = 'future'; }
-                } else if (time >= w.start && time <= w.end) {
-                    let percentage = Math.max(0, Math.min(100, ((time - w.start) / (w.end - w.start)) * 100));
-                    w.el.style.setProperty('--progress', `${percentage}%`);
-                    if (w.state !== 'active') { w.el.className = 'lyric-word active'; w.state = 'active'; }
-                } else {
-                    if (w.state !== 'passed') { w.el.className = 'lyric-word passed'; w.el.style.setProperty('--progress', '100%'); w.state = 'passed'; }
-                }
-            }
-
             for (let i = 0; i < lineElements.length; i++) {
                 if (time >= lineElements[i].start) currentLineIndex = i;
             }
 
             const isResize = e && e.type === 'resize';
-            if (activeLineIndex !== currentLineIndex || isResize) {
-                if (activeLineIndex !== currentLineIndex) {
-                    if (activeLineIndex !== -1 && lineElements[activeLineIndex]) lineElements[activeLineIndex].el.classList.remove('active-line');
-                    if (currentLineIndex !== -1 && lineElements[currentLineIndex]) lineElements[currentLineIndex].el.classList.add('active-line');
+            const lineChanged = activeLineIndex !== currentLineIndex;
+
+            if (lineChanged || isResize) {
+                if (lineChanged) {
+                    if (activeLineIndex !== -1 && lineElements[activeLineIndex]) {
+                        lineElements[activeLineIndex].el.classList.remove('active-line');
+                    }
+                    if (currentLineIndex !== -1 && lineElements[currentLineIndex]) {
+                        lineElements[currentLineIndex].el.classList.add('active-line');
+                    }
                     activeLineIndex = currentLineIndex;
+
+                    // Bulk update word states on line transition rather than every frame
+                    for (let i = 0; i < lineElements.length; i++) {
+                        const line = lineElements[i];
+                        if (!line.words) continue;
+                        if (i < currentLineIndex) {
+                            line.words.forEach(w => {
+                                if (w.state !== 'passed') {
+                                    w.el.className = 'lyric-word passed';
+                                    w.el.style.setProperty('--progress', '100%');
+                                    w.state = 'passed';
+                                }
+                            });
+                        } else if (i > currentLineIndex) {
+                            line.words.forEach(w => {
+                                if (w.state !== 'future') {
+                                    w.el.className = 'lyric-word';
+                                    w.el.style.setProperty('--progress', '0%');
+                                    w.state = 'future';
+                                }
+                            });
+                        }
+                    }
                 }
 
                 // Only calculate layout when the line changes or window resizes to prevent massive layout thrashing
@@ -2831,13 +2956,31 @@ function onPlayerStateChange(event) {
                 } else targetY = panelHeight / 2;
             }
 
+            // ONLY animate active line's words on every frame
+            if (currentLineIndex !== -1 && lineElements[currentLineIndex]) {
+                const activeLine = lineElements[currentLineIndex];
+                if (activeLine.words) {
+                    activeLine.words.forEach(w => {
+                        if (time < w.start) {
+                            if (w.state !== 'future') { w.el.className = 'lyric-word'; w.el.style.setProperty('--progress', '0%'); w.state = 'future'; }
+                        } else if (time >= w.start && time <= w.end) {
+                            let percentage = Math.max(0, Math.min(100, ((time - w.start) / (w.end - w.start)) * 100));
+                            w.el.style.setProperty('--progress', `${percentage}%`);
+                            if (w.state !== 'active') { w.el.className = 'lyric-word active'; w.state = 'active'; }
+                        } else {
+                            if (w.state !== 'passed') { w.el.className = 'lyric-word passed'; w.el.style.setProperty('--progress', '100%'); w.state = 'passed'; }
+                        }
+                    });
+                }
+            }
+
             lerpScroll();
         }
 
         function lerpScroll() {
             const diff = targetY - currentY;
             if (Math.abs(diff) > 0.5) {
-                currentY += diff * 0.08; 
+                currentY += diff * 0.05; 
                 lyricsContainer.style.transform = `translateY(${currentY}px)`;
             } else if (Math.abs(diff) > 0) {
                 currentY = targetY;
@@ -2861,7 +3004,7 @@ function onPlayerStateChange(event) {
                 }
             });
             btn.addEventListener('click', () => {
-                if(btn.id === 'queue-nav-btn') return; // Handled separately
+                if(btn.id === 'floating-queue-btn') return; // Handled separately
                 
                 navBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -2880,26 +3023,50 @@ function onPlayerStateChange(event) {
             });
         });
 
-        // Chameleon Glow Logic
-        function updateChameleonGlow() {
+        // Dynamic Colors Extraction (Chameleon Glow + Mesh Background)
+        async function updateDynamicColors() {
             try {
                 if (!coverArt.src || coverArt.src === window.location.href) return;
+                
+                // Fast async decoding off-main-thread to prevent UI lag
+                const bitmap = await window.createImageBitmap(coverArt, { resizeWidth: 10, resizeHeight: 10, resizeQuality: 'low' });
+                
                 const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 1; canvas.height = 1;
-                // Draw entire image into 1x1 canvas to get the average color
-                ctx.drawImage(coverArt, 0, 0, coverArt.naturalWidth || 600, coverArt.naturalHeight || 600, 0, 0, 1, 1);
-                const data = ctx.getImageData(0, 0, 1, 1).data;
-                const r = data[0], g = data[1], b = data[2];
-                // Set custom CSS variable for the drop shadow glow
-                sideNavEl.style.setProperty('--chameleon-glow', `rgba(${r},${g},${b},0.5)`);
+                canvas.width = 10; canvas.height = 10;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(bitmap, 0, 0);
+                bitmap.close();
+                
+                const data = ctx.getImageData(0, 0, 10, 10).data;
+                
+                let rSum = 0, gSum = 0, bSum = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    rSum += data[i]; gSum += data[i+1]; bSum += data[i+2];
+                }
+                
+                const avgR = Math.round(rSum / 100);
+                const avgG = Math.round(gSum / 100);
+                const avgB = Math.round(bSum / 100);
+                
+                // Set CSS variables for CSS Aurora Orbs
+                const auroraContainer = document.getElementById('css-aurora-container');
+                if (auroraContainer) {
+                    auroraContainer.style.setProperty('--aurora-1', `rgba(${avgR}, ${avgG}, ${avgB}, 0.95)`);
+                    auroraContainer.style.setProperty('--aurora-2', `rgba(${Math.min(255, avgR + 40)}, ${Math.max(0, avgG - 20)}, ${Math.min(255, avgB + 20)}, 0.95)`);
+                    auroraContainer.style.setProperty('--aurora-3', `rgba(${Math.max(0, avgR - 30)}, ${Math.min(255, avgG + 40)}, ${Math.max(0, avgB - 10)}, 0.95)`);
+                    auroraContainer.style.setProperty('--aurora-4', `rgba(${Math.min(255, avgR + 20)}, ${Math.max(0, avgG - 30)}, ${Math.min(255, avgB + 50)}, 0.95)`);
+                    auroraContainer.style.setProperty('--aurora-5', `rgba(${Math.max(0, avgR - 10)}, ${Math.min(255, avgG + 20)}, ${Math.max(0, avgB - 40)}, 0.95)`);
+                }
+
+                // Set very subtle chameleon glow to avoid "weird" navbar coloring
+                sideNavEl.style.setProperty('--chameleon-glow', `rgba(${avgR},${avgG},${avgB},0.08)`);
             } catch(e) {
-                // Ignore CORS errors if image doesn't allow canvas extraction
-                sideNavEl.style.setProperty('--chameleon-glow', `rgba(255,255,255,0.05)`);
+                // Fallback
+                sideNavEl.style.setProperty('--chameleon-glow', `rgba(255,255,255,0.02)`);
             }
         }
         
-        coverArt.addEventListener('load', updateChameleonGlow);
+        coverArt.addEventListener('load', updateDynamicColors);
 
         // --- AUTO-TRENDING & PERSONALIZATION ---
         async function loadTrendingFeeds() {
@@ -2919,7 +3086,7 @@ function onPlayerStateChange(event) {
                             uniqueHistory.push(h);
                         }
                     }
-                    populateDenseGrid('jump-back-in-container', uniqueHistory.slice(0, 16));
+                    populateArtGrid('jump-back-in-container', uniqueHistory.slice(0, 64));
                     // Fire the new smart recommendation engine (non-blocking)
                     populateTasteMix(uniqueHistory);
                     populateBecauseRows(uniqueHistory);
@@ -3011,13 +3178,14 @@ function onPlayerStateChange(event) {
                 // Use backend cover proxy for reliable images
                 const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
                 const query = `${title} ${subtitle}`;
+                const fallbackThumb = `/api/cover?vid=${videoId || ''}&q=${encodeURIComponent(query)}`;
                 
                 const card = document.createElement('div');
                 card.className = 'dense-card';
                 card.style.animationDelay = `${idx * 0.03}s`;
                 card.setAttribute('data-query', query);
                 card.innerHTML = `
-                    <img src="${thumb}" alt="" class="dense-card-cover" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/api/cover'">
+                    <img src="${thumb}" alt="" class="dense-card-cover" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallbackThumb}'">
                     <div class="dense-card-info">
                         <div class="dense-card-title">${title}</div>
                         <div class="dense-card-artist">${subtitle}</div>
@@ -3043,6 +3211,142 @@ function onPlayerStateChange(event) {
                 container.appendChild(card);
             });
             setupLazyCovers(container);
+        }
+
+        // 🎨 ART GRID — Pure album art squares for "Jump Back In"
+        function populateArtGrid(containerId, entries) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            container.className = 'jump-back-wrapper';
+
+            const chunkSize = 16;
+            const numPages = Math.ceil(entries.length / chunkSize);
+            
+            for (let i = 0; i < entries.length; i += chunkSize) {
+                const chunk = entries.slice(i, i + chunkSize);
+                const slide = document.createElement('div');
+                slide.className = 'jump-back-slide art-grid-container';
+
+                chunk.forEach((item, idx) => {
+                    const title = item.title || item.name || 'Unknown';
+                    const subtitle = item.artist || item.uploader || '';
+                    const videoId = item.videoId || item.id;
+                    let rawThumb = item.cover || item.thumbnail || item.thumb || '';
+                    if (!rawThumb && videoId) rawThumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                    const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
+                    const fallbackThumb = `/api/cover?vid=${videoId || ''}&q=${encodeURIComponent(title + ' ' + subtitle)}`;
+                    const safeTitle = title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    const safeArtist = subtitle.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    
+                    const card = document.createElement('div');
+                    card.className = 'art-grid-card';
+                    card.style.animationDelay = `${idx * 0.035}s`;
+                    card.innerHTML = `
+                        <img src="${thumb}" alt="${safeTitle}" loading="lazy" decoding="async"
+                             onerror="this.onerror=null;this.src='${fallbackThumb}'">
+                        <div class="art-grid-overlay">
+                            <div class="art-grid-play-btn">
+                                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                            <div class="art-grid-title">${safeTitle}</div>
+                            <div class="art-grid-artist">${safeArtist}</div>
+                        </div>
+                    `;
+                    card.onclick = () => {
+                        if (videoId) {
+                            const songJson = JSON.stringify({title, artist: subtitle, cover: thumb, videoId}).replace(/"/g, '&quot;');
+                            window.playSong(videoId, songJson, card);
+                        } else {
+                            songSearchInput.value = `${title} ${subtitle}`; searchBtn.click();
+                        }
+                    };
+                    slide.appendChild(card);
+                });
+                container.appendChild(slide);
+            }
+            
+            // Add dots indicator
+            if (numPages > 1) {
+                let dotsContainer = document.getElementById(containerId + '-dots');
+                if (!dotsContainer) {
+                    dotsContainer = document.createElement('div');
+                    dotsContainer.id = containerId + '-dots';
+                    dotsContainer.className = 'carousel-dots';
+                    container.parentNode.insertBefore(dotsContainer, container.nextSibling);
+                }
+                dotsContainer.innerHTML = '';
+                for (let i = 0; i < numPages; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+                    dot.onclick = () => {
+                        const slides = container.querySelectorAll('.jump-back-slide');
+                        if (slides[i]) slides[i].scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start'});
+                    };
+                    dotsContainer.appendChild(dot);
+                }
+                
+                // Update dots on scroll
+                const dotsList = Array.from(dotsContainer.children);
+                let scrollTimeout;
+                container.addEventListener('scroll', () => {
+                    if(scrollTimeout) return;
+                    scrollTimeout = requestAnimationFrame(() => {
+                        scrollTimeout = null;
+                    const scrollLeft = container.scrollLeft;
+                    const slideWidth = container.clientWidth;
+                    const activeIndex = Math.round(scrollLeft / slideWidth);
+                    const dots = Array.from(dotsContainer.children);
+                    dotsList.forEach((d, i) => d.classList.toggle('active', i === activeIndex));
+                    });
+                }, {passive: true});
+            }
+        }
+
+        // 🎬 CINEMATIC CARDS — Netflix-style horizontal scroll for "AI Mix"
+        function populateCinematicCards(containerId, entries) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            container.className = 'cinematic-scroll-container';
+
+            entries.forEach((item, idx) => {
+                const title = item.title || item.name || 'Unknown';
+                const subtitle = item.artist || item.uploader || '';
+                const videoId = item.videoId || item.id;
+                let rawThumb = item.cover || item.thumbnail || item.thumb || '';
+                if (!rawThumb && videoId) rawThumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
+                const fallbackThumb = `/api/cover?vid=${videoId || ''}&q=${encodeURIComponent(title + ' ' + subtitle)}`;
+                const safeTitle = title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const safeArtist = subtitle.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+                const card = document.createElement('div');
+                card.className = 'cinematic-card';
+                card.style.animationDelay = `${idx * 0.04}s`;
+                card.innerHTML = `
+                    <div class="cinematic-card-inner">
+                        <img src="${thumb}" class="cinematic-card-img" alt="${safeTitle}" loading="lazy" decoding="async"
+                             onerror="this.onerror=null;this.src='${fallbackThumb}'">
+                        <div class="cinematic-card-body">
+                            <div class="cinematic-card-title">${safeTitle}</div>
+                            <div class="cinematic-card-artist">${safeArtist}</div>
+                        </div>
+                        <div class="cinematic-card-play">
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => {
+                    if (videoId) {
+                        const songJson = JSON.stringify({title, artist: subtitle, cover: thumb, videoId}).replace(/"/g, '&quot;');
+                        window.playSong(videoId, songJson, card);
+                    } else {
+                        songSearchInput.value = `${title} ${subtitle}`; searchBtn.click();
+                    }
+                };
+                container.appendChild(card);
+            });
         }
 
         async function populateHomeTopArtists() {
@@ -3141,7 +3445,7 @@ function onPlayerStateChange(event) {
                 [allRecs[i], allRecs[j]] = [allRecs[j], allRecs[i]];
             }
 
-            populateDenseGrid('home-taste-mix-container', allRecs.slice(0, 24));
+            populateCinematicCards('home-taste-mix-container', allRecs.slice(0, 24));
         }
 
         async function populateBecauseRows(historyItems) {
@@ -3250,6 +3554,13 @@ function onPlayerStateChange(event) {
                     el.classList.remove('hidden-screen');
                     el.classList.add('active-screen');
                     document.body.classList.add(id + '-active');
+                    
+                    // Sync top bar and logo scroll position for the new screen
+                    const topBar = document.getElementById('top-bar-wrapper');
+                    if (topBar) {
+                        topBar.style.transform = `translateY(${-el.scrollTop}px)`;
+                    }
+
                 } else {
                     el.classList.remove('active-screen');
                     el.classList.add('hidden-screen');
@@ -3872,7 +4183,7 @@ function onPlayerStateChange(event) {
             try {
                 const song = JSON.parse(songJsonStr.replace(/&quot;/g, '"'));
                 songSearchInput.value = song.title + ' ' + song.artist;
-                window._forceQueueSong = { videoId, title: song.title, artist: song.artist, thumbnail: song.cover || song.thumbnail };
+                window._forceQueueSong = { id: videoId, videoId, title: song.title, artist: song.artist, thumbnail: song.cover || song.thumbnail };
                 searchBtn.click();
             } catch(e) { console.error(e); }
         };
@@ -3916,7 +4227,7 @@ function onPlayerStateChange(event) {
                     chip.classList.remove('loading');
                     if (data.status === 'success' && data.tracks && data.tracks.length > 0) {
                         populateVinylContainer('mood-radio-container', data.tracks);
-                        showToast(`ðŸ“» ${mood} Radio loaded!`);
+                        showToast(`📻 ${mood} Radio loaded!`);
                     } else {
                         container.innerHTML = '<div class="empty-state">Nothing found. Try another mood!</div>';
                     }
@@ -3927,7 +4238,7 @@ function onPlayerStateChange(event) {
             });
         });
 
-        // â”€â”€ PLAYLIST DETAIL MODAL â”€â”€
+        // ── PLAYLIST DETAIL MODAL ──
         let currentPlaylistIndex = -1;
         function openPlaylistModal(plIdx) {
             const playlists = getPlaylists();
@@ -3991,9 +4302,9 @@ function onPlayerStateChange(event) {
             showScreen('playlist-full-screen');
         }
 
-        // renderPlaylists is defined at line 485 â€” no duplicate needed here
+        // renderPlaylists is defined at line 485 — no duplicate needed here
 
-        // â”€â”€ PREMIUM QUEUE RENDERER â”€â”€
+        // ── PREMIUM QUEUE RENDERER ──
         function renderQueue() {
             if (typeof updateCinematicCards === 'function') updateCinematicCards();
             const qList = document.getElementById('queue-list');
@@ -4001,104 +4312,217 @@ function onPlayerStateChange(event) {
 
             if (queueList.length === 0) {
                 qList.innerHTML = `
-                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:12px;opacity:0.5;">
-                        <svg viewBox="0 0 24 24" style="width:48px;height:48px;fill:white;"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
-                        <div style="font-size:0.95rem;color:rgba(255,255,255,0.6);">Queue is empty</div>
-                        <div style="font-size:0.78rem;color:rgba(255,255,255,0.35);">Play a song to auto-fill</div>
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:14px;">
+                        <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+                            <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:rgba(255,255,255,0.3);"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
+                        </div>
+                        <div style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.45);">Queue is empty</div>
+                        <div style="font-size:0.75rem;color:rgba(255,255,255,0.22);letter-spacing:0.02em;">Play a song to auto-fill the queue</div>
                     </div>`;
                 return;
             }
 
             const nowPlayingSong = queueList[currentQueueIndex];
 
-            // â”€â”€ NOW PLAYING HERO CARD â”€â”€
+            // ── NOW PLAYING HERO CARD ──
             if (nowPlayingSong) {
                 const heroThumb = getCoverUrl(`${nowPlayingSong.title} ${nowPlayingSong.artist}`, nowPlayingSong.cover || '', nowPlayingSong.id || nowPlayingSong.videoId);
                 const hero = document.createElement('div');
-                hero.style.cssText = `
-                    position:relative; border-radius:18px; overflow:hidden;
-                    margin-bottom:28px; cursor:pointer;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-                `;
+                hero.className = 'q-hero-card';
                 hero.innerHTML = `
-                    <img src="${heroThumb}" style="width:100%;height:180px;object-fit:cover;display:block;border-radius:18px;">
-                    <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);border-radius:18px;"></div>
-                    <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 18px;display:flex;align-items:flex-end;justify-content:space-between;">
-                        <div>
-                            <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent,#ff476d);margin-bottom:4px;">â™ª Now Playing</div>
-                            <div style="font-size:1.1rem;line-height:1.3;font-weight:700;color:white;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:280px;margin-bottom:4px;">${nowPlayingSong.title}</div>
-                            <div style="font-size:0.85rem;color:rgba(255,255,255,0.7);">${nowPlayingSong.artist}</div>
+                    <div class="q-hero-img-wrap">
+                        <img src="${heroThumb}" class="q-hero-img" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect fill=\'%23222\' width=\'100\' height=\'100\'/%3E%3C/svg%3E'">
+                        <div class="q-hero-gradient"></div>
+                    </div>
+                    <div class="q-hero-body">
+                        <div class="q-hero-meta">
+                            <div class="q-hero-label">&#9835; Now Playing</div>
+                            <div class="q-hero-waveform">
+                                <span></span><span></span><span></span><span></span><span></span>
+                            </div>
                         </div>
-                        <div style="display:flex;align-items:flex-end;gap:3px;height:28px;padding-bottom:2px;">
-                            <div style="width:4px;background:var(--accent,#ff476d);border-radius:3px;animation:qEq 0.9s ease-in-out infinite;transform-origin:bottom;"></div>
-                            <div style="width:4px;background:var(--accent,#ff476d);border-radius:3px;animation:qEq 1.2s ease-in-out infinite 0.15s;transform-origin:bottom;"></div>
-                            <div style="width:4px;background:var(--accent,#ff476d);border-radius:3px;animation:qEq 0.75s ease-in-out infinite 0.08s;transform-origin:bottom;"></div>
-                            <div style="width:4px;background:var(--accent,#ff476d);border-radius:3px;animation:qEq 1.05s ease-in-out infinite 0.22s;transform-origin:bottom;"></div>
-                        </div>
+                        <div class="q-hero-title">${nowPlayingSong.title}</div>
+                        <div class="q-hero-artist">${nowPlayingSong.artist}</div>
                     </div>
                 `;
                 hero.addEventListener('click', () => playPauseBtn.click());
                 qList.appendChild(hero);
             }
 
-            // Inject keyframes once
+            // Inject styles once
             if (!document.getElementById('qEq-style')) {
                 const s = document.createElement('style');
                 s.id = 'qEq-style';
                 s.textContent = `
-                    @keyframes qEq {
-                        0%,100%{height:4px} 50%{height:24px}
+                    /* ===== Hero Now Playing Card ===== */
+                    .q-hero-card {
+                        position: relative; border-radius: 22px; overflow: hidden;
+                        margin-bottom: 22px; cursor: pointer;
+                        box-shadow: 0 16px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.08);
+                        transition: transform 0.28s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.28s;
                     }
+                    .q-hero-card:hover { transform: scale(1.015); box-shadow: 0 22px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.12); }
+                    .q-hero-card:active { transform: scale(0.99); }
+                    .q-hero-img-wrap { position: relative; }
+                    .q-hero-img { width: 100%; height: 190px; object-fit: cover; display: block; }
+                    .q-hero-gradient {
+                        position: absolute; inset: 0;
+                        background: linear-gradient(to top, rgba(8,3,18,0.95) 0%, rgba(8,3,18,0.4) 55%, transparent 100%);
+                    }
+                    .q-hero-body {
+                        position: absolute; bottom: 0; left: 0; right: 0;
+                        padding: 14px 18px 16px;
+                    }
+                    .q-hero-meta {
+                        display: flex; align-items: center; justify-content: space-between;
+                        margin-bottom: 6px;
+                    }
+                    .q-hero-label {
+                        font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em;
+                        text-transform: uppercase;
+                        color: var(--accent, #ff476d);
+                        text-shadow: 0 0 10px rgba(255,71,109,0.6);
+                    }
+                    /* Mini waveform bars */
+                    .q-hero-waveform {
+                        display: flex; align-items: flex-end; gap: 3px; height: 22px;
+                    }
+                    .q-hero-waveform span {
+                        display: block; width: 3px; border-radius: 4px;
+                        background: var(--accent, #ff476d);
+                        box-shadow: 0 0 6px rgba(255,71,109,0.5);
+                    }
+                    .q-hero-waveform span:nth-child(1) { animation: qWave 0.9s ease-in-out infinite; }
+                    .q-hero-waveform span:nth-child(2) { animation: qWave 1.3s ease-in-out infinite 0.1s; }
+                    .q-hero-waveform span:nth-child(3) { animation: qWave 0.7s ease-in-out infinite 0.22s; }
+                    .q-hero-waveform span:nth-child(4) { animation: qWave 1.1s ease-in-out infinite 0.05s; }
+                    .q-hero-waveform span:nth-child(5) { animation: qWave 0.85s ease-in-out infinite 0.16s; }
+                    @keyframes qWave {
+                        0%,100% { height: 4px; } 50% { height: 18px; }
+                    }
+                    .q-hero-title {
+                        font-size: 1.05rem; font-weight: 700; color: white;
+                        display: -webkit-box; -webkit-line-clamp: 1;
+                        -webkit-box-orient: vertical; overflow: hidden;
+                        letter-spacing: -0.01em;
+                    }
+                    .q-hero-artist {
+                        font-size: 0.82rem; color: rgba(255,255,255,0.62); margin-top: 3px;
+                    }
+
+                    /* ===== Song Row ===== */
                     @keyframes q-row-enter {
                         to { opacity: 1; transform: translateX(0); }
                     }
                     .q-row {
-                        display:flex; align-items:center; gap:12px;
-                        padding:12px 14px; border-radius:16px;
-                        background:rgba(255,255,255,0.03);
-                        border:1px solid rgba(255,255,255,0.05);
-                        margin-bottom:8px; cursor:grab;
-                        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                        transition: background 0.2s, transform 0.2s, border-color 0.2s, box-shadow 0.2s, margin-top 0.2s;
-                        opacity:0; transform:translateX(20px);
-                        will-change: transform, opacity;
-                        animation: q-row-enter 0.45s cubic-bezier(0.2,0.8,0.2,1) forwards;
+                        display: flex; align-items: center; gap: 13px;
+                        padding: 9px 12px;
+                        border-radius: 16px;
+                        background: rgba(255,255,255,0.03);
+                        border: 1px solid rgba(255,255,255,0.05);
+                        margin-bottom: 6px; cursor: grab;
+                        transition: background 0.22s, transform 0.22s cubic-bezier(0.2,0.8,0.2,1),
+                                    border-color 0.22s, box-shadow 0.22s;
+                        will-change: transform;
+                        transform: translateZ(0);
+                        opacity: 0; transform: translateX(20px);
+                        animation: q-row-enter 0.4s cubic-bezier(0.2,0.8,0.2,1) forwards;
                     }
-                    .q-row:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.12); transform:translateX(-4px) scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 10; position:relative; }
+                    .q-row:hover {
+                        background: rgba(255,255,255,0.075);
+                        border-color: rgba(255,255,255,0.11);
+                        transform: translateX(-3px) scale(1.015);
+                        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+                        position: relative; z-index: 2;
+                    }
                     .q-row:active { cursor: grabbing; }
-                    .q-row.q-next { border-color:rgba(255,71,109,0.25); background:rgba(255,71,109,0.06); }
-                    .q-row.dragging { opacity: 0.4 !important; transform: scale(0.98) !important; background: rgba(255,255,255,0.02); border-style: dashed; }
-                    .q-row.drag-over { border-top: 2px solid var(--accent, #ff476d) !important; margin-top: 12px; padding-top: 14px; background: linear-gradient(to bottom, rgba(255,71,109,0.1) 0%, transparent 40%); }
-                    .q-cover { width:46px;height:46px;border-radius:10px;object-fit:cover;flex-shrink:0; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-                    .q-info { flex:1; min-width:0; }
-                    .q-title { font-size:0.92rem;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; letter-spacing: 0.02em; }
-                    .q-artist { font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-                    .q-remove-btn { opacity:0; background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;padding:6px;border-radius:8px;transition:opacity 0.2s,color 0.2s, background 0.2s;flex-shrink:0; }
-                    .q-row:hover .q-remove-btn { opacity:1; }
-                    .q-remove-btn:hover { color:white; background:rgba(255,80,80,0.6); }
-                    .q-badge { font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:20px;flex-shrink:0; }
-                    .q-badge-next { background:rgba(255,71,109,0.18);color:var(--accent,#ff476d); box-shadow: 0 2px 8px rgba(255,71,109,0.2); }
-                    .q-badge-num { background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4); }
+                    .q-row.q-next {
+                        border-color: rgba(255,71,109,0.22);
+                        background: rgba(255,71,109,0.05);
+                    }
+                    .q-row.q-next:hover {
+                        border-color: rgba(255,71,109,0.38);
+                        background: rgba(255,71,109,0.1);
+                    }
+                    .q-row.dragging { opacity: 0.35 !important; transform: scale(0.97) !important; border-style: dashed; }
+                    .q-row.drag-over { border-top: 2px solid var(--accent, #ff476d) !important; margin-top: 10px; }
+
+                    /* Cover art */
+                    .q-cover {
+                        width: 44px; height: 44px; border-radius: 10px;
+                        object-fit: cover; flex-shrink: 0;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                    }
+
+                    /* Index number circle */
+                    .q-index {
+                        width: 22px; flex-shrink: 0;
+                        font-size: 0.72rem; font-weight: 600;
+                        color: rgba(255,255,255,0.28);
+                        text-align: center;
+                        letter-spacing: 0;
+                        font-variant-numeric: tabular-nums;
+                    }
+
+                    /* Song info */
+                    .q-info { flex: 1; min-width: 0; }
+                    .q-title {
+                        font-size: 0.9rem; font-weight: 600;
+                        color: white; white-space: nowrap;
+                        overflow: hidden; text-overflow: ellipsis;
+                    }
+                    .q-artist {
+                        font-size: 0.73rem; color: rgba(255,255,255,0.42);
+                        margin-top: 2px; white-space: nowrap;
+                        overflow: hidden; text-overflow: ellipsis;
+                    }
+
+                    /* Next / index badge */
+                    .q-badge {
+                        font-size: 0.62rem; font-weight: 700;
+                        letter-spacing: 0.09em; text-transform: uppercase;
+                        padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
+                    }
+                    .q-badge-next {
+                        background: rgba(255,71,109,0.15);
+                        color: var(--accent, #ff476d);
+                        border: 1px solid rgba(255,71,109,0.3);
+                        box-shadow: 0 0 10px rgba(255,71,109,0.15);
+                    }
+
+                    /* Remove button */
+                    .q-remove-btn {
+                        opacity: 0; background: transparent; border: none;
+                        color: rgba(255,255,255,0.35); cursor: pointer;
+                        padding: 6px; border-radius: 8px;
+                        transition: opacity 0.18s, color 0.18s, background 0.18s;
+                        flex-shrink: 0;
+                    }
+                    .q-row:hover .q-remove-btn { opacity: 1; }
+                    .q-remove-btn:hover {
+                        color: white;
+                        background: rgba(255, 60, 80, 0.5);
+                    }
                 `;
                 document.head.appendChild(s);
             }
 
-            // â”€â”€ UP NEXT LABEL â”€â”€
+            // ── UP NEXT LABEL ──
             const upNextSongs = queueList.filter((_, i) => i > currentQueueIndex);
             if (upNextSongs.length > 0) {
                 const label = document.createElement('div');
-                label.style.cssText = 'font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:0 4px 10px;';
-                label.textContent = `Up Next Â· ${upNextSongs.length} song${upNextSongs.length !== 1 ? 's' : ''}`;
+                label.style.cssText = 'font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:14px 4px 10px;';
+                label.textContent = `Up Next · ${upNextSongs.length} song${upNextSongs.length !== 1 ? 's' : ''}`;
                 qList.appendChild(label);
             }
 
-            // â”€â”€ SONG ROWS (skip now-playing) â”€â”€
+            // ── SONG ROWS (skip now-playing) ──
             let upNextCount = 0;
+            const listFrag = document.createDocumentFragment();
             for (let idx = 0; idx < queueList.length; idx++) {
                 if (idx === currentQueueIndex) continue; // hero card handles this
                 
                 // PERFORMANCE FIX: Only render 5 previous songs and queueRenderLimit upcoming songs
-                // Rendering 500 backdrop-filtered elements freezes the UI!
                 if (idx < currentQueueIndex - 5 || idx > currentQueueIndex + queueRenderLimit) continue;
 
                 const song = queueList[idx];
@@ -4109,17 +4533,17 @@ function onPlayerStateChange(event) {
                 const row = document.createElement('div');
                 row.className = `q-row${isNext ? ' q-next' : ''}`;
                 row.draggable = true;
-                row.style.animationDelay = `${20 + upNextCount * 45}ms`;
+                row.style.animationDelay = `${20 + upNextCount * 40}ms`;
 
                 row.innerHTML = `
-                    <img src="${thumbUrl}" class="q-cover" onerror="this.style.background='rgba(255,255,255,0.1)'">
+                    <img src="${thumbUrl}" class="q-cover" onerror="this.style.background='rgba(255,255,255,0.08)'">
                     <div class="q-info">
                         <div class="q-title">${song.title}</div>
                         <div class="q-artist">${song.artist}</div>
                     </div>
-                    <span class="q-badge ${isNext ? 'q-badge-next' : 'q-badge-num'}">${isNext ? 'Next' : '#' + (upNextCount)}</span>
+                    ${isNext ? '<span class="q-badge q-badge-next">Next</span>' : ''}
                     <button class="q-remove-btn remove-queue-btn" data-idx="${idx}" title="Remove">
-                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                        <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
                     </button>
                 `;
 
@@ -4191,17 +4615,18 @@ function onPlayerStateChange(event) {
                     playQueueIndex(idx);
                 });
 
-                qList.appendChild(row);
+                listFrag.appendChild(row);
             }
+            qList.appendChild(listFrag);
 
             if (currentQueueIndex + queueRenderLimit < queueList.length - 1) {
                 const btnRow = document.createElement('div');
                 btnRow.style.cssText = 'display:flex; justify-content:center; padding: 20px 0; margin-bottom: 20px;';
                 const loadBtn = document.createElement('button');
                 loadBtn.textContent = 'Load More (' + (queueList.length - 1 - (currentQueueIndex + queueRenderLimit)) + ' more)';
-                loadBtn.style.cssText = 'background: rgba(255,255,255,0.1); color: white; border: none; padding: 10px 24px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); font-weight: 600; font-size: 0.9rem; transition: background 0.2s;';
-                loadBtn.onmouseover = () => loadBtn.style.background = 'rgba(255,255,255,0.2)';
-                loadBtn.onmouseleave = () => loadBtn.style.background = 'rgba(255,255,255,0.1)';
+                loadBtn.style.cssText = 'background: rgba(255,255,255,0.06); color: white; border: none; padding: 10px 24px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); font-weight: 600; font-size: 0.9rem; transition: background 0.2s;';
+                loadBtn.onmouseover = () => loadBtn.style.background = 'rgba(255,255,255,0.1)';
+                loadBtn.onmouseleave = () => loadBtn.style.background = 'rgba(255,255,255,0.06)';
                 loadBtn.onclick = () => {
                     queueRenderLimit += 20;
                     renderQueue();
@@ -4217,8 +4642,8 @@ function onPlayerStateChange(event) {
         }
 
         
-        // Clear Queue Button
-        document.getElementById('clear-queue-btn').addEventListener('click', () => {
+        // Clear Queue Header Button
+        document.getElementById('queue-header-clear-btn')?.addEventListener('click', () => {
             if(queueList.length <= 1) return;
             const currentSong = queueList[currentQueueIndex];
             queueList.splice(0, queueList.length);
@@ -4227,6 +4652,51 @@ function onPlayerStateChange(event) {
                 currentQueueIndex = 0;
             }
             renderQueue();
+        });
+
+        // ── QUEUE CONTROL BUTTONS SYNC ──
+        function updateQueueControlsState() {
+            const qShuffleBtn = document.getElementById('queue-shuffle-btn');
+            const qRepeatBtn = document.getElementById('queue-repeat-btn');
+            const qAutoplayBtn = document.getElementById('queue-autoplay-btn');
+
+            if (qShuffleBtn) {
+                qShuffleBtn.classList.toggle('active', isShuffled);
+            }
+            if (qRepeatBtn) {
+                qRepeatBtn.classList.remove('active', 'repeat-one');
+                if (repeatMode === 1) {
+                    qRepeatBtn.classList.add('active');
+                } else if (repeatMode === 2) {
+                    qRepeatBtn.classList.add('active', 'repeat-one');
+                }
+            }
+            if (qAutoplayBtn) {
+                const apt = document.getElementById('autoplay-toggle');
+                const isAutoplay = apt ? apt.checked : false;
+                qAutoplayBtn.classList.toggle('active', isAutoplay);
+            }
+        }
+
+        // Register queue controls click listeners
+        document.getElementById('queue-shuffle-btn')?.addEventListener('click', () => {
+            const mainShuffle = document.getElementById('shuffle-btn');
+            mainShuffle?.click();
+            updateQueueControlsState();
+        });
+
+        document.getElementById('queue-repeat-btn')?.addEventListener('click', () => {
+            const mainRepeat = document.getElementById('repeat-btn');
+            mainRepeat?.click();
+            updateQueueControlsState();
+        });
+
+        document.getElementById('queue-autoplay-btn')?.addEventListener('click', () => {
+            const apt = document.getElementById('autoplay-toggle');
+            if (apt) {
+                apt.checked = !apt.checked;
+                apt.dispatchEvent(new Event('change'));
+            }
         });
 
         // â”€â”€ YOUTUBE MUSIC ACCOUNT SYNC LOGIC â”€â”€
@@ -4822,7 +5292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const perfToggle = document.getElementById('performance-mode-toggle');
     if (perfToggle) {
         const perfVal = localStorage.getItem('apple_performance_mode');
-        const isPerf = perfVal === null ? true : perfVal === 'true';
+        const isPerf = perfVal === null ? false : perfVal === 'true';
         perfToggle.checked = isPerf;
         if (isPerf) {
             document.body.classList.add('performance-mode');
@@ -5548,20 +6018,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => PartyEngine.init(), 1000);
 });
 
-/* =========================================================================
-   SPATIAL AUDIO ENGINE (Concert Hall Effect)
-   ========================================================================= */
 
-
-// Visualizer completely removed for maximum dynamic wallpaper performance.
-
-document.getElementById('spatial-audio-btn')?.addEventListener('click', () => {
-    SpatialAudioEngine.toggle();
-});
-
-document.getElementById('spatial-8d-btn')?.addEventListener('click', () => {
-    SpatialAudioEngine.toggle8D();
-});
 
 window.toggleDownloadMenu = function(e) {
     const menu = document.getElementById('download-dropdown-menu');
@@ -5742,4 +6199,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     recognition.onerror = () => { isListening = false; micBtn.classList.remove('listening'); searchInput.placeholder = 'Search songs, artists, albums...'; };
 })();
+
+// ── Lyrics Glow Intensity Slider ──
+(function() {
+    const slider = document.getElementById('lyrics-glow-slider');
+    const valText = document.getElementById('glow-intensity-val');
+    if (!slider || !valText) return;
+
+    const savedGlow = localStorage.getItem('lyrics_glow_v1') || '2';
+    slider.value = savedGlow;
+    updateGlow(savedGlow);
+
+    slider.addEventListener('input', (e) => {
+        updateGlow(e.target.value);
+    });
+
+    slider.addEventListener('change', (e) => {
+        localStorage.setItem('lyrics_glow_v1', e.target.value);
+    });
+
+    function updateGlow(val) {
+        const num = parseInt(val, 10);
+        document.documentElement.style.setProperty('--lyrics-glow-intensity', `${num}px`);
+        if (num === 0) valText.textContent = 'None';
+        else if (num <= 2) valText.textContent = 'Low';
+        else if (num <= 5) valText.textContent = 'Medium';
+        else valText.textContent = 'High';
+    }
+})();
+
+
+
+
+
+
+
+
+
+
+
+
+let isScrolling;
+window.addEventListener('scroll', function ( event ) {
+    window.clearTimeout( isScrolling );
+    document.body.style.pointerEvents = 'none';
+    isScrolling = setTimeout(function() {
+        document.body.style.pointerEvents = 'auto';
+    }, 66);
+}, true);
+
 
