@@ -1496,20 +1496,29 @@ function onPlayerStateChange(event) {
 
         // â”€â”€ Global Back Button â”€â”€
         const globalBackBtn = document.getElementById('global-back-btn');
-        const screenHistory = []; // Track screen navigation history
+        const screenHistory = [];
+
+        window.addEventListener('popstate', (e) => {
+            if (e.state && e.state.screen) {
+                if (typeof showScreenExcept === 'function') { showScreenExcept(e.state.screen, true); }
+            } else {
+                if (typeof showScreenExcept === 'function') { showScreenExcept('home-screen', true); }
+            }
+        });
 
         globalBackBtn?.addEventListener('click', () => {
+            if (history.state && history.state.screen) {
+                history.back();
+                return;
+            }
             if (screenHistory.length > 0) {
                 const prev = screenHistory.pop();
-                // Use the built-in show helpers if they're available, else raw switch
                 if (prev === 'home-screen' && typeof showHome === 'function') { showHome(); return; }
                 if (prev === 'player-screen' && typeof showPlayer === 'function') { showPlayer(); return; }
                 if (prev === 'history-screen' && typeof showHistory === 'function') { showHistory(); return; }
                 if (prev === 'settings-screen' && typeof showSettings === 'function') { showSettings(); return; }
-                // Fallback raw switch
-                if (typeof showScreenExcept === 'function') { showScreenExcept(prev); return; }
+                if (typeof showScreenExcept === 'function') { showScreenExcept(prev, true); return; }
             }
-            // No history â€” go home
             if (typeof showHome === 'function') showHome();
         });
 
@@ -3537,7 +3546,7 @@ function onPlayerStateChange(event) {
         }
 
         // --- ARTIST & ALBUM PAGES ---
-        function showScreenExcept(showId) {
+        function showScreenExcept(showId, skipPushState = false) {
             // Record current screen in history for back button
             const currentScreen = ['home-screen','player-screen','history-screen','settings-screen','artist-screen','album-screen','library-screen','search-screen','playlist-full-screen'].find(id => {
                 const el = document.getElementById(id);
@@ -3545,6 +3554,9 @@ function onPlayerStateChange(event) {
             });
             if (currentScreen && currentScreen !== showId && typeof screenHistory !== 'undefined') {
                 screenHistory.push(currentScreen);
+                if (!skipPushState && window.history) {
+                    history.pushState({ screen: showId }, '', # + showId);
+                }
             }
 
             ['home-screen', 'player-screen', 'history-screen', 'settings-screen', 'artist-screen', 'album-screen', 'library-screen', 'search-screen', 'playlist-full-screen'].forEach(id => {
@@ -6247,5 +6259,7 @@ window.addEventListener('scroll', function ( event ) {
         document.body.style.pointerEvents = 'auto';
     }, 66);
 }, true);
+
+
 
 
