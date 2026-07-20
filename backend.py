@@ -556,58 +556,42 @@ async def stream(id: str, refresh: bool = False):
         result = await asyncio.to_thread(run_ytdlp)
         if result: return result
         
-        # --- FALLBACK: INVIDIOUS API ---
-        print(f"[Fallback] yt-dlp failed for {id}, trying Invidious APIs...")
-        async with httpx.AsyncClient(timeout=4.0) as client:
-            for instance in INVIDIOUS_INSTANCES:
-                try:
-                    r = await client.get(f"{instance}/api/v1/videos/{id}")
+        # --- FALLBACK: JIOSAAVN API ---
+        print(f"[Fallback] yt-dlp failed for {id}, trying JioSaavn API...")
+        try:
+            def fetch_meta():
+                return ytmusic.get_song(id)
+            meta = await asyncio.to_thread(fetch_meta)
+            
+            if meta and meta.get('videoDetails'):
+                title = meta['videoDetails'].get('title', '')
+                author = meta['videoDetails'].get('author', '')
+                query = f"{title} {author}".strip().replace(' ', '+')
+                
+                async with httpx.AsyncClient(timeout=8.0) as client:
+                    r = await client.get(f"https://www.jiosaavn.com/api.php?__call=autocomplete.get&query={query}&_format=json&_marker=0&ctx=android")
                     if r.status_code == 200:
                         data = r.json()
-                        streams = data.get('adaptiveFormats', [])
-                        audio_streams = [s for s in streams if s.get('type', '').startswith('audio')]
-                        if audio_streams:
-                            audio_streams.sort(key=lambda x: int(x.get('bitrate', 0)), reverse=True)
-                            best = audio_streams[0]
-                            return {
-                                "url": best['url'],
-                                "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
-                                "format_note": best.get('container', 'webm'),
-                                "duration": data.get('lengthSeconds', 0),
-                                "cached": False,
-                                "source": f"invidious ({instance})"
-                            }
-                except Exception:
-                    continue
-
-        # --- FALLBACK 2: PIPED API ---
-        print(f"[Fallback] Invidious failed for {id}, trying Piped APIs...")
-        PIPED_INSTANCES = [
-            "https://pipedapi.kavin.rocks",
-            "https://pipedapi.tokhmi.xyz",
-            "https://pipedapi.syncpundit.io",
-            "https://pi.ggtyler.dev"
-        ]
-        async with httpx.AsyncClient(timeout=4.0) as client:
-            for instance in PIPED_INSTANCES:
-                try:
-                    r = await client.get(f"{instance}/streams/{id}")
-                    if r.status_code == 200:
-                        data = r.json()
-                        audio_streams = data.get('audioStreams', [])
-                        if audio_streams:
-                            audio_streams.sort(key=lambda x: int(x.get('bitrate', 0)), reverse=True)
-                            best = audio_streams[0]
-                            return {
-                                "url": best['url'],
-                                "quality": f"{int(best.get('bitrate', 128000)//1000)}kbps",
-                                "format_note": best.get('mimeType', 'webm'),
-                                "duration": data.get('duration', 0),
-                                "cached": False,
-                                "source": f"piped ({instance})"
-                            }
-                except Exception:
-                    continue
+                        songs = data.get('songs', {}).get('data', [])
+                        if songs:
+                            song_id = songs[0]['id']
+                            r2 = await client.get(f"https://www.jiosaavn.com/api.php?__call=song.getDetails&pids={song_id}&_format=json&_marker=0&ctx=android")
+                            if r2.status_code == 200:
+                                details = r2.json()
+                                song_info = details.get(song_id, {})
+                                media_url = song_info.get('media_preview_url', '')
+                                if media_url:
+                                    full_url = media_url.replace("preview.saavncdn.com", "aac.saavncdn.com").replace("_96_p", "_320")
+                                    return {
+                                        "url": full_url,
+                                        "quality": "320kbps",
+                                        "format_note": "m4a",
+                                        "duration": int(meta['videoDetails'].get('lengthSeconds', 0)),
+                                        "cached": False,
+                                        "source": "jiosaavn"
+                                    }
+        except Exception as e:
+            print(f"[JioSaavn Fallback Error]: {str(e)}")
                     
         raise HTTPException(status_code=404, detail="Stream failed on all sources.")
 

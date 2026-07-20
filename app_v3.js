@@ -2173,63 +2173,20 @@ function onPlayerStateChange(event) {
 
         // —— Background Tasks for Queue Playback (Asynchronous to prevent autoplay blocks) ——
         async function fetchLyricsForQueueSong(title, artist, videoId) {
-            const query = title + ' ' + artist;
-            const cleanTitle = title.split('(')[0].split('[')[0].split('|')[0].trim();
-            const cleanArtist = artist.replace(/VEVO|Official|Topic|Music/gi, '').trim();
-            
             try {
-                // Try 1: Syncing lyrics
-                let lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`);
-                let bestMatch = null;
-                if (lrc1.ok) {
-                    let lrcData = await lrc1.json();
-                    if (lrcData && lrcData.length > 0) bestMatch = lrcData.find(item => item.syncedLyrics);
-                }
-
-                // Try 2: Clean Title + Clean Artist
-                if (!bestMatch) {
-                    const lrc2 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle + ' ' + cleanArtist)}`);
-                    if (lrc2.ok) {
-                        let lrcData = await lrc2.json();
-                        if (lrcData && lrcData.length > 0) bestMatch = lrcData.find(item => item.syncedLyrics);
-                    }
-                }
-
-                // Try 3: Just clean title
-                if (!bestMatch) {
-                    const lrc3 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle)}`);
-                    if (lrc3.ok) {
-                        let lrcData = await lrc3.json();
-                        if (lrcData && lrcData.length > 0) bestMatch = lrcData.find(item => item.syncedLyrics);
-                    }
-                }
-
-                // Check if current video ID hasn't changed in the meantime (race condition check)
                 if (currentVideoId !== videoId) return;
-
-                // Render Lyrics if found
-                if (bestMatch && bestMatch.syncedLyrics) {
-                    lyricsData = convertLrcToJson(bestMatch.syncedLyrics);
-                    renderLyrics();
+                const ytRes = await fetch(`/api/lyrics?videoId=${videoId}`);
+                const ytData = await ytRes.json();
+                if (currentVideoId !== videoId) return;
+                
+                if (ytData.status === 'success' && ytData.lyrics) {
+                    lyricsContainer.innerHTML = `<div style="padding: 0 20px 100px 20px; font-size: 1.5rem; line-height: 2; color: rgba(255,255,255,0.7); white-space: pre-wrap; font-weight: 500; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">${ytData.lyrics}</div>`;
                 } else {
-                    // Fallback to YouTube Plain Text Lyrics via Backend
-                    try {
-                        const ytRes = await fetch(`/api/lyrics?videoId=${videoId}`);
-                        const ytData = await ytRes.json();
-                        if (currentVideoId !== videoId) return;
-                        if (ytData.status === 'success' && ytData.lyrics) {
-                            lyricsContainer.innerHTML = `<div style="padding: 0 20px 100px 20px; font-size: 1.5rem; line-height: 2; color: rgba(255,255,255,0.7); white-space: pre-wrap; font-weight: 500; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">${ytData.lyrics}</div>`;
-                        } else {
-                            lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
-                        }
-                    } catch (err) {
-                        if (currentVideoId !== videoId) return;
-                        lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
-                    }
+                    lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
                 }
-            } catch (lrcErr) {
+            } catch (err) {
                 if (currentVideoId !== videoId) return;
-                lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">Lyrics Database overloaded.<br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+                lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this specific song yet.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
             }
         }
 
