@@ -844,19 +844,107 @@ async def get_playlist(id: str):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+LYRICS_CACHE = {}
+LYRICS_CACHE_TTL = 86400  # 24 hours
+
+def parse_synced_lrc(lrc_text: str):
+    """Parses LRC timestamped lyrics string into a list of line and word timing objects."""
+    import re
+    lines = []
+    raw_lines = lrc_text.splitlines()
+    for idx_l, line in enumerate(raw_lines):
+        line = line.strip()
+        if not line:
+            continue
+        match = re.match(r'^\[(\d+):(\d+(?:\.\d+)?)\](.*)', line)
+        if match:
+            minutes = int(match.group(1))
+            seconds = float(match.group(2))
+            timestamp = round(minutes * 60 + seconds, 2)
+            text = match.group(3).strip()
+            if text:
+                words_list = text.split()
+                num_words = len(words_list)
+                words = []
+                # Estimate line duration until next timestamp or default 3.5s
+                next_time = timestamp + 3.5
+                if idx_l + 1 < len(raw_lines):
+                    next_match = re.match(r'^\[(\d+):(\d+(?:\.\d+)?)\]', raw_lines[idx_l + 1].strip())
+                    if next_match:
+                        next_time = int(next_match.group(1)) * 60 + float(next_match.group(2))
+                duration = max(next_time - timestamp, 1.0)
+                step = duration / max(num_words, 1)
+                for idx, w in enumerate(words_list):
+                    w_time = round(timestamp + (idx * step), 2)
+                    words.append({"word": w, "time": w_time})
+                lines.append({
+                    "time": timestamp,
+                    "text": text,
+                    "words": words
+                })
+    return lines
+
 @app.get("/api/lyrics")
-async def get_lyrics(videoId: str):
+async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
+    cache_key = f"lyrics_{videoId}_{title}_{artist}"
+    now = time.time()
+    if cache_key in LYRICS_CACHE and (now - LYRICS_CACHE[cache_key]['time']) < LYRICS_CACHE_TTL:
+        return LYRICS_CACHE[cache_key]['data']
+
+    # Priority 1: Fast Word-by-Word Synced Lyrics check (1.5s timeout)
+    word_synced_data = None
+    if title or artist:
+        q_title = clean_cover_search_term(title or "")
+        q_artist = clean_cover_search_term(artist or "")
+        try:
+            async with httpx.AsyncClient(timeout=1.5, headers={"User-Agent": "Mozilla/5.0"}) as client:
+                params = {}
+                if q_title: params["track_name"] = q_title
+                if q_artist: params["artist_name"] = q_artist
+                if params:
+                    r = await client.get("https://lrclib.net/api/get", params=params)
+                    if r.status_code == 200:
+                        data = r.json()
+                        synced = data.get("syncedLyrics")
+                        if synced and synced.strip():
+                            parsed_lines = parse_synced_lrc(synced)
+                            if parsed_lines:
+                                word_synced_data = {
+                                    "status": "success",
+                                    "type": "word_synced",
+                                    "lines": parsed_lines,
+                                    "raw_lrc": synced,
+                                    "source": "synced"
+                                }
+        except Exception:
+            pass
+
+    if word_synced_data:
+        LYRICS_CACHE[cache_key] = {'time': time.time(), 'data': word_synced_data}
+        return word_synced_data
+
+    # Priority 2 (Main Official): Instant YouTube Official Plain Text Lyrics Fallback
     try:
-        def fetch_lyrics():
+        def fetch_yt_lyrics():
+            if not videoId:
+                return None
             watch = ytmusic.get_watch_playlist(videoId=videoId)
             lyrics_id = watch.get("lyrics")
             if lyrics_id:
                 return ytmusic.get_lyrics(lyrics_id)
             return None
             
-        lyrics_data = await asyncio.to_thread(fetch_lyrics)
-        if lyrics_data:
-            return {"status": "success", "lyrics": lyrics_data.get("lyrics", ""), "source": "ytmusic"}
+        lyrics_data = await asyncio.to_thread(fetch_yt_lyrics)
+        if lyrics_data and lyrics_data.get("lyrics"):
+            res = {
+                "status": "success",
+                "type": "plain_text",
+                "lyrics": lyrics_data.get("lyrics", ""),
+                "source": "ytmusic"
+            }
+            LYRICS_CACHE[cache_key] = {'time': time.time(), 'data': res}
+            return res
+            
         return {"status": "error", "message": "No lyrics found"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
