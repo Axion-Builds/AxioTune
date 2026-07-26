@@ -5341,13 +5341,6 @@ body.player-screen-active #top-bar-wrapper:focus-within {
 
 /* Added by AI for Player Screen Top Bar */
 body.player-screen-active #top-bar-wrapper { justify-content: flex-start !important; padding-left: 20px !important; padding-right: 300px !important; }
-body.player-screen-active #global-back-btn { position: static !important; margin-right: 15px !important; }
-
-
-.lyric-word { background: linear-gradient(to right, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) calc(var(--progress, 0%) - 2px), rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + 2px), rgba(255, 255, 255, 0.35) 100%) !important; -webkit-background-clip: text !important; background-clip: text !important; -webkit-text-fill-color: transparent !important; }
-
-
-.lyric-word { transition: --progress 0.05s linear, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) !important; }
 
 
 .lyric-line { transform-origin: left center !important; filter: blur(3px) !important; opacity: 0.4 !important; transform: scale(0.95) !important; padding-left: 0 !important; border-left: none !important; } .lyric-line.active-line { filter: blur(0px) drop-shadow(0 0 var(--lyrics-glow-intensity, 2px) rgba(255, 255, 255, 0.45)) !important; opacity: 1 !important; transform: scale(1) !important; padding-left: 0 !important; border-left: none !important; } .lyric-line.active-line::before { display: none !important; }
@@ -5446,3 +5439,30 @@ body.player-screen-active #global-back-btn { position: static !important; margin
     box-shadow: none !important; /* Remove heavy hover shadows during scroll */
 }
 
+
+
+/* --- ELEGANT WORD-BY-WORD KARAOKE HIGHLIGHTING --- */
+.lyric-word {
+    display: inline-block !important;
+    color: rgba(255, 255, 255, 0.35) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.35) !important;
+    background: none !important;
+    transition: color 0.15s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), text-shadow 0.2s ease !important;
+    margin-right: 6px !important;
+    transform-origin: center center !important;
+}
+
+.lyric-word.active {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    transform: scale(1.12) translateY(-2px) !important;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 24px rgba(255, 255, 255, 0.6) !important;
+    font-weight: 700 !important;
+}
+
+.lyric-word.passed {
+    color: rgba(255, 255, 255, 0.9) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
+    transform: scale(1) !important;
+    text-shadow: none !important;
+}
