@@ -891,31 +891,36 @@ async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
     if cache_key in LYRICS_CACHE and (now - LYRICS_CACHE[cache_key]['time']) < LYRICS_CACHE_TTL:
         return LYRICS_CACHE[cache_key]['data']
 
-    # Priority 1: Fast Word-by-Word Synced Lyrics check (1.5s timeout)
+    # Priority 1: Fast Word-by-Word Synced Lyrics check (2.0s timeout)
     word_synced_data = None
     if title or artist:
-        q_title = clean_cover_search_term(title or "")
-        q_artist = clean_cover_search_term(artist or "")
+        c_title = clean_cover_search_term(title or "")
+        c_artist = clean_cover_search_term((artist or "").split(',')[0].split('&')[0])
+        queries = [
+            f"{c_title} {c_artist}".strip(),
+            c_title
+        ]
         try:
-            async with httpx.AsyncClient(timeout=1.5, headers={"User-Agent": "Mozilla/5.0"}) as client:
-                params = {}
-                if q_title: params["track_name"] = q_title
-                if q_artist: params["artist_name"] = q_artist
-                if params:
-                    r = await client.get("https://lrclib.net/api/get", params=params)
+            async with httpx.AsyncClient(timeout=2.0, headers={"User-Agent": "Mozilla/5.0"}) as client:
+                for q in queries:
+                    if not q:
+                        continue
+                    r = await client.get("https://lrclib.net/api/search", params={"q": q})
                     if r.status_code == 200:
                         data = r.json()
-                        synced = data.get("syncedLyrics")
-                        if synced and synced.strip():
-                            parsed_lines = parse_synced_lrc(synced)
-                            if parsed_lines:
-                                word_synced_data = {
-                                    "status": "success",
-                                    "type": "word_synced",
-                                    "lines": parsed_lines,
-                                    "raw_lrc": synced,
-                                    "source": "synced"
-                                }
+                        if isinstance(data, list):
+                            best = next((item for item in data if item.get("syncedLyrics")), None)
+                            if best and best.get("syncedLyrics"):
+                                parsed_lines = parse_synced_lrc(best["syncedLyrics"])
+                                if parsed_lines:
+                                    word_synced_data = {
+                                        "status": "success",
+                                        "type": "word_synced",
+                                        "lines": parsed_lines,
+                                        "raw_lrc": best["syncedLyrics"],
+                                        "source": "synced"
+                                    }
+                                    break
         except Exception:
             pass
 
