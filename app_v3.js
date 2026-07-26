@@ -2854,13 +2854,26 @@ function onPlayerStateChange(event) {
             });
             lyricsContainer.appendChild(frag);
             
+            updateCachedPanelHeight();
             requestAnimationFrame(processLyricsFrame);
         }
 
-        window.addEventListener('resize', processLyricsFrame);
+        let cachedPanelHeight = 0;
+        function updateCachedPanelHeight() {
+            if (rightPanel) {
+                cachedPanelHeight = rightPanel.offsetHeight || window.innerHeight;
+            } else {
+                cachedPanelHeight = window.innerHeight;
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            updateCachedPanelHeight();
+            processLyricsFrame();
+        }, { passive: true });
 
         function animationLoop() {
-            if (!window._appTabHidden) {
+            if (!window._appTabHidden && lineElements && lineElements.length > 0) {
                 // Focus Mode: We let it scroll, but CSS will fade it out to prevent lag
                 if (!audioPlayer.paused) processLyricsFrame();
                 else if (Math.abs(targetY - currentY) > 0.1) lerpScroll();
@@ -3512,7 +3525,7 @@ function onPlayerStateChange(event) {
             if (currentScreen && currentScreen !== showId && typeof screenHistory !== 'undefined') {
                 screenHistory.push(currentScreen);
                 if (!skipPushState && window.history) {
-                    history.pushState({ screen: showId }, '', # + showId);
+                    history.pushState({ screen: showId }, '', '#' + showId);
                 }
             }
 

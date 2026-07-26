@@ -2536,7 +2536,7 @@ body.offline-mode .offline-hide {
 
         /* Cover art wrapper — subtle floating pulse when playing */
         #cover-wrapper.now-playing-active #cover-art-container {
-            /* animation removed as per user request */
+            animation: cover-float 4s ease-in-out infinite;
         }
         @keyframes cover-float {
             0%, 100% { transform: scale(1.03) translateY(0px); box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 60px rgba(0,0,0,0.4); }
