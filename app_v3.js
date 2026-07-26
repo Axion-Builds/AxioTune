@@ -1139,15 +1139,23 @@ function onPlayerStateChange(event) {
                 // If the original URL is already provided by backend, it's the largest available.
                 // We only resize for small/medium to save bandwidth. For large, use a standard high-res size!
                 const base = ytThumb.split('=')[0];
-                if (size === 'small') return base + '=w60-h60-l90-rj';
-                if (size === 'medium') return base + '=w120-h120-l90-rj';
-                if (size === 'large') return base + '=w600-h600-l90-rj';
+                if (size === 'small') return base + '=w180-h180-l90-rj';
+                if (size === 'medium') return base + '=w300-h300-l90-rj';
+                if (size === 'large') return base + '=w800-h800-l90-rj';
+            }
+            if (ytThumb.includes('img.youtube.com/vi/')) {
+                if (size === 'large') {
+                    return ytThumb.replace('/hqdefault.jpg', '/maxresdefault.jpg').replace('/mqdefault.jpg', '/maxresdefault.jpg');
+                } else if (size === 'medium') {
+                    return ytThumb.replace('/hqdefault.jpg', '/sddefault.jpg').replace('/mqdefault.jpg', '/sddefault.jpg');
+                }
             }
             return ytThumb;
         }
 
         function getCoverUrl(query, ytThumb, vid, isPlayerScreen = false) {
-            const thumb = resolveYtThumb(ytThumb);
+            const targetSize = isPlayerScreen ? 'large' : 'medium';
+            const thumb = resolveYtThumb(ytThumb, targetSize);
             
             if (thumb && thumb.startsWith('http')) {
                 if (!isPlayerScreen) {
