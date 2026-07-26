@@ -781,7 +781,7 @@ function onPlayerStateChange(event) {
             const tracksEl = document.getElementById('playlist-screen-tracks');
 
             nameEl.textContent = pl.name;
-            countEl.textContent = `${pl.songs.length} song${pl.songs.length !== 1 ? 's' : ''}  â€¢  Your Playlist`;
+            countEl.textContent = `${pl.songs.length} song${pl.songs.length !== 1 ? 's' : ''}  •  Your Playlist`;
 
             // Build mosaic art or use custom cover
             const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId));
@@ -3636,9 +3636,9 @@ function onPlayerStateChange(event) {
                     const topCard = document.createElement('div');
                     topCard.className = 'sr-top-card anim-slide-up';
                     topCard.innerHTML = `
-                        <img src="${topSong.cover || 'default_cover.jpg'}" alt="${topSong.title.replace(/"/g, '&quot;')}">
+                        <img src="${getCoverUrl(topSong.title + " " + topSong.artist, topSong.cover, topSong.videoId)}" alt="${topSong.title.replace(/"/g, '&quot;')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='default_cover.jpg'">
                         <div class="sr-top-title">${topSong.title}</div>
-                        <div class="sr-top-type">Song â€¢ ${topSong.artist}</div>
+                        <div class="sr-top-type">Song • ${topSong.artist}</div>
                         <button class="sr-top-play" onclick="event.stopPropagation(); playSong('${topSong.videoId}', '${JSON.stringify(topSong).replace(/"/g, '&quot;')}', this)">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                         </button>
@@ -3655,7 +3655,7 @@ function onPlayerStateChange(event) {
                         row.className = 'sr-stacked-row anim-slide-up';
                         row.style.animationDelay = `${delay}s`; delay += 0.055;
                         row.innerHTML = `
-                            <img src="${s.cover || 'default_cover.jpg'}">
+                            <img src="${getCoverUrl(s.title + " " + s.artist, s.cover, s.videoId)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='default_cover.jpg'">
                             <div class="sr-stacked-info">
                                 <div class="sr-song-title">${s.title}</div>
                                 <div class="sr-song-artist">${s.artist}</div>
@@ -3683,7 +3683,7 @@ function onPlayerStateChange(event) {
                         row.className = 'sr-song-row anim-slide-up';
                         row.style.animationDelay = `${delay}s`; delay += 0.055;
                         row.innerHTML = `
-                            <img class="sr-song-cover" src="${s.cover || 'default_cover.jpg'}">
+                            <img class="sr-song-cover" src="${getCoverUrl(s.title + " " + s.artist, s.cover, s.videoId)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='default_cover.jpg'">
                             <div class="sr-song-info">
                                 <div class="sr-song-title">${s.title}</div>
                                 <div class="sr-song-artist">${s.artist}</div>
@@ -3718,7 +3718,7 @@ function onPlayerStateChange(event) {
                     const topCard = document.createElement('div');
                     topCard.className = 'sr-top-card anim-slide-up';
                     topCard.innerHTML = `
-                        <img src="${topVideo.cover || 'default_cover.jpg'}" alt="${topVideo.title.replace(/"/g, '&quot;')}" style="border-radius: 8px; width: 140px; height: 78px; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+                        <img src="${getCoverUrl(topVideo.title + " " + topVideo.artist, topVideo.cover, topVideo.videoId)}" alt="${topVideo.title.replace(/"/g, '&quot;')}" style="border-radius: 8px; width: 140px; height: 78px; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
                         <div class="sr-top-title">${topVideo.title}</div>
                         <div class="sr-top-type" style="color: rgba(255,255,255,0.5); font-weight: 600; display: flex; align-items: center; gap: 8px;">
                             <span style="background: rgba(255,255,255,0.15); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Video</span>
@@ -3740,7 +3740,7 @@ function onPlayerStateChange(event) {
                         row.className = 'sr-stacked-row anim-slide-up';
                         row.style.animationDelay = `${delay}s`; delay += 0.055;
                         row.innerHTML = `
-                            <img src="${v.cover || 'default_cover.jpg'}" style="width: 80px; height: 45px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                            <img src="${getCoverUrl(v.title + " " + v.artist, v.cover, v.videoId)}" style="width: 80px; height: 45px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                             <div class="sr-stacked-info">
                                 <div class="sr-song-title">${v.title}</div>
                                 <div class="sr-song-artist">${v.artist}</div>
@@ -3767,7 +3767,7 @@ function onPlayerStateChange(event) {
                         row.className = 'sr-song-row anim-slide-up';
                         row.style.animationDelay = `${delay}s`; delay += 0.055;
                         row.innerHTML = `
-                            <img class="sr-song-cover" src="${v.cover || 'default_cover.jpg'}" style="border-radius:8px;">
+                            <img class="sr-song-cover" src="${getCoverUrl(v.title + " " + v.artist, v.cover, v.videoId)}" style="border-radius:8px;">
                             <div class="sr-song-info">
                                 <div class="sr-song-title">${v.title}</div>
                                 <div class="sr-song-artist">${v.artist}</div>
@@ -3802,7 +3802,7 @@ function onPlayerStateChange(event) {
                     card.className = 'sr-card album';
                     card.style.animationDelay = `${delay}s`; delay += 0.06;
                     card.innerHTML = `
-                        <img class="sr-card-cover" src="${a.cover || 'default_cover.jpg'}">
+                        <img class="sr-card-cover" src="${getCoverUrl(a.title + " " + a.artist, a.cover)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='default_cover.jpg'">
                         <div class="sr-card-name">${a.title}</div>
                         <div class="sr-card-sub">${a.artist}</div>`;
                     card.addEventListener('click', () => {
@@ -3830,7 +3830,7 @@ function onPlayerStateChange(event) {
                     card.className = 'sr-card artist';
                     card.style.animationDelay = `${delay}s`; delay += 0.06;
                     card.innerHTML = `
-                        <img class="sr-card-cover" src="${ar.cover || 'default_cover.jpg'}">
+                        <img class="sr-card-cover" src="${getCoverUrl(ar.title, ar.cover)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='default_cover.jpg'">
                         <div class="sr-card-name">${ar.title}</div>`;
                     card.addEventListener('click', () => {
                         if (ar.browseId) showArtistPage(ar.browseId);
@@ -3899,7 +3899,7 @@ function onPlayerStateChange(event) {
                 if (data.status === 'success' && data.artist) {
                     const artist = data.artist;
                     const thumb = artist.thumbnails && artist.thumbnails.length > 0 ? getCoverUrl(artist.name, artist.thumbnails[artist.thumbnails.length-1].url) : 'default_cover.jpg';
-                    const subs = artist.subscribers ? ` â€¢ ${artist.subscribers}` : '';
+                    const subs = artist.subscribers ? ` • ${artist.subscribers}` : '';
                     
                     let html = `
                         <div class="hero-banner">
@@ -4007,7 +4007,7 @@ function onPlayerStateChange(event) {
                                 <img src="${thumb}" alt="${album.title}" class="hero-album-cover anim-pop">
                                 <div class="hero-info">
                                     <h1 class="anim-slide-up" style="animation-delay: 0.1s">${album.title}</h1>
-                                    <p class="anim-slide-up" style="animation-delay: 0.2s">${artistName} â€¢ ${album.year || ''} â€¢ ${album.trackCount || 0} tracks</p>
+                                    <p class="anim-slide-up" style="animation-delay: 0.2s">${artistName} • ${album.year || ''} • ${album.trackCount || 0} tracks</p>
                                     <div class="apple-btn-row anim-slide-up" style="animation-delay: 0.3s">
                                         <button class="apple-btn apple-play-btn" onclick="playFirstTrack()"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Play</button>
                                         <button class="apple-btn apple-shuffle-btn" onclick="playFirstTrack()"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10.59,9.17L5.41,4,4,5.41l5.17,5.17,1.42-1.41zM14.5,4l2.04,2.04L4,18.59,5.41,20l12.55-12.55L20,9.5V4h-5.5zm.33,9.41l-1.41,1.41,3.13,3.13L14.5,20H20v-5.5l-2.04,2.04-3.13-3.13z"/></svg> Shuffle</button>
@@ -4085,7 +4085,7 @@ function onPlayerStateChange(event) {
                 if (data.status === 'success' && data.playlist) {
                     const pl = data.playlist;
                     nameEl.textContent = pl.title;
-                    countEl.textContent = `${pl.trackCount || pl.tracks?.length || 0} songs  â€¢  Community Playlist`;
+                    countEl.textContent = `${pl.trackCount || pl.tracks?.length || 0} songs  •  Community Playlist`;
 
                     const thumb = pl.thumbnails && pl.thumbnails.length > 0 ? getCoverUrl(pl.title, pl.thumbnails[pl.thumbnails.length-1].url, playlistId) : 'default_cover.jpg';
                     artEl.innerHTML = `<img src="${thumb}" onerror="this.src='default_cover.jpg'">`;
@@ -5960,7 +5960,7 @@ const PartyEngine = {
         
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         msgDiv.innerHTML = `
-            <div class="msg-meta">${isSelf ? 'You' : sender} â€¢ ${timeStr}</div>
+            <div class="msg-meta">${isSelf ? 'You' : sender} • ${timeStr}</div>
             <div class="msg-bubble">${this.escapeHTML(text)}</div>
         `;
         
