@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: apple-music-streamer
+    name: axiotune
     env: docker
     envVars:
       - key: PORT
-        value: 7860
+        value: 10000
