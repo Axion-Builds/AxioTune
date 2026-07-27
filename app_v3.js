@@ -2421,9 +2421,9 @@ function onPlayerStateChange(event) {
 
             lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;"><div class="premium-glass-loader"></div><div>Finding song...</div></div>';
             
+            let songData = null;
             try {
                 // STEP 1: Get song metadata (Bypass search if forced from queue)
-                let songData;
                 const isFromQueue = !!window._forceQueueSong;
                 
                 if (isFromQueue) {
@@ -2603,9 +2603,15 @@ function onPlayerStateChange(event) {
                 console.warn("Backend stream failed or blocked on cloud server. Instantly falling back to YouTube Official IFrame Player:", e);
                 
                 try {
+                    const fallbackVid = (songData && (songData.id || songData.videoId)) || currentVideoId;
+                    const fallbackTitle = (songData && songData.title) || trackTitleEl.textContent || query;
+                    const fallbackArtist = (songData && songData.uploader) || trackArtistEl.textContent || '';
+                    
                     audioPlayer._mode = 'yt';
-                    audioPlayer.src = songData.id || songData.videoId || currentVideoId;
-                    audioPlayer.play().catch(err => console.warn("IFrame play failed:", err));
+                    if (fallbackVid) {
+                        audioPlayer.src = fallbackVid;
+                        audioPlayer.play().catch(err => console.warn("IFrame play failed:", err));
+                    }
                     
                     showToast("🎵 Playing via YouTube Official Player");
                     isSongLoaded = true;
@@ -2613,8 +2619,12 @@ function onPlayerStateChange(event) {
                     nextBtn.disabled = false;
                     prevBtn.disabled = false;
                     
-                    populateQueue(songData.videoId || songData.id, isFromQueue);
-                    fetchLyricsForQueueSong(cleanTitle, cleanArtist, songData.id || songData.videoId);
+                    if (fallbackVid) {
+                        populateQueue(fallbackVid, isFromQueue);
+                        const cTitle = fallbackTitle.split('(')[0].split('[')[0].split('|')[0].trim();
+                        const cArtist = fallbackArtist.replace(/VEVO|Official|Topic|Music/gi, '').trim();
+                        fetchLyricsForQueueSong(cTitle, cArtist, fallbackVid);
+                    }
                 } catch (fallbackErr) {
                     console.error("Playback Error:", fallbackErr);
                     showToast("Playback Error: " + (fallbackErr.message || "Unknown Error"));
