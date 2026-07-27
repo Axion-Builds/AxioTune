@@ -1147,8 +1147,8 @@ function onPlayerStateChange(event) {
                 // We only resize for small/medium to save bandwidth. For large, use a standard high-res size!
                 const base = ytThumb.split('=')[0];
                 if (size === 'small') return base + '=w180-h180-l90-rj';
-                if (size === 'medium') return base + '=w300-h300-l90-rj';
-                if (size === 'large') return base + '=w800-h800-l90-rj';
+                if (size === 'medium') return base + '=w400-h400-l90-rj';
+                if (size === 'large') return base + '=w1400-h1400-l100-rj';
             }
             if (ytThumb.includes('img.youtube.com/vi/')) {
                 if (size === 'large') {
@@ -1164,21 +1164,12 @@ function onPlayerStateChange(event) {
             const targetSize = isPlayerScreen ? 'large' : 'medium';
             const thumb = resolveYtThumb(ytThumb, targetSize);
             
-            if (thumb && thumb.startsWith('http')) {
-                if (!isPlayerScreen) {
-                    return thumb; // Fast loading for lists
-                }
-                // For player screen, proxy the image to bypass Canvas CORS constraints
-                const params = new URLSearchParams();
-                params.set('yt_thumb', thumb);
-                if (vid) params.set('vid', vid);
-                return `/api/cover?${params.toString()}`;
+            if (!isPlayerScreen && thumb && thumb.startsWith('http')) {
+                return thumb; // Fast loading for lists
             }
             
             const params = new URLSearchParams();
-            if (query && (isPlayerScreen || !vid)) {
-                params.set('q', query);
-            }
+            if (query) params.set('q', query);
             if (thumb && thumb.startsWith('http')) params.set('yt_thumb', thumb);
             if (vid) params.set('vid', vid);
             
@@ -2322,11 +2313,8 @@ function onPlayerStateChange(event) {
             coverArt.removeAttribute('crossorigin');
             coverArt.src = rawYtThumb;
             const smallThumb = resolveYtThumb(rawYtThumb, 'small') || rawYtThumb;
-            miniCover.src = smallThumb;
-            
-            const bgImg = new Image();
-            bgImg.src = smallThumb;
-            bgImg.decode().catch(() => {});
+            // Fetch HD 1400x1400 iTunes Cover in background
+            fetchHdCoverForQueueSong(song.title, song.artist, song.videoId, rawYtThumb);
             
             coverArt.style.display = 'block';
             const defaultCoverIcon = document.getElementById('default-cover-icon');

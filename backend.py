@@ -204,7 +204,7 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = ""):
                     if r.status_code == 200:
                         data = r.json()
                         if data.get("results"):
-                            art_url = data["results"][0]["artworkUrl100"].replace("100x100bb", "600x600bb")
+                            art_url = data["results"][0]["artworkUrl100"].replace("100x100bb", "1400x1400bb")
                             img_r = await client.get(art_url)
                             if img_r.status_code == 200:
                                 if cache_key:
