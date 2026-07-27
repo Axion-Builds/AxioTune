@@ -2202,10 +2202,10 @@ function onPlayerStateChange(event) {
                             end: l.time + 4.0,
                             text: l.text,
                             isInstrumental: false,
-                            words: (l.words || []).map(w => ({
+                            words: (l.words || []).map((w, idx, arr) => ({
                                 text: w.word,
                                 start: w.time,
-                                end: w.time + 0.5
+                                end: (idx + 1 < arr.length) ? arr[idx + 1].time : (l.time + 3.5)
                             }))
                         }));
                         renderLyrics();

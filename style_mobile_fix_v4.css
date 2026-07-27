@@ -2534,13 +2534,9 @@ body.offline-mode .offline-hide {
         }
         #crossfade-overlay.active { opacity: 1; }
 
-        /* Cover art wrapper — subtle floating pulse when playing */
+        /* Cover art wrapper — elegant static glow when playing (No up-down floating) */
         #cover-wrapper.now-playing-active #cover-art-container {
-            animation: cover-float 4s ease-in-out infinite;
-        }
-        @keyframes cover-float {
-            0%, 100% { transform: scale(1.03) translateY(0px); box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 60px rgba(0,0,0,0.4); }
-            50%       { transform: scale(1.03) translateY(-8px); box-shadow: 0 55px 100px rgba(0,0,0,0.8), 0 0 80px rgba(var(--accent-rgb),0.15); }
+            box-shadow: 0 45px 90px rgba(0,0,0,0.75), 0 0 70px rgba(var(--accent-rgb),0.2);
         }
 
         /* ── MOOD RADIO SECTION ── */
