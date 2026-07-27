@@ -5431,7 +5431,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     will-change: transform, scroll-position !important;
 }
 
-/* --- APPLE MUSIC STYLE SMOOTH WORD-BY-WORD GRADIENT WIPE --- */
+/* --- LUXURY ELEVATING KARAOKE WORD ANIMATION --- */
 .lyric-word {
     display: inline-block !important;
     margin-right: 6px !important;
@@ -5446,13 +5446,14 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
-    transform: none !important;
-    transition: filter 0.2s ease !important;
+    transform: translateY(0) scale(1) !important;
+    transform-origin: bottom center !important;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s ease !important;
 }
 
 .lyric-word.active {
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.75)) !important;
-    transform: none !important;
+    transform: translateY(-2px) scale(1.05) !important;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) !important;
 }
 
 .lyric-word.passed {
@@ -5460,8 +5461,8 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
-    filter: none !important;
-    transform: none !important;
+    transform: translateY(-2px) scale(1.05) !important; /* STAYS ELEVATED! */
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3)) !important;
 }
 
 .art-grid-card, .cinematic-card, .vinyl-card, .q-hero-card {
