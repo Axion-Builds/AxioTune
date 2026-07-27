@@ -107,7 +107,14 @@ const audioPlayer = {
     get src() { return this._src; },
     get currentTime() { 
         if (this._mode === 'local') return this._realAudio.currentTime;
-        return ytPlayer && ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0; 
+        if (!ytPlayer || !ytPlayer.getCurrentTime) return 0;
+        const now = performance.now();
+        if (now - window._lastYtReadTime > 150) {
+            window._cachedYtTime = ytPlayer.getCurrentTime() || 0;
+            window._lastYtReadTime = now;
+        }
+        if (this.paused) return window._cachedYtTime || 0;
+        return (window._cachedYtTime || 0) + ((now - (window._lastYtReadTime || now)) / 1000);
     },
     set currentTime(val) { 
         if (this._mode === 'local') { this._realAudio.currentTime = val; return; }
@@ -6121,14 +6128,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.appendChild(glare);
 
     // --- 3D Tilt Logic ---
+    container.addEventListener('mouseenter', () => {
+        container.style.animationPlayState = 'paused';
+    });
+
     container.addEventListener('mousemove', (e) => {
+        container.style.animationPlayState = 'paused';
         const rect = container.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
         const dx = (e.clientX - cx) / (rect.width / 2);
         const dy = (e.clientY - cy) / (rect.height / 2);
 
-        container.style.transform = `perspective(800px) rotateX(${dy * -18}deg) rotateY(${dx * 18}deg) scale(1.04)`;
+        container.style.transform = `perspective(800px) rotateX(${dy * -18}deg) rotateY(${dx * 18}deg) scale(1.06)`;
 
         // Move glare to mouse position
         const gx = ((e.clientX - rect.left) / rect.width) * 100;
@@ -6140,7 +6152,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.addEventListener('mouseleave', () => {
         container.style.transition = 'transform 0.6s cubic-bezier(0.2,0.8,0.2,1)';
         container.style.transform = '';
-        setTimeout(() => { container.style.transition = ''; }, 600);
+        setTimeout(() => { 
+            container.style.transition = ''; 
+            container.style.animationPlayState = 'running';
+        }, 600);
     });
 
     container.addEventListener('mouseenter', () => {
