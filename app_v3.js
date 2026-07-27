@@ -2202,11 +2202,11 @@ function onPlayerStateChange(event) {
                             end: l.time + 4.0,
                             text: l.text,
                             isInstrumental: false,
-                            words: (l.words || []).map((w, idx, arr) => ({
-                                text: w.word,
-                                start: w.time,
-                                end: (idx + 1 < arr.length) ? arr[idx + 1].time : (l.time + 3.5)
-                            }))
+                            words: (l.words || []).map((w, idx, arr) => {
+                                let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (l.time + 3.5);
+                                if (nextTime <= w.time) nextTime = w.time + 0.3;
+                                return { text: w.word, start: w.time, end: nextTime };
+                            })
                         }));
                         renderLyrics();
                     } else if (ytData.type === 'plain_text' && ytData.lyrics) {
@@ -2958,15 +2958,28 @@ function onPlayerStateChange(event) {
                 const activeLine = lineElements[currentLineIndex];
                 if (activeLine.words) {
                     activeLine.words.forEach(w => {
-                        if (time < w.start) {
-                            if (w.state !== 'future') { w.el.className = 'lyric-word'; w.el.style.setProperty('--progress', '0%'); w.state = 'future'; }
-                        } else if (time >= w.start && time <= w.end) {
-                            let percentage = Math.max(0, Math.min(100, ((time - w.start) / (w.end - w.start)) * 100));
-                            w.el.style.setProperty('--progress', `${percentage}%`);
-                            if (w.state !== 'active') { w.el.className = 'lyric-word active'; w.state = 'active'; }
+                        let pct = 0;
+                        const dur = Math.max(0.15, w.end - w.start);
+                        if (time >= w.end) {
+                            pct = 100;
+                            if (w.state !== 'passed') {
+                                w.el.className = 'lyric-word passed';
+                                w.state = 'passed';
+                            }
+                        } else if (time >= w.start) {
+                            pct = Math.max(0, Math.min(100, ((time - w.start) / dur) * 100));
+                            if (w.state !== 'active') {
+                                w.el.className = 'lyric-word active';
+                                w.state = 'active';
+                            }
                         } else {
-                            if (w.state !== 'passed') { w.el.className = 'lyric-word passed'; w.el.style.setProperty('--progress', '100%'); w.state = 'passed'; }
+                            pct = 0;
+                            if (w.state !== 'future') {
+                                w.el.className = 'lyric-word';
+                                w.state = 'future';
+                            }
                         }
+                        w.el.style.setProperty('--progress', `${pct}%`);
                     });
                 }
             }
