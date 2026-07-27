@@ -2600,14 +2600,25 @@ function onPlayerStateChange(event) {
                                                 
             } catch (e) {
                 if (e.name === 'AbortError') return; // Ignore aborted fetches from rapid skipping
-                console.error("Playback Error:", e);
-                const errorMsg = e.message || "Unknown Error";
-                showToast("Playback Error: " + errorMsg);
-                lyricsContainer.innerHTML = `<div class="empty-state" style="margin-top:0;">
-                    <span style="color:#ff4d4d; font-weight:bold;">Error Details:</span><br>
-                    ${errorMsg}<br><br>
-                    <span style="font-size:0.9rem; opacity:0.7">If this happens consistently on a deployed server, check if YouTube requires a cookie update in Settings.</span>
-                </div>`;
+                console.warn("Backend stream failed or blocked on cloud server. Instantly falling back to YouTube Official IFrame Player:", e);
+                
+                try {
+                    audioPlayer._mode = 'yt';
+                    audioPlayer.src = songData.id || songData.videoId || currentVideoId;
+                    audioPlayer.play().catch(err => console.warn("IFrame play failed:", err));
+                    
+                    showToast("🎵 Playing via YouTube Official Player");
+                    isSongLoaded = true;
+                    playPauseBtn.disabled = false;
+                    nextBtn.disabled = false;
+                    prevBtn.disabled = false;
+                    
+                    populateQueue(songData.videoId || songData.id, isFromQueue);
+                    fetchLyricsForQueueSong(cleanTitle, cleanArtist, songData.id || songData.videoId);
+                } catch (fallbackErr) {
+                    console.error("Playback Error:", fallbackErr);
+                    showToast("Playback Error: " + (fallbackErr.message || "Unknown Error"));
+                }
             }
         });
 
