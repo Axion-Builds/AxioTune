@@ -109,12 +109,12 @@ const audioPlayer = {
         if (this._mode === 'local') return this._realAudio.currentTime;
         if (!ytPlayer || !ytPlayer.getCurrentTime) return 0;
         const now = performance.now();
-        if (now - window._lastYtReadTime > 150) {
+        if (!window._lastYtReadTime || now - window._lastYtReadTime > 150) {
             window._cachedYtTime = ytPlayer.getCurrentTime() || 0;
             window._lastYtReadTime = now;
         }
         if (this.paused) return window._cachedYtTime || 0;
-        return (window._cachedYtTime || 0) + ((now - (window._lastYtReadTime || now)) / 1000);
+        return (window._cachedYtTime || 0) + ((now - window._lastYtReadTime) / 1000);
     },
     set currentTime(val) { 
         if (this._mode === 'local') { this._realAudio.currentTime = val; return; }
@@ -2429,9 +2429,10 @@ function onPlayerStateChange(event) {
             lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;"><div class="premium-glass-loader"></div><div>Finding song...</div></div>';
             
             let songData = null;
+            let isFromQueue = false;
             try {
                 // STEP 1: Get song metadata (Bypass search if forced from queue)
-                const isFromQueue = !!window._forceQueueSong;
+                isFromQueue = !!window._forceQueueSong;
                 
                 if (isFromQueue) {
                     songData = {
@@ -6129,11 +6130,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 3D Tilt Logic ---
     container.addEventListener('mouseenter', () => {
-        container.style.animationPlayState = 'paused';
+        container.style.animation = 'none';
+        container.style.transition = 'none';
     });
 
     container.addEventListener('mousemove', (e) => {
-        container.style.animationPlayState = 'paused';
+        container.style.animation = 'none';
         const rect = container.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
@@ -6154,12 +6156,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.style.transform = '';
         setTimeout(() => { 
             container.style.transition = ''; 
-            container.style.animationPlayState = 'running';
+            container.style.animation = ''; // Restore CSS animation
         }, 600);
-    });
-
-    container.addEventListener('mouseenter', () => {
-        container.style.transition = 'none';
     });
 })();
 
