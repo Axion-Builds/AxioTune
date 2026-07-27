@@ -68,7 +68,7 @@
         }
 
         body.song-playing:not(.pitch-black-mode):not(.performance-mode):not(.disable-animations) #background-layer {
-            animation: ambient-pan-fast 10s infinite alternate ease-in-out;
+            animation: none !important;
         }
 
         @keyframes ambient-pan-fast {
@@ -97,9 +97,9 @@
             will-change: opacity;
         }
 
-        /* Song chal raha hai — album art BG le leta hai, aurora gayab */
-        body.song-playing:not(.performance-mode):not(.pitch-black-mode) #css-aurora-container {
-            opacity: 0;
+        /* Song chal raha hai — album art BG le leta hai, aurora completely disabled */
+        body.song-playing #css-aurora-container {
+            display: none !important;
         }
 
         body.pitch-black-mode #css-aurora-container {
