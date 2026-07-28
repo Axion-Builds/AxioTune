@@ -2195,17 +2195,20 @@ function onPlayerStateChange(event) {
                 
                 if (ytData.status === 'success') {
                     if (ytData.type === 'word_synced' && ytData.lines && ytData.lines.length > 0) {
-                        lyricsData = ytData.lines.map(l => ({
-                            start: l.time,
-                            end: l.time + 4.0,
-                            text: l.text,
-                            isInstrumental: false,
-                            words: (l.words || []).map((w, idx, arr) => {
-                                let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (l.time + 3.5);
-                                if (nextTime <= w.time) nextTime = w.time + 0.3;
-                                return { text: w.word, start: w.time, end: nextTime };
-                            })
-                        }));
+                        lyricsData = ytData.lines.map((l, lineIdx, lineArr) => {
+                            const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
+                            return {
+                                start: l.time,
+                                end: nextLineTime,
+                                text: l.text,
+                                isInstrumental: false,
+                                words: (l.words || []).map((w, idx, arr) => {
+                                    let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : nextLineTime;
+                                    if (nextTime <= w.time) nextTime = w.time + 0.3;
+                                    return { text: w.word, start: w.time, end: nextTime };
+                                })
+                            };
+                        });
                         renderLyrics();
                         showToast("✨ Word-by-Word Lyrics Active");
                     } else if (ytData.type === 'plain_text' && ytData.lyrics) {
