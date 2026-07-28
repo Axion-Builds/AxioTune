@@ -2181,7 +2181,14 @@ function onPlayerStateChange(event) {
         async function fetchLyricsForQueueSong(title, artist, videoId) {
             try {
                 if (currentVideoId !== videoId) return;
-                lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">🎵 Syncing lyrics...</div>';
+                lyricsContainer.innerHTML = `
+                    <div class="empty-state loading-state-wrapper" style="margin-top:0;">
+                        <div class="premium-glass-loader"></div>
+                        <div style="font-size:0.95rem; font-weight:600; color:rgba(255,255,255,0.85); margin-top:12px; letter-spacing:0.02em;">
+                            Finding word-by-word lyrics...
+                        </div>
+                    </div>
+                `;
                 const ytRes = await fetch(`/api/lyrics?videoId=${encodeURIComponent(videoId || '')}&title=${encodeURIComponent(title || '')}&artist=${encodeURIComponent(artist || '')}`);
                 const ytData = await ytRes.json();
                 if (currentVideoId !== videoId) return;
@@ -2200,9 +2207,11 @@ function onPlayerStateChange(event) {
                             })
                         }));
                         renderLyrics();
+                        showToast("✨ Word-by-Word Lyrics Active");
                     } else if (ytData.type === 'plain_text' && ytData.lyrics) {
                         lyricsData = [];
-                        lyricsContainer.innerHTML = `<div style="padding: 0 20px 100px 20px; font-size: 1.5rem; line-height: 2; color: rgba(255,255,255,0.7); white-space: pre-wrap; font-weight: 500; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">${ytData.lyrics}</div>`;
+                        lyricsContainer.innerHTML = `<div style="padding: 0 20px 100px 20px; font-size: 1.5rem; line-height: 2; color: rgba(255,255,255,0.7); white-space: pre-wrap; font-weight: 500;">${ytData.lyrics}</div>`;
+                        showToast("🎤 Official Line-by-Line Lyrics");
                     } else {
                         lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this song.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
                     }
