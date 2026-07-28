@@ -5332,16 +5332,66 @@ body.player-screen-active #top-bar-wrapper:focus-within {
     }
 }
 
+/* --- LUXURY COMBINED APPLE MUSIC & UNAKKUL NAANE LYRICS --- */
+.lyric-line {
+    transform-origin: left center !important;
+    filter: blur(4px) !important;
+    opacity: 0.35 !important;
+    transform: scale(0.96) !important;
+    padding-left: 0 !important;
+    border-left: none !important;
+    transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                filter 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                transform 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
 
+.lyric-line.active-line {
+    filter: blur(0px) !important;
+    opacity: 1 !important;
+    transform: scale(1.0) !important;
+    padding-left: 0 !important;
+    border-left: none !important;
+}
 
+.lyric-line.active-line::before {
+    display: none !important;
+}
 
+.lyric-word {
+    display: inline-block !important;
+    margin-right: 6px !important;
+    background: linear-gradient(
+        to right,
+        #ffffff 0%,
+        #ffffff var(--progress, 0%),
+        rgba(255, 255, 255, 0.38) var(--progress, 0%),
+        rgba(255, 255, 255, 0.38) 100%
+    ) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    transform: none !important;
+    filter: none !important;
+    transition: filter 0.2s ease !important;
+}
+
+.lyric-word.active {
+    transform: none !important;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45)) !important;
+}
+
+.lyric-word.passed {
+    background: #ffffff !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    transform: none !important;
+    filter: none !important;
+}
 
 /* Added by AI for Player Screen Top Bar */
 body.player-screen-active #top-bar-wrapper { justify-content: flex-start !important; padding-left: 20px !important; padding-right: 300px !important; }
-
-
-.lyric-line { transform-origin: left center !important; filter: blur(3px) !important; opacity: 0.4 !important; transform: scale(0.95) !important; padding-left: 0 !important; border-left: none !important; } .lyric-line.active-line { filter: blur(0px) drop-shadow(0 0 var(--lyrics-glow-intensity, 2px) rgba(255, 255, 255, 0.45)) !important; opacity: 1 !important; transform: scale(1) !important; padding-left: 0 !important; border-left: none !important; } .lyric-line.active-line::before { display: none !important; }
-
 
 .q-hero-card { position: relative; width: 100%; height: 200px; border-radius: 12px; overflow: hidden; margin-bottom: 24px; display: flex; align-items: flex-end; box-shadow: 0 10px 30px rgba(0,0,0,0.3); flex-shrink: 0; cursor: pointer; }
 .q-hero-img-wrap { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
