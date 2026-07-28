@@ -2203,7 +2203,7 @@ function onPlayerStateChange(event) {
                                 text: l.text,
                                 isInstrumental: false,
                                 words: (l.words || []).map((w, idx, arr) => {
-                                    let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : nextLineTime;
+                                    let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
                                     if (nextTime <= w.time) nextTime = w.time + 0.3;
                                     return { text: w.word, start: w.time, end: nextTime };
                                 })

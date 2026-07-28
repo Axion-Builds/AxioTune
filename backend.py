@@ -872,8 +872,13 @@ def parse_synced_lrc(lrc_text: str):
                     next_match = re.match(r'^\[(\d+):(\d+(?:\.\d+)?)\]', raw_lines[idx_l + 1].strip())
                     if next_match:
                         next_time = int(next_match.group(1)) * 60 + float(next_match.group(2))
-                duration = max(next_time - timestamp, 1.0)
-                step = duration / max(num_words, 1)
+                # Smart vocal duration: clamp word singing time so instrumental gaps (>2s) don't stretch word speed!
+                raw_gap = max(next_time - timestamp, 0.5)
+                vocal_dur = min(num_words * 0.48, raw_gap * 0.70)
+                if vocal_dur < 0.8:
+                    vocal_dur = min(raw_gap, 1.2)
+                
+                step = vocal_dur / max(num_words, 1)
                 for idx, w in enumerate(words_list):
                     w_time = round(timestamp + (idx * step), 2)
                     words.append({"word": w, "time": w_time})
