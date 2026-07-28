@@ -5337,12 +5337,12 @@ body.player-screen-active #top-bar-wrapper:focus-within {
     transform-origin: left center !important;
     filter: blur(4px) !important;
     opacity: 0.35 !important;
-    transform: scale(0.96) !important;
+    transform: scale(0.95) !important;
     padding-left: 0 !important;
     border-left: none !important;
-    transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1),
-                filter 0.5s cubic-bezier(0.25, 1, 0.5, 1),
-                transform 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+                filter 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+                transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
 .lyric-line.active-line {
@@ -5371,14 +5371,15 @@ body.player-screen-active #top-bar-wrapper:focus-within {
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
-    transform: none !important;
+    transform: translateY(0) scale(1) !important;
+    transform-origin: center center !important;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.2s ease !important;
     filter: none !important;
-    transition: filter 0.2s ease !important;
 }
 
 .lyric-word.active {
-    transform: none !important;
-    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45)) !important;
+    transform: translateY(-2px) scale(1.05) !important;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
 }
 
 .lyric-word.passed {
@@ -5386,7 +5387,7 @@ body.player-screen-active #top-bar-wrapper:focus-within {
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
-    transform: none !important;
+    transform: translateY(0) scale(1) !important;
     filter: none !important;
 }
 
