@@ -848,11 +848,11 @@ LYRICS_CACHE = {}
 LYRICS_CACHE_TTL = 86400  # 24 hours
 
 def parse_synced_lrc(lrc_text: str):
-    """Parses LRC timestamped lyrics string into a list of line and word timing objects."""
+    """Parses LRC timestamped lyrics string into line and word objects with smart vocal timing & 3-dot instrumental indicators."""
     import re
-    lines = []
+    parsed_raw = []
     raw_lines = lrc_text.splitlines()
-    for idx_l, line in enumerate(raw_lines):
+    for line in raw_lines:
         line = line.strip()
         if not line:
             continue
@@ -863,30 +863,61 @@ def parse_synced_lrc(lrc_text: str):
             timestamp = round(minutes * 60 + seconds, 2)
             text = match.group(3).strip()
             if text:
-                words_list = text.split()
-                num_words = len(words_list)
-                words = []
-                # Estimate line duration until next timestamp or default 3.5s
-                next_time = timestamp + 3.5
-                if idx_l + 1 < len(raw_lines):
-                    next_match = re.match(r'^\[(\d+):(\d+(?:\.\d+)?)\]', raw_lines[idx_l + 1].strip())
-                    if next_match:
-                        next_time = int(next_match.group(1)) * 60 + float(next_match.group(2))
-                # Smart vocal duration: clamp word singing time so instrumental gaps (>2s) don't stretch word speed!
-                raw_gap = max(next_time - timestamp, 0.5)
-                vocal_dur = min(num_words * 0.48, raw_gap * 0.70)
-                if vocal_dur < 0.8:
-                    vocal_dur = min(raw_gap, 1.2)
-                
-                step = vocal_dur / max(num_words, 1)
-                for idx, w in enumerate(words_list):
-                    w_time = round(timestamp + (idx * step), 2)
-                    words.append({"word": w, "time": w_time})
-                lines.append({
-                    "time": timestamp,
-                    "text": text,
-                    "words": words
-                })
+                parsed_raw.append({"time": timestamp, "text": text})
+
+    if not parsed_raw:
+        return []
+
+    lines = []
+    # 1. Intro Instrumental check (if song intro > 3s before first vocal line)
+    if parsed_raw[0]["time"] >= 3.0:
+        lines.append({
+            "time": 0.0,
+            "text": "• • •",
+            "isInstrumental": True,
+            "words": []
+        })
+
+    for idx, item in enumerate(parsed_raw):
+        timestamp = item["time"]
+        text = item["text"]
+        words_list = text.split()
+        num_words = len(words_list)
+
+        # Next line timestamp
+        next_time = timestamp + 3.5
+        if idx + 1 < len(parsed_raw):
+            next_time = parsed_raw[idx + 1]["time"]
+
+        raw_gap = max(next_time - timestamp, 0.5)
+        # Vocal singing duration: clamp to natural singing speed (0.48s/word)
+        vocal_dur = min(num_words * 0.48, raw_gap * 0.70)
+        if vocal_dur < 0.8:
+            vocal_dur = min(raw_gap, 1.2)
+
+        step = vocal_dur / max(num_words, 1)
+        words = []
+        for w_idx, w in enumerate(words_list):
+            w_time = round(timestamp + (w_idx * step), 2)
+            words.append({"word": w, "time": w_time})
+
+        lines.append({
+            "time": timestamp,
+            "text": text,
+            "isInstrumental": False,
+            "words": words
+        })
+
+        # 2. Mid-song Instrumental break check (if gap before next line is >= 3.5s)
+        vocal_end = round(timestamp + vocal_dur + 0.2, 2)
+        if (next_time - vocal_end) >= 2.5 and idx + 1 < len(parsed_raw):
+            lines.append({
+                "time": vocal_end,
+                "text": "• • •",
+                "isInstrumental": True,
+                "words": []
+            })
+
     return lines
 
 @app.get("/api/lyrics")

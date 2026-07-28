@@ -2201,7 +2201,7 @@ function onPlayerStateChange(event) {
                                 start: l.time,
                                 end: nextLineTime,
                                 text: l.text,
-                                isInstrumental: false,
+                                isInstrumental: !!l.isInstrumental,
                                 words: (l.words || []).map((w, idx, arr) => {
                                     let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
                                     if (nextTime <= w.time) nextTime = w.time + 0.3;
