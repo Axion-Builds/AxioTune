@@ -1,4 +1,4 @@
-﻿let _errCnt=0; window.onerror=function(m,u,l){if(++_errCnt>5)return false;console.error(m,l);let e=document.createElement('div');e.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);background:red;color:white;padding:10px;z-index:999999;border-radius:8px;font-size:12px;';e.textContent='Err: '+m+' (L'+l+')';document.body.appendChild(e);setTimeout(()=>e.remove(),5000);return false;};
+let _errCnt=0; window.onerror=function(m,u,l){if(++_errCnt>5)return false;console.error(m,l);let e=document.createElement('div');e.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);background:red;color:white;padding:10px;z-index:999999;border-radius:8px;font-size:12px;';e.textContent='Err: '+m+' (L'+l+')';document.body.appendChild(e);setTimeout(()=>e.remove(),5000);return false;};
 window.onunhandledrejection = function(event) { console.error('Promise Rejection: ', event.reason); };
 window._localNetworkIp = null;
 fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});// --- YOUTUBE IFRAME API MOCK AUDIO PLAYER ---
@@ -4406,9 +4406,13 @@ function onPlayerStateChange(event) {
             nowCard.innerHTML = `
                 <div class="q-card-now-ring">
                     <img src="${nowThumb}" class="q-card-now-art" onerror="this.src='default_cover.jpg'">
+                    <div class="q-card-sheen"></div>
                     <div class="q-card-now-badge">
                         <div class="q-eq"><span></span><span></span><span></span><span></span></div>
                         <span class="q-card-now-badge-text">Now Playing</span>
+                    </div>
+                    <div class="q-soundwave-overlay" title="Playing">
+                        <span></span><span></span><span></span><span></span><span></span>
                     </div>
                 </div>
                 <div class="q-card-now-info">
