@@ -1,4 +1,4 @@
-﻿let _errCnt=0; window.onerror=function(m,u,l){if(++_errCnt>5)return false;console.error(m,l);let e=document.createElement('div');e.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);background:red;color:white;padding:10px;z-index:999999;border-radius:8px;font-size:12px;';e.textContent='Err: '+m+' (L'+l+')';document.body.appendChild(e);setTimeout(()=>e.remove(),5000);return false;};
+let _errCnt=0; window.onerror=function(m,u,l){if(++_errCnt>5)return false;console.error(m,l);let e=document.createElement('div');e.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);background:red;color:white;padding:10px;z-index:999999;border-radius:8px;font-size:12px;';e.textContent='Err: '+m+' (L'+l+')';document.body.appendChild(e);setTimeout(()=>e.remove(),5000);return false;};
 window.onunhandledrejection = function(event) { console.error('Promise Rejection: ', event.reason); };
 window._localNetworkIp = null;
 fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});// --- YOUTUBE IFRAME API MOCK AUDIO PLAYER ---
@@ -1673,18 +1673,51 @@ function onPlayerStateChange(event) {
             if (q.length >= 2) fetchSuggestions(q, activeFilter);
         });
 
-        // Double-tap seek on player screen
+        // Double-click / Double-tap 10s seeking (-10s / +10s) with animated ripple badge
+        function triggerSeekRipple(side) {
+            if (!isSongLoaded) return;
+            if (side === 'right') {
+                audioPlayer.currentTime = Math.min(audioPlayer.duration || 9999, audioPlayer.currentTime + 10);
+            } else {
+                audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
+            }
+
+            const container = document.getElementById('cover-art-container') || document.getElementById('player-screen');
+            if (container) {
+                const existing = container.querySelector('.seek-ripple-indicator');
+                if (existing) existing.remove();
+
+                const ripple = document.createElement('div');
+                ripple.className = `seek-ripple-indicator ${side === 'right' ? 'right-seek' : 'left-seek'}`;
+                ripple.innerHTML = `
+                    <div class="seek-ripple-icon">${side === 'right' ? '⏩' : '⏪'}</div>
+                    <div>${side === 'right' ? '+10s' : '-10s'}</div>
+                `;
+                container.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 650);
+            }
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+
+        // Double click mouse listener on player cover art
+        const coverArtEl = document.getElementById('cover-art-container');
+        coverArtEl?.addEventListener('dblclick', (e) => {
+            const rect = coverArtEl.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const side = clickX < rect.width / 2 ? 'left' : 'right';
+            triggerSeekRipple(side);
+        });
+
+        // Touch double tap seek
         let lastTapTime = 0, lastTapSide = '';
         document.getElementById('player-screen')?.addEventListener('touchend', (e) => {
-            if (!appSettings.doubleTapSeek || !isSongLoaded) return;
+            if (!isSongLoaded) return;
             const now = Date.now();
             const screenW = window.innerWidth;
             const tapX = e.changedTouches[0].clientX;
             const side = tapX < screenW / 2 ? 'left' : 'right';
-            if (now - lastTapTime < 350 && side === lastTapSide) {
-                if (side === 'right') audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 10);
-                else audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
-                if (appSettings.haptic && navigator.vibrate) navigator.vibrate(30);
+            if (now - lastTapTime < 380 && side === lastTapSide) {
+                triggerSeekRipple(side);
             }
             lastTapTime = now; lastTapSide = side;
         });
@@ -1961,12 +1994,14 @@ function onPlayerStateChange(event) {
 
         function openQueue() {
             queueOpen = true;
-            queuePanel.classList.add('open');
-            queueBackdrop.classList.add('open');
-            queueNavBtn.classList.add('active');
-            document.body.classList.add('queue-active');
             renderQueue();
             if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
+            requestAnimationFrame(() => {
+                queuePanel.classList.add('open');
+                queueBackdrop.classList.add('open');
+                queueNavBtn.classList.add('active');
+                document.body.classList.add('queue-active');
+            });
         }
 
         function closeQueue() {
