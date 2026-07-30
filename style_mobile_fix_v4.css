@@ -2893,41 +2893,66 @@ body.offline-mode .offline-hide {
         }
         .q-card-play-icon svg { width: 20px; height: 20px; fill: #000; margin-left: 2px; }
 
-        /* Track number pill */
+        /* Track number pill — clickable/double-clickable for instant Move to Up Next #1 */
         .q-card-num {
             position: absolute;
             top: 8px;
             left: 8px;
-            font-size: 0.65rem;
+            font-size: 0.68rem;
             font-weight: 900;
             color: #fff;
-            background: rgba(0,0,0,0.65);
+            background: rgba(0,0,0,0.72);
             backdrop-filter: blur(4px);
             border-radius: 7px;
-            padding: 3px 7px;
+            padding: 3px 8px;
             letter-spacing: 0.05em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            transition: transform 0.15s, background 0.15s;
+        }
+        .q-card-up:hover .q-card-num {
+            background: rgba(var(--accent-rgb,140,50,255), 0.9);
+            transform: scale(1.08);
         }
 
-        /* Remove button */
-        .q-card-remove {
+        /* Action buttons overlay on hover (Move Left, Move Right, Delete) */
+        .q-card-actions {
             position: absolute;
             top: 8px;
             right: 8px;
-            width: 24px; height: 24px;
-            background: rgba(0,0,0,0.7);
-            border: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 6;
+            opacity: 0;
+            transition: opacity 0.18s ease;
+        }
+        .q-card-up:hover .q-card-actions { opacity: 1; }
+
+        .q-action-btn {
+            width: 26px; height: 26px;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.15);
             border-radius: 50%;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.9);
             font-size: 0.7rem;
+            font-weight: 800;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0;
-            transition: opacity 0.15s, background 0.15s;
+            transition: background 0.15s, transform 0.15s, color 0.15s;
         }
-        .q-card-up:hover .q-card-remove { opacity: 1; }
-        .q-card-remove:hover { background: #ff375f !important; color: #fff !important; }
+        .q-action-btn:hover {
+            background: rgba(var(--accent-rgb,140,50,255), 0.9);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            transform: scale(1.12);
+        }
+        .q-action-btn.q-remove-btn:hover {
+            background: #ff375f !important;
+            border-color: #ff375f !important;
+        }
 
         .q-card-title {
             font-size: 0.88rem;
