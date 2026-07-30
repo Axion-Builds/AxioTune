@@ -1262,12 +1262,12 @@ function onPlayerStateChange(event) {
             root.style.setProperty('--title-font', s.titleFont);
             // Lyrics font size & family & style
             const fontSizeMap = {
-                small: '1.35rem',
-                medium: '1.85rem',
-                large: '2.4rem',
-                xlarge: '3.0rem'
+                small: '1.65rem',
+                medium: '2.25rem',
+                large: '2.9rem',
+                xlarge: '3.6rem'
             };
-            root.style.setProperty('--lyrics-font-size', fontSizeMap[s.lyricsFontSize] || '1.85rem');
+            root.style.setProperty('--lyrics-font-size', fontSizeMap[s.lyricsFontSize] || '2.25rem');
 
             const fontMap = {
                 default: "'Inter', 'Outfit', sans-serif",

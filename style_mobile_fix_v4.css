@@ -5848,23 +5848,22 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     background: linear-gradient(
         to right,
         #ffffff 0%,
-        #ffffff var(--progress, 0%),
-        rgba(255, 255, 255, 0.35) var(--progress, 0%),
+        #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 6px)),
+        rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 6px)),
         rgba(255, 255, 255, 0.35) 100%
     ) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
-    transform: translateY(0) scale(1) !important;
+    transform: translateY(0) scale(1);
     transform-origin: bottom center !important;
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-    filter: none !important;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease !important;
 }
 
 .lyric-word.active {
-    transform: translateY(-2px) scale(1.04) !important;
-    filter: none !important;
+    transform: translateY(-3px) scale(var(--lrc-bounce-scale, 1.08)) !important;
+    filter: drop-shadow(0 0 var(--lrc-glow-radius, 12px) rgba(var(--accent-rgb, 140,50,255), var(--lrc-glow-opacity, 0.85))) !important;
 }
 
 .lyric-word.passed {
@@ -5872,7 +5871,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
-    transform: translateY(-2px) scale(1.04) !important;
+    transform: translateY(0) scale(1) !important;
     filter: none !important;
 }
 
