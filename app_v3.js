@@ -4339,6 +4339,12 @@ function onPlayerStateChange(event) {
             const qList = document.getElementById('queue-list');
             qList.innerHTML = '';
 
+            const totalUpNext = queueList.length > 0 ? queueList.length - currentQueueIndex - 1 : 0;
+            const qHeaderTitle = document.getElementById('queue-header-title');
+            if (qHeaderTitle) {
+                qHeaderTitle.textContent = queueList.length > 0 ? `Up Next · ${totalUpNext} song${totalUpNext !== 1 ? 's' : ''}` : 'Up Next';
+            }
+
             if (queueList.length === 0) {
                 qList.innerHTML = `
                     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;position:relative;z-index:2;">
@@ -4352,13 +4358,6 @@ function onPlayerStateChange(event) {
             }
 
             const nowSong = queueList[currentQueueIndex];
-            const totalUpNext = queueList.length - currentQueueIndex - 1;
-
-            // HEADER
-            const headerRow = document.createElement('div');
-            headerRow.style.cssText = 'display:flex;align-items:center;padding:14px 24px 10px;flex-shrink:0;position:relative;z-index:2;';
-            headerRow.innerHTML = `<span style="font-size:0.68rem;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.45);">Up Next &middot; ${totalUpNext} song${totalUpNext !== 1 ? 's' : ''}</span>`;
-            qList.appendChild(headerRow);
 
             // HORIZONTAL SCROLL ROW
             const hScroll = document.createElement('div');
@@ -4373,9 +4372,8 @@ function onPlayerStateChange(event) {
                     <img src="${nowThumb}" class="q-card-now-art" onerror="this.src='default_cover.jpg'">
                     <div class="q-card-now-badge">
                         <div class="q-eq"><span></span><span></span><span></span><span></span></div>
-                        <span class="q-card-now-badge-text">Live</span>
+                        <span class="q-card-now-badge-text">Now Playing</span>
                     </div>
-                    <div class="q-card-shadow"></div>
                 </div>
                 <div class="q-card-now-info">
                     <div class="q-card-now-title">${nowSong.title}</div>
@@ -4438,7 +4436,6 @@ function onPlayerStateChange(event) {
 
             qList.appendChild(hScroll);
         }
-
         
         // Clear Queue Header Button
         document.getElementById('queue-header-clear-btn')?.addEventListener('click', () => {
