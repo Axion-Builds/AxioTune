@@ -4367,6 +4367,7 @@ function onPlayerStateChange(event) {
             const nowThumb = getCoverUrl(`${nowSong.title} ${nowSong.artist}`, nowSong.cover || '', nowSong.id || nowSong.videoId);
             const nowCard = document.createElement('div');
             nowCard.className = 'q-card-now';
+            nowCard.style.setProperty('--card-index', 0);
             nowCard.innerHTML = `
                 <div class="q-card-now-ring">
                     <img src="${nowThumb}" class="q-card-now-art" onerror="this.src='default_cover.jpg'">
@@ -4387,6 +4388,7 @@ function onPlayerStateChange(event) {
             if (totalUpNext > 0) {
                 const divider = document.createElement('div');
                 divider.className = 'q-section-divider';
+                divider.style.setProperty('--card-index', 1);
                 divider.innerHTML = `<div class="q-section-divider-line"></div><div class="q-section-divider-dot"></div><div class="q-section-divider-line"></div>`;
                 hScroll.appendChild(divider);
             }
@@ -4400,6 +4402,7 @@ function onPlayerStateChange(event) {
                 const numLabel = pos < 10 ? '0' + pos : pos;
                 const card = document.createElement('div');
                 card.className = `q-card-up${isNext ? ' q-card-next' : ''}`;
+                card.style.setProperty('--card-index', pos + 1);
                 card.innerHTML = `
                     <div class="q-card-art-wrap">
                         <img src="${thumb}" class="q-card-art" onerror="this.src='default_cover.jpg'">
@@ -4429,6 +4432,7 @@ function onPlayerStateChange(event) {
                 const remaining = queueList.length - (currentQueueIndex + 1 + queueRenderLimit);
                 const more = document.createElement('div');
                 more.className = 'q-card-more';
+                more.style.setProperty('--card-index', queueRenderLimit + 2);
                 more.innerHTML = `<div class="q-card-more-circle">+${remaining > 99 ? '99' : remaining}</div><span class="q-card-more-label">Load More</span>`;
                 more.addEventListener('click', () => { queueRenderLimit += 12; renderQueue(); });
                 hScroll.appendChild(more);

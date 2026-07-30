@@ -2628,7 +2628,7 @@ body.offline-mode .offline-hide {
 
 
         /* ══════════════════════════════════════════════════
-           HORIZONTAL QUEUE — ULTRA-PREMIUM CENTERING & LARGE CARDS
+           HORIZONTAL QUEUE — ULTRA-PREMIUM CENTERING & ANIMATIONS
         ══════════════════════════════════════════════════ */
 
         /* Scroll container — centered vertically in the panel, generous top/bottom padding to eliminate any top clipping */
@@ -2650,6 +2650,25 @@ body.offline-mode .offline-hide {
             z-index: 2;
         }
         .q-horizontal-scroll::-webkit-scrollbar { display: none; }
+
+        /* Staggered Entrance Cascade Animation when Queue Panel opens */
+        #queue-panel.open .q-card-now,
+        #queue-panel.open .q-section-divider,
+        #queue-panel.open .q-card-up,
+        #queue-panel.open .q-card-more {
+            animation: qCardCascade 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+            animation-delay: calc(var(--card-index, 0) * 0.04s + 0.05s);
+        }
+        @keyframes qCardCascade {
+            0% {
+                opacity: 0;
+                transform: translateX(40px) scale(0.92);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
 
         /* Section divider pill between Now Playing and Up Next */
         .q-section-divider {
@@ -2673,6 +2692,11 @@ body.offline-mode .offline-hide {
             border-radius: 50%;
             background: rgba(var(--accent-rgb,140,50,255),0.9);
             box-shadow: 0 0 10px rgba(var(--accent-rgb,140,50,255),1);
+            animation: qDotPulse 2.4s ease-in-out infinite;
+        }
+        @keyframes qDotPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(var(--accent-rgb,140,50,255),0.8); }
+            50% { transform: scale(1.4); box-shadow: 0 0 18px rgba(var(--accent-rgb,140,50,255),1); }
         }
 
         /* ── NOW PLAYING CARD (large 210px dominant card) ── */
@@ -2692,16 +2716,24 @@ body.offline-mode .offline-hide {
             transform: translateY(-5px);
         }
 
-        /* Glowing framed artwork for Now Playing */
+        /* Glowing framed artwork for Now Playing with breathing ambient aura */
         .q-card-now-ring {
             position: relative;
             width: 210px;
             height: 210px;
             border-radius: 22px;
             flex-shrink: 0;
-            box-shadow: 0 16px 45px rgba(var(--accent-rgb, 140,50,255), 0.38), 0 0 0 2px rgba(var(--accent-rgb, 140,50,255), 0.85);
             background: #0d0520;
             overflow: hidden;
+            animation: qGlowBreathe 3.6s ease-in-out infinite;
+        }
+        @keyframes qGlowBreathe {
+            0%, 100% {
+                box-shadow: 0 16px 45px rgba(var(--accent-rgb, 140,50,255), 0.38), 0 0 0 2px rgba(var(--accent-rgb, 140,50,255), 0.85);
+            }
+            50% {
+                box-shadow: 0 22px 60px rgba(var(--accent-rgb, 140,50,255), 0.65), 0 0 0 2.5px rgba(255, 255, 255, 0.95);
+            }
         }
         .q-card-now-art {
             width: 100%;
