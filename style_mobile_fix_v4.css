@@ -4444,21 +4444,75 @@ body.theme-static #background-layer {
 
 
 /* =========================================================================
-   🔍 AUTO-HIDE SEARCH BAR ON PLAYER SCREEN (DESKTOP)
+   🔍 FIXED PLAYER SCREEN TOP CONTROLS (DESKTOP)
+   - Back Button: ALWAYS visible on top left
+   - Search Bar: Sits next to Back Button (NO OVERLAP) & reveals on hover
    ========================================================================= */
 body.player-screen-active #top-bar-wrapper {
-    opacity: 0;
-    pointer-events: auto !important; /* capture hover events */
-    transform: translateY(-10px);
-    transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    transition-delay: 0.1s;
+    position: fixed !important;
+    top: 20px !important;
+    left: 24px !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    z-index: 999999 !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    background: transparent !important;
 }
 
-body.player-screen-active #top-bar-wrapper:hover,
-body.player-screen-active #top-bar-wrapper:focus-within {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0s;
+/* Back Button is ALWAYS visible on player screen */
+body.player-screen-active #global-back-btn {
+    display: flex !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    flex-shrink: 0 !important;
+    z-index: 999999 !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+}
+
+body.player-screen-active #global-back-btn:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+    transform: scale(1.08) !important;
+}
+
+/* Search Bar input container on player screen: Auto-hide, reveal on hover */
+body.player-screen-active #top-bar {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateX(-10px) !important;
+    transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+/* Reveal Search Bar when hovering over top-bar-wrapper or focus within input */
+body.player-screen-active #top-bar-wrapper:hover #top-bar,
+body.player-screen-active #top-bar:hover,
+body.player-screen-active #top-bar:focus-within {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateX(0) !important;
 }
 
 /* =========================================================================
@@ -5332,67 +5386,16 @@ body.player-screen-active #top-bar-wrapper:focus-within {
     }
 }
 
-/* --- LUXURY COMBINED APPLE MUSIC & UNAKKUL NAANE LYRICS --- */
-.lyric-line {
-    transform-origin: left center !important;
-    filter: blur(4px) !important;
-    opacity: 0.35 !important;
-    transform: scale(0.95) !important;
-    padding-left: 0 !important;
-    border-left: none !important;
-    transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1),
-                filter 0.6s cubic-bezier(0.25, 1, 0.5, 1),
-                transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) !important;
-}
 
-.lyric-line.active-line {
-    filter: blur(0px) !important;
-    opacity: 1 !important;
-    transform: scale(1.0) !important;
-    padding-left: 0 !important;
-    border-left: none !important;
-}
 
-.lyric-line.active-line::before {
-    display: none !important;
-}
 
-.lyric-word {
-    display: inline-block !important;
-    margin-right: 6px !important;
-    background: linear-gradient(
-        to right,
-        #ffffff 0%,
-        #ffffff var(--progress, 0%),
-        rgba(255, 255, 255, 0.38) var(--progress, 0%),
-        rgba(255, 255, 255, 0.38) 100%
-    ) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    color: transparent !important;
-    transform: translateY(0) scale(1) !important;
-    transform-origin: center center !important;
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.2s ease !important;
-    filter: none !important;
-}
-
-.lyric-word.active {
-    transform: translateY(-2px) scale(1.05) !important;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
-}
-
-.lyric-word.passed {
-    background: #ffffff !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    transform: translateY(0) scale(1) !important;
-    filter: none !important;
-}
 
 /* Added by AI for Player Screen Top Bar */
 body.player-screen-active #top-bar-wrapper { justify-content: flex-start !important; padding-left: 20px !important; padding-right: 300px !important; }
+
+
+.lyric-line { transform-origin: left center !important; filter: blur(3px) !important; opacity: 0.4 !important; transform: scale(0.95) !important; padding-left: 0 !important; border-left: none !important; } .lyric-line.active-line { filter: blur(0px) drop-shadow(0 0 var(--lyrics-glow-intensity, 2px) rgba(255, 255, 255, 0.45)) !important; opacity: 1 !important; transform: scale(1) !important; padding-left: 0 !important; border-left: none !important; } .lyric-line.active-line::before { display: none !important; }
+
 
 .q-hero-card { position: relative; width: 100%; height: 200px; border-radius: 12px; overflow: hidden; margin-bottom: 24px; display: flex; align-items: flex-end; box-shadow: 0 10px 30px rgba(0,0,0,0.3); flex-shrink: 0; cursor: pointer; }
 .q-hero-img-wrap { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
@@ -5479,7 +5482,40 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     will-change: transform, scroll-position !important;
 }
 
+/* --- PURE APPLE MUSIC CRISP TYPOGRAPHY LYRICS --- */
+.lyric-word {
+    display: inline-block !important;
+    margin-right: 6px !important;
+    background: linear-gradient(
+        to right,
+        #ffffff 0%,
+        #ffffff var(--progress, 0%),
+        rgba(255, 255, 255, 0.35) var(--progress, 0%),
+        rgba(255, 255, 255, 0.35) 100%
+    ) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    transform: translateY(0) scale(1) !important;
+    transform-origin: bottom center !important;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    filter: none !important;
+}
 
+.lyric-word.active {
+    transform: translateY(-2px) scale(1.04) !important;
+    filter: none !important;
+}
+
+.lyric-word.passed {
+    background: #ffffff !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    transform: translateY(-2px) scale(1.04) !important;
+    filter: none !important;
+}
 
 .art-grid-card, .cinematic-card, .vinyl-card, .q-hero-card {
     will-change: transform !important;
