@@ -4355,96 +4355,57 @@ function onPlayerStateChange(event) {
 
             const nowPlayingSong = queueList[currentQueueIndex];
 
-            // ── NOW PLAYING HERO CARD ──
-            if (nowPlayingSong) {
-                const heroThumb = getCoverUrl(`${nowPlayingSong.title} ${nowPlayingSong.artist}`, nowPlayingSong.cover || '', nowPlayingSong.id || nowPlayingSong.videoId);
-                const hero = document.createElement('div');
-                hero.className = 'q-hero-card';
-                hero.innerHTML = `
-                    <div class="q-hero-img-wrap">
-                        <img src="${heroThumb}" class="q-hero-img" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect fill=\'%23222\' width=\'100\' height=\'100\'/%3E%3C/svg%3E'">
-                        <div class="q-hero-gradient"></div>
+            // ── 3D VINYL STACK DECK (NOW PLAYING + UPCOMING TOP 3) ──
+            const stackWrapper = document.createElement('div');
+            stackWrapper.className = 'queue-3d-wrapper';
+            const deck = document.createElement('div');
+            deck.className = 'queue-3d-deck';
+
+            const deckSongs = [];
+            for (let i = 0; i < 4; i++) {
+                const songIdx = currentQueueIndex + i;
+                if (songIdx < queueList.length) {
+                    deckSongs.push({ song: queueList[songIdx], queueIdx: songIdx, deckPos: i });
+                }
+            }
+
+            deckSongs.reverse().forEach(item => {
+                const s = item.song;
+                const card = document.createElement('div');
+                card.className = `deck-card deck-card-${item.deckPos}`;
+                const thumb = getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId);
+                const tagText = item.deckPos === 0 ? '♫ Now Playing' : (item.deckPos === 1 ? 'Next Up' : `Up Next #${item.deckPos + 1}`);
+
+                card.innerHTML = `
+                    <div class="deck-card-art-wrap">
+                        <img src="${thumb}" class="deck-card-art" onerror="this.src='default_cover.jpg'">
+                        ${item.deckPos === 0 ? '<div class="deck-card-vinyl-disk"></div>' : ''}
                     </div>
-                    <div class="q-hero-body">
-                        <div class="q-hero-meta">
-                            <div class="q-hero-label">&#9835; Now Playing</div>
-                            <div class="q-hero-waveform">
-                                <span></span><span></span><span></span><span></span><span></span>
-                            </div>
-                        </div>
-                        <div class="q-hero-title">${nowPlayingSong.title}</div>
-                        <div class="q-hero-artist">${nowPlayingSong.artist}</div>
+                    <div class="deck-card-body">
+                        <div class="deck-card-tag">${tagText}</div>
+                        <div class="deck-card-title">${s.title}</div>
+                        <div class="deck-card-artist">${s.artist}</div>
                     </div>
                 `;
-                hero.addEventListener('click', () => playPauseBtn.click());
-                qList.appendChild(hero);
-            }
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (item.deckPos === 0) {
+                        playPauseBtn.click();
+                    } else {
+                        playQueueIndex(item.queueIdx);
+                    }
+                });
+                deck.appendChild(card);
+            });
+
+            stackWrapper.appendChild(deck);
+            qList.appendChild(stackWrapper);
 
             // Inject styles once
             if (!document.getElementById('qEq-style')) {
                 const s = document.createElement('style');
                 s.id = 'qEq-style';
                 s.textContent = `
-                    /* ===== Hero Now Playing Card ===== */
-                    .q-hero-card {
-                        position: relative; border-radius: 22px; overflow: hidden;
-                        margin-bottom: 22px; cursor: pointer;
-                        box-shadow: 0 16px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.08);
-                        transition: transform 0.28s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.28s;
-                    }
-                    .q-hero-card:hover { transform: scale(1.015); box-shadow: 0 22px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.12); }
-                    .q-hero-card:active { transform: scale(0.99); }
-                    .q-hero-img-wrap { position: relative; }
-                    .q-hero-img { width: 100%; height: 190px; object-fit: cover; display: block; }
-                    .q-hero-gradient {
-                        position: absolute; inset: 0;
-                        background: linear-gradient(to top, rgba(8,3,18,0.95) 0%, rgba(8,3,18,0.4) 55%, transparent 100%);
-                    }
-                    .q-hero-body {
-                        position: absolute; bottom: 0; left: 0; right: 0;
-                        padding: 14px 18px 16px;
-                    }
-                    .q-hero-meta {
-                        display: flex; align-items: center; justify-content: space-between;
-                        margin-bottom: 6px;
-                    }
-                    .q-hero-label {
-                        font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em;
-                        text-transform: uppercase;
-                        color: var(--accent, #ff476d);
-                        text-shadow: 0 0 10px rgba(255,71,109,0.6);
-                    }
-                    /* Mini waveform bars */
-                    .q-hero-waveform {
-                        display: flex; align-items: flex-end; gap: 3px; height: 22px;
-                    }
-                    .q-hero-waveform span {
-                        display: block; width: 3px; border-radius: 4px;
-                        background: var(--accent, #ff476d);
-                        box-shadow: 0 0 6px rgba(255,71,109,0.5);
-                    }
-                    .q-hero-waveform span:nth-child(1) { animation: qWave 0.9s ease-in-out infinite; }
-                    .q-hero-waveform span:nth-child(2) { animation: qWave 1.3s ease-in-out infinite 0.1s; }
-                    .q-hero-waveform span:nth-child(3) { animation: qWave 0.7s ease-in-out infinite 0.22s; }
-                    .q-hero-waveform span:nth-child(4) { animation: qWave 1.1s ease-in-out infinite 0.05s; }
-                    .q-hero-waveform span:nth-child(5) { animation: qWave 0.85s ease-in-out infinite 0.16s; }
-                    @keyframes qWave {
-                        0%,100% { height: 4px; } 50% { height: 18px; }
-                    }
-                    .q-hero-title {
-                        font-size: 1.05rem; font-weight: 700; color: white;
-                        display: -webkit-box; -webkit-line-clamp: 1;
-                        -webkit-box-orient: vertical; overflow: hidden;
-                        letter-spacing: -0.01em;
-                    }
-                    .q-hero-artist {
-                        font-size: 0.82rem; color: rgba(255,255,255,0.62); margin-top: 3px;
-                    }
-
-                    /* ===== Song Row ===== */
-                    @keyframes q-row-enter {
-                        to { opacity: 1; transform: translateX(0); }
-                    }
                     .q-row {
                         display: flex; align-items: center; gap: 13px;
                         padding: 9px 12px;
@@ -4452,19 +4413,13 @@ function onPlayerStateChange(event) {
                         background: rgba(255,255,255,0.03);
                         border: 1px solid rgba(255,255,255,0.05);
                         margin-bottom: 6px; cursor: grab;
-                        transition: background 0.22s, transform 0.22s cubic-bezier(0.2,0.8,0.2,1),
-                                    border-color 0.22s, box-shadow 0.22s;
+                        transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
                         will-change: transform;
-                        transform: translateZ(0);
-                        opacity: 0; transform: translateX(20px);
-                        animation: q-row-enter 0.4s cubic-bezier(0.2,0.8,0.2,1) forwards;
                     }
                     .q-row:hover {
                         background: rgba(255,255,255,0.075);
                         border-color: rgba(255,255,255,0.11);
-                        transform: translateX(-3px) scale(1.015);
-                        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-                        position: relative; z-index: 2;
+                        transform: translateX(-2px);
                     }
                     .q-row:active { cursor: grabbing; }
                     .q-row.q-next {
