@@ -4351,57 +4351,26 @@ function onPlayerStateChange(event) {
                 return;
             }
 
-            // ── 3D COVERFLOW SHELF (PREV, ACTIVE, NEXT 1, NEXT 2, NEXT 3) ──
-            const stage = document.createElement('div');
-            stage.className = 'queue-cf-stage';
-            const shelf = document.createElement('div');
-            shelf.className = 'queue-cf-shelf';
+            const nowPlayingSong = queueList[currentQueueIndex];
 
-            const cfPositions = [
-                { posClass: 'cf-pos-prev', offset: -1 },
-                { posClass: 'cf-pos-active', offset: 0 },
-                { posClass: 'cf-pos-next1', offset: 1 },
-                { posClass: 'cf-pos-next2', offset: 2 },
-                { posClass: 'cf-pos-next3', offset: 3 }
-            ];
+            // ── LIGHTWEIGHT NOW PLAYING BANNER ──
+            if (nowPlayingSong) {
+                const nowThumb = getCoverUrl(`${nowPlayingSong.title} ${nowPlayingSong.artist}`, nowPlayingSong.cover || '', nowPlayingSong.id || nowPlayingSong.videoId);
+                const nowCard = document.createElement('div');
+                nowCard.className = 'q-now-card';
+                nowCard.innerHTML = `
+                    <img src="${nowThumb}" class="q-now-thumb" onerror="this.src='default_cover.jpg'">
+                    <div class="q-now-info">
+                        <div class="q-now-tag">♫ Now Playing</div>
+                        <div class="q-now-title">${nowPlayingSong.title}</div>
+                        <div class="q-now-artist">${nowPlayingSong.artist}</div>
+                    </div>
+                `;
+                nowCard.addEventListener('click', () => playPauseBtn.click());
+                qList.appendChild(nowCard);
+            }
 
-            cfPositions.forEach(cfg => {
-                const targetIdx = currentQueueIndex + cfg.offset;
-                if (targetIdx >= 0 && targetIdx < queueList.length) {
-                    const song = queueList[targetIdx];
-                    const card = document.createElement('div');
-                    card.className = `cf-card ${cfg.posClass}`;
-                    const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
-                    const isNowPlaying = cfg.offset === 0;
-                    const tagText = isNowPlaying ? '♫ Now Playing' : (cfg.offset < 0 ? 'Previous' : `Up Next #${cfg.offset}`);
-
-                    card.innerHTML = `
-                        <div class="cf-art-box">
-                            <img src="${thumb}" class="cf-art-img" onerror="this.src='default_cover.jpg'">
-                            ${isNowPlaying ? '<div class="cf-vinyl-disc"></div>' : ''}
-                        </div>
-                        <div class="cf-body">
-                            <div class="cf-tag">${tagText}</div>
-                            <div class="cf-title">${song.title}</div>
-                            <div class="cf-artist">${song.artist}</div>
-                        </div>
-                    `;
-                    card.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (isNowPlaying) {
-                            playPauseBtn.click();
-                        } else {
-                            playQueueIndex(targetIdx);
-                        }
-                    });
-                    shelf.appendChild(card);
-                }
-            });
-
-            stage.appendChild(shelf);
-            qList.appendChild(stage);
-
-            // ── 2-COLUMN GLASS MATRIX GRID FOR UPCOMING TRACKS ──
+            // ── UP NEXT TRACK LIST ──
             const upNextSongs = queueList.filter((_, i) => i > currentQueueIndex);
             if (upNextSongs.length > 0) {
                 const label = document.createElement('div');
@@ -4409,8 +4378,8 @@ function onPlayerStateChange(event) {
                 label.textContent = `Up Next · ${upNextSongs.length} song${upNextSongs.length !== 1 ? 's' : ''}`;
                 qList.appendChild(label);
 
-                const matrixGrid = document.createElement('div');
-                matrixGrid.className = 'q-matrix-grid';
+                const listWrapper = document.createElement('div');
+                listWrapper.style.cssText = 'display:flex; flex-direction:column; width:100%;';
 
                 let count = 0;
                 for (let idx = currentQueueIndex + 1; idx < Math.min(queueList.length, currentQueueIndex + 1 + queueRenderLimit); idx++) {
@@ -4419,20 +4388,20 @@ function onPlayerStateChange(event) {
                     const isNext = idx === currentQueueIndex + 1;
                     const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
 
-                    const card = document.createElement('div');
-                    card.className = `q-matrix-card${isNext ? ' q-next-matrix' : ''}`;
-                    card.innerHTML = `
-                        <span class="q-matrix-num">${count < 10 ? '0' + count : count}</span>
-                        <img src="${thumbUrl}" class="q-matrix-thumb" onerror="this.src='default_cover.jpg'">
-                        <div class="q-matrix-info">
-                            <div class="q-matrix-title">${song.title}</div>
-                            <div class="q-matrix-artist">${song.artist}</div>
+                    const row = document.createElement('div');
+                    row.className = `q-row${isNext ? ' q-next' : ''}`;
+                    row.innerHTML = `
+                        <span class="q-num">${count < 10 ? '0' + count : count}</span>
+                        <img src="${thumbUrl}" class="q-thumb" onerror="this.src='default_cover.jpg'">
+                        <div class="q-info">
+                            <div class="q-title">${song.title}</div>
+                            <div class="q-artist">${song.artist}</div>
                         </div>
-                        <button class="q-matrix-remove" data-idx="${idx}" title="Remove">✕</button>
+                        <button class="q-remove-btn" data-idx="${idx}" title="Remove">✕</button>
                     `;
 
-                    card.addEventListener('click', (e) => {
-                        if (e.target.closest('.q-matrix-remove')) {
+                    row.addEventListener('click', (e) => {
+                        if (e.target.closest('.q-remove-btn')) {
                             e.stopPropagation();
                             queueList.splice(idx, 1);
                             renderQueue();
@@ -4441,9 +4410,9 @@ function onPlayerStateChange(event) {
                         playQueueIndex(idx);
                     });
 
-                    matrixGrid.appendChild(card);
+                    listWrapper.appendChild(row);
                 }
-                qList.appendChild(matrixGrid);
+                qList.appendChild(listWrapper);
             }
 
             if (currentQueueIndex + queueRenderLimit < queueList.length - 1) {

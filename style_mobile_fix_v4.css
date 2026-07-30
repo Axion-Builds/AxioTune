@@ -2702,146 +2702,51 @@ body.offline-mode .offline-hide {
             }
         }
 
-        /* 🌌 RADICAL 3D COVERFLOW & LIQUID MATRIX QUEUE UI */
-        .queue-cf-stage {
-            perspective: 1000px;
-            width: 100%;
-            height: 220px;
+        /* ── SUPER LIGHTWEIGHT 60 FPS QUEUE UI ── */
+        .q-now-card {
             display: flex;
             align-items: center;
-            justify-content: center;
-            position: relative;
-            margin-bottom: 6px;
-            overflow: visible;
-            flex-shrink: 0;
-            padding-top: 10px;
-        }
-        .queue-cf-shelf {
-            position: relative;
-            width: 100%;
-            max-width: 420px;
-            height: 190px;
-            transform-style: preserve-3d;
-            user-select: none;
-        }
-        .cf-card {
-            position: absolute;
-            width: 240px;
-            height: 170px;
-            left: 50%;
-            top: 50%;
-            margin-left: -120px;
-            margin-top: -85px;
-            border-radius: 20px;
-            background: linear-gradient(145deg, rgba(32, 12, 60, 0.98) 0%, rgba(12, 4, 25, 0.98) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            box-shadow: 0 20px 45px rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            padding: 12px;
             gap: 14px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15) 0%, rgba(20, 10, 35, 0.4) 100%);
+            border: 1px solid rgba(var(--accent-rgb), 0.3);
+            margin: 12px 16px;
             cursor: pointer;
-            will-change: transform, opacity;
-            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.3s ease;
-            transform-origin: center center;
-            overflow: visible;
+            transition: background 0.18s ease;
         }
-
-        /* 3D CoverFlow Shelf Positions */
-        .cf-pos-prev {
-            transform: translate3d(-140px, 0, -80px) rotateY(25deg) scale(0.82);
-            opacity: 0.55;
-            z-index: 5;
-            filter: brightness(0.7);
+        .q-now-card:hover {
+            background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25) 0%, rgba(20, 10, 35, 0.6) 100%);
         }
-        .cf-pos-active {
-            transform: translate3d(0, 0, 30px) rotateY(0deg) scale(1.06);
-            opacity: 1;
-            z-index: 10;
-            border-color: rgba(var(--accent-rgb), 0.55);
-            box-shadow: 0 24px 60px rgba(0,0,0,0.9), 0 0 40px rgba(var(--accent-rgb), 0.3);
-            filter: brightness(1);
-        }
-        .cf-pos-active:hover {
-            transform: translate3d(0, -6px, 45px) scale(1.09);
-        }
-        .cf-pos-next1 {
-            transform: translate3d(140px, 0, -80px) rotateY(-25deg) scale(0.82);
-            opacity: 0.7;
-            z-index: 5;
-            filter: brightness(0.8);
-        }
-        .cf-pos-next2 {
-            transform: translate3d(230px, 0, -140px) rotateY(-35deg) scale(0.7);
-            opacity: 0.45;
-            z-index: 4;
-            filter: brightness(0.6);
-        }
-        .cf-pos-next3 {
-            transform: translate3d(300px, 0, -180px) rotateY(-40deg) scale(0.6);
-            opacity: 0.25;
-            z-index: 3;
-            filter: brightness(0.4);
-        }
-
-        .cf-art-box {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            flex-shrink: 0;
-        }
-        .cf-art-img {
-            width: 100%;
-            height: 100%;
+        .q-now-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
             object-fit: cover;
-            border-radius: 14px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-            position: relative;
-            z-index: 2;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
-        .cf-vinyl-disc {
-            position: absolute;
-            right: -24px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 105px;
-            height: 105px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #111 18%, #222 32%, #050505 55%, #1a1a1a 75%, #000 100%);
-            border: 2px solid rgba(255,255,255,0.12);
-            box-shadow: inset 0 0 10px rgba(255,255,255,0.2), 0 6px 18px rgba(0,0,0,0.7);
-            z-index: 1;
-            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-        .cf-pos-active:hover .cf-vinyl-disc {
-            transform: translateY(-50%) translateX(28px) rotate(45deg);
-        }
-
-        .cf-body {
+        .q-now-info {
             flex: 1;
             min-width: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
-        .cf-tag {
-            font-size: 0.62rem;
+        .q-now-tag {
+            font-size: 0.65rem;
             font-weight: 800;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--accent);
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
-        .cf-title {
-            font-family: var(--font-display);
-            font-size: 1.05rem;
+        .q-now-title {
+            font-size: 1rem;
             font-weight: 700;
             color: #fff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .cf-artist {
+        .q-now-artist {
             font-size: 0.8rem;
             color: rgba(255,255,255,0.6);
             margin-top: 2px;
@@ -2850,85 +2755,70 @@ body.offline-mode .offline-hide {
             text-overflow: ellipsis;
         }
 
-        /* ── 2-COLUMN GLASS MATRIX GRID FOR UPCOMING TRACKS ── */
-        .q-matrix-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 8px;
-            padding: 8px 16px 30px;
-            overflow-y: auto;
-            width: 100%;
-        }
-        .q-matrix-card {
+        .q-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            border-radius: 14px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
+            gap: 12px;
+            padding: 9px 16px;
+            background: transparent;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
             cursor: pointer;
-            transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+            transition: background 0.15s ease;
         }
-        .q-matrix-card:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.12);
-            transform: scale(1.02);
+        .q-row:hover {
+            background: rgba(255,255,255,0.06);
         }
-        .q-matrix-card.q-next-matrix {
-            border-color: rgba(var(--accent-rgb), 0.35);
-            background: rgba(var(--accent-rgb), 0.08);
+        .q-row.q-next {
+            background: rgba(var(--accent-rgb), 0.05);
         }
-        .q-matrix-num {
-            font-size: 0.72rem;
-            font-weight: 800;
-            color: var(--accent);
-            opacity: 0.7;
-            width: 18px;
+        .q-num {
+            width: 22px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
             text-align: center;
             flex-shrink: 0;
         }
-        .q-matrix-thumb {
-            width: 40px;
-            height: 40px;
+        .q-thumb {
+            width: 42px;
+            height: 42px;
             border-radius: 8px;
             object-fit: cover;
             flex-shrink: 0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
         }
-        .q-matrix-info {
+        .q-info {
             flex: 1;
             min-width: 0;
         }
-        .q-matrix-title {
-            font-size: 0.88rem;
+        .q-title {
+            font-size: 0.92rem;
             font-weight: 600;
             color: #fff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .q-matrix-artist {
-            font-size: 0.73rem;
+        .q-artist {
+            font-size: 0.78rem;
             color: rgba(255,255,255,0.5);
             margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .q-matrix-remove {
+        .q-remove-btn {
             background: transparent;
             border: none;
             color: rgba(255,255,255,0.3);
             cursor: pointer;
-            padding: 4px;
+            padding: 6px;
             border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.15s, color 0.15s;
+            transition: color 0.15s;
             flex-shrink: 0;
         }
-        .q-matrix-card:hover .q-matrix-remove { opacity: 1; }
-        .q-matrix-remove:hover { color: #ff375f; }
+        .q-row:hover .q-remove-btn {
+            color: #ff375f;
+        }
 
         #queue-panel .section-title { font-size: 1.2rem; margin-bottom: 16px; }
         .queue-now-playing-label {
