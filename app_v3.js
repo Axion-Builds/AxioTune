@@ -2590,8 +2590,8 @@ function onPlayerStateChange(event) {
                 nextBtn.disabled = false;
                 prevBtn.disabled = false;
                 
-                // If it's a manual search, replace the queue. If auto-playing from queue, append to infinite radio!
-                populateQueue(songData.videoId || songData.id, isFromQueue);
+                // Always replace the queue when playing a new song from search / home screen / artist / album
+                populateQueue(songData.videoId || songData.id, false);
 
                 // Quality badge
                 if (streamData.quality) {
@@ -4636,12 +4636,12 @@ function onPlayerStateChange(event) {
                 const btnRow = document.createElement('div');
                 btnRow.style.cssText = 'display:flex; justify-content:center; padding: 20px 0; margin-bottom: 20px;';
                 const loadBtn = document.createElement('button');
-                loadBtn.textContent = 'Load More (' + (queueList.length - 1 - (currentQueueIndex + queueRenderLimit)) + ' more)';
-                loadBtn.style.cssText = 'background: rgba(255,255,255,0.06); color: white; border: none; padding: 10px 24px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); font-weight: 600; font-size: 0.9rem; transition: background 0.2s;';
-                loadBtn.onmouseover = () => loadBtn.style.background = 'rgba(255,255,255,0.1)';
-                loadBtn.onmouseleave = () => loadBtn.style.background = 'rgba(255,255,255,0.06)';
+                loadBtn.textContent = '➕ Add 10 More';
+                loadBtn.style.cssText = 'background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.12); padding: 10px 24px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); font-weight: 600; font-size: 0.9rem; transition: all 0.2s;';
+                loadBtn.onmouseover = () => { loadBtn.style.background = 'rgba(255,255,255,0.12)'; loadBtn.style.transform = 'scale(1.03)'; };
+                loadBtn.onmouseleave = () => { loadBtn.style.background = 'rgba(255,255,255,0.06)'; loadBtn.style.transform = 'scale(1)'; };
                 loadBtn.onclick = () => {
-                    queueRenderLimit += 20;
+                    queueRenderLimit += 10;
                     renderQueue();
                 };
                 btnRow.appendChild(loadBtn);
