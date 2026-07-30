@@ -2830,18 +2830,22 @@ body.offline-mode .offline-hide {
             text-overflow: ellipsis;
         }
 
-        /* ── REGULAR UPCOMING CARDS (165px / 185px) ── */
-        .q-card-up {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            width: 165px;
-            cursor: pointer;
-            will-change: transform;
-            transition: transform 0.22s cubic-bezier(0.2,0.8,0.2,1);
-            position: relative;
+        /* Drag and Drop Visual Feedback Styles */
+        .q-card-up[draggable="true"] {
+            cursor: grab;
+        }
+        .q-card-up.dragging {
+            opacity: 0.35 !important;
+            transform: scale(0.92) translateY(-4px) !important;
+            filter: grayscale(0.3);
+            cursor: grabbing !important;
+        }
+        .q-card-up.drag-over {
+            transform: scale(1.08) translateY(-10px) !important;
+            z-index: 10 !important;
+        }
+        .q-card-up.drag-over .q-card-art-wrap {
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb,140,50,255), 1), 0 16px 40px rgba(0,0,0,0.8) !important;
         }
         .q-card-up:hover { transform: translateY(-7px); }
         .q-card-up.q-card-next { width: 185px; }

@@ -4428,7 +4428,10 @@ function onPlayerStateChange(event) {
                 hScroll.appendChild(divider);
             }
 
-            // UPCOMING CARDS WITH DOUBLE CLICK REORDER & MOVE LEFT/RIGHT ACTION BUTTONS
+            // Global variable for active drag
+            window._qDragIndex = null;
+
+            // UPCOMING CARDS WITH DRAG & DROP REORDER & DOUBLE CLICK REORDER
             for (let idx = currentQueueIndex + 1; idx < Math.min(queueList.length, currentQueueIndex + 1 + queueRenderLimit); idx++) {
                 const song = queueList[idx];
                 const pos = idx - currentQueueIndex;
@@ -4438,22 +4441,69 @@ function onPlayerStateChange(event) {
                 const card = document.createElement('div');
                 card.className = `q-card-up${isNext ? ' q-card-next' : ''}`;
                 card.style.setProperty('--card-index', pos + 1);
+                card.setAttribute('draggable', 'true');
+                card.setAttribute('data-idx', idx);
+
                 card.innerHTML = `
                     <div class="q-card-art-wrap">
                         <img src="${thumb}" class="q-card-art" onerror="this.src='default_cover.jpg'">
                         <div class="q-card-play-overlay">
                             <div class="q-card-play-icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
                         </div>
-                        <span class="q-card-num" title="Double-click to move to Up Next #1">${numLabel}</span>
+                        <span class="q-card-num" title="Drag to reorder or Double-click to move to #1">${numLabel}</span>
                         <div class="q-card-actions">
-                            ${pos > 1 ? `<button class="q-action-btn q-move-left" data-idx="${idx}" title="Move left / up in queue">◄</button>` : ''}
-                            ${idx < queueList.length - 1 ? `<button class="q-action-btn q-move-right" data-idx="${idx}" title="Move right / down in queue">►</button>` : ''}
+                            ${pos > 1 ? `<button class="q-action-btn q-move-left" data-idx="${idx}" title="Move left">◄</button>` : ''}
+                            ${idx < queueList.length - 1 ? `<button class="q-action-btn q-move-right" data-idx="${idx}" title="Move right">►</button>` : ''}
                             <button class="q-action-btn q-remove-btn" data-idx="${idx}" title="Remove">✕</button>
                         </div>
                     </div>
                     <div class="q-card-title">${song.title}</div>
                     <div class="q-card-artist">${song.artist}</div>
                 `;
+
+                // ── DRAG & DROP REORDER EVENTS ──
+                card.addEventListener('dragstart', (e) => {
+                    window._qDragIndex = idx;
+                    card.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', idx.toString());
+                });
+
+                card.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (window._qDragIndex !== null && window._qDragIndex !== idx) {
+                        card.classList.add('drag-over');
+                    }
+                });
+
+                card.addEventListener('dragleave', () => {
+                    card.classList.remove('drag-over');
+                });
+
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over');
+                    card.classList.remove('dragging');
+
+                    const fromIdx = window._qDragIndex !== null ? window._qDragIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
+                    const toIdx = idx;
+
+                    if (!isNaN(fromIdx) && fromIdx !== toIdx && fromIdx > currentQueueIndex && toIdx > currentQueueIndex) {
+                        const [moved] = queueList.splice(fromIdx, 1);
+                        queueList.splice(toIdx, 0, moved);
+                        renderQueue();
+                        if (typeof showToast === 'function') showToast(`Queue reordered! 🎵`);
+                    }
+                    window._qDragIndex = null;
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                    card.classList.remove('drag-over');
+                    document.querySelectorAll('.q-card-up').forEach(c => c.classList.remove('drag-over', 'dragging'));
+                    window._qDragIndex = null;
+                });
 
                 // Reorder action button handlers
                 card.addEventListener('click', (e) => {
@@ -4473,7 +4523,7 @@ function onPlayerStateChange(event) {
                             const [moved] = queueList.splice(idx, 1);
                             queueList.splice(idx - 1, 0, moved);
                             renderQueue();
-                            showToast(`Moved "${song.title}" up in queue! 🎵`);
+                            showToast(`Moved "${song.title}" left! 🎵`);
                         }
                         return;
                     }
@@ -4483,7 +4533,7 @@ function onPlayerStateChange(event) {
                             const [moved] = queueList.splice(idx, 1);
                             queueList.splice(idx + 1, 0, moved);
                             renderQueue();
-                            showToast(`Moved "${song.title}" down in queue! 🎵`);
+                            showToast(`Moved "${song.title}" right! 🎵`);
                         }
                         return;
                     }
