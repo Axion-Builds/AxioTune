@@ -2676,7 +2676,7 @@ body.offline-mode .offline-hide {
         .plt-remove:hover { color: #ff375f; }
         .plt-remove svg { width: 16px; height: 16px; fill: currentColor; display: block; }
 
-        /* ── APPLE MUSIC DESKTOP FLOATING RIGHT SIDEBAR & SOLID 3D DECK ── */
+        /* ── APPLE MUSIC DESKTOP FLOATING RIGHT SIDEBAR ── */
         @media (min-width: 769px) {
             #queue-panel {
                 position: fixed !important;
@@ -2702,140 +2702,233 @@ body.offline-mode .offline-hide {
             }
         }
 
-        .queue-3d-wrapper {
-            perspective: 1200px;
-            padding: 22px 18px 14px;
-            margin-bottom: 8px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        /* 🌌 RADICAL 3D COVERFLOW & LIQUID MATRIX QUEUE UI */
+        .queue-cf-stage {
+            perspective: 1000px;
             width: 100%;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 6px;
+            overflow: visible;
+            flex-shrink: 0;
+            padding-top: 10px;
         }
-        .queue-3d-deck {
+        .queue-cf-shelf {
             position: relative;
             width: 100%;
-            max-width: 400px;
-            height: 175px;
+            max-width: 420px;
+            height: 190px;
             transform-style: preserve-3d;
             user-select: none;
         }
-        .deck-card {
+        .cf-card {
             position: absolute;
-            inset: 0;
-            border-radius: 22px;
-            /* Solid opaque background to 100% stop text bleed from back cards */
-            background: linear-gradient(140deg, #240c48 0%, #110526 100%);
+            width: 240px;
+            height: 170px;
+            left: 50%;
+            top: 50%;
+            margin-left: -120px;
+            margin-top: -85px;
+            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(32, 12, 60, 0.98) 0%, rgba(12, 4, 25, 0.98) 100%);
             border: 1px solid rgba(255, 255, 255, 0.16);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.75);
+            box-shadow: 0 20px 45px rgba(0,0,0,0.8);
             display: flex;
             align-items: center;
-            padding: 16px;
-            gap: 16px;
+            padding: 12px;
+            gap: 14px;
             cursor: pointer;
             will-change: transform, opacity;
-            transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.45s ease, box-shadow 0.3s ease;
-            transform-origin: center bottom;
-            overflow: hidden;
-        }
-        /* 3D Stacked Deck Positions */
-        .deck-card-0 {
-            transform: translate3d(0, 0, 0) rotateX(0deg) scale(1);
-            z-index: 10;
-            opacity: 1;
-            border-color: rgba(var(--accent-rgb), 0.45);
-            background: linear-gradient(135deg, rgba(46, 18, 82, 0.98) 0%, rgba(18, 6, 35, 0.98) 100%);
-            box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 0 35px rgba(var(--accent-rgb), 0.25);
-        }
-        .deck-card-0:hover {
-            transform: translate3d(0, -8px, 20px) scale(1.02);
-            box-shadow: 0 30px 70px rgba(0,0,0,0.95), 0 0 50px rgba(var(--accent-rgb), 0.35);
-        }
-        .deck-card-1 {
-            transform: translate3d(0, -22px, -50px) scale(0.92);
-            z-index: 9;
-            opacity: 0.85;
-        }
-        .deck-card-2 {
-            transform: translate3d(0, -40px, -100px) scale(0.84);
-            z-index: 8;
-            opacity: 0.65;
-        }
-        .deck-card-3 {
-            transform: translate3d(0, -56px, -150px) scale(0.76);
-            z-index: 7;
-            opacity: 0.45;
-        }
-
-        .deck-card-art-wrap {
-            position: relative;
-            width: 125px;
-            height: 125px;
-            flex-shrink: 0;
-            border-radius: 16px;
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.3s ease;
+            transform-origin: center center;
             overflow: visible;
         }
-        .deck-card-art {
+
+        /* 3D CoverFlow Shelf Positions */
+        .cf-pos-prev {
+            transform: translate3d(-140px, 0, -80px) rotateY(25deg) scale(0.82);
+            opacity: 0.55;
+            z-index: 5;
+            filter: brightness(0.7);
+        }
+        .cf-pos-active {
+            transform: translate3d(0, 0, 30px) rotateY(0deg) scale(1.06);
+            opacity: 1;
+            z-index: 10;
+            border-color: rgba(var(--accent-rgb), 0.55);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.9), 0 0 40px rgba(var(--accent-rgb), 0.3);
+            filter: brightness(1);
+        }
+        .cf-pos-active:hover {
+            transform: translate3d(0, -6px, 45px) scale(1.09);
+        }
+        .cf-pos-next1 {
+            transform: translate3d(140px, 0, -80px) rotateY(-25deg) scale(0.82);
+            opacity: 0.7;
+            z-index: 5;
+            filter: brightness(0.8);
+        }
+        .cf-pos-next2 {
+            transform: translate3d(230px, 0, -140px) rotateY(-35deg) scale(0.7);
+            opacity: 0.45;
+            z-index: 4;
+            filter: brightness(0.6);
+        }
+        .cf-pos-next3 {
+            transform: translate3d(300px, 0, -180px) rotateY(-40deg) scale(0.6);
+            opacity: 0.25;
+            z-index: 3;
+            filter: brightness(0.4);
+        }
+
+        .cf-art-box {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            flex-shrink: 0;
+        }
+        .cf-art-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 16px;
-            box-shadow: 0 10px 26px rgba(0,0,0,0.6);
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
             position: relative;
             z-index: 2;
         }
-        .deck-card-vinyl-disk {
+        .cf-vinyl-disc {
             position: absolute;
-            right: -28px;
+            right: -24px;
             top: 50%;
             transform: translateY(-50%);
-            width: 115px;
-            height: 115px;
+            width: 105px;
+            height: 105px;
             border-radius: 50%;
             background: radial-gradient(circle, #111 18%, #222 32%, #050505 55%, #1a1a1a 75%, #000 100%);
             border: 2px solid rgba(255,255,255,0.12);
-            box-shadow: inset 0 0 12px rgba(255,255,255,0.2), 0 8px 22px rgba(0,0,0,0.7);
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.2), 0 6px 18px rgba(0,0,0,0.7);
             z-index: 1;
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .deck-card-0:hover .deck-card-vinyl-disk {
-            transform: translateY(-50%) translateX(32px) rotate(60deg);
+        .cf-pos-active:hover .cf-vinyl-disc {
+            transform: translateY(-50%) translateX(28px) rotate(45deg);
         }
-        .deck-card-body {
+
+        .cf-body {
             flex: 1;
             min-width: 0;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
-        .deck-card-tag {
-            font-size: 0.65rem;
+        .cf-tag {
+            font-size: 0.62rem;
             font-weight: 800;
             letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--accent);
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            margin-bottom: 3px;
         }
-        .deck-card-title {
+        .cf-title {
             font-family: var(--font-display);
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: #fff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .deck-card-artist {
-            font-size: 0.85rem;
+        .cf-artist {
+            font-size: 0.8rem;
             color: rgba(255,255,255,0.6);
-            margin-top: 3px;
+            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* ── 2-COLUMN GLASS MATRIX GRID FOR UPCOMING TRACKS ── */
+        .q-matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+            padding: 8px 16px 30px;
+            overflow-y: auto;
+            width: 100%;
+        }
+        .q-matrix-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer;
+            transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+        }
+        .q-matrix-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.12);
+            transform: scale(1.02);
+        }
+        .q-matrix-card.q-next-matrix {
+            border-color: rgba(var(--accent-rgb), 0.35);
+            background: rgba(var(--accent-rgb), 0.08);
+        }
+        .q-matrix-num {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--accent);
+            opacity: 0.7;
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .q-matrix-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+        .q-matrix-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .q-matrix-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .q-matrix-artist {
+            font-size: 0.73rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .q-matrix-remove {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.3);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.15s, color 0.15s;
+            flex-shrink: 0;
+        }
+        .q-matrix-card:hover .q-matrix-remove { opacity: 1; }
+        .q-matrix-remove:hover { color: #ff375f; }
 
         #queue-panel .section-title { font-size: 1.2rem; margin-bottom: 16px; }
         .queue-now-playing-label {

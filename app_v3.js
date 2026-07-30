@@ -4333,8 +4333,6 @@ function onPlayerStateChange(event) {
             showScreen('playlist-full-screen');
         }
 
-        // renderPlaylists is defined at line 485 — no duplicate needed here
-
         // ── PREMIUM QUEUE RENDERER ──
         function renderQueue() {
             if (typeof updateCinematicCards === 'function') updateCinematicCards();
@@ -4353,275 +4351,107 @@ function onPlayerStateChange(event) {
                 return;
             }
 
-            const nowPlayingSong = queueList[currentQueueIndex];
+            // ── 3D COVERFLOW SHELF (PREV, ACTIVE, NEXT 1, NEXT 2, NEXT 3) ──
+            const stage = document.createElement('div');
+            stage.className = 'queue-cf-stage';
+            const shelf = document.createElement('div');
+            shelf.className = 'queue-cf-shelf';
 
-            // ── 3D VINYL STACK DECK (NOW PLAYING + UPCOMING TOP 3) ──
-            const stackWrapper = document.createElement('div');
-            stackWrapper.className = 'queue-3d-wrapper';
-            const deck = document.createElement('div');
-            deck.className = 'queue-3d-deck';
+            const cfPositions = [
+                { posClass: 'cf-pos-prev', offset: -1 },
+                { posClass: 'cf-pos-active', offset: 0 },
+                { posClass: 'cf-pos-next1', offset: 1 },
+                { posClass: 'cf-pos-next2', offset: 2 },
+                { posClass: 'cf-pos-next3', offset: 3 }
+            ];
 
-            const deckSongs = [];
-            for (let i = 0; i < 4; i++) {
-                const songIdx = currentQueueIndex + i;
-                if (songIdx < queueList.length) {
-                    deckSongs.push({ song: queueList[songIdx], queueIdx: songIdx, deckPos: i });
-                }
-            }
+            cfPositions.forEach(cfg => {
+                const targetIdx = currentQueueIndex + cfg.offset;
+                if (targetIdx >= 0 && targetIdx < queueList.length) {
+                    const song = queueList[targetIdx];
+                    const card = document.createElement('div');
+                    card.className = `cf-card ${cfg.posClass}`;
+                    const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
+                    const isNowPlaying = cfg.offset === 0;
+                    const tagText = isNowPlaying ? '♫ Now Playing' : (cfg.offset < 0 ? 'Previous' : `Up Next #${cfg.offset}`);
 
-            deckSongs.reverse().forEach(item => {
-                const s = item.song;
-                const card = document.createElement('div');
-                card.className = `deck-card deck-card-${item.deckPos}`;
-                const thumb = getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId);
-                const tagText = item.deckPos === 0 ? '♫ Now Playing' : (item.deckPos === 1 ? 'Next Up' : `Up Next #${item.deckPos + 1}`);
-
-                if (item.deckPos === 0) {
                     card.innerHTML = `
-                        <div class="deck-card-art-wrap">
-                            <img src="${thumb}" class="deck-card-art" onerror="this.src='default_cover.jpg'">
-                            <div class="deck-card-vinyl-disk"></div>
+                        <div class="cf-art-box">
+                            <img src="${thumb}" class="cf-art-img" onerror="this.src='default_cover.jpg'">
+                            ${isNowPlaying ? '<div class="cf-vinyl-disc"></div>' : ''}
                         </div>
-                        <div class="deck-card-body">
-                            <div class="deck-card-tag">♫ Now Playing</div>
-                            <div class="deck-card-title">${s.title}</div>
-                            <div class="deck-card-artist">${s.artist}</div>
+                        <div class="cf-body">
+                            <div class="cf-tag">${tagText}</div>
+                            <div class="cf-title">${song.title}</div>
+                            <div class="cf-artist">${song.artist}</div>
                         </div>
                     `;
-                } else {
-                    card.innerHTML = `
-                        <div class="deck-card-art-wrap" style="width:100%;height:100%;display:flex;align-items:center;gap:16px;">
-                            <img src="${thumb}" class="deck-card-art" onerror="this.src='default_cover.jpg'" style="width:125px;height:125px;border-radius:16px;">
-                            <div style="opacity:0.4;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:white;">Up Next #${item.deckPos}</div>
-                        </div>
-                    `;
+                    card.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (isNowPlaying) {
+                            playPauseBtn.click();
+                        } else {
+                            playQueueIndex(targetIdx);
+                        }
+                    });
+                    shelf.appendChild(card);
                 }
-                card.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (item.deckPos === 0) {
-                        playPauseBtn.click();
-                    } else {
-                        playQueueIndex(item.queueIdx);
-                    }
-                });
-                deck.appendChild(card);
             });
 
-            stackWrapper.appendChild(deck);
-            qList.appendChild(stackWrapper);
+            stage.appendChild(shelf);
+            qList.appendChild(stage);
 
-            // Inject styles once
-            if (!document.getElementById('qEq-style')) {
-                const s = document.createElement('style');
-                s.id = 'qEq-style';
-                s.textContent = `
-                    .q-row {
-                        display: flex; align-items: center; gap: 13px;
-                        padding: 9px 12px;
-                        border-radius: 16px;
-                        background: rgba(255,255,255,0.03);
-                        border: 1px solid rgba(255,255,255,0.05);
-                        margin-bottom: 6px; cursor: grab;
-                        transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-                        will-change: transform;
-                    }
-                    .q-row:hover {
-                        background: rgba(255,255,255,0.075);
-                        border-color: rgba(255,255,255,0.11);
-                        transform: translateX(-2px);
-                    }
-                    .q-row:active { cursor: grabbing; }
-                    .q-row.q-next {
-                        border-color: rgba(255,71,109,0.22);
-                        background: rgba(255,71,109,0.05);
-                    }
-                    .q-row.q-next:hover {
-                        border-color: rgba(255,71,109,0.38);
-                        background: rgba(255,71,109,0.1);
-                    }
-                    .q-row.dragging { opacity: 0.35 !important; transform: scale(0.97) !important; border-style: dashed; }
-                    .q-row.drag-over { border-top: 2px solid var(--accent, #ff476d) !important; margin-top: 10px; }
-
-                    /* Cover art */
-                    .q-cover {
-                        width: 44px; height: 44px; border-radius: 10px;
-                        object-fit: cover; flex-shrink: 0;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-                    }
-
-                    /* Index number circle */
-                    .q-index {
-                        width: 22px; flex-shrink: 0;
-                        font-size: 0.72rem; font-weight: 600;
-                        color: rgba(255,255,255,0.28);
-                        text-align: center;
-                        letter-spacing: 0;
-                        font-variant-numeric: tabular-nums;
-                    }
-
-                    /* Song info */
-                    .q-info { flex: 1; min-width: 0; }
-                    .q-title {
-                        font-size: 0.9rem; font-weight: 600;
-                        color: white; white-space: nowrap;
-                        overflow: hidden; text-overflow: ellipsis;
-                    }
-                    .q-artist {
-                        font-size: 0.73rem; color: rgba(255,255,255,0.42);
-                        margin-top: 2px; white-space: nowrap;
-                        overflow: hidden; text-overflow: ellipsis;
-                    }
-
-                    /* Next / index badge */
-                    .q-badge {
-                        font-size: 0.62rem; font-weight: 700;
-                        letter-spacing: 0.09em; text-transform: uppercase;
-                        padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
-                    }
-                    .q-badge-next {
-                        background: rgba(255,71,109,0.15);
-                        color: var(--accent, #ff476d);
-                        border: 1px solid rgba(255,71,109,0.3);
-                        box-shadow: 0 0 10px rgba(255,71,109,0.15);
-                    }
-
-                    /* Remove button */
-                    .q-remove-btn {
-                        opacity: 0; background: transparent; border: none;
-                        color: rgba(255,255,255,0.35); cursor: pointer;
-                        padding: 6px; border-radius: 8px;
-                        transition: opacity 0.18s, color 0.18s, background 0.18s;
-                        flex-shrink: 0;
-                    }
-                    .q-row:hover .q-remove-btn { opacity: 1; }
-                    .q-remove-btn:hover {
-                        color: white;
-                        background: rgba(255, 60, 80, 0.5);
-                    }
-                `;
-                document.head.appendChild(s);
-            }
-
-            // ── UP NEXT LABEL ──
+            // ── 2-COLUMN GLASS MATRIX GRID FOR UPCOMING TRACKS ──
             const upNextSongs = queueList.filter((_, i) => i > currentQueueIndex);
             if (upNextSongs.length > 0) {
                 const label = document.createElement('div');
-                label.style.cssText = 'font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:14px 4px 10px;';
+                label.style.cssText = 'font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:14px 16px 8px;';
                 label.textContent = `Up Next · ${upNextSongs.length} song${upNextSongs.length !== 1 ? 's' : ''}`;
                 qList.appendChild(label);
-            }
 
-            // ── SONG ROWS (skip now-playing) ──
-            let upNextCount = 0;
-            const listFrag = document.createDocumentFragment();
-            for (let idx = 0; idx < queueList.length; idx++) {
-                if (idx === currentQueueIndex) continue; // hero card handles this
-                
-                // PERFORMANCE FIX: Only render 5 previous songs and queueRenderLimit upcoming songs
-                if (idx < currentQueueIndex - 5 || idx > currentQueueIndex + queueRenderLimit) continue;
+                const matrixGrid = document.createElement('div');
+                matrixGrid.className = 'q-matrix-grid';
 
-                const song = queueList[idx];
-                upNextCount++;
-                const isNext = idx === currentQueueIndex + 1;
-                const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
+                let count = 0;
+                for (let idx = currentQueueIndex + 1; idx < Math.min(queueList.length, currentQueueIndex + 1 + queueRenderLimit); idx++) {
+                    count++;
+                    const song = queueList[idx];
+                    const isNext = idx === currentQueueIndex + 1;
+                    const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
 
-                const row = document.createElement('div');
-                row.className = `q-row${isNext ? ' q-next' : ''}`;
-                row.draggable = true;
-                row.style.animationDelay = `${20 + upNextCount * 40}ms`;
+                    const card = document.createElement('div');
+                    card.className = `q-matrix-card${isNext ? ' q-next-matrix' : ''}`;
+                    card.innerHTML = `
+                        <span class="q-matrix-num">${count < 10 ? '0' + count : count}</span>
+                        <img src="${thumbUrl}" class="q-matrix-thumb" onerror="this.src='default_cover.jpg'">
+                        <div class="q-matrix-info">
+                            <div class="q-matrix-title">${song.title}</div>
+                            <div class="q-matrix-artist">${song.artist}</div>
+                        </div>
+                        <button class="q-matrix-remove" data-idx="${idx}" title="Remove">✕</button>
+                    `;
 
-                row.innerHTML = `
-                    <img src="${thumbUrl}" class="q-cover" onerror="this.style.background='rgba(255,255,255,0.08)'">
-                    <div class="q-info">
-                        <div class="q-title">${song.title}</div>
-                        <div class="q-artist">${song.artist}</div>
-                    </div>
-                    ${isNext ? '<span class="q-badge q-badge-next">Next</span>' : ''}
-                    <button class="q-remove-btn remove-queue-btn" data-idx="${idx}" title="Remove">
-                        <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                    </button>
-                `;
-
-                // Drag and Drop Events
-                row.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', idx);
-                    setTimeout(() => row.classList.add('dragging'), 0);
-                });
-                row.addEventListener('dragend', () => {
-                    row.classList.remove('dragging');
-                    document.querySelectorAll('.q-row').forEach(r => r.classList.remove('drag-over'));
-                });
-                row.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    const rect = row.getBoundingClientRect();
-                    const midY = rect.top + rect.height / 2;
-                    if (e.clientY < midY) {
-                        row.classList.add('drag-over');
-                    } else {
-                        row.classList.remove('drag-over');
-                        if (row.nextElementSibling && row.nextElementSibling.classList.contains('q-row')) {
-                            row.nextElementSibling.classList.add('drag-over');
+                    card.addEventListener('click', (e) => {
+                        if (e.target.closest('.q-matrix-remove')) {
+                            e.stopPropagation();
+                            queueList.splice(idx, 1);
+                            renderQueue();
+                            return;
                         }
-                    }
-                });
-                row.addEventListener('dragleave', () => {
-                    row.classList.remove('drag-over');
-                });
-                row.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    row.classList.remove('drag-over');
-                    const draggedIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                    if (isNaN(draggedIdx) || draggedIdx === idx) return;
+                        playQueueIndex(idx);
+                    });
 
-                    const rect = row.getBoundingClientRect();
-                    const midY = rect.top + rect.height / 2;
-                    let targetIdx = idx;
-                    if (e.clientY > midY) targetIdx += 1;
-
-                    const item = queueList.splice(draggedIdx, 1)[0];
-                    if (targetIdx > draggedIdx) targetIdx--; 
-                    queueList.splice(targetIdx, 0, item);
-
-                    if (currentQueueIndex === draggedIdx) {
-                        currentQueueIndex = targetIdx;
-                    } else if (currentQueueIndex > draggedIdx && currentQueueIndex <= targetIdx) {
-                        currentQueueIndex--;
-                    } else if (currentQueueIndex < draggedIdx && currentQueueIndex >= targetIdx) {
-                        currentQueueIndex++;
-                    }
-                    
-                    renderQueue();
-                });
-
-                row.addEventListener('click', (e) => {
-                    if (e.target.closest('.remove-queue-btn')) {
-                        e.stopPropagation();
-                        queueList.splice(idx, 1);
-                        if (currentQueueIndex >= idx && currentQueueIndex > 0) currentQueueIndex--;
-                        renderQueue();
-                        return;
-                    }
-                    if (idx === currentQueueIndex) {
-                        playPauseBtn.click();
-                        return;
-                    }
-                    playQueueIndex(idx);
-                });
-
-                listFrag.appendChild(row);
+                    matrixGrid.appendChild(card);
+                }
+                qList.appendChild(matrixGrid);
             }
-            qList.appendChild(listFrag);
 
             if (currentQueueIndex + queueRenderLimit < queueList.length - 1) {
                 const btnRow = document.createElement('div');
-                btnRow.style.cssText = 'display:flex; justify-content:center; padding: 20px 0; margin-bottom: 20px;';
+                btnRow.style.cssText = 'display:flex; justify-content:center; padding: 15px 0 25px;';
                 const loadBtn = document.createElement('button');
                 loadBtn.textContent = '➕ Add 10 More';
                 loadBtn.style.cssText = 'background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.12); padding: 10px 24px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); font-weight: 600; font-size: 0.9rem; transition: all 0.2s;';
-                loadBtn.onmouseover = () => { loadBtn.style.background = 'rgba(255,255,255,0.12)'; loadBtn.style.transform = 'scale(1.03)'; };
-                loadBtn.onmouseleave = () => { loadBtn.style.background = 'rgba(255,255,255,0.06)'; loadBtn.style.transform = 'scale(1)'; };
                 loadBtn.onclick = () => {
                     queueRenderLimit += 10;
                     renderQueue();
