@@ -5282,7 +5282,110 @@ document.addEventListener('click', () => {
 
 
 
+// --- LYRICS ANIMATION STYLE SETTINGS CONTROLLER ---
+const defaultLyricsSettings = {
+    lineBounce: true,
+    bounceAmplitude: 100,
+    glowIntensity: 100,
+    fillSmoothness: 8
+};
+
+function getLyricsSettings() {
+    try {
+        const saved = localStorage.getItem('axiotune_lyrics_settings');
+        return saved ? { ...defaultLyricsSettings, ...JSON.parse(saved) } : defaultLyricsSettings;
+    } catch(e) {
+        return defaultLyricsSettings;
+    }
+}
+
+function saveLyricsSettings(settings) {
+    try {
+        localStorage.setItem('axiotune_lyrics_settings', JSON.stringify(settings));
+    } catch(e) {}
+}
+
+function applyLyricsAnimationSettings(settings) {
+    const s = settings || getLyricsSettings();
+    const root = document.documentElement;
+
+    // Line Bounce
+    const bounceAmp = s.lineBounce ? s.bounceAmplitude : 0;
+    const bounceScale = (1 + (0.06 * (bounceAmp / 100))).toFixed(3);
+    root.style.setProperty('--lrc-bounce-scale', bounceScale);
+
+    // Glow Intensity
+    const glowPct = s.glowIntensity / 100;
+    const glowRadius = `${Math.round(12 * glowPct)}px`;
+    const glowOpacity = (0.85 * glowPct).toFixed(2);
+    root.style.setProperty('--lrc-glow-radius', glowRadius);
+    root.style.setProperty('--lrc-glow-opacity', glowOpacity);
+
+    // Fill Smoothness
+    root.style.setProperty('--lrc-fill-smoothness', `${s.fillSmoothness}px`);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    const lyricsSet = getLyricsSettings();
+    applyLyricsAnimationSettings(lyricsSet);
+
+    const toggle = document.getElementById('lrc-bounce-toggle');
+    const ampSlider = document.getElementById('lrc-bounce-amp');
+    const ampVal = document.getElementById('lrc-bounce-amp-val');
+    const glowSlider = document.getElementById('lrc-glow-intensity');
+    const glowVal = document.getElementById('lrc-glow-intensity-val');
+    const fillSlider = document.getElementById('lrc-fill-smoothness');
+    const fillVal = document.getElementById('lrc-fill-smoothness-val');
+
+    if (toggle) {
+        toggle.checked = lyricsSet.lineBounce;
+        toggle.addEventListener('change', (e) => {
+            const current = getLyricsSettings();
+            current.lineBounce = e.target.checked;
+            saveLyricsSettings(current);
+            applyLyricsAnimationSettings(current);
+        });
+    }
+
+    if (ampSlider && ampVal) {
+        ampSlider.value = lyricsSet.bounceAmplitude;
+        ampVal.textContent = `${lyricsSet.bounceAmplitude}%`;
+        ampSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value, 10);
+            ampVal.textContent = `${val}%`;
+            const current = getLyricsSettings();
+            current.bounceAmplitude = val;
+            saveLyricsSettings(current);
+            applyLyricsAnimationSettings(current);
+        });
+    }
+
+    if (glowSlider && glowVal) {
+        glowSlider.value = lyricsSet.glowIntensity;
+        glowVal.textContent = `${lyricsSet.glowIntensity}%`;
+        glowSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value, 10);
+            glowVal.textContent = `${val}%`;
+            const current = getLyricsSettings();
+            current.glowIntensity = val;
+            saveLyricsSettings(current);
+            applyLyricsAnimationSettings(current);
+        });
+    }
+
+    if (fillSlider && fillVal) {
+        fillSlider.value = lyricsSet.fillSmoothness;
+        fillVal.textContent = `${lyricsSet.fillSmoothness} dp`;
+        fillSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value, 10);
+            fillVal.textContent = `${val} dp`;
+            const current = getLyricsSettings();
+            current.fillSmoothness = val;
+            saveLyricsSettings(current);
+            applyLyricsAnimationSettings(current);
+        });
+    }
+
     // Performance Mode
     const perfToggle = document.getElementById('performance-mode-toggle');
     if (perfToggle) {

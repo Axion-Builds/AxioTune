@@ -34,7 +34,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=105">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=106">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -805,20 +805,46 @@
         <div id="settings-screen" class="screen-view hidden-screen">
             <h1>⚙️ Settings</h1>
 
-            <!-- LYRICS SETTINGS -->
+            <!-- LYRICS ANIMATION STYLE -->
             <div class="settings-section">
-                <div class="settings-section-title">✨ Lyrics Appearance</div>
+                <div class="settings-section-title">🎤 Lyrics Animation Style</div>
                 <div class="settings-card" style="padding: 20px;">
-                    <div style="font-size:0.95rem; font-weight:500; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
-                        <span>Glow Intensity</span>
-                        <span id="glow-intensity-val" style="color:var(--accent); font-weight:700;">Medium</span>
+                    <div class="settings-row" style="margin-bottom: 20px;">
+                        <div class="settings-row-left">
+                            <div class="settings-row-label" style="font-size:1.05rem; font-weight:700;">Line Bounce Effect</div>
+                            <div class="settings-row-desc" style="color:rgba(255,255,255,0.5); font-size:0.85rem; margin-top:2px;">Enable bounce animation for line-synced (LRC) lyrics</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="lrc-bounce-toggle" checked>
+                            <span class="toggle-track"></span>
+                        </label>
                     </div>
-                    <div class="am-volume-slider-wrapper" style="width: 100%; margin-bottom: 5px;">
-                        <input type="range" id="lyrics-glow-slider" min="0" max="8" step="1" value="2" style="width: 100%;">
+
+                    <div class="settings-row-slider-group" style="margin-bottom: 22px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                            <div class="settings-row-label" style="font-size:1rem; font-weight:700;">Bounce Amplitude</div>
+                            <span id="lrc-bounce-amp-val" style="color:var(--accent); font-weight:700; font-size:0.9rem;">100%</span>
+                        </div>
+                        <div style="color:rgba(255,255,255,0.5); font-size:0.82rem; margin-bottom: 8px;">Adjust the bounce effect when a word is sung</div>
+                        <input type="range" id="lrc-bounce-amp" min="0" max="200" value="100" class="am-setting-range-slider" style="width:100%;">
                     </div>
-                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:rgba(255,255,255,0.4); margin-top: 8px;">
-                        <span>None</span>
-                        <span>Max</span>
+
+                    <div class="settings-row-slider-group" style="margin-bottom: 22px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                            <div class="settings-row-label" style="font-size:1rem; font-weight:700;">Glow Intensity</div>
+                            <span id="lrc-glow-intensity-val" style="color:var(--accent); font-weight:700; font-size:0.9rem;">100%</span>
+                        </div>
+                        <div style="color:rgba(255,255,255,0.5); font-size:0.82rem; margin-bottom: 8px;">Adjust the glow brightness of the sung word</div>
+                        <input type="range" id="lrc-glow-intensity" min="0" max="200" value="100" class="am-setting-range-slider" style="width:100%;">
+                    </div>
+
+                    <div class="settings-row-slider-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                            <div class="settings-row-label" style="font-size:1rem; font-weight:700;">Fill Transition Smoothness</div>
+                            <span id="lrc-fill-smoothness-val" style="color:var(--accent); font-weight:700; font-size:0.9rem;">8 dp</span>
+                        </div>
+                        <div style="color:rgba(255,255,255,0.5); font-size:0.82rem; margin-bottom: 8px;">Adjust the gradient edge width of the liquid fill effect</div>
+                        <input type="range" id="lrc-fill-smoothness" min="0" max="20" value="8" class="am-setting-range-slider" style="width:100%;">
                     </div>
                 </div>
             </div>
@@ -1390,7 +1416,7 @@
     </div>
     <div id="queue-backdrop"></div>
 
-    <script src="app_v3.js?v=105"></script>
+    <script src="app_v3.js?v=106"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

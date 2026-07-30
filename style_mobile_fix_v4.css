@@ -1042,20 +1042,48 @@
             background: linear-gradient(
                 to right,
                 rgba(255, 255, 255, 1) 0%,
-                rgba(255, 255, 255, 0.35) var(--progress, 0%),
+                rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 8px)),
+                rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 8px)),
                 rgba(255, 255, 255, 0.35) 100%
             );
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-            transition: --progress 0.15s ease-out, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: --progress 0.15s ease-out, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s ease;
             transform-origin: bottom center;
         }
 
         .lyric-word.active { 
-            transform: scale(1.04) translateY(-1px);
+            transform: scale(var(--lrc-bounce-scale, 1.05)) translateY(-1px);
+            filter: drop-shadow(0 0 var(--lrc-glow-radius, 10px) rgba(var(--accent-rgb), var(--lrc-glow-opacity, 0.8)));
         }
 
         .lyric-word.passed {
-            transform: scale(1.04) translateY(-1px);
+            transform: scale(1);
+        }
+
+        .am-setting-range-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            outline: none;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .am-setting-range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.6);
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .am-setting-range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
         }
 
         .instrumental-line {
