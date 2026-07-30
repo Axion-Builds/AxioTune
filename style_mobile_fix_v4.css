@@ -988,8 +988,8 @@
         }
 
         .lyric-line {
-            font-size: var(--lyrics-font-size); font-weight: 700; line-height: 1.35;
-            font-family: var(--lyrics-font-family);
+            font-size: var(--lyrics-font-size, 1.85rem); font-weight: 700; line-height: 1.35;
+            font-family: var(--lyrics-font-family, 'Inter', 'Outfit', sans-serif);
             letter-spacing: -0.02em; margin-bottom: 1.5rem; transform-origin: left center; position: relative;
             transition:
                 filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
