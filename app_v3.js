@@ -4311,7 +4311,31 @@ function onPlayerStateChange(event) {
                     `;
                     div.addEventListener('click', () => {
                         queueList = [...pl.songs];
-                        currentQueueIndex =            if (typeof updateCinematicCards === 'function') updateCinematicCards();
+                        currentQueueIndex = sIdx;
+                        window._preserveQueue = true;
+                        renderQueue();
+                        playQueueIndex(sIdx);
+                        setPlayPauseUI(true);
+                    });
+                    div.querySelector('.song-options-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const pls = getPlaylists();
+                        pls[plIdx].songs.splice(sIdx, 1);
+                        savePlaylists(pls);
+                        openPlaylistModal(plIdx); // re-render
+                        renderPlaylists();
+                        showToast('Song removed from playlist');
+                    });
+                    tracksEl.appendChild(div);
+                });
+            }
+
+            showScreen('playlist-full-screen');
+        }
+
+        // â”€â”€ PREMIUM QUEUE RENDERER â”€â”€
+        function renderQueue() {
+            if (typeof updateCinematicCards === 'function') updateCinematicCards();
             const qList = document.getElementById('queue-list');
             qList.innerHTML = '';
 
@@ -4328,17 +4352,15 @@ function onPlayerStateChange(event) {
             }
 
             const nowSong = queueList[currentQueueIndex];
-
-            // â”€â”€ HEADER ROW â”€â”€
             const totalUpNext = queueList.length - currentQueueIndex - 1;
+
+            // HEADER
             const headerRow = document.createElement('div');
-            headerRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 24px 10px;flex-shrink:0;position:relative;z-index:2;';
-            headerRow.innerHTML = `
-                <span style="font-size:0.68rem;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.45);">Up Next Â· ${totalUpNext} song${totalUpNext !== 1 ? 's' : ''}</span>
-            `;
+            headerRow.style.cssText = 'display:flex;align-items:center;padding:14px 24px 10px;flex-shrink:0;position:relative;z-index:2;';
+            headerRow.innerHTML = `<span style="font-size:0.68rem;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.45);">Up Next &middot; ${totalUpNext} song${totalUpNext !== 1 ? 's' : ''}</span>`;
             qList.appendChild(headerRow);
 
-            // â”€â”€ HORIZONTAL SCROLL ROW â”€â”€
+            // HORIZONTAL SCROLL ROW
             const hScroll = document.createElement('div');
             hScroll.className = 'q-horizontal-scroll';
 
@@ -4350,9 +4372,7 @@ function onPlayerStateChange(event) {
                 <div class="q-card-now-ring">
                     <img src="${nowThumb}" class="q-card-now-art" onerror="this.src='default_cover.jpg'">
                     <div class="q-card-now-badge">
-                        <div class="q-eq">
-                            <span></span><span></span><span></span><span></span>
-                        </div>
+                        <div class="q-eq"><span></span><span></span><span></span><span></span></div>
                         <span class="q-card-now-badge-text">Live</span>
                     </div>
                     <div class="q-card-shadow"></div>
@@ -4365,38 +4385,31 @@ function onPlayerStateChange(event) {
             nowCard.addEventListener('click', () => playPauseBtn.click());
             hScroll.appendChild(nowCard);
 
-            // Divider between Now Playing and Up Next
+            // DIVIDER
             if (totalUpNext > 0) {
                 const divider = document.createElement('div');
                 divider.className = 'q-section-divider';
-                divider.innerHTML = `
-                    <div class="q-section-divider-line"></div>
-                    <div class="q-section-divider-dot"></div>
-                    <div class="q-section-divider-line"></div>
-                `;
+                divider.innerHTML = `<div class="q-section-divider-line"></div><div class="q-section-divider-dot"></div><div class="q-section-divider-line"></div>`;
                 hScroll.appendChild(divider);
             }
 
-            // UPCOMING SONG CARDS (left to right)
+            // UPCOMING CARDS
             for (let idx = currentQueueIndex + 1; idx < Math.min(queueList.length, currentQueueIndex + 1 + queueRenderLimit); idx++) {
                 const song = queueList[idx];
-                const pos = idx - currentQueueIndex; // 1 = next, 2 = after next, etc.
+                const pos = idx - currentQueueIndex;
                 const isNext = pos === 1;
                 const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
                 const numLabel = pos < 10 ? '0' + pos : pos;
-
                 const card = document.createElement('div');
                 card.className = `q-card-up${isNext ? ' q-card-next' : ''}`;
                 card.innerHTML = `
                     <div class="q-card-art-wrap">
                         <img src="${thumb}" class="q-card-art" onerror="this.src='default_cover.jpg'">
                         <div class="q-card-play-overlay">
-                            <div class="q-card-play-icon">
-                                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            </div>
+                            <div class="q-card-play-icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
                         </div>
                         <span class="q-card-num">${numLabel}</span>
-                        <button class="q-card-remove" data-idx="${idx}" title="Remove">âœ•</button>
+                        <button class="q-card-remove" data-idx="${idx}" title="Remove">&#x2715;</button>
                     </div>
                     <div class="q-card-title">${song.title}</div>
                     <div class="q-card-artist">${song.artist}</div>
@@ -4413,26 +4426,18 @@ function onPlayerStateChange(event) {
                 hScroll.appendChild(card);
             }
 
-            // Load More card at end
+            // LOAD MORE
             if (currentQueueIndex + 1 + queueRenderLimit < queueList.length) {
                 const remaining = queueList.length - (currentQueueIndex + 1 + queueRenderLimit);
                 const more = document.createElement('div');
                 more.className = 'q-card-more';
-                more.innerHTML = `
-                    <div class="q-card-more-circle">+${remaining > 99 ? '99' : remaining}</div>
-                    <span class="q-card-more-label">Load More</span>
-                `;
-                more.addEventListener('click', () => {
-                    queueRenderLimit += 12;
-                    renderQueue();
-                });
+                more.innerHTML = `<div class="q-card-more-circle">+${remaining > 99 ? '99' : remaining}</div><span class="q-card-more-label">Load More</span>`;
+                more.addEventListener('click', () => { queueRenderLimit += 12; renderQueue(); });
                 hScroll.appendChild(more);
             }
 
             qList.appendChild(hScroll);
         }
-
-        
 
         
         // Clear Queue Header Button
