@@ -4376,17 +4376,26 @@ function onPlayerStateChange(event) {
                 const thumb = getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId);
                 const tagText = item.deckPos === 0 ? '♫ Now Playing' : (item.deckPos === 1 ? 'Next Up' : `Up Next #${item.deckPos + 1}`);
 
-                card.innerHTML = `
-                    <div class="deck-card-art-wrap">
-                        <img src="${thumb}" class="deck-card-art" onerror="this.src='default_cover.jpg'">
-                        ${item.deckPos === 0 ? '<div class="deck-card-vinyl-disk"></div>' : ''}
-                    </div>
-                    <div class="deck-card-body">
-                        <div class="deck-card-tag">${tagText}</div>
-                        <div class="deck-card-title">${s.title}</div>
-                        <div class="deck-card-artist">${s.artist}</div>
-                    </div>
-                `;
+                if (item.deckPos === 0) {
+                    card.innerHTML = `
+                        <div class="deck-card-art-wrap">
+                            <img src="${thumb}" class="deck-card-art" onerror="this.src='default_cover.jpg'">
+                            <div class="deck-card-vinyl-disk"></div>
+                        </div>
+                        <div class="deck-card-body">
+                            <div class="deck-card-tag">♫ Now Playing</div>
+                            <div class="deck-card-title">${s.title}</div>
+                            <div class="deck-card-artist">${s.artist}</div>
+                        </div>
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <div class="deck-card-art-wrap" style="width:100%;height:100%;display:flex;align-items:center;gap:16px;">
+                            <img src="${thumb}" class="deck-card-art" onerror="this.src='default_cover.jpg'" style="width:125px;height:125px;border-radius:16px;">
+                            <div style="opacity:0.4;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:white;">Up Next #${item.deckPos}</div>
+                        </div>
+                    `;
+                }
                 card.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (item.deckPos === 0) {
