@@ -2676,78 +2676,125 @@ body.offline-mode .offline-hide {
         .plt-remove:hover { color: #ff375f; }
         .plt-remove svg { width: 16px; height: 16px; fill: currentColor; display: block; }
 
-        /* ── APPLE MUSIC DESKTOP FLOATING RIGHT SIDEBAR ── */
-        @media (min-width: 769px) {
-            #queue-panel {
-                position: fixed !important;
-                top: 85px !important;
-                bottom: 24px !important;
-                right: 24px !important;
-                left: auto !important;
-                width: 440px !important;
-                max-width: 440px !important;
-                height: calc(100vh - 110px) !important;
-                min-height: 0 !important;
-                max-height: none !important;
-                margin: 0 !important;
-                border-radius: 28px !important;
-                border: 1px solid rgba(255, 255, 255, 0.15) !important;
-                box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-                transform: translateX(115%) !important;
-                transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.45s ease !important;
-            }
-            #queue-panel.open {
-                transform: translateX(0) !important;
-                box-shadow: -20px 20px 80px rgba(0, 0, 0, 0.85), 0 0 45px rgba(var(--accent-rgb), 0.2) !important;
-            }
+        /* ── BOTTOM SHEET QUEUE — ALL SCREENS ── */
+        #queue-panel {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 62vh !important;
+            min-height: 0 !important;
+            max-height: 80vh !important;
+            margin: 0 !important;
+            border-radius: 28px 28px 0 0 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-bottom: none !important;
+            background: rgba(10, 4, 22, 0.97) !important;
+            backdrop-filter: blur(30px) !important;
+            -webkit-backdrop-filter: blur(30px) !important;
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.7) !important;
+            transform: translateY(105%) !important;
+            transition: transform 0.42s cubic-bezier(0.25, 0.9, 0.3, 1) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            z-index: 1200 !important;
+        }
+        #queue-panel.open {
+            transform: translateY(0) !important;
         }
 
-        /* ── SUPER LIGHTWEIGHT 60 FPS QUEUE UI ── */
-        .q-now-card {
+        /* Drag Handle */
+        .q-drag-handle {
+            width: 40px;
+            height: 5px;
+            border-radius: 99px;
+            background: rgba(255,255,255,0.2);
+            margin: 12px auto 8px;
+            flex-shrink: 0;
+            cursor: grab;
+        }
+
+        /* Queue header row */
+        .q-header {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15) 0%, rgba(20, 10, 35, 0.4) 100%);
-            border: 1px solid rgba(var(--accent-rgb), 0.3);
-            margin: 12px 16px;
-            cursor: pointer;
-            transition: background 0.18s ease;
-        }
-        .q-now-card:hover {
-            background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25) 0%, rgba(20, 10, 35, 0.6) 100%);
-        }
-        .q-now-thumb {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
-            object-fit: cover;
+            justify-content: space-between;
+            padding: 4px 20px 12px;
             flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
-        .q-now-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .q-now-tag {
-            font-size: 0.65rem;
+        .q-header-title {
+            font-size: 0.72rem;
             font-weight: 800;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+        }
+        .q-header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* ── BENTO GRID (Now Playing + Next 2) ── */
+        .q-bento {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 8px;
+            padding: 0 16px;
+            height: 190px;
+            flex-shrink: 0;
+        }
+        .q-bento-now {
+            grid-column: 1;
+            grid-row: 1 / 3;
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            background: #0d0520;
+        }
+        .q-bento-now-art {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            opacity: 0.75;
+            transition: opacity 0.2s ease;
+        }
+        .q-bento-now:hover .q-bento-now-art { opacity: 0.9; }
+        .q-bento-now-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(160deg, transparent 30%, rgba(5, 0, 15, 0.92) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 12px 13px;
+        }
+        .q-bento-now-tag {
+            font-size: 0.58rem;
+            font-weight: 800;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
             color: var(--accent);
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
-        .q-now-title {
-            font-size: 1rem;
+        .q-bento-now-title {
+            font-size: 0.95rem;
             font-weight: 700;
             color: #fff;
-            white-space: nowrap;
+            line-height: 1.2;
             overflow: hidden;
-            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
-        .q-now-artist {
-            font-size: 0.8rem;
+        .q-bento-now-artist {
+            font-size: 0.72rem;
             color: rgba(255,255,255,0.6);
             margin-top: 2px;
             white-space: nowrap;
@@ -2755,69 +2802,181 @@ body.offline-mode .offline-hide {
             text-overflow: ellipsis;
         }
 
-        .q-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 9px 16px;
-            background: transparent;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+        /* Small bento tiles for next songs */
+        .q-bento-tile {
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
             cursor: pointer;
-            transition: background 0.15s ease;
+            background: #0d0520;
         }
-        .q-row:hover {
-            background: rgba(255,255,255,0.06);
+        .q-bento-tile-art {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            opacity: 0.6;
+            transition: opacity 0.2s ease;
         }
-        .q-row.q-next {
-            background: rgba(var(--accent-rgb), 0.05);
+        .q-bento-tile:hover .q-bento-tile-art { opacity: 0.85; }
+        .q-bento-tile-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(160deg, transparent 20%, rgba(5, 0, 15, 0.9) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 8px 10px;
         }
-        .q-num {
-            width: 22px;
+        .q-bento-tile-num {
+            font-size: 0.55rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .q-bento-tile-title {
             font-size: 0.78rem;
             font-weight: 700;
-            color: rgba(255,255,255,0.4);
-            text-align: center;
-            flex-shrink: 0;
-        }
-        .q-thumb {
-            width: 42px;
-            height: 42px;
-            border-radius: 8px;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-        .q-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .q-title {
-            font-size: 0.92rem;
-            font-weight: 600;
             color: #fff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .q-artist {
-            font-size: 0.78rem;
+        .q-bento-tile-artist {
+            font-size: 0.65rem;
             color: rgba(255,255,255,0.5);
-            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .q-remove-btn {
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,0.3);
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 50%;
-            transition: color 0.15s;
+
+        /* ── HORIZONTAL SCROLL STRIP ── */
+        .q-strip-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            padding: 14px 18px 8px;
             flex-shrink: 0;
         }
-        .q-row:hover .q-remove-btn {
-            color: #ff375f;
+        .q-strip-scroll {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            padding: 0 16px 20px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex-shrink: 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .q-strip-scroll::-webkit-scrollbar { display: none; }
+        .q-strip-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            width: 68px;
+            transition: transform 0.18s ease;
+        }
+        .q-strip-card:hover { transform: translateY(-3px); }
+        .q-strip-art-wrap {
+            position: relative;
+            width: 68px;
+            height: 68px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .q-strip-art {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 12px;
+        }
+        .q-strip-num {
+            position: absolute;
+            top: 4px;
+            left: 5px;
+            font-size: 0.6rem;
+            font-weight: 900;
+            color: rgba(255,255,255,0.7);
+            background: rgba(0,0,0,0.5);
+            border-radius: 5px;
+            padding: 1px 4px;
+            line-height: 1.4;
+        }
+        .q-strip-remove {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 18px;
+            height: 18px;
+            background: rgba(0,0,0,0.6);
+            border: none;
+            border-radius: 50%;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.65rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .q-strip-card:hover .q-strip-remove { opacity: 1; }
+        .q-strip-remove:hover { color: #ff375f; }
+        .q-strip-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.75);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        .q-strip-card.q-strip-next .q-strip-art-wrap {
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        /* Load more button */
+        .q-load-more {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+            width: 68px;
+        }
+        .q-load-more-icon {
+            width: 68px;
+            height: 68px;
+            border-radius: 12px;
+            border: 1px dashed rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.4);
+            transition: border-color 0.18s, color 0.18s;
+        }
+        .q-load-more:hover .q-load-more-icon {
+            border-color: rgba(255,255,255,0.45);
+            color: rgba(255,255,255,0.8);
+        }
+        .q-load-more-label {
+            font-size: 0.62rem;
+            color: rgba(255,255,255,0.4);
+            text-align: center;
         }
 
         #queue-panel .section-title { font-size: 1.2rem; margin-bottom: 16px; }

@@ -4341,67 +4341,104 @@ function onPlayerStateChange(event) {
 
             if (queueList.length === 0) {
                 qList.innerHTML = `
-                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:14px;">
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;">
                         <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
                             <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:rgba(255,255,255,0.3);"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
                         </div>
                         <div style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.45);">Queue is empty</div>
-                        <div style="font-size:0.75rem;color:rgba(255,255,255,0.22);letter-spacing:0.02em;">Play a song to auto-fill the queue</div>
+                        <div style="font-size:0.75rem;color:rgba(255,255,255,0.22);">Play a song to auto-fill the queue</div>
                     </div>`;
                 return;
             }
 
-            const nowPlayingSong = queueList[currentQueueIndex];
+            const nowSong = queueList[currentQueueIndex];
+            const nextSong1 = queueList[currentQueueIndex + 1];
+            const nextSong2 = queueList[currentQueueIndex + 2];
 
-            // ── LIGHTWEIGHT NOW PLAYING BANNER ──
-            if (nowPlayingSong) {
-                const nowThumb = getCoverUrl(`${nowPlayingSong.title} ${nowPlayingSong.artist}`, nowPlayingSong.cover || '', nowPlayingSong.id || nowPlayingSong.videoId);
-                const nowCard = document.createElement('div');
-                nowCard.className = 'q-now-card';
-                nowCard.innerHTML = `
-                    <img src="${nowThumb}" class="q-now-thumb" onerror="this.src='default_cover.jpg'">
-                    <div class="q-now-info">
-                        <div class="q-now-tag">♫ Now Playing</div>
-                        <div class="q-now-title">${nowPlayingSong.title}</div>
-                        <div class="q-now-artist">${nowPlayingSong.artist}</div>
+            // ── DRAG HANDLE ──
+            const handle = document.createElement('div');
+            handle.className = 'q-drag-handle';
+            qList.appendChild(handle);
+
+            // ── HEADER ──
+            const header = document.createElement('div');
+            header.className = 'q-header';
+            const totalUpNext = queueList.length - currentQueueIndex - 1;
+            header.innerHTML = `
+                <span class="q-header-title">Up Next · ${totalUpNext} song${totalUpNext !== 1 ? 's' : ''}</span>
+            `;
+            qList.appendChild(header);
+
+            // ── BENTO GRID: Now Playing (big left) + Next 2 (right column) ──
+            const bento = document.createElement('div');
+            bento.className = 'q-bento';
+
+            // Big NOW PLAYING tile
+            const nowThumb = getCoverUrl(`${nowSong.title} ${nowSong.artist}`, nowSong.cover || '', nowSong.id || nowSong.videoId);
+            const nowTile = document.createElement('div');
+            nowTile.className = 'q-bento-now';
+            nowTile.innerHTML = `
+                <img src="${nowThumb}" class="q-bento-now-art" onerror="this.src='default_cover.jpg'">
+                <div class="q-bento-now-overlay">
+                    <div class="q-bento-now-tag">♫ Now Playing</div>
+                    <div class="q-bento-now-title">${nowSong.title}</div>
+                    <div class="q-bento-now-artist">${nowSong.artist}</div>
+                </div>
+            `;
+            nowTile.addEventListener('click', () => playPauseBtn.click());
+            bento.appendChild(nowTile);
+
+            // Small next tiles (right column)
+            [nextSong1, nextSong2].forEach((song, i) => {
+                if (!song) return;
+                const idx = currentQueueIndex + 1 + i;
+                const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
+                const tile = document.createElement('div');
+                tile.className = 'q-bento-tile';
+                tile.innerHTML = `
+                    <img src="${thumb}" class="q-bento-tile-art" onerror="this.src='default_cover.jpg'">
+                    <div class="q-bento-tile-overlay">
+                        <div class="q-bento-tile-num">Next ${i === 0 ? '' : '#2'}</div>
+                        <div class="q-bento-tile-title">${song.title}</div>
+                        <div class="q-bento-tile-artist">${song.artist}</div>
                     </div>
                 `;
-                nowCard.addEventListener('click', () => playPauseBtn.click());
-                qList.appendChild(nowCard);
+                tile.addEventListener('click', () => playQueueIndex(idx));
+                bento.appendChild(tile);
+            });
+
+            qList.appendChild(bento);
+
+            // ── HORIZONTAL SCROLL STRIP: songs from index+3 onwards ──
+            const stripStart = currentQueueIndex + 3;
+            const stripSongs = [];
+            for (let i = stripStart; i < Math.min(queueList.length, stripStart + queueRenderLimit); i++) {
+                stripSongs.push({ song: queueList[i], idx: i });
             }
 
-            // ── UP NEXT TRACK LIST ──
-            const upNextSongs = queueList.filter((_, i) => i > currentQueueIndex);
-            if (upNextSongs.length > 0) {
-                const label = document.createElement('div');
-                label.style.cssText = 'font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:14px 16px 8px;';
-                label.textContent = `Up Next · ${upNextSongs.length} song${upNextSongs.length !== 1 ? 's' : ''}`;
-                qList.appendChild(label);
+            if (stripSongs.length > 0) {
+                const stripLabel = document.createElement('div');
+                stripLabel.className = 'q-strip-label';
+                stripLabel.textContent = 'Coming Up';
+                qList.appendChild(stripLabel);
 
-                const listWrapper = document.createElement('div');
-                listWrapper.style.cssText = 'display:flex; flex-direction:column; width:100%;';
+                const strip = document.createElement('div');
+                strip.className = 'q-strip-scroll';
 
-                let count = 0;
-                for (let idx = currentQueueIndex + 1; idx < Math.min(queueList.length, currentQueueIndex + 1 + queueRenderLimit); idx++) {
-                    count++;
-                    const song = queueList[idx];
-                    const isNext = idx === currentQueueIndex + 1;
-                    const thumbUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
-
-                    const row = document.createElement('div');
-                    row.className = `q-row${isNext ? ' q-next' : ''}`;
-                    row.innerHTML = `
-                        <span class="q-num">${count < 10 ? '0' + count : count}</span>
-                        <img src="${thumbUrl}" class="q-thumb" onerror="this.src='default_cover.jpg'">
-                        <div class="q-info">
-                            <div class="q-title">${song.title}</div>
-                            <div class="q-artist">${song.artist}</div>
+                stripSongs.forEach(({ song, idx }, count) => {
+                    const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
+                    const card = document.createElement('div');
+                    card.className = 'q-strip-card';
+                    card.innerHTML = `
+                        <div class="q-strip-art-wrap">
+                            <img src="${thumb}" class="q-strip-art" onerror="this.src='default_cover.jpg'">
+                            <span class="q-strip-num">${count + 3 < 10 ? '0' + (count + 3) : (count + 3)}</span>
+                            <button class="q-strip-remove" data-idx="${idx}" title="Remove">✕</button>
                         </div>
-                        <button class="q-remove-btn" data-idx="${idx}" title="Remove">✕</button>
+                        <span class="q-strip-title">${song.title}</span>
                     `;
-
-                    row.addEventListener('click', (e) => {
-                        if (e.target.closest('.q-remove-btn')) {
+                    card.addEventListener('click', (e) => {
+                        if (e.target.closest('.q-strip-remove')) {
                             e.stopPropagation();
                             queueList.splice(idx, 1);
                             renderQueue();
@@ -4409,25 +4446,26 @@ function onPlayerStateChange(event) {
                         }
                         playQueueIndex(idx);
                     });
+                    strip.appendChild(card);
+                });
 
-                    listWrapper.appendChild(row);
+                // "Load more" tile at end
+                if (stripStart + queueRenderLimit < queueList.length) {
+                    const more = document.createElement('div');
+                    more.className = 'q-load-more';
+                    more.innerHTML = `
+                        <div class="q-load-more-icon">+</div>
+                        <span class="q-load-more-label">More</span>
+                    `;
+                    more.addEventListener('click', () => {
+                        queueRenderLimit += 10;
+                        renderQueue();
+                    });
+                    strip.appendChild(more);
                 }
-                qList.appendChild(listWrapper);
-            }
 
-            if (currentQueueIndex + queueRenderLimit < queueList.length - 1) {
-                const btnRow = document.createElement('div');
-                btnRow.style.cssText = 'display:flex; justify-content:center; padding: 15px 0 25px;';
-                const loadBtn = document.createElement('button');
-                loadBtn.textContent = '➕ Add 10 More';
-                loadBtn.style.cssText = 'background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.12); padding: 10px 24px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); font-weight: 600; font-size: 0.9rem; transition: all 0.2s;';
-                loadBtn.onclick = () => {
-                    queueRenderLimit += 10;
-                    renderQueue();
-                };
-                btnRow.appendChild(loadBtn);
-                qList.appendChild(btnRow);
-            } else if (upNextSongs.length === 0 && nowPlayingSong) {
+                qList.appendChild(strip);
+            } else if (queueList.length <= currentQueueIndex + 1) {
                 const end = document.createElement('div');
                 end.style.cssText = 'text-align:center;padding:20px;font-size:0.8rem;color:rgba(255,255,255,0.25);';
                 end.textContent = 'â€” End of queue â€”';
