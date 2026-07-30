@@ -2670,224 +2670,305 @@ body.offline-mode .offline-hide {
         .plt-remove svg { width: 16px; height: 16px; fill: currentColor; display: block; }
 
 
-        /* ── BOTTOM SHEET BENTO QUEUE UI ── */
+        /* ══════════════════════════════════════════════════
+           HORIZONTAL QUEUE — PREMIUM CARD LAYOUT
+        ══════════════════════════════════════════════════ */
 
-        /* Drag Handle */
-        .q-drag-handle {
-            width: 40px;
-            height: 5px;
-            border-radius: 99px;
-            background: rgba(255,255,255,0.2);
-            margin: 12px auto 8px;
-            flex-shrink: 0;
-            cursor: grab;
-        }
-
-        /* Queue header row */
-        .q-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 4px 20px 12px;
-            flex-shrink: 0;
-        }
-        .q-header-title {
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.5);
-        }
-        .q-header-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        /* ── BENTO GRID (Now Playing + Next 2) ── */
-        .q-bento {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 8px;
-            padding: 0 16px;
-            height: 190px;
-            flex-shrink: 0;
-        }
-        .q-bento-now {
-            grid-column: 1;
-            grid-row: 1 / 3;
-            border-radius: 18px;
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
-            background: #0d0520;
-        }
-        .q-bento-now-art {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            opacity: 0.75;
-            transition: opacity 0.2s ease;
-        }
-        .q-bento-now:hover .q-bento-now-art { opacity: 0.9; }
-        .q-bento-now-overlay {
+        /* Dynamic blurred art background inside queue panel */
+        #queue-panel::before {
+            content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(160deg, transparent 30%, rgba(5, 0, 15, 0.92) 100%);
+            background: linear-gradient(
+                180deg,
+                rgba(var(--accent-rgb, 120,60,200), 0.22) 0%,
+                rgba(5, 1, 18, 0.97) 55%
+            );
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Glowing top accent line */
+        #queue-panel::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 10%; right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(var(--accent-rgb, 120,60,200), 0.9) 40%,
+                rgba(200, 120, 255, 1) 55%,
+                rgba(var(--accent-rgb, 120,60,200), 0.9) 70%,
+                transparent);
+            border-radius: 0 0 4px 4px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* Scroll container — all queue content sits here */
+        .q-horizontal-scroll {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 0 24px 24px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex: 1;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+            z-index: 2;
+        }
+        .q-horizontal-scroll::-webkit-scrollbar { display: none; }
+
+        /* Section divider pill between Now Playing and Up Next */
+        .q-section-divider {
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
-            padding: 12px 13px;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            gap: 6px;
+            padding: 0 4px;
+            align-self: center;
         }
-        .q-bento-now-tag {
+        .q-section-divider-line {
+            width: 1px;
+            height: 50px;
+            background: linear-gradient(180deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+        .q-section-divider-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(var(--accent-rgb,120,60,200),0.7);
+            box-shadow: 0 0 8px rgba(var(--accent-rgb,120,60,200),0.8);
+        }
+
+        /* ── NOW PLAYING CARD (larger, animated) ── */
+        .q-card-now {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            width: 148px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        /* Glowing ring behind Now Playing art */
+        .q-card-now-ring {
+            position: relative;
+            width: 148px;
+            height: 148px;
+            border-radius: 18px;
+            flex-shrink: 0;
+        }
+        .q-card-now-ring::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 21px;
+            background: conic-gradient(
+                from 0deg,
+                rgba(var(--accent-rgb,120,60,200),0.9),
+                rgba(200,100,255,0.6),
+                rgba(var(--accent-rgb,120,60,200),0.9),
+                rgba(100,180,255,0.5),
+                rgba(var(--accent-rgb,120,60,200),0.9)
+            );
+            animation: q-ring-spin 3s linear infinite;
+            z-index: 0;
+        }
+        @keyframes q-ring-spin {
+            to { transform: rotate(360deg); }
+        }
+        .q-card-now-ring::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            border-radius: 17px;
+            background: rgba(8, 2, 20, 0.95);
+            z-index: 1;
+        }
+        .q-card-now-art {
+            position: absolute;
+            inset: 2px;
+            width: calc(100% - 4px);
+            height: calc(100% - 4px);
+            border-radius: 16px;
+            object-fit: cover;
+            z-index: 2;
+            display: block;
+        }
+
+        /* NOW PLAYING label with equalizer bars */
+        .q-card-now-badge {
+            position: absolute;
+            top: 7px;
+            left: 7px;
+            z-index: 4;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(var(--accent-rgb,120,60,200), 0.85);
+            border-radius: 8px;
+            padding: 3px 7px 3px 5px;
+        }
+        /* Animated equalizer bars */
+        .q-eq {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 12px;
+        }
+        .q-eq span {
+            display: block;
+            width: 2.5px;
+            background: #fff;
+            border-radius: 2px;
+            animation: q-eq-bounce 0.9s ease-in-out infinite;
+        }
+        .q-eq span:nth-child(1) { height: 4px; animation-delay: 0s; }
+        .q-eq span:nth-child(2) { height: 10px; animation-delay: 0.18s; }
+        .q-eq span:nth-child(3) { height: 6px; animation-delay: 0.36s; }
+        .q-eq span:nth-child(4) { height: 12px; animation-delay: 0.12s; }
+        @keyframes q-eq-bounce {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.3); }
+        }
+        .q-card-now-badge-text {
             font-size: 0.58rem;
             font-weight: 800;
-            letter-spacing: 0.14em;
+            letter-spacing: 0.08em;
+            color: #fff;
             text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 3px;
         }
-        .q-bento-now-title {
-            font-size: 0.95rem;
+
+        /* Shadow glow below Now Playing art */
+        .q-card-now .q-card-shadow {
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 20px;
+            background: rgba(var(--accent-rgb,120,60,200),0.5);
+            filter: blur(14px);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .q-card-now-info {
+            text-align: center;
+            width: 100%;
+        }
+        .q-card-now-title {
+            font-size: 0.88rem;
             font-weight: 700;
             color: #fff;
-            line-height: 1.2;
+            white-space: nowrap;
             overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
         }
-        .q-bento-now-artist {
+        .q-card-now-artist {
             font-size: 0.72rem;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.55);
             margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* Small bento tiles for next songs */
-        .q-bento-tile {
-            border-radius: 14px;
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
-            background: #0d0520;
-        }
-        .q-bento-tile-art {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            opacity: 0.6;
-            transition: opacity 0.2s ease;
-        }
-        .q-bento-tile:hover .q-bento-tile-art { opacity: 0.85; }
-        .q-bento-tile-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(160deg, transparent 20%, rgba(5, 0, 15, 0.9) 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 8px 10px;
-        }
-        .q-bento-tile-num {
-            font-size: 0.55rem;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            color: rgba(255,255,255,0.45);
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-        .q-bento-tile-title {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .q-bento-tile-artist {
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.5);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* ── HORIZONTAL SCROLL STRIP ── */
-        .q-strip-label {
-            font-size: 0.65rem;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.4);
-            padding: 14px 18px 8px;
-            flex-shrink: 0;
-        }
-        .q-strip-scroll {
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
-            padding: 0 16px 20px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            flex-shrink: 0;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            -webkit-overflow-scrolling: touch;
-        }
-        .q-strip-scroll::-webkit-scrollbar { display: none; }
-        .q-strip-card {
+        /* ── REGULAR UPCOMING CARD ── */
+        .q-card-up {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            cursor: pointer;
+            gap: 8px;
             flex-shrink: 0;
-            width: 68px;
-            transition: transform 0.18s ease;
-        }
-        .q-strip-card:hover { transform: translateY(-3px); }
-        .q-strip-art-wrap {
+            width: 120px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
             position: relative;
-            width: 68px;
-            height: 68px;
-            border-radius: 12px;
-            overflow: hidden;
         }
-        .q-strip-art {
+        .q-card-up:hover { transform: translateY(-5px); }
+        .q-card-up.q-card-next { width: 132px; }
+
+        .q-card-art-wrap {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+        }
+        .q-card-up .q-card-art-wrap { width: 120px; height: 120px; }
+        .q-card-up.q-card-next .q-card-art-wrap { width: 132px; height: 132px; }
+
+        .q-card-art {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
-            border-radius: 12px;
+            transition: transform 0.3s ease, opacity 0.2s ease;
         }
-        .q-strip-num {
+        .q-card-up:hover .q-card-art { transform: scale(1.06); }
+
+        /* Next song highlight border */
+        .q-card-up.q-card-next .q-card-art-wrap {
+            box-shadow: 0 0 0 2px rgba(var(--accent-rgb,120,60,200),0.7), 0 8px 24px rgba(0,0,0,0.55);
+        }
+
+        /* Hover play icon overlay */
+        .q-card-play-overlay {
             position: absolute;
-            top: 4px;
-            left: 5px;
-            font-size: 0.6rem;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.45);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            border-radius: 14px;
+        }
+        .q-card-up:hover .q-card-play-overlay { opacity: 1; }
+        .q-card-play-icon {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .q-card-play-icon svg { width: 16px; height: 16px; fill: #000; margin-left: 2px; }
+
+        /* Track number pill */
+        .q-card-num {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            font-size: 0.58rem;
             font-weight: 900;
-            color: rgba(255,255,255,0.7);
-            background: rgba(0,0,0,0.5);
-            border-radius: 5px;
-            padding: 1px 4px;
-            line-height: 1.4;
+            color: #fff;
+            background: rgba(0,0,0,0.55);
+            border-radius: 6px;
+            padding: 2px 5px;
+            letter-spacing: 0.05em;
         }
-        .q-strip-remove {
+
+        /* Remove button */
+        .q-card-remove {
             position: absolute;
-            top: 3px;
-            right: 3px;
-            width: 18px;
-            height: 18px;
+            top: 5px;
+            right: 5px;
+            width: 20px; height: 20px;
             background: rgba(0,0,0,0.6);
             border: none;
             border-radius: 50%;
-            color: rgba(255,255,255,0.6);
-            font-size: 0.65rem;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.6rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -2895,69 +2976,63 @@ body.offline-mode .offline-hide {
             opacity: 0;
             transition: opacity 0.15s;
         }
-        .q-strip-card:hover .q-strip-remove { opacity: 1; }
-        .q-strip-remove:hover { color: #ff375f; }
-        .q-strip-title {
-            font-size: 0.7rem;
+        .q-card-up:hover .q-card-remove { opacity: 1; }
+        .q-card-remove:hover { color: #ff375f !important; }
+
+        .q-card-title {
+            font-size: 0.78rem;
             font-weight: 600;
-            color: rgba(255,255,255,0.75);
+            color: rgba(255,255,255,0.85);
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%;
         }
-        .q-strip-card.q-strip-next .q-strip-art-wrap {
-            box-shadow: 0 0 0 2px var(--accent);
+        .q-card-artist {
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.45);
+            text-align: center;
+            margin-top: -4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }
+        .q-card-up.q-card-next .q-card-title { color: #fff; }
 
-        /* Load more button */
-        .q-load-more {
+        /* Load More card */
+        .q-card-more {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            cursor: pointer;
+            gap: 8px;
             flex-shrink: 0;
-            width: 68px;
+            width: 90px;
+            cursor: pointer;
+            align-self: center;
         }
-        .q-load-more-icon {
-            width: 68px;
-            height: 68px;
-            border-radius: 12px;
-            border: 1px dashed rgba(255,255,255,0.2);
+        .q-card-more-circle {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 1.5px dashed rgba(255,255,255,0.25);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             color: rgba(255,255,255,0.4);
-            transition: border-color 0.18s, color 0.18s;
+            transition: all 0.2s ease;
         }
-        .q-load-more:hover .q-load-more-icon {
-            border-color: rgba(255,255,255,0.45);
-            color: rgba(255,255,255,0.8);
+        .q-card-more:hover .q-card-more-circle {
+            border-color: rgba(var(--accent-rgb,120,60,200),0.6);
+            color: rgba(var(--accent-rgb,120,60,200),0.9);
+            box-shadow: 0 0 16px rgba(var(--accent-rgb,120,60,200),0.25);
         }
-        .q-load-more-label {
-            font-size: 0.62rem;
+        .q-card-more-label {
+            font-size: 0.65rem;
             color: rgba(255,255,255,0.4);
             text-align: center;
-        }
-
-        #queue-panel .section-title { font-size: 1.2rem; margin-bottom: 16px; }
-        .queue-now-playing-label {
-            font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
-            text-transform: uppercase; color: var(--accent);
-            margin-bottom: 8px; padding-left: 2px;
-        }
-        .queue-up-next-label {
-            font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
-            text-transform: uppercase; color: rgba(255,255,255,0.4);
-            margin: 16px 0 8px; padding-left: 2px;
-        }
-        .premium-list-item.now-playing-queue {
-            background: rgba(var(--accent-rgb), 0.12);
-            border-color: rgba(var(--accent-rgb), 0.3);
         }
 
         /* Mood radio loading skeleton */
