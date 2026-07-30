@@ -2452,6 +2452,21 @@ function onPlayerStateChange(event) {
                 
                 currentVideoId = songData.id || null;
 
+                // INSTANT SYNCHRONOUS QUEUE RESET (unless playing a preserved playlist)
+                if (!window._preserveQueue) {
+                    queueRenderLimit = 10;
+                    queueList = [{
+                        videoId: currentVideoId,
+                        title: songData.title,
+                        artist: songData.uploader,
+                        cover: songData.thumbnail || ''
+                    }];
+                    currentQueueIndex = 0;
+                    renderQueue();
+                } else {
+                    window._preserveQueue = false; // consume
+                }
+
                 // Immediately update UI with what we have
                 trackTitleEl.textContent = songData.title;
                 trackArtistEl.textContent = songData.uploader;
@@ -2590,8 +2605,8 @@ function onPlayerStateChange(event) {
                 nextBtn.disabled = false;
                 prevBtn.disabled = false;
                 
-                // Always replace the queue when playing a new song from search / home screen / artist / album
-                populateQueue(songData.videoId || songData.id, false);
+                // Populate recommendations for infinite radio
+                populateQueue(songData.videoId || songData.id, true);
 
                 // Quality badge
                 if (streamData.quality) {
@@ -2624,7 +2639,7 @@ function onPlayerStateChange(event) {
                     if (fallbackVid) {
                         audioPlayer.src = fallbackVid;
                         audioPlayer.play().catch(err => console.warn("IFrame play failed:", err));
-                        populateQueue(fallbackVid, isFromQueue);
+                        populateQueue(fallbackVid, true);
                     }
                     
                     showToast("🎵 Playing via YouTube Official Player");
@@ -4146,6 +4161,7 @@ function onPlayerStateChange(event) {
                                     queueList.push({ title: t.title, artist: artistName, cover: coverUrl, videoId: t.videoId || '' });
                                 });
                                 currentQueueIndex = sIdx;
+                                window._preserveQueue = true;
                                 window._forceQueueSong = { videoId: track.videoId, title: track.title, artist: trackArtist, cover: trackThumb };
                                 songSearchInput.value = `${track.title} ${trackArtist}`;
                                 searchBtn.click();
@@ -4164,6 +4180,7 @@ function onPlayerStateChange(event) {
                                     queueList.push({ title: t.title, artist: artistName, cover: coverUrl, videoId: t.videoId || '' });
                                 });
                                 currentQueueIndex = 0;
+                                window._preserveQueue = true;
                                 const first = pl.tracks[0];
                                 const firstArtist = first.artists && first.artists.length > 0 ? first.artists[0].name : 'Unknown Artist';
                                 const firstThumb = first.thumbnails && first.thumbnails.length > 0 ? first.thumbnails[first.thumbnails.length-1].url : '';
@@ -4293,8 +4310,9 @@ function onPlayerStateChange(event) {
                         </button>
                     `;
                     div.addEventListener('click', () => {
-                        queue = [...pl.songs];
+                        queueList = [...pl.songs];
                         currentQueueIndex = sIdx;
+                        window._preserveQueue = true;
                         renderQueue();
                         playQueueIndex(sIdx);
                         setPlayPauseUI(true);
