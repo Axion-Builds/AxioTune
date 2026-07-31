@@ -1956,11 +1956,11 @@
         .cinematic-poster-wrap {
             position: relative;
             width: 175px;
-            height: 175px;
-            border-radius: 14px;
+            height: 225px;
+            border-radius: 16px;
             overflow: hidden;
             background: #140a24;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
         }
 
         .cinematic-card-img {
@@ -2060,6 +2060,20 @@
         .cinematic-card-more:hover {
             color: #ffffff;
             background: rgba(255, 255, 255, 0.15);
+        }
+
+        @media (max-width: 768px) {
+            .cinematic-card {
+                flex: 0 0 140px;
+                width: 140px;
+            }
+            .cinematic-poster-wrap {
+                width: 140px;
+                height: 180px;
+            }
+            .cinematic-card-title {
+                font-size: 0.9rem;
+            }
         }
 
         /* Keep old dense-card for other sections (Because You Listened etc) */
