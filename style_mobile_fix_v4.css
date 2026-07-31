@@ -6000,3 +6000,158 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     will-change: transform !important;
     transform: translateZ(0);
 }
+
+/* 🌸 MATERIAL DESIGN 3 FLOWER SHAPE SONG CARDS 🌸 */
+.md3-flower-scroll-container {
+    display: flex;
+    gap: 22px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 12px 6px 24px 6px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    will-change: scroll-position, transform;
+    -webkit-overflow-scrolling: touch;
+}
+.md3-flower-scroll-container::-webkit-scrollbar { display: none; }
+
+.md3-flower-card {
+    flex: 0 0 175px;
+    width: 175px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    scroll-snap-align: start;
+    position: relative;
+    background: transparent;
+    border: none;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: fadeInUp 0.5s ease both;
+}
+
+.md3-flower-poster-wrap {
+    position: relative;
+    width: 175px;
+    height: 175px;
+    background: #180c30;
+    clip-path: url(#md3-flower-clip);
+    -webkit-clip-path: url(#md3-flower-clip);
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.35s ease;
+    transform-origin: center center;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+}
+
+/* Hover: Rotates left (counter-clockwise -45deg) once */
+.md3-flower-card:hover .md3-flower-poster-wrap {
+    transform: rotate(-45deg) scale(1.08);
+    filter: drop-shadow(0 12px 30px rgba(var(--accent-rgb, 140,50,255), 0.65));
+}
+
+/* Mouse Leave: Rotates back clockwise to 0deg */
+.md3-flower-card .md3-flower-poster-wrap {
+    transform: rotate(0deg) scale(1);
+}
+
+.md3-flower-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.md3-flower-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    opacity: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent, #ff2d55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 6px 20px rgba(var(--accent-rgb, 140,50,255), 0.8);
+    z-index: 2;
+}
+
+.md3-flower-card:hover .md3-flower-play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.md3-flower-play svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
+    margin-left: 2px;
+}
+
+.md3-flower-meta {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+}
+
+.md3-flower-artist {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.md3-flower-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+}
+
+.md3-flower-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.md3-flower-more {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 2px 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s;
+}
+
+.md3-flower-more:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 768px) {
+    .md3-flower-card {
+        flex: 0 0 140px;
+        width: 140px;
+    }
+    .md3-flower-poster-wrap {
+        width: 140px;
+        height: 140px;
+    }
+}

@@ -34,7 +34,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=133">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=134">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -635,6 +635,33 @@
                 <h2 class="section-title" style="margin:0;">Your Taste Mix</h2>
             </div>
             <div class="cinematic-scroll-container" id="home-taste-mix-container"></div>
+        </div>
+
+        <!-- 🌸 MATERIAL DESIGN 3 FLOWER SHAPE SVG DEFINITION 🌸 -->
+        <svg width="0" height="0" style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
+            <defs>
+                <clipPath id="md3-flower-clip" clipPathUnits="objectBoundingBox">
+                    <path d="M 0.5,0 C 0.68,0 0.70,0.22 0.85,0.15 C 1,0.08 1,0.32 1,0.5 C 1,0.68 0.78,0.70 0.85,0.85 C 0.92,1 0.68,1 0.5,1 C 0.32,1 0.30,0.78 0.15,0.85 C 0,0.92 0,0.68 0,0.5 C 0,0.32 0.22,0.30 0.15,0.15 C 0.08,0 0.32,0 0.5,0 Z" />
+                </clipPath>
+            </defs>
+        </svg>
+
+        <!-- 🌎 GLOBALLY VIRAL SONGS (Material You 3 Flower Shape) -->
+        <div class="home-section" id="home-global-viral-section" style="margin-bottom:36px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                <div style="background: linear-gradient(135deg, #00c2ff, #0072ff); padding:6px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#fff;">🌎 Global</div>
+                <h2 class="section-title" style="margin:0;">Globally Viral Hits</h2>
+            </div>
+            <div class="md3-flower-scroll-container" id="home-global-viral-container"></div>
+        </div>
+
+        <!-- 🇮🇳 INDIA TRENDING SONGS (Material You 3 Flower Shape) -->
+        <div class="home-section" id="home-india-trending-section" style="margin-bottom:36px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                <div style="background: linear-gradient(135deg, #ff9933, #ff3366); padding:6px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#fff;">🇮🇳 Trending</div>
+                <h2 class="section-title" style="margin:0;">India Trending Hits</h2>
+            </div>
+            <div class="md3-flower-scroll-container" id="home-india-trending-container"></div>
         </div>
 
         <!-- Dynamic Dynamic Because You Listened To Rows -->
@@ -1504,7 +1531,7 @@
     </div>
     <div id="queue-backdrop"></div>
 
-    <script src="app_v3.js?v=133"></script>
+    <script src="app_v3.js?v=134"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

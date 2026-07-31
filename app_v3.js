@@ -3608,6 +3608,80 @@ function onPlayerStateChange(event) {
             });
         }
 
+        // 🌸 MATERIAL DESIGN 3 FLOWER SHAPE CARDS — For Globally Viral & India Trending Songs
+        function populateFlowerCards(containerId, entries) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            container.className = 'md3-flower-scroll-container';
+
+            entries.forEach((item, idx) => {
+                const title = item.title || item.name || 'Unknown';
+                const subtitle = item.artist || item.uploader || 'Artist';
+                const videoId = item.videoId || item.id;
+                let rawThumb = item.cover || item.thumbnail || item.thumb || '';
+                if (!rawThumb && videoId) rawThumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
+                const fallbackThumb = `/api/cover?vid=${videoId || ''}&q=${encodeURIComponent(title + ' ' + subtitle)}`;
+                const safeTitle = title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const safeArtist = subtitle.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+                const card = document.createElement('div');
+                card.className = 'md3-flower-card';
+                card.style.animationDelay = `${idx * 0.04}s`;
+                card.innerHTML = `
+                    <div class="md3-flower-poster-wrap">
+                        <img src="${thumb}" class="md3-flower-img" alt="${safeTitle}" loading="lazy" decoding="async"
+                             onerror="this.onerror=null;this.src='${fallbackThumb}'">
+                        <div class="md3-flower-play">
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </div>
+                    <div class="md3-flower-meta">
+                        <div class="md3-flower-artist">${safeArtist}</div>
+                        <div class="md3-flower-title-row">
+                            <div class="md3-flower-title">${safeTitle}</div>
+                            <button class="md3-flower-more" title="Options" onclick="event.stopPropagation(); if(typeof openSongOptions==='function') openSongOptions('${videoId}', '${safeTitle.replace(/'/g, "\\'")}', '${safeArtist.replace(/'/g, "\\'")}', '${thumb}');">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => {
+                    if (videoId) {
+                        const songJson = JSON.stringify({title, artist: subtitle, cover: thumb, videoId}).replace(/"/g, '&quot;');
+                        window.playSong(videoId, songJson, card);
+                    } else {
+                        songSearchInput.value = `${title} ${subtitle}`; searchBtn.click();
+                    }
+                };
+                container.appendChild(card);
+            });
+        }
+
+        // Fetch Globally Viral Songs & India Trending Hits
+        async function fetchTrendingAndViralSongs() {
+            try {
+                // 1. Fetch Globally Viral Hits
+                const globalRes = await fetch('/api/recommendations?videoId=gLMC4TzN34k');
+                const globalData = await globalRes.json();
+                if (globalData.status === 'success' && globalData.recommendations && globalData.recommendations.length > 0) {
+                    populateFlowerCards('home-global-viral-container', globalData.recommendations.slice(0, 20));
+                }
+
+                // 2. Fetch India Trending Hits
+                const indiaRes = await fetch('/api/recommendations?videoId=3yMPb_8q6K0');
+                const indiaData = await indiaRes.json();
+                if (indiaData.status === 'success' && indiaData.recommendations && indiaData.recommendations.length > 0) {
+                    populateFlowerCards('home-india-trending-container', indiaData.recommendations.slice(0, 20));
+                }
+            } catch (err) {
+                console.warn("Trending fetch fallback:", err);
+            }
+        }
+
+        fetchTrendingAndViralSongs();
+
         async function populateHomeTopArtists() {
             const container = document.getElementById('home-top-artists-container');
             const section = document.getElementById('home-top-artists-section');
