@@ -6036,14 +6036,14 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     background: #180c30;
     clip-path: url(#md3-flower-clip);
     -webkit-clip-path: url(#md3-flower-clip);
-    transition: transform 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transition: transform 3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
     transform-origin: center center !important;
     will-change: transform !important;
     transform: rotate(0deg) translateZ(0);
     filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
 }
 
-/* On Hover: Rotates 90deg slowly over 3.5s */
+/* On Hover: Rotates 90deg slowly over 3s */
 .md3-flower-card:hover .md3-flower-poster-wrap {
     transform: rotate(90deg) translateZ(0) !important;
 }
@@ -6054,7 +6054,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     object-fit: cover;
     display: block;
     transform: scale(1.35) rotate(0deg) translateZ(0);
-    transition: transform 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transition: transform 3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
     transform-origin: center center !important;
     will-change: transform !important;
 }
