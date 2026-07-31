@@ -1162,10 +1162,18 @@ function onPlayerStateChange(event) {
 
         function getCoverUrl(query, ytThumb, vid, isPlayerScreen = false) {
             const targetSize = isPlayerScreen ? 'large' : 'medium';
-            const thumb = resolveYtThumb(ytThumb, targetSize);
+            let thumb = resolveYtThumb(ytThumb, targetSize);
             
-            if (!isPlayerScreen && thumb && thumb.startsWith('http')) {
-                return thumb; // Fast loading for lists
+            if (!thumb && vid) {
+                thumb = `https://i.ytimg.com/vi/${vid}/sddefault.jpg`;
+            }
+            
+            if (thumb && thumb.startsWith('http')) {
+                return thumb; // Fast direct CDN loading
+            }
+
+            if (vid) {
+                return `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
             }
             
             const params = new URLSearchParams();
@@ -4580,13 +4588,15 @@ function onPlayerStateChange(event) {
             hScroll.className = 'q-horizontal-scroll';
 
             // NOW PLAYING CARD
-            const nowThumb = getCoverUrl(`${nowSong.title} ${nowSong.artist}`, nowSong.cover || '', nowSong.id || nowSong.videoId);
+            const nowVid = nowSong.id || nowSong.videoId || '';
+            const nowFb = nowVid ? `https://i.ytimg.com/vi/${nowVid}/hqdefault.jpg` : 'default_cover.jpg';
+            const nowThumb = getCoverUrl(`${nowSong.title} ${nowSong.artist}`, nowSong.cover || '', nowVid);
             const nowCard = document.createElement('div');
             nowCard.className = 'q-card-now';
             nowCard.style.setProperty('--card-index', 0);
             nowCard.innerHTML = `
                 <div class="q-card-now-ring">
-                    <img src="${nowThumb}" class="q-card-now-art" onerror="this.src='default_cover.jpg'">
+                    <img src="${nowThumb}" class="q-card-now-art" onerror="this.onerror=null; this.src='${nowFb}';">
                     <div class="q-card-sheen"></div>
                     <div class="q-card-now-badge">
                         <div class="q-eq"><span></span><span></span><span></span><span></span></div>
@@ -4621,7 +4631,9 @@ function onPlayerStateChange(event) {
                 const song = queueList[idx];
                 const pos = idx - currentQueueIndex;
                 const isNext = pos === 1;
-                const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
+                const songVid = song.id || song.videoId || '';
+                const songFb = songVid ? `https://i.ytimg.com/vi/${songVid}/hqdefault.jpg` : 'default_cover.jpg';
+                const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', songVid);
                 const numLabel = pos < 10 ? '0' + pos : pos;
                 const card = document.createElement('div');
                 card.className = `q-card-up${isNext ? ' q-card-next' : ''}`;
@@ -4631,7 +4643,7 @@ function onPlayerStateChange(event) {
 
                 card.innerHTML = `
                     <div class="q-card-art-wrap">
-                        <img src="${thumb}" class="q-card-art" onerror="this.src='default_cover.jpg'">
+                        <img src="${thumb}" class="q-card-art" onerror="this.onerror=null; this.src='${songFb}';">
                         <div class="q-card-play-overlay">
                             <div class="q-card-play-icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
                         </div>

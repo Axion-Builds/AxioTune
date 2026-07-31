@@ -1503,26 +1503,34 @@
         #queue-header-right {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: nowrap;
+            padding-right: 4px;
         }
-        #clear-queue-btn {
-            background: rgba(255, 71, 109, 0.08);
-            border: 1px solid rgba(255, 71, 109, 0.22);
-            color: rgba(255, 100, 130, 0.8);
+        #queue-header-clear-btn, #clear-queue-btn {
+            background: rgba(255, 71, 109, 0.12) !important;
+            border: 1px solid rgba(255, 71, 109, 0.3) !important;
+            color: #ff6b8a !important;
             cursor: pointer;
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            padding: 5px 13px;
-            border-radius: 100px;
-            transition: all 0.25s ease;
+            padding: 6px 14px !important;
+            border-radius: 100px !important;
+            transition: all 0.25s ease !important;
+            font-family: inherit !important;
+            outline: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
         }
-        #clear-queue-btn:hover {
-            background: rgba(255, 71, 109, 0.2);
-            color: #ff6b8a;
-            border-color: rgba(255, 71, 109, 0.5);
-            box-shadow: 0 0 14px rgba(255, 71, 109, 0.25);
+        #queue-header-clear-btn:hover, #clear-queue-btn:hover {
+            background: rgba(255, 71, 109, 0.25) !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 71, 109, 0.6) !important;
+            box-shadow: 0 0 14px rgba(255, 71, 109, 0.35) !important;
         }
         #close-queue-btn {
             background: rgba(255,255,255,0.07);
@@ -2675,26 +2683,19 @@ body.offline-mode .offline-hide {
             -webkit-overflow-scrolling: touch;
             position: relative;
             z-index: 2;
+            will-change: transform, scroll-position;
+            transform: translateZ(0);
+            contain: layout style paint;
         }
         .q-horizontal-scroll::-webkit-scrollbar { display: none; }
 
-        /* Staggered Entrance Cascade Animation when Queue Panel opens */
+        /* Hardware Accelerated Smooth Entrance for Queue Cards */
         #queue-panel.open .q-card-now,
         #queue-panel.open .q-section-divider,
         #queue-panel.open .q-card-up,
         #queue-panel.open .q-card-more {
-            animation: qCardCascade 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-            animation-delay: calc(var(--card-index, 0) * 0.04s + 0.05s);
-        }
-        @keyframes qCardCascade {
-            0% {
-                opacity: 0;
-                transform: translateX(40px) scale(0.92);
-            }
-            100% {
-                opacity: 1;
-                transform: translateX(0) scale(1);
-            }
+            will-change: transform, opacity;
+            transform: translateZ(0);
         }
 
         /* Section divider pill between Now Playing and Up Next */
