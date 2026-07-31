@@ -193,16 +193,12 @@ function onPlayerStateChange(event) {
         audioPlayer.paused = false;
         audioPlayer.dispatchEvent('play');
         audioPlayer.dispatchEvent('loadedmetadata');
-        clearInterval(timeupdateInterval);
-        timeupdateInterval = setInterval(() => { audioPlayer.dispatchEvent('timeupdate'); }, 250);
     } else if (event.data == YT.PlayerState.PAUSED) {
         audioPlayer.paused = true;
         audioPlayer.dispatchEvent('pause');
-        clearInterval(timeupdateInterval);
     } else if (event.data == YT.PlayerState.ENDED) {
         audioPlayer.paused = true;
         audioPlayer.dispatchEvent('ended');
-        clearInterval(timeupdateInterval);
     } else if (event.data == YT.PlayerState.BUFFERING) {
         audioPlayer.dispatchEvent('stalled');
     }
@@ -1313,17 +1309,6 @@ function onPlayerStateChange(event) {
                 c.classList.remove('layout-grid', 'layout-list');
                 if (s.cardLayout !== 'vinyl') c.classList.add(`layout-${s.cardLayout}`);
             });
-            // Volume normalize via Web Audio
-            if (false && s.normalizeVolume && !gainNode) {
-                try {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const source = audioContext.createMediaElementSource(audioPlayer);
-                    const compressor = audioContext.createDynamicsCompressor();
-                    gainNode = audioContext.createGain();
-                    gainNode.gain.value = 1.0;
-                    source.connect(compressor); compressor.connect(gainNode); gainNode.connect(audioContext.destination);
-                } catch(e) { console.warn('Normalize init fail:', e); }
-            }
         }
 
         function syncSettingsUI(s) {
@@ -5370,70 +5355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- Web Audio API Optimizer (YouTube Music / Spotify style Sound Enhancement) ---
-let audioCtx;
-let audioSourceNode;
-let isAudioOptimized = false;
-
-function initAudioOptimizer() {
-    if (isAudioOptimized) return;
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        
-        audioCtx = new AudioContext();
-        
-        // Ensure context is resumed (browser autoplay policy)
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-
-        const audioEl = document.getElementById('audio-player');
-        // Check if we already created a source for this media element
-        if (audioEl._audioSourceNode) {
-             audioSourceNode = audioEl._audioSourceNode;
-        } else {
-             audioSourceNode = audioCtx.createMediaElementSource(audioEl);
-             audioEl._audioSourceNode = audioSourceNode;
-        }
-
-        // 1. Bass Boost (LowShelf Filter) - adds warmth and punch
-        const bassBoost = audioCtx.createBiquadFilter();
-        bassBoost.type = 'lowshelf';
-        bassBoost.frequency.value = 85; // Hz
-        bassBoost.gain.value = 4.5; // dB boost
-
-        // 2. High Frequency Clarity (HighShelf Filter) - vocal clarity
-        const trebleBoost = audioCtx.createBiquadFilter();
-        trebleBoost.type = 'highshelf';
-        trebleBoost.frequency.value = 8000;
-        trebleBoost.gain.value = 2.5;
-
-        // 3. Dynamic Range Compressor (Punchy & normalized)
-        const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.value = -24;
-        compressor.knee.value = 30;
-        compressor.ratio.value = 4;
-        compressor.attack.value = 0.005;
-        compressor.release.value = 0.25;
-
-        // Connect the audio pipeline
-        audioSourceNode.connect(bassBoost);
-        bassBoost.connect(trebleBoost);
-        trebleBoost.connect(compressor);
-        compressor.connect(audioCtx.destination);
-
-        isAudioOptimized = true;
-        console.log("Audio Optimizer Initialized! ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â§ Sound quality enhanced.");
-    } catch(e) {
-        console.warn("Audio Optimizer failed to initialize:", e);
-    }
-}
-
-// Initialize audio context on first user interaction to comply with autoplay policies
-document.addEventListener('click', () => { 
-    // if(!isAudioOptimized) initAudioOptimizer(); // Temporarily disabled due to CORS restrictions on YouTube audio
-}, { once: true });
+// --- LYRICS ANIMATION STYLE SETTINGS CONTROLLER ---
 
 
 
