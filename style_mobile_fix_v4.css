@@ -6029,6 +6029,18 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     animation: fadeInUp 0.5s ease both;
 }
 
+@keyframes md3FlowerSpinReturn {
+    0% { transform: rotate(0deg); }
+    45% { transform: rotate(-45deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes md3ImageCounterSpinReturn {
+    0% { transform: scale(1.35) rotate(0deg); }
+    45% { transform: scale(1.35) rotate(45deg); }
+    100% { transform: scale(1.35) rotate(0deg); }
+}
+
 .md3-flower-poster-wrap {
     position: relative;
     width: 175px;
@@ -6036,21 +6048,15 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     background: #180c30;
     clip-path: url(#md3-flower-clip);
     -webkit-clip-path: url(#md3-flower-clip);
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
     transform-origin: center center;
     will-change: transform;
     transform: translateZ(0);
     filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
 }
 
-/* Outer Flower Frame Rotates -45deg Left (Smooth 60FPS) */
+/* On Hover: Rotates left once (-45deg) and automatically returns back to original shape (0deg)! */
 .md3-flower-card:hover .md3-flower-poster-wrap {
-    transform: rotate(-45deg);
-}
-
-/* Mouse Leave: Rotates back to 0deg */
-.md3-flower-card .md3-flower-poster-wrap {
-    transform: rotate(0deg);
+    animation: md3FlowerSpinReturn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .md3-flower-img {
@@ -6059,14 +6065,13 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     object-fit: cover;
     display: block;
     transform: scale(1.35) rotate(0deg);
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
     transform-origin: center center;
     will-change: transform;
 }
 
-/* Counter-Rotate Inner Image +45deg so Picture Stays 100% Upright! */
+/* On Hover: Inner image counter-rotates and returns back so picture stays 100% upright! */
 .md3-flower-card:hover .md3-flower-img {
-    transform: scale(1.35) rotate(45deg);
+    animation: md3ImageCounterSpinReturn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .md3-flower-play {
