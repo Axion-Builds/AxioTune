@@ -2465,6 +2465,8 @@ function onPlayerStateChange(event) {
                     coverArt.setAttribute('crossorigin', 'anonymous');
                     coverArt.src = hdImg.src;
                     miniCover.src = hdImg.src;
+                    const qNowArt = document.querySelector('.q-card-now-art');
+                    if (qNowArt) qNowArt.src = hdImg.src;
                     updateMediaSession(title, artist, hdImg.src);
                     
                     coverArt.classList.remove('cover-changing');
@@ -4590,7 +4592,10 @@ function onPlayerStateChange(event) {
             // NOW PLAYING CARD
             const nowVid = nowSong.id || nowSong.videoId || '';
             const nowFb = nowVid ? `https://i.ytimg.com/vi/${nowVid}/hqdefault.jpg` : 'default_cover.jpg';
-            const nowThumb = getCoverUrl(`${nowSong.title} ${nowSong.artist}`, nowSong.cover || '', nowVid);
+            const playerScreenCover = document.getElementById('cover-art')?.src;
+            const nowThumb = (playerScreenCover && playerScreenCover.startsWith('http') && !playerScreenCover.includes('default_cover.jpg'))
+                ? playerScreenCover
+                : getCoverUrl(`${nowSong.title} ${nowSong.artist}`, nowSong.cover || '', nowVid);
             const nowCard = document.createElement('div');
             nowCard.className = 'q-card-now';
             nowCard.style.setProperty('--card-index', 0);
