@@ -6036,20 +6036,16 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     background: #180c30;
     clip-path: url(#md3-flower-clip);
     -webkit-clip-path: url(#md3-flower-clip);
-    transition: transform 4.5s cubic-bezier(0.1, 1, 0.2, 1);
-    transform-origin: center center;
-    will-change: transform;
-    transform: translateZ(0);
+    transition: transform 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transform-origin: center center !important;
+    will-change: transform !important;
+    transform: rotate(0deg) translateZ(0);
     filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
 }
 
-/* On Hover: Rotates 90deg slowly in 1/4th turn so 4-lobed flower shape seamlessly matches original silhouette! */
+/* On Hover: Rotates 90deg slowly over 3.5s */
 .md3-flower-card:hover .md3-flower-poster-wrap {
-    transform: rotate(90deg);
-}
-
-.md3-flower-card .md3-flower-poster-wrap {
-    transform: rotate(0deg);
+    transform: rotate(90deg) translateZ(0) !important;
 }
 
 .md3-flower-img {
@@ -6057,19 +6053,15 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     height: 100%;
     object-fit: cover;
     display: block;
-    transform: scale(1.35) rotate(0deg);
-    transition: transform 4.5s cubic-bezier(0.1, 1, 0.2, 1);
-    transform-origin: center center;
-    will-change: transform;
+    transform: scale(1.35) rotate(0deg) translateZ(0);
+    transition: transform 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transform-origin: center center !important;
+    will-change: transform !important;
 }
 
 /* Counter-rotates inner image -90deg so picture stays 100% upright */
 .md3-flower-card:hover .md3-flower-img {
-    transform: scale(1.35) rotate(-90deg);
-}
-
-.md3-flower-card .md3-flower-img {
-    transform: scale(1.35) rotate(0deg);
+    transform: scale(1.35) rotate(-90deg) translateZ(0) !important;
 }
 
 .md3-flower-play {
