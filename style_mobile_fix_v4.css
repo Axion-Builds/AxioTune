@@ -6054,9 +6054,9 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
 }
 
-/* On Hover: Rotates left once (-45deg) and automatically returns back to original shape (0deg)! */
+/* On Hover: Rotates left gently (-45deg) and smoothly returns back to original shape (0deg) */
 .md3-flower-card:hover .md3-flower-poster-wrap {
-    animation: md3FlowerSpinReturn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: md3FlowerSpinReturn 1.15s cubic-bezier(0.25, 1, 0.35, 1) forwards;
 }
 
 .md3-flower-img {
@@ -6071,7 +6071,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 
 /* On Hover: Inner image counter-rotates and returns back so picture stays 100% upright! */
 .md3-flower-card:hover .md3-flower-img {
-    animation: md3ImageCounterSpinReturn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: md3ImageCounterSpinReturn 1.15s cubic-bezier(0.25, 1, 0.35, 1) forwards;
 }
 
 .md3-flower-play {
