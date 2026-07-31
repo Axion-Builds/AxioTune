@@ -3659,24 +3659,55 @@ function onPlayerStateChange(event) {
             });
         }
 
-        // Fetch Globally Viral Songs & India Trending Hits
+        // Fetch Globally Viral Songs & India Trending Hits (Instant Curated Default + Live API Search)
         async function fetchTrendingAndViralSongs() {
+            const defaultGlobalViral = [
+                { videoId: 'hT_nvWreIhg', title: 'Espresso', artist: 'Sabrina Carpenter', cover: 'https://i.scdn.co/image/ab67616d0000b273fd8d7aed31db214690e54d33' },
+                { videoId: 'q3zqJs7JUCQ', title: 'Fortnight', artist: 'Taylor Swift ft. Post Malone', cover: 'https://i.scdn.co/image/ab67616d0000b273bb54dde68cd23e2a268ae0f5' },
+                { videoId: 't7w8Z_M-2fU', title: 'BIRDS OF A FEATHER', artist: 'Billie Eilish', cover: 'https://i.scdn.co/image/ab67616d0000b27371d62ea7ea8a5be92d3c1f62' },
+                { videoId: 'EVZ981-LzD8', title: 'Please Please Please', artist: 'Sabrina Carpenter', cover: 'https://i.scdn.co/image/ab67616d0000b273fd8d7aed31db214690e54d33' },
+                { videoId: 'H5v3kku4y6Q', title: 'As It Was', artist: 'Harry Styles', cover: 'https://i.scdn.co/image/ab67616d0000b273b46f74097655d7f353caab14' },
+                { videoId: 'kffacxfA7G4', title: 'Greedy', artist: 'Tate McRae', cover: 'https://i.scdn.co/image/ab67616d0000b27322fd80edd709c0f99d989f66' },
+                { videoId: 'Uq9gPaIzbe8', title: 'Water', artist: 'Tyla', cover: 'https://i.scdn.co/image/ab67616d0000b2730a08e7a6857ed883907ff9dd' },
+                { videoId: 'Jg72l28mffQ', title: 'Cruel Summer', artist: 'Taylor Swift', cover: 'https://i.scdn.co/image/ab67616d0000b273e787cffcb666b26db2502750' }
+            ];
+
+            const defaultIndiaTrending = [
+                { videoId: '3yMPb_8q6K0', title: 'Tauba Tauba', artist: 'Karan Aujla', cover: 'https://i.scdn.co/image/ab67616d0000b27302484a0d926fb9fb641a9bc2' },
+                { videoId: 'gLMC4TzN34k', title: 'Soulmate', artist: 'Badshah ft. Arijit Singh', cover: 'https://i.scdn.co/image/ab67616d0000b273ee029a14d59a80b0fb30d7f5' },
+                { videoId: '1zKj13100j0', title: 'Millionaire', artist: 'Yo Yo Honey Singh', cover: 'https://i.scdn.co/image/ab67616d0000b2730ca782161f38fa093f41ae9a' },
+                { videoId: '2rN2h3Zz2Y0', title: 'Putt Jatt Da', artist: 'Diljit Dosanjh', cover: 'https://i.scdn.co/image/ab67616d0000b273fa439401be9d3752e2586b3e' },
+                { videoId: '0zN3a78f2Q1', title: 'Husn', artist: 'Anuv Jain', cover: 'https://i.scdn.co/image/ab67616d0000b273e970a25695fa9fa6067756f7' },
+                { videoId: '9zM73199k0L', title: 'Naina (Crew)', artist: 'Diljit Dosanjh ft. Badshah', cover: 'https://i.scdn.co/image/ab67616d0000b273b53f6390cfd26c59d9c2a8f8' },
+                { videoId: '8zK00213l8Q', title: 'Ve Kamleya', artist: 'Arijit Singh, Shreya Ghoshal', cover: 'https://i.scdn.co/image/ab67616d0000b27339d6718d09f7a77e5bc87b5a' },
+                { videoId: '0zM771190Lq', title: 'O Mahi', artist: 'Arijit Singh', cover: 'https://i.scdn.co/image/ab67616d0000b27351658a2d1d054bf38f8fa2ef' }
+            ];
+
+            // 0ms Instant Load
+            populateFlowerCards('home-global-viral-container', defaultGlobalViral);
+            populateFlowerCards('home-india-trending-container', defaultIndiaTrending);
+
             try {
-                // 1. Fetch Globally Viral Hits
-                const globalRes = await fetch('/api/recommendations?videoId=gLMC4TzN34k');
+                // Live Background API Search Update
+                const globalRes = await fetch('/api/search?q=' + encodeURIComponent('Global Viral Top Songs 2026'));
                 const globalData = await globalRes.json();
-                if (globalData.status === 'success' && globalData.recommendations && globalData.recommendations.length > 0) {
-                    populateFlowerCards('home-global-viral-container', globalData.recommendations.slice(0, 20));
+                if (globalData.status === 'success' && globalData.results && globalData.results.length > 0) {
+                    const songs = globalData.results.filter(r => r.videoId).map(r => ({
+                        videoId: r.videoId, title: r.title, artist: r.artist || r.uploader || 'Artist', cover: r.cover || r.thumbnail || ''
+                    }));
+                    if (songs.length > 0) populateFlowerCards('home-global-viral-container', songs.slice(0, 20));
                 }
 
-                // 2. Fetch India Trending Hits
-                const indiaRes = await fetch('/api/recommendations?videoId=3yMPb_8q6K0');
+                const indiaRes = await fetch('/api/search?q=' + encodeURIComponent('India Trending Songs Top 50 2026'));
                 const indiaData = await indiaRes.json();
-                if (indiaData.status === 'success' && indiaData.recommendations && indiaData.recommendations.length > 0) {
-                    populateFlowerCards('home-india-trending-container', indiaData.recommendations.slice(0, 20));
+                if (indiaData.status === 'success' && indiaData.results && indiaData.results.length > 0) {
+                    const songs = indiaData.results.filter(r => r.videoId).map(r => ({
+                        videoId: r.videoId, title: r.title, artist: r.artist || r.uploader || 'Artist', cover: r.cover || r.thumbnail || ''
+                    }));
+                    if (songs.length > 0) populateFlowerCards('home-india-trending-container', songs.slice(0, 20));
                 }
             } catch (err) {
-                console.warn("Trending fetch fallback:", err);
+                console.warn("Live trending update failed, using curated defaults:", err);
             }
         }
 
