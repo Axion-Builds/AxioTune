@@ -5962,3 +5962,14 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
         transform: scale(0.85);
     }
 }
+
+/* GPU Hardware Acceleration for 60FPS Instant Scroll Responsiveness */
+.screen-view, #home-screen, #library-screen, #queue-drawer, .q-horizontal-scroll {
+    will-change: scroll-position, transform !important;
+    contain: layout style !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+#cat-pupil-left, #cat-pupil-right, #cat-head-group, #cat-paw {
+    will-change: transform !important;
+    transform: translateZ(0);
+}

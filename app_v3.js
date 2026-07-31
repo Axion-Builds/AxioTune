@@ -175,7 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (topBar) {
                 if (topBarScrollTimeout) return;
                 topBarScrollTimeout = requestAnimationFrame(() => {
-                    topBar.style.transform = `translateY(px)`;
+                    const st = screen.scrollTop;
+                    topBar.style.transform = st > 50 ? 'translateY(-4px)' : 'translateY(0)';
                     topBarScrollTimeout = null;
                 });
             }
@@ -6436,15 +6437,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-let isScrolling;
-window.addEventListener('scroll', function ( event ) {
-    window.clearTimeout( isScrolling );
-    document.body.style.pointerEvents = 'none';
-    isScrolling = setTimeout(function() {
-        document.body.style.pointerEvents = 'auto';
-    }, 66);
-}, true);
-
 /* 🐾 AXIØTUNE CUTE LOFI CAT PET COMPANION CONTROLLER 🐾 */
 function initCatCompanion() {
     const catPet = document.getElementById('axio-cat-pet');
@@ -6460,36 +6452,45 @@ function initCatCompanion() {
     let targetDxLeft = 0, targetDyLeft = 0;
     let targetDxRight = 0, targetDyRight = 0;
     let headAngle = 0;
+    let lastDxLeft = null, lastDyLeft = null;
+    let mouseMoveScheduled = false;
 
-    // Mouse movement pupil tracking & head tilt
+    // Mouse movement pupil tracking & head tilt (Throttled for 60FPS smoothness)
     window.addEventListener('mousemove', (e) => {
-        const rect = catPet.getBoundingClientRect();
-        // Left Eye SVG Center
-        const leftEyeX = rect.left + (45 / 120) * rect.width;
-        const leftEyeY = rect.top + (48 / 120) * rect.height;
-        // Right Eye SVG Center
-        const rightEyeX = rect.left + (75 / 120) * rect.width;
-        const rightEyeY = rect.top + (48 / 120) * rect.height;
+        if (mouseMoveScheduled) return;
+        mouseMoveScheduled = true;
+        requestAnimationFrame(() => {
+            mouseMoveScheduled = false;
+            const rect = catPet.getBoundingClientRect();
+            // Left Eye SVG Center
+            const leftEyeX = rect.left + (45 / 120) * rect.width;
+            const leftEyeY = rect.top + (48 / 120) * rect.height;
+            // Right Eye SVG Center
+            const rightEyeX = rect.left + (75 / 120) * rect.width;
+            const rightEyeY = rect.top + (48 / 120) * rect.height;
 
-        const angleLeft = Math.atan2(e.clientY - leftEyeY, e.clientX - leftEyeX);
-        const distLeft = Math.min(3.8, Math.hypot(e.clientX - leftEyeX, e.clientY - leftEyeY) / 60);
-        targetDxLeft = Math.cos(angleLeft) * distLeft;
-        targetDyLeft = Math.sin(angleLeft) * distLeft;
+            const angleLeft = Math.atan2(e.clientY - leftEyeY, e.clientX - leftEyeX);
+            const distLeft = Math.min(3.8, Math.hypot(e.clientX - leftEyeX, e.clientY - leftEyeY) / 60);
+            targetDxLeft = Math.cos(angleLeft) * distLeft;
+            targetDyLeft = Math.sin(angleLeft) * distLeft;
 
-        const angleRight = Math.atan2(e.clientY - rightEyeY, e.clientX - rightEyeX);
-        const distRight = Math.min(3.8, Math.hypot(e.clientX - rightEyeX, e.clientY - rightEyeY) / 60);
-        targetDxRight = Math.cos(angleRight) * distRight;
-        targetDyRight = Math.sin(angleRight) * distRight;
+            const angleRight = Math.atan2(e.clientY - rightEyeY, e.clientX - rightEyeX);
+            const distRight = Math.min(3.8, Math.hypot(e.clientX - rightEyeX, e.clientY - rightEyeY) / 60);
+            targetDxRight = Math.cos(angleRight) * distRight;
+            targetDyRight = Math.sin(angleRight) * distRight;
 
-        // Head tilt angle calculation
-        const headCenterX = rect.left + (60 / 120) * rect.width;
-        headAngle = Math.max(-12, Math.min(12, (e.clientX - headCenterX) / 45));
+            // Head tilt angle calculation
+            const headCenterX = rect.left + (60 / 120) * rect.width;
+            headAngle = Math.max(-12, Math.min(12, (e.clientX - headCenterX) / 45));
+        });
     }, { passive: true });
 
-    // Smooth Animation Frame Loop
+    // Smooth Animation Frame Loop (Only mutates DOM when values actually change!)
     let beatTime = 0;
     function catAnimLoop() {
-        if (pupilLeft && pupilRight) {
+        if (pupilLeft && pupilRight && (lastDxLeft !== targetDxLeft || lastDyLeft !== targetDyLeft)) {
+            lastDxLeft = targetDxLeft;
+            lastDyLeft = targetDyLeft;
             pupilLeft.style.transform = `translate(${targetDxLeft.toFixed(2)}px, ${targetDyLeft.toFixed(2)}px)`;
             pupilRight.style.transform = `translate(${targetDxRight.toFixed(2)}px, ${targetDyRight.toFixed(2)}px)`;
         }
@@ -6498,8 +6499,8 @@ function initCatCompanion() {
 
         if (isPlaying) {
             // Awake Mode
-            if (eyesAwake) eyesAwake.style.display = 'inline';
-            if (eyesAsleep) eyesAsleep.style.display = 'none';
+            if (eyesAwake && eyesAwake.style.display !== 'inline') eyesAwake.style.display = 'inline';
+            if (eyesAsleep && eyesAsleep.style.display !== 'none') eyesAsleep.style.display = 'none';
 
             // Music Beat-Bop Head Movement
             beatTime += 0.12;
@@ -6514,10 +6515,10 @@ function initCatCompanion() {
         } else {
             // Sleeping Mode
             beatTime = 0;
-            if (eyesAwake) eyesAwake.style.display = 'none';
-            if (eyesAsleep) eyesAsleep.style.display = 'inline';
+            if (eyesAwake && eyesAwake.style.display !== 'none') eyesAwake.style.display = 'none';
+            if (eyesAsleep && eyesAsleep.style.display !== 'inline') eyesAsleep.style.display = 'inline';
             if (headGroup) headGroup.style.transform = `rotate(${headAngle.toFixed(1)}deg)`;
-            if (bubble) bubble.textContent = 'Zzz...';
+            if (bubble && bubble.textContent !== 'Zzz...') bubble.textContent = 'Zzz...';
         }
 
         requestAnimationFrame(catAnimLoop);
