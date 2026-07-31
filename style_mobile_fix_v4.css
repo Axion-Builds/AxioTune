@@ -1039,24 +1039,30 @@
         .lyric-word {
             display: inline-block;
             padding: 0 1px;
-            background: linear-gradient(
-                to right,
-                rgba(255, 255, 255, 1) 0%,
-                rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 8px)),
-                rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 8px)),
-                rgba(255, 255, 255, 0.35) 100%
-            );
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-            transition: --progress 0.15s ease-out, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s ease;
+            color: rgba(255, 255, 255, 0.35);
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.35);
+            background: none;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease;
             transform-origin: bottom center;
         }
 
         .lyric-word.active { 
+            background: linear-gradient(
+                to right,
+                #ffffff 0%,
+                #ffffff var(--progress, 0%),
+                rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 4px)),
+                rgba(255, 255, 255, 0.35) 100%
+            );
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
             transform: scale(var(--lrc-bounce-scale, 1.05)) translateY(-1px);
             filter: drop-shadow(0 0 var(--lrc-glow-radius, 10px) rgba(var(--accent-rgb), var(--lrc-glow-opacity, 0.8)));
         }
 
         .lyric-word.passed {
+            color: #ffffff;
+            -webkit-text-fill-color: #ffffff;
+            background: none;
             transform: scale(1);
         }
 
@@ -5845,32 +5851,34 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 .lyric-word {
     display: inline-block !important;
     margin-right: 6px !important;
+    color: rgba(255, 255, 255, 0.35) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.35) !important;
+    background: none !important;
+    transform: translateY(0) scale(1);
+    transform-origin: bottom center !important;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease, color 0.2s ease, -webkit-text-fill-color 0.2s ease !important;
+}
+
+.lyric-word.active {
     background: linear-gradient(
         to right,
         #ffffff 0%,
-        #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 6px)),
-        rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 6px)),
+        #ffffff var(--progress, 0%),
+        rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 4px)),
         rgba(255, 255, 255, 0.35) 100%
     ) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
-    transform: translateY(0) scale(1);
-    transform-origin: bottom center !important;
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease !important;
-}
-
-.lyric-word.active {
     transform: translateY(-3px) scale(var(--lrc-bounce-scale, 1.08)) !important;
     filter: drop-shadow(0 0 var(--lrc-glow-radius, 12px) rgba(var(--accent-rgb, 140,50,255), var(--lrc-glow-opacity, 0.85))) !important;
 }
 
 .lyric-word.passed {
-    background: #ffffff !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
+    background: none !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     transform: translateY(0) scale(1) !important;
     filter: none !important;
 }
