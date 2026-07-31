@@ -3192,9 +3192,9 @@ function onPlayerStateChange(event) {
                         let pct = 0;
                         const dur = Math.max(0.15, w.end - w.start);
                         if (time >= w.end) {
-                            pct = 100;
                             if (w.state !== 'passed') {
                                 w.el.className = 'lyric-word passed';
+                                w.el.style.setProperty('--progress', '100%');
                                 w.state = 'passed';
                             }
                         } else if (time >= w.start) {
@@ -3203,14 +3203,14 @@ function onPlayerStateChange(event) {
                                 w.el.className = 'lyric-word active';
                                 w.state = 'active';
                             }
+                            w.el.style.setProperty('--progress', `${pct}%`);
                         } else {
-                            pct = 0;
                             if (w.state !== 'future') {
                                 w.el.className = 'lyric-word';
+                                w.el.style.setProperty('--progress', '0%');
                                 w.state = 'future';
                             }
                         }
-                        w.el.style.setProperty('--progress', `${pct}%`);
                     });
                 }
             }
