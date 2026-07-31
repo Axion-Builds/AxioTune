@@ -3557,7 +3557,7 @@ function onPlayerStateChange(event) {
             }
         }
 
-        // Ã°Å¸Å½Â¬ CINEMATIC CARDS Ã¢â‚¬â€ Netflix-style horizontal scroll for "AI Mix"
+        // 🎬 CINEMATIC CARDS — Spotify/Apple Music Style Square Cards for "AI Mix"
         function populateCinematicCards(containerId, entries) {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -3566,7 +3566,7 @@ function onPlayerStateChange(event) {
 
             entries.forEach((item, idx) => {
                 const title = item.title || item.name || 'Unknown';
-                const subtitle = item.artist || item.uploader || '';
+                const subtitle = item.artist || item.uploader || 'Artist';
                 const videoId = item.videoId || item.id;
                 let rawThumb = item.cover || item.thumbnail || item.thumb || '';
                 if (!rawThumb && videoId) rawThumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
@@ -3579,15 +3579,20 @@ function onPlayerStateChange(event) {
                 card.className = 'cinematic-card';
                 card.style.animationDelay = `${idx * 0.04}s`;
                 card.innerHTML = `
-                    <div class="cinematic-card-inner">
+                    <div class="cinematic-poster-wrap">
                         <img src="${thumb}" class="cinematic-card-img" alt="${safeTitle}" loading="lazy" decoding="async"
                              onerror="this.onerror=null;this.src='${fallbackThumb}'">
-                        <div class="cinematic-card-body">
-                            <div class="cinematic-card-title">${safeTitle}</div>
-                            <div class="cinematic-card-artist">${safeArtist}</div>
-                        </div>
                         <div class="cinematic-card-play">
                             <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </div>
+                    <div class="cinematic-card-meta">
+                        <div class="cinematic-card-artist">${safeArtist}</div>
+                        <div class="cinematic-card-title-row">
+                            <div class="cinematic-card-title">${safeTitle}</div>
+                            <button class="cinematic-card-more" title="Options" onclick="event.stopPropagation(); if(typeof openSongOptions==='function') openSongOptions('${videoId}', '${safeTitle.replace(/'/g, "\\'")}', '${safeArtist.replace(/'/g, "\\'")}', '${thumb}');">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                            </button>
                         </div>
                     </div>
                 `;
