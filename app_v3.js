@@ -2320,9 +2320,10 @@ function onPlayerStateChange(event) {
         // Helper to parse standard LRC string ([00:12.34] lyric text) into lyricsData structure
         function parseLrcString(lrcStr) {
             if (!lrcStr) return [];
-            const lines = lrcStr.split('\n');
-            const result = [];
-            lines.forEach((line) => {
+            const rawLines = lrcStr.split('\n');
+            const parsedLines = [];
+            
+            rawLines.forEach((line) => {
                 const match = line.match(/\[(\d+):(\d+(?:\.\d+)?)\](.*)/);
                 if (match) {
                     const min = parseInt(match[1], 10);
@@ -2330,26 +2331,42 @@ function onPlayerStateChange(event) {
                     const time = min * 60 + sec;
                     const text = match[3].trim();
                     if (text) {
-                        const words = text.split(' ').map((w, wIdx) => {
-                            return { word: w, time: time + (wIdx * 0.35) };
-                        });
-                        result.push({ time, text, words });
+                        parsedLines.push({ time, text });
                     }
                 }
             });
 
-            return result.map((l, lineIdx, lineArr) => {
-                const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
+            return parsedLines.map((l, lineIdx, lineArr) => {
+                const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.8);
+                const lineDuration = Math.max(1.2, nextLineTime - l.time);
+                
+                // Split line into raw words
+                const rawWords = l.text.split(/\s+/).filter(w => w.length > 0);
+                
+                // Calculate phonetic & syllable weight for each word (vowels & length)
+                const wordWeights = rawWords.map(w => {
+                    const vowels = (w.match(/[aeiouyàáâãäåèéêëìíîïòóôõöùúûü]/gi) || []).length;
+                    return Math.max(1, w.length + (vowels * 0.8));
+                });
+                
+                const totalWeight = wordWeights.reduce((a, b) => a + b, 0) || 1;
+                
+                // Allocate lineDuration proportionally according to word weight
+                let currentWordTime = l.time;
+                const words = rawWords.map((w, idx) => {
+                    const allocatedDur = (wordWeights[idx] / totalWeight) * lineDuration;
+                    const wStart = currentWordTime;
+                    const wEnd = currentWordTime + allocatedDur;
+                    currentWordTime = wEnd;
+                    return { text: w, start: wStart, end: wEnd };
+                });
+
                 return {
                     start: l.time,
                     end: nextLineTime,
                     text: l.text,
                     isInstrumental: false,
-                    words: (l.words || []).map((w, idx, arr) => {
-                        let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
-                        if (nextTime <= w.time) nextTime = w.time + 0.3;
-                        return { text: w.word, start: w.time, end: nextTime };
-                    })
+                    words: words
                 };
             });
         }
