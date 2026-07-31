@@ -6445,6 +6445,105 @@ window.addEventListener('scroll', function ( event ) {
     }, 66);
 }, true);
 
+/* 🐾 AXIØTUNE CUTE LOFI CAT PET COMPANION CONTROLLER 🐾 */
+function initCatCompanion() {
+    const catPet = document.getElementById('axio-cat-pet');
+    const pupilLeft = document.getElementById('cat-pupil-left');
+    const pupilRight = document.getElementById('cat-pupil-right');
+    const headGroup = document.getElementById('cat-head-group');
+    const eyesAwake = document.getElementById('cat-eyes-awake');
+    const eyesAsleep = document.getElementById('cat-eyes-asleep');
+    const bubble = document.getElementById('cat-speech-bubble');
+
+    if (!catPet || !pupilLeft || !pupilRight) return;
+
+    let targetDxLeft = 0, targetDyLeft = 0;
+    let targetDxRight = 0, targetDyRight = 0;
+    let headAngle = 0;
+
+    // Mouse movement pupil tracking & head tilt
+    window.addEventListener('mousemove', (e) => {
+        const rect = catPet.getBoundingClientRect();
+        // Left Eye SVG Center
+        const leftEyeX = rect.left + (45 / 120) * rect.width;
+        const leftEyeY = rect.top + (48 / 120) * rect.height;
+        // Right Eye SVG Center
+        const rightEyeX = rect.left + (75 / 120) * rect.width;
+        const rightEyeY = rect.top + (48 / 120) * rect.height;
+
+        const angleLeft = Math.atan2(e.clientY - leftEyeY, e.clientX - leftEyeX);
+        const distLeft = Math.min(3.8, Math.hypot(e.clientX - leftEyeX, e.clientY - leftEyeY) / 60);
+        targetDxLeft = Math.cos(angleLeft) * distLeft;
+        targetDyLeft = Math.sin(angleLeft) * distLeft;
+
+        const angleRight = Math.atan2(e.clientY - rightEyeY, e.clientX - rightEyeX);
+        const distRight = Math.min(3.8, Math.hypot(e.clientX - rightEyeX, e.clientY - rightEyeY) / 60);
+        targetDxRight = Math.cos(angleRight) * distRight;
+        targetDyRight = Math.sin(angleRight) * distRight;
+
+        // Head tilt angle calculation
+        const headCenterX = rect.left + (60 / 120) * rect.width;
+        headAngle = Math.max(-12, Math.min(12, (e.clientX - headCenterX) / 45));
+    }, { passive: true });
+
+    // Smooth Animation Frame Loop
+    let beatTime = 0;
+    function catAnimLoop() {
+        if (pupilLeft && pupilRight) {
+            pupilLeft.style.transform = `translate(${targetDxLeft.toFixed(2)}px, ${targetDyLeft.toFixed(2)}px)`;
+            pupilRight.style.transform = `translate(${targetDxRight.toFixed(2)}px, ${targetDyRight.toFixed(2)}px)`;
+        }
+
+        const isPlaying = audioPlayer && !audioPlayer.paused;
+
+        if (isPlaying) {
+            // Awake Mode
+            if (eyesAwake) eyesAwake.style.display = 'inline';
+            if (eyesAsleep) eyesAsleep.style.display = 'none';
+
+            // Music Beat-Bop Head Movement
+            beatTime += 0.12;
+            const bopY = Math.sin(beatTime * 3) * 3;
+            const headRot = headAngle + (Math.cos(beatTime * 2.5) * 3);
+            if (headGroup) headGroup.style.transform = `translateY(${bopY.toFixed(1)}px) rotate(${headRot.toFixed(1)}deg)`;
+
+            if (bubble && Math.random() < 0.015) {
+                const notes = ['🎵', '🎶', '✨', '🔥', '💖', '🐾'];
+                bubble.textContent = notes[Math.floor(Math.random() * notes.length)];
+            }
+        } else {
+            // Sleeping Mode
+            beatTime = 0;
+            if (eyesAwake) eyesAwake.style.display = 'none';
+            if (eyesAsleep) eyesAsleep.style.display = 'inline';
+            if (headGroup) headGroup.style.transform = `rotate(${headAngle.toFixed(1)}deg)`;
+            if (bubble) bubble.textContent = 'Zzz...';
+        }
+
+        requestAnimationFrame(catAnimLoop);
+    }
+    requestAnimationFrame(catAnimLoop);
+
+    // Interactive Click Easter Egg
+    catPet.addEventListener('click', () => {
+        if (typeof showToast === 'function') showToast("🐱 Axio Cat: Purrrrrr! 💖🎵");
+        
+        // Spawn Floating Heart Particle
+        const heart = document.createElement('div');
+        heart.textContent = '💖';
+        heart.style.cssText = 'position:fixed; bottom:90px; left:40px; font-size:1.4rem; z-index:100000; pointer-events:none; transition: all 1s ease-out; opacity:1;';
+        document.body.appendChild(heart);
+        requestAnimationFrame(() => {
+            heart.style.transform = 'translateY(-60px) scale(1.5)';
+            heart.style.opacity = '0';
+        });
+        setTimeout(() => heart.remove(), 1000);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initCatCompanion);
+setTimeout(initCatCompanion, 1000);
+
 
 
 

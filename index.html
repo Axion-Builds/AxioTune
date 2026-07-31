@@ -34,7 +34,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=128">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=129">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -494,6 +494,94 @@
         <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
         <span class="nav-tooltip">Queue</span>
     </button>
+
+    <!-- 🐾 AXIØTUNE CUTE LOFI CAT PET COMPANION 🐾 -->
+    <div id="axio-cat-pet" title="Click Axio Cat for Purrs & Music Beat! 🐾">
+        <div id="cat-speech-bubble" class="cat-bubble">Zzz...</div>
+        <svg id="cat-svg" viewBox="0 0 120 120" width="80" height="80">
+            <defs>
+                <linearGradient id="catBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#2a1b40"/>
+                    <stop offset="100%" stop-color="#120924"/>
+                </linearGradient>
+                <linearGradient id="catHeadphoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="var(--accent, #ff2d55)"/>
+                    <stop offset="100%" stop-color="#00c2ff"/>
+                </linearGradient>
+            </defs>
+            
+            <!-- Shadow Base -->
+            <ellipse cx="60" cy="108" rx="42" ry="8" fill="rgba(0,0,0,0.4)" />
+            <ellipse cx="60" cy="106" rx="34" ry="5" fill="rgba(var(--accent-rgb, 140,50,255), 0.35)" />
+
+            <!-- Tail -->
+            <path id="cat-tail" d="M 85 92 C 108 85, 112 65, 96 55 C 90 50, 86 62, 92 70" fill="none" stroke="#2a1b40" stroke-width="8" stroke-linecap="round"/>
+
+            <!-- Body -->
+            <ellipse cx="60" cy="85" rx="28" ry="22" fill="url(#catBodyGrad)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+            <ellipse cx="60" cy="88" rx="14" ry="12" fill="rgba(255,255,255,0.12)"/>
+
+            <!-- Head Group -->
+            <g id="cat-head-group" transform-origin="60 55">
+                <!-- Left Ear -->
+                <polygon points="38,42 26,18 50,34" fill="#2a1b40" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                <polygon points="40,40 30,23 48,34" fill="#ff7597" opacity="0.6"/>
+                <!-- Right Ear -->
+                <polygon points="82,42 94,18 70,34" fill="#2a1b40" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                <polygon points="80,40 90,23 72,34" fill="#ff7597" opacity="0.6"/>
+
+                <!-- Head Base -->
+                <ellipse cx="60" cy="52" rx="32" ry="24" fill="url(#catBodyGrad)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+
+                <!-- Cheeks -->
+                <circle cx="40" cy="58" r="5" fill="#ff7597" opacity="0.4"/>
+                <circle cx="80" cy="58" r="5" fill="#ff7597" opacity="0.4"/>
+
+                <!-- Whiskers -->
+                <path d="M 28 54 L 10 50 M 28 58 L 8 58 M 28 62 L 12 66" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" stroke-linecap="round"/>
+                <path d="M 92 54 L 110 50 M 92 58 L 112 58 M 92 62 L 108 66" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" stroke-linecap="round"/>
+
+                <!-- Nose & Mouth -->
+                <polygon points="60,57 57,54 63,54" fill="#ff7597"/>
+                <path d="M 57 59 Q 60 62 63 59" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" stroke-linecap="round"/>
+
+                <!-- EYES AWAKE -->
+                <g id="cat-eyes-awake">
+                    <ellipse cx="45" cy="48" rx="8" ry="9" fill="#ffffff"/>
+                    <ellipse cx="75" cy="48" rx="8" ry="9" fill="#ffffff"/>
+                    <g id="cat-pupil-left">
+                        <circle cx="45" cy="48" r="5" fill="#120924"/>
+                        <circle cx="43" cy="46" r="1.8" fill="#ffffff"/>
+                    </g>
+                    <g id="cat-pupil-right">
+                        <circle cx="75" cy="48" r="5" fill="#120924"/>
+                        <circle cx="73" cy="46" r="1.8" fill="#ffffff"/>
+                    </g>
+                </g>
+
+                <!-- EYES ASLEEP -->
+                <g id="cat-eyes-asleep" style="display:none;">
+                    <path d="M 39 48 Q 45 54 51 48" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M 69 48 Q 75 54 81 48" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round"/>
+                </g>
+
+                <!-- Headphones -->
+                <g id="cat-headphones">
+                    <path d="M 28 50 C 28 20, 92 20, 92 50" fill="none" stroke="url(#catHeadphoneGrad)" stroke-width="4" stroke-linecap="round"/>
+                    <rect x="18" y="40" width="10" height="20" rx="5" fill="url(#catHeadphoneGrad)" stroke="#ffffff" stroke-width="1"/>
+                    <rect x="92" y="40" width="10" height="20" rx="5" fill="url(#catHeadphoneGrad)" stroke="#ffffff" stroke-width="1"/>
+                </g>
+            </g>
+
+            <!-- Paw -->
+            <g id="cat-paw" transform="translate(0,0)">
+                <ellipse cx="38" cy="98" rx="8" ry="6" fill="#2a1b40" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                <circle cx="35" cy="95" r="1.5" fill="#ff7597"/>
+                <circle cx="38" cy="94" r="1.5" fill="#ff7597"/>
+                <circle cx="41" cy="95" r="1.5" fill="#ff7597"/>
+            </g>
+        </svg>
+    </div>
 
     <!-- Home Screen with 3D Vinyl Gallery -->
     <!-- Home Screen -->
@@ -1416,7 +1504,7 @@
     </div>
     <div id="queue-backdrop"></div>
 
-    <script src="app_v3.js?v=128"></script>
+    <script src="app_v3.js?v=129"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
