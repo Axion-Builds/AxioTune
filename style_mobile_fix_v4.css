@@ -5990,6 +5990,271 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     }
 }
 
+/* 🐱 MAJONI AI CHATBOT MODAL (COMPACT, MINIMAL, GLASSMORPHISM) 🐱 */
+#majoni-chat-modal {
+    position: fixed;
+    bottom: 110px;
+    left: 18px;
+    width: 350px;
+    max-width: calc(100vw - 36px);
+    height: 470px;
+    max-height: calc(100vh - 140px);
+    background: rgba(16, 8, 32, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 20px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(var(--accent-rgb, 255, 45, 85), 0.15);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    transform-origin: bottom left;
+}
+
+#majoni-chat-modal.majoni-modal-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.9) translateY(20px);
+}
+
+.majoni-modal-header {
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.majoni-avatar-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.majoni-avatar-icon {
+    font-size: 1.5rem;
+    background: rgba(255, 45, 85, 0.15);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 45, 85, 0.3);
+}
+
+.majoni-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+
+.majoni-subtitle {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.majoni-icon-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.majoni-icon-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.majoni-chips-container {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.majoni-chips-container::-webkit-scrollbar { display: none; }
+
+.majoni-chip {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.majoni-chip:hover {
+    background: var(--accent, #ff2d55);
+    color: #ffffff;
+    transform: scale(1.03);
+}
+
+.majoni-messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+.majoni-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+    animation: fadeInUp 0.3s ease both;
+}
+
+.majoni-msg.bot {
+    align-self: flex-start;
+}
+
+.majoni-msg.user {
+    align-self: flex-end;
+}
+
+.majoni-bubble {
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.majoni-msg.bot .majoni-bubble {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-top-left-radius: 4px;
+}
+
+.majoni-msg.user .majoni-bubble {
+    background: linear-gradient(135deg, var(--accent, #ff2d55), #00c2ff);
+    color: #ffffff;
+    border-top-right-radius: 4px;
+    font-weight: 500;
+}
+
+/* Song Card inside Majoni Chat */
+.majoni-song-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 6px 10px;
+    border-radius: 10px;
+    margin-top: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.majoni-song-card:hover {
+    background: rgba(255, 45, 85, 0.25);
+}
+.majoni-song-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+.majoni-song-info {
+    flex: 1;
+    overflow: hidden;
+}
+.majoni-song-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.majoni-song-artist {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.majoni-input-bar {
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.majoni-mic-btn, .majoni-send-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ffffff;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    flex-shrink: 0;
+}
+
+.majoni-mic-btn:hover {
+    background: #00c2ff;
+}
+
+.majoni-mic-btn.listening {
+    background: #ff2d55;
+    animation: pulse 1s infinite alternate;
+}
+
+.majoni-send-btn:hover {
+    background: var(--accent, #ff2d55);
+}
+
+#majoni-chat-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    padding: 7px 14px;
+    color: #ffffff;
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#majoni-chat-input:focus {
+    border-color: var(--accent, #ff2d55);
+}
+
+@media (max-width: 768px) {
+    #majoni-chat-modal {
+        bottom: 155px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        height: 420px;
+    }
+}
+
 /* GPU Hardware Acceleration for 60FPS Instant Scroll Responsiveness */
 .screen-view, #home-screen, #library-screen, #queue-drawer, .q-horizontal-scroll {
     will-change: scroll-position, transform !important;

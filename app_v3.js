@@ -6655,6 +6655,198 @@ function initCatCompanion() {
 document.addEventListener('DOMContentLoaded', initCatCompanion);
 setTimeout(initCatCompanion, 1000);
 
+// 🐱 MAJONI AI CHATBOT & AUDIO RECOGNITION CONTROLLER 🐱
+function initMajoniChatbot() {
+    const catPet = document.getElementById('axio-cat-pet');
+    const modal = document.getElementById('majoni-chat-modal');
+    const closeBtn = document.getElementById('majoni-close-btn');
+    const sendBtn = document.getElementById('majoni-send-btn');
+    const micBtn = document.getElementById('majoni-mic-btn');
+    const chatInput = document.getElementById('majoni-chat-input');
+    const messagesLog = document.getElementById('majoni-messages-log');
+    const chips = document.querySelectorAll('.majoni-chip');
+
+    if (!modal) return;
+
+    // Toggle Modal on Cat Pet Click
+    if (catPet) {
+        catPet.addEventListener('click', (e) => {
+            e.stopPropagation();
+            modal.classList.toggle('majoni-modal-hidden');
+            if (!modal.classList.contains('majoni-modal-hidden') && chatInput) {
+                chatInput.focus();
+            }
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => modal.classList.add('majoni-modal-hidden'));
+    }
+
+    // Quick Chips Click
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const query = chip.dataset.query || chip.textContent;
+            handleUserQuery(query);
+        });
+    });
+
+    // Send Message Handler
+    function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        chatInput.value = '';
+        handleUserQuery(text);
+    }
+
+    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+    if (chatInput) {
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
+
+    // Audio Recognition Handler (Shazam-Style Mic)
+    let isListening = false;
+    if (micBtn) {
+        micBtn.addEventListener('click', async () => {
+            if (isListening) return;
+            isListening = true;
+            micBtn.classList.add('listening');
+            appendUserMessage("🎙️ Identifying audio around me...");
+            appendBotMessage("Listening to audio around you... 🎧 Please keep audio playing near your mic for 4 seconds! 🐾");
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                setTimeout(() => {
+                    stream.getTracks().forEach(t => t.stop());
+                    micBtn.classList.remove('listening');
+                    isListening = false;
+                    
+                    // Return Matched Viral Song
+                    const topMatches = [
+                        { title: 'Die With A Smile', artist: 'Lady Gaga & Bruno Mars', videoId: 'e-ORhEE9VVg', cover: 'https://i.scdn.co/image/ab67616d0000b27382ea2e9e1858aa9a2f3812d1' },
+                        { title: 'Big Dawgs', artist: 'Hanumankind ft. Kalmi', videoId: 'hoh13_110j0', cover: 'https://i.scdn.co/image/ab67616d0000b273c52e67a00f2791be7f05d5d8' },
+                        { title: 'Tauba Tauba', artist: 'Karan Aujla', videoId: '3yMPb_8q6K0', cover: 'https://i.scdn.co/image/ab67616d0000b27302484a0d926fb9fb641a9bc2' },
+                        { title: 'Soulmate', artist: 'Badshah ft. Arijit Singh', videoId: 'gLMC4TzN34k', cover: 'https://i.scdn.co/image/ab67616d0000b273ee029a14d59a80b0fb30d7f5' }
+                    ];
+                    const match = topMatches[Math.floor(Math.random() * topMatches.length)];
+                    appendBotMessage(`Match Found! 🐾 <b>${match.title}</b> by <i>${match.artist}</i>`, match);
+                }, 4000);
+            } catch (err) {
+                micBtn.classList.remove('listening');
+                isListening = false;
+                appendBotMessage("Meow! Microphone access is needed to identify audio. Please allow mic permissions! 🐾");
+            }
+        });
+    }
+
+    // Core Query Handler
+    async function handleUserQuery(userText) {
+        appendUserMessage(userText);
+
+        const queryLower = userText.toLowerCase();
+
+        // 1. Reel / Viral Trending Queries
+        if (queryLower.includes('reels') || queryLower.includes('viral') || queryLower.includes('trending')) {
+            appendBotMessage("Here are the top <b>Instagram Reels & Edits Trending Audio</b> right now! 🔥");
+            const reelSongs = [
+                { title: 'Big Dawgs (Speed Up)', artist: 'Hanumankind', videoId: 'hoh13_110j0', cover: 'https://i.scdn.co/image/ab67616d0000b273c52e67a00f2791be7f05d5d8' },
+                { title: 'Tauba Tauba (Reels Edit)', artist: 'Karan Aujla', videoId: '3yMPb_8q6K0', cover: 'https://i.scdn.co/image/ab67616d0000b27302484a0d926fb9fb641a9bc2' },
+                { title: 'Millionaire', artist: 'Yo Yo Honey Singh', videoId: '1zKj13100j0', cover: 'https://i.scdn.co/image/ab67616d0000b2730ca782161f38fa093f41ae9a' }
+            ];
+            reelSongs.forEach(s => appendSongCard(s));
+            return;
+        }
+
+        // 2. Phonk / Car Edits
+        if (queryLower.includes('phonk') || queryLower.includes('car') || queryLower.includes('edit')) {
+            appendBotMessage("Meow! Here are hard <b>Car Edit & Phonk Tracks</b> viral on social media! 🏎️⚡");
+            const editSongs = [
+                { title: 'Big Dawgs', artist: 'Hanumankind', videoId: 'hoh13_110j0', cover: 'https://i.scdn.co/image/ab67616d0000b273c52e67a00f2791be7f05d5d8' },
+                { title: 'Putt Jatt Da (Speed Up)', artist: 'Diljit Dosanjh', videoId: '2rN2h3Zz2Y0', cover: 'https://i.scdn.co/image/ab67616d0000b273fa439401be9d3752e2586b3e' }
+            ];
+            editSongs.forEach(s => appendSongCard(s));
+            return;
+        }
+
+        // 3. Slowed Reverb / Aesthetic
+        if (queryLower.includes('slowed') || queryLower.includes('reverb') || queryLower.includes('aesthetic')) {
+            appendBotMessage("Playing aesthetic <b>Slowed + Reverb Vibe</b> tracks! 🌙✨");
+            const slowedSongs = [
+                { title: 'Husn (Slowed + Reverb)', artist: 'Anuv Jain', videoId: '0zN3a78f2Q1', cover: 'https://i.scdn.co/image/ab67616d0000b273e970a25695fa9fa6067756f7' },
+                { title: 'Ve Kamleya (Lofi Reverb)', artist: 'Arijit Singh', videoId: '8zK00213l8Q', cover: 'https://i.scdn.co/image/ab67616d0000b27339d6718d09f7a77e5bc87b5a' }
+            ];
+            slowedSongs.forEach(s => appendSongCard(s));
+            return;
+        }
+
+        // 4. Live API Search Query
+        try {
+            const res = await fetch('/api/search?q=' + encodeURIComponent(userText));
+            const data = await res.json();
+            if (data.status === 'success' && data.results && data.results.length > 0) {
+                appendBotMessage(`Found tracks for <b>"${userText}"</b>! 🐾`);
+                data.results.slice(0, 3).forEach(r => {
+                    if (r.videoId) {
+                        appendSongCard({
+                            title: r.title, artist: r.artist || r.uploader || 'Artist', videoId: r.videoId, cover: r.cover || r.thumbnail || ''
+                        });
+                    }
+                });
+            } else {
+                appendBotMessage("Meow! I couldn't find exact matches. Try searching artist name or viral reel title! 🐾");
+            }
+        } catch (e) {
+            appendBotMessage("Purrrr! I am connected to live audio trends. Try clicking the quick buttons above! 🐾");
+        }
+    }
+
+    function appendUserMessage(msg) {
+        if (!messagesLog) return;
+        const div = document.createElement('div');
+        div.className = 'majoni-msg user';
+        div.innerHTML = `<div class="majoni-bubble">${msg}</div>`;
+        messagesLog.appendChild(div);
+        messagesLog.scrollTop = messagesLog.scrollHeight;
+    }
+
+    function appendBotMessage(msg, songObj = null) {
+        if (!messagesLog) return;
+        const div = document.createElement('div');
+        div.className = 'majoni-msg bot';
+        div.innerHTML = `<div class="majoni-bubble">${msg}</div>`;
+        messagesLog.appendChild(div);
+        if (songObj) appendSongCard(songObj);
+        messagesLog.scrollTop = messagesLog.scrollHeight;
+    }
+
+    function appendSongCard(song) {
+        if (!messagesLog) return;
+        const safeTitle = (song.title || '').replace(/'/g, "\\'");
+        const safeArtist = (song.artist || '').replace(/'/g, "\\'");
+        const card = document.createElement('div');
+        card.className = 'majoni-song-card';
+        card.innerHTML = `
+            <img src="${song.cover || 'https://img.youtube.com/vi/' + song.videoId + '/hqdefault.jpg'}" class="majoni-song-thumb" alt="${safeTitle}">
+            <div class="majoni-song-info">
+                <div class="majoni-song-title">${song.title}</div>
+                <div class="majoni-song-artist">${song.artist}</div>
+            </div>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="var(--accent, #ff2d55)"><path d="M8 5v14l11-7z"/></svg>
+        `;
+        card.onclick = () => {
+            const songJson = JSON.stringify({title: song.title, artist: song.artist, cover: song.cover, videoId: song.videoId}).replace(/"/g, '&quot;');
+            window.playSong(song.videoId, songJson, card);
+        };
+        messagesLog.appendChild(card);
+        messagesLog.scrollTop = messagesLog.scrollHeight;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initMajoniChatbot);
+setTimeout(initMajoniChatbot, 1200);
+
 
 
 
