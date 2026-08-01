@@ -6741,13 +6741,30 @@ function initMajoniChatbot() {
         });
     }
 
-    // Core Query Handler
+    // Core Query Handler (Conversational AI + Intent Routing + Music Search)
     async function handleUserQuery(userText) {
         appendUserMessage(userText);
 
-        const queryLower = userText.toLowerCase();
+        const queryLower = userText.toLowerCase().trim();
 
-        // 1. Reel / Viral Trending Queries
+        // 1. Greetings & Casual AI Chit-Chat
+        if (/^(hi|hello|hey|heyy|heyyy|kaise ho|who are you|kon ho|kya kar rahe ho|gm|good morning|ge|good evening|bye|thx|thanks|thank you)/i.test(queryLower)) {
+            const greetings = [
+                "Meow! Hey there! 🐾 I'm <b>Majoni</b>, your AI music companion & Social Audio Radar. Want me to play Reels viral hits, hard edit phonk tracks, or recognize a song near you?",
+                "Purrrr! Hi! 🐱 Tell me what vibe you're in today — sad songs, gym workout hype, or Instagram trending audio?",
+                "Meow! Everything's groovin'! 🎶 Ask me for Reels viral hits or click the 🎙️ mic button to identify any song playing around you!"
+            ];
+            appendBotMessage(greetings[Math.floor(Math.random() * greetings.length)]);
+            return;
+        }
+
+        // 2. App Help & Feature Guide
+        if (queryLower.includes('download') || queryLower.includes('offline') || queryLower.includes('lyrics') || queryLower.includes('vinyl') || queryLower.includes('help')) {
+            appendBotMessage("Meow! Here is how to use AxioTune like a pro! 🐾<br>• <b>Offline Downloads</b>: Click 💾 on any song card to save offline.<br>• <b>Synced Lyrics</b>: Click 💬 in the player for live word-by-word lyrics.<br>• <b>3D Vinyl</b>: Click 📀 to spin the vinyl player!");
+            return;
+        }
+
+        // 3. Reel / Viral Trending Queries
         if (queryLower.includes('reels') || queryLower.includes('viral') || queryLower.includes('trending')) {
             appendBotMessage("Here are the top <b>Instagram Reels & Edits Trending Audio</b> right now! 🔥");
             const reelSongs = [
@@ -6759,7 +6776,7 @@ function initMajoniChatbot() {
             return;
         }
 
-        // 2. Phonk / Car Edits
+        // 4. Phonk / Car Edits
         if (queryLower.includes('phonk') || queryLower.includes('car') || queryLower.includes('edit')) {
             appendBotMessage("Meow! Here are hard <b>Car Edit & Phonk Tracks</b> viral on social media! 🏎️⚡");
             const editSongs = [
@@ -6770,8 +6787,8 @@ function initMajoniChatbot() {
             return;
         }
 
-        // 3. Slowed Reverb / Aesthetic
-        if (queryLower.includes('slowed') || queryLower.includes('reverb') || queryLower.includes('aesthetic')) {
+        // 5. Slowed Reverb / Aesthetic
+        if (queryLower.includes('slowed') || queryLower.includes('reverb') || queryLower.includes('aesthetic') || queryLower.includes('sad')) {
             appendBotMessage("Playing aesthetic <b>Slowed + Reverb Vibe</b> tracks! 🌙✨");
             const slowedSongs = [
                 { title: 'Husn (Slowed + Reverb)', artist: 'Anuv Jain', videoId: '0zN3a78f2Q1', cover: 'https://i.scdn.co/image/ab67616d0000b273e970a25695fa9fa6067756f7' },
@@ -6781,12 +6798,12 @@ function initMajoniChatbot() {
             return;
         }
 
-        // 4. Live API Search Query
+        // 6. Live API Music Search Query
         try {
             const res = await fetch('/api/search?q=' + encodeURIComponent(userText));
             const data = await res.json();
             if (data.status === 'success' && data.results && data.results.length > 0) {
-                appendBotMessage(`Found tracks for <b>"${userText}"</b>! 🐾`);
+                appendBotMessage(`Found top tracks for <b>"${userText}"</b>! 🐾`);
                 data.results.slice(0, 3).forEach(r => {
                     if (r.videoId) {
                         appendSongCard({
@@ -6795,10 +6812,10 @@ function initMajoniChatbot() {
                     }
                 });
             } else {
-                appendBotMessage("Meow! I couldn't find exact matches. Try searching artist name or viral reel title! 🐾");
+                appendBotMessage("Meow! I couldn't find exact song matches for that, but try typing artist names or click <b>🔥 Reels Viral</b>! 🐾");
             }
         } catch (e) {
-            appendBotMessage("Purrrr! I am connected to live audio trends. Try clicking the quick buttons above! 🐾");
+            appendBotMessage("Purrrr! I am ready. Try typing a song name or clicking the quick action buttons above! 🐾");
         }
     }
 
