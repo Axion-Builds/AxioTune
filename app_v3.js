@@ -6635,9 +6635,16 @@ function initCatCompanion() {
     }
     requestAnimationFrame(catAnimLoop);
 
-    // Interactive Click Easter Egg
-    catPet.addEventListener('click', () => {
-        if (typeof showToast === 'function') showToast("🐱 Axio Cat: Purrrrrr! 💖🎵");
+    // Interactive Click: Toggle Majoni Chatbot Modal + Heart Particle
+    catPet.addEventListener('click', (e) => {
+        const modal = document.getElementById('majoni-chat-modal');
+        if (modal) {
+            modal.classList.toggle('majoni-modal-hidden');
+            const chatInput = document.getElementById('majoni-chat-input');
+            if (!modal.classList.contains('majoni-modal-hidden') && chatInput) {
+                chatInput.focus();
+            }
+        }
         
         // Spawn Floating Heart Particle
         const heart = document.createElement('div');
@@ -6657,7 +6664,6 @@ setTimeout(initCatCompanion, 1000);
 
 // 🐱 MAJONI AI CHATBOT & AUDIO RECOGNITION CONTROLLER 🐱
 function initMajoniChatbot() {
-    const catPet = document.getElementById('axio-cat-pet');
     const modal = document.getElementById('majoni-chat-modal');
     const closeBtn = document.getElementById('majoni-close-btn');
     const sendBtn = document.getElementById('majoni-send-btn');
@@ -6667,17 +6673,6 @@ function initMajoniChatbot() {
     const chips = document.querySelectorAll('.majoni-chip');
 
     if (!modal) return;
-
-    // Toggle Modal on Cat Pet Click
-    if (catPet) {
-        catPet.addEventListener('click', (e) => {
-            e.stopPropagation();
-            modal.classList.toggle('majoni-modal-hidden');
-            if (!modal.classList.contains('majoni-modal-hidden') && chatInput) {
-                chatInput.focus();
-            }
-        });
-    }
 
     if (closeBtn) {
         closeBtn.addEventListener('click', () => modal.classList.add('majoni-modal-hidden'));
