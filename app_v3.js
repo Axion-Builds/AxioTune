@@ -6635,28 +6635,33 @@ function initCatCompanion() {
     }
     requestAnimationFrame(catAnimLoop);
 
-    // Interactive Click: Toggle Majoni Chatbot Modal + Heart Particle
-    catPet.addEventListener('click', (e) => {
+    // Global Window Function to Toggle Majoni Chat Modal
+    window.toggleMajoniChatModal = function(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
         const modal = document.getElementById('majoni-chat-modal');
         if (modal) {
-            modal.classList.toggle('majoni-modal-hidden');
+            modal.classList.toggle('active');
             const chatInput = document.getElementById('majoni-chat-input');
-            if (!modal.classList.contains('majoni-modal-hidden') && chatInput) {
-                chatInput.focus();
+            if (modal.classList.contains('active') && chatInput) {
+                setTimeout(() => chatInput.focus(), 100);
             }
         }
         
         // Spawn Floating Heart Particle
         const heart = document.createElement('div');
         heart.textContent = '💖';
-        heart.style.cssText = 'position:fixed; bottom:90px; left:40px; font-size:1.4rem; z-index:100000; pointer-events:none; transition: all 1s ease-out; opacity:1;';
+        heart.style.cssText = 'position:fixed; bottom:90px; left:40px; font-size:1.4rem; z-index:1000000; pointer-events:none; transition: all 1s ease-out; opacity:1;';
         document.body.appendChild(heart);
         requestAnimationFrame(() => {
             heart.style.transform = 'translateY(-60px) scale(1.5)';
             heart.style.opacity = '0';
         });
         setTimeout(() => heart.remove(), 1000);
-    });
+    };
+
+    if (catPet) {
+        catPet.onclick = window.toggleMajoniChatModal;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initCatCompanion);
@@ -6675,7 +6680,7 @@ function initMajoniChatbot() {
     if (!modal) return;
 
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => modal.classList.add('majoni-modal-hidden'));
+        closeBtn.onclick = (e) => window.toggleMajoniChatModal(e);
     }
 
     // Quick Chips Click

@@ -6005,22 +6005,22 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(var(--accent-rgb, 255, 45, 85), 0.25);
-    z-index: 99999;
-    display: flex;
+    z-index: 999999;
+    display: none;
     flex-direction: column;
     overflow: hidden;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
     transform-origin: bottom left;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transform: scale(1) translateY(0);
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.85) translateY(30px);
 }
 
-#majoni-chat-modal.majoni-modal-hidden {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transform: scale(0.85) translateY(30px) !important;
-    display: none !important;
+#majoni-chat-modal.active {
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: scale(1) translateY(0) !important;
 }
 
 .majoni-modal-header {

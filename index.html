@@ -34,7 +34,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=150">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=151">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -496,7 +496,7 @@
     </button>
 
     <!-- 🐱 MAJONI — SOCIAL AUDIO RADAR & AI COMPANION CHAT MODAL 🐱 -->
-    <div id="majoni-chat-modal" class="majoni-modal-hidden">
+    <div id="majoni-chat-modal">
         <div class="majoni-modal-header">
             <div class="majoni-avatar-status">
                 <span class="majoni-avatar-icon">🐱</span>
@@ -505,7 +505,7 @@
                     <div class="majoni-subtitle">Social Audio & Music Radar</div>
                 </div>
             </div>
-            <button id="majoni-close-btn" class="majoni-icon-btn" title="Close">✕</button>
+            <button id="majoni-close-btn" class="majoni-icon-btn" title="Close" onclick="if(typeof toggleMajoniChatModal==='function') toggleMajoniChatModal(event)">✕</button>
         </div>
 
         <!-- Quick Action Chips -->
@@ -536,7 +536,7 @@
     </div>
 
     <!-- 🐾 AXIØTUNE CUTE LOFI CAT PET COMPANION (MAJONI) 🐾 -->
-    <div id="axio-cat-pet" title="Click Majoni for AI Music Radar! 🐾">
+    <div id="axio-cat-pet" title="Click Majoni for AI Music Radar! 🐾" onclick="if(typeof toggleMajoniChatModal==='function') toggleMajoniChatModal(event)">
         <div id="cat-speech-bubble" class="cat-bubble">Zzz...</div>
         <svg id="cat-svg" viewBox="0 0 120 120" width="80" height="80">
             <defs>
@@ -1571,7 +1571,7 @@
     </div>
     <div id="queue-backdrop"></div>
 
-    <script src="app_v3.js?v=150"></script>
+    <script src="app_v3.js?v=151"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
