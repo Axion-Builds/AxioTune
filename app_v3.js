@@ -3135,6 +3135,7 @@ function onPlayerStateChange(event) {
         }, { passive: true });
 
         function animationLoop() {
+            if (!isDraggingProgress) updateProgressUI();
             if (!window._appTabHidden && lineElements && lineElements.length > 0) {
                 // Focus Mode: We let it scroll, but CSS will fade it out to prevent lag
                 if (!audioPlayer.paused) processLyricsFrame();
@@ -6741,16 +6742,22 @@ function initMajoniChatbot() {
         });
     }
 
-    // Core Query Handler (Conversational AI + Intent Routing + Music Search)
+    // Core Query Handler (Conversational AI + Creator Info + Intent Routing + Music Search)
     async function handleUserQuery(userText) {
         appendUserMessage(userText);
 
         const queryLower = userText.toLowerCase().trim();
 
-        // 1. Greetings & Casual AI Chit-Chat
-        if (/^(hi|hello|hey|heyy|heyyy|kaise ho|who are you|kon ho|kya kar rahe ho|gm|good morning|ge|good evening|bye|thx|thanks|thank you)/i.test(queryLower)) {
+        // 1. Creator & Identity Questions
+        if (queryLower.includes('creator') || queryLower.includes('banaya') || queryLower.includes('built you') || queryLower.includes('made you') || queryLower.includes('who are you') || queryLower.includes('kon ho') || queryLower.includes('kya karti ho')) {
+            appendBotMessage("Meow! 🐾 I am <b>Majoni 🐱</b>, your AI Music Companion & Social Audio Radar!<br>I was created by <b>Adarsh (Axion Builds)</b>! I track viral Reels audio, recognize songs playing near you with my 🎙️ mic, and play music for you 24/7! Purrrr! 💖");
+            return;
+        }
+
+        // 2. Greetings & Casual AI Chit-Chat
+        if (/^(hi|hello|hey|heyy|heyyy|kaise ho|kya haal|kya kar rahe ho|gm|good morning|ge|good evening|bye|thx|thanks|thank you)/i.test(queryLower)) {
             const greetings = [
-                "Meow! Hey there! 🐾 I'm <b>Majoni</b>, your AI music companion & Social Audio Radar. Want me to play Reels viral hits, hard edit phonk tracks, or recognize a song near you?",
+                "Meow! Hey there! 🐾 I'm <b>Majoni</b>! Want me to play Reels viral hits, hard edit phonk tracks, or recognize a song near you?",
                 "Purrrr! Hi! 🐱 Tell me what vibe you're in today — sad songs, gym workout hype, or Instagram trending audio?",
                 "Meow! Everything's groovin'! 🎶 Ask me for Reels viral hits or click the 🎙️ mic button to identify any song playing around you!"
             ];
@@ -6758,13 +6765,24 @@ function initMajoniChatbot() {
             return;
         }
 
-        // 2. App Help & Feature Guide
+        // 3. Jokes, Fun Facts & Entertainment
+        if (queryLower.includes('joke') || queryLower.includes('chutkula') || queryLower.includes('bored') || queryLower.includes('fun fact')) {
+            const jokes = [
+                "Meow! Why did the music cat go to space? To find the bass-ronaut! 🐱🚀",
+                "Purrrr! Fun Fact: Cats spend 70% of their lives sleeping, but I spend 100% of my time listening to bangers with you! 🎧",
+                "Why don't cats play cards in the jungle? Too many cheetahs! Meow! 🐾"
+            ];
+            appendBotMessage(jokes[Math.floor(Math.random() * jokes.length)]);
+            return;
+        }
+
+        // 4. App Help & Feature Guide
         if (queryLower.includes('download') || queryLower.includes('offline') || queryLower.includes('lyrics') || queryLower.includes('vinyl') || queryLower.includes('help')) {
             appendBotMessage("Meow! Here is how to use AxioTune like a pro! 🐾<br>• <b>Offline Downloads</b>: Click 💾 on any song card to save offline.<br>• <b>Synced Lyrics</b>: Click 💬 in the player for live word-by-word lyrics.<br>• <b>3D Vinyl</b>: Click 📀 to spin the vinyl player!");
             return;
         }
 
-        // 3. Reel / Viral Trending Queries
+        // 5. Reel / Viral Trending Queries
         if (queryLower.includes('reels') || queryLower.includes('viral') || queryLower.includes('trending')) {
             appendBotMessage("Here are the top <b>Instagram Reels & Edits Trending Audio</b> right now! 🔥");
             const reelSongs = [
@@ -6776,7 +6794,7 @@ function initMajoniChatbot() {
             return;
         }
 
-        // 4. Phonk / Car Edits
+        // 6. Phonk / Car Edits
         if (queryLower.includes('phonk') || queryLower.includes('car') || queryLower.includes('edit')) {
             appendBotMessage("Meow! Here are hard <b>Car Edit & Phonk Tracks</b> viral on social media! 🏎️⚡");
             const editSongs = [
@@ -6787,7 +6805,7 @@ function initMajoniChatbot() {
             return;
         }
 
-        // 5. Slowed Reverb / Aesthetic
+        // 7. Slowed Reverb / Aesthetic
         if (queryLower.includes('slowed') || queryLower.includes('reverb') || queryLower.includes('aesthetic') || queryLower.includes('sad')) {
             appendBotMessage("Playing aesthetic <b>Slowed + Reverb Vibe</b> tracks! 🌙✨");
             const slowedSongs = [
@@ -6798,7 +6816,7 @@ function initMajoniChatbot() {
             return;
         }
 
-        // 6. Live API Music Search Query
+        // 8. Live API Music Search Query
         try {
             const res = await fetch('/api/search?q=' + encodeURIComponent(userText));
             const data = await res.json();
@@ -6812,10 +6830,10 @@ function initMajoniChatbot() {
                     }
                 });
             } else {
-                appendBotMessage("Meow! I couldn't find exact song matches for that, but try typing artist names or click <b>🔥 Reels Viral</b>! 🐾");
+                appendBotMessage("Meow! That's an interesting question! 🐱 I am specialized in music discovery, Reels viral audio, and song matching! Try asking me for Reels hits or artist names! 🐾");
             }
         } catch (e) {
-            appendBotMessage("Purrrr! I am ready. Try typing a song name or clicking the quick action buttons above! 🐾");
+            appendBotMessage("Purrrr! I am ready. Try typing a song name, asking who created me, or clicking the quick buttons above! 🐾");
         }
     }
 
