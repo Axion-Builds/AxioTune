@@ -3948,17 +3948,22 @@ function onPlayerStateChange(event) {
                 }
             });
 
-            // INSTANT MINI-PLAYER VISIBILITY SYNC
+            // INSTANT MINI-PLAYER & HEADER VISIBILITY SYNC
             const miniPlayerEl = document.getElementById('mini-player');
-            if (miniPlayerEl) {
-                if (showId === 'player-screen') {
-                    miniPlayerEl.classList.add('hidden-mini');
-                    document.body.classList.add('player-screen-active');
-                } else {
-                    document.body.classList.remove('player-screen-active');
-                    if (typeof isSongLoaded !== 'undefined' && isSongLoaded) {
-                        miniPlayerEl.classList.remove('hidden-mini');
-                    }
+            const pcHeaderEl = document.getElementById('pc-sticky-header');
+            if (showId === 'player-screen') {
+                if (miniPlayerEl) miniPlayerEl.classList.add('hidden-mini');
+                if (pcHeaderEl) pcHeaderEl.style.display = 'none';
+                document.body.classList.add('player-screen-active');
+            } else {
+                document.body.classList.remove('player-screen-active');
+                if (pcHeaderEl) {
+                    pcHeaderEl.style.display = 'flex';
+                    pcHeaderEl.style.opacity = '1';
+                    pcHeaderEl.style.visibility = 'visible';
+                }
+                if (miniPlayerEl && typeof isSongLoaded !== 'undefined' && isSongLoaded) {
+                    miniPlayerEl.classList.remove('hidden-mini');
                 }
             }
 
