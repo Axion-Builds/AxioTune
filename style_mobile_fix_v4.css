@@ -846,22 +846,14 @@
             transform: scale(1.03);
         }
 
-        /* ── Glare overlay — follows mouse on 3D tilt ── */
-        #cover-glare {
-            position: absolute; inset: 0;
-            border-radius: 20px;
-            background: radial-gradient(
-                circle at var(--gx, 50%) var(--gy, 50%),
-                rgba(255,255,255,0.18) 0%,
-                rgba(255,255,255,0.04) 40%,
-                transparent 70%
-            );
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        /* ── Remove white glare/spotlight on mouse hover ── */
+        #cover-glare, .cover-glare, .vinyl-card::after, .vinyl-card:hover::after {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            animation: none !important;
         }
-        #cover-art-container:hover #cover-glare { opacity: 1; }
 
         #default-cover-icon { position: absolute; z-index: 1; }
         #cover-art {
