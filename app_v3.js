@@ -4028,7 +4028,7 @@ function onPlayerStateChange(event) {
                     topCard.innerHTML = `
                         <img src="${getCoverUrl(topSong.title + " " + topSong.artist, topSong.cover, topSong.videoId)}" alt="${topSong.title.replace(/"/g, '&quot;')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='default_cover.jpg'">
                         <div class="sr-top-title">${topSong.title}</div>
-                        <div class="sr-top-type">Song Ã¢â‚¬Â¢ ${topSong.artist}</div>
+                        <div class="sr-top-type">Song • ${topSong.artist}</div>
                         <button class="sr-top-play" onclick="event.stopPropagation(); playSong('${topSong.videoId}', '${JSON.stringify(topSong).replace(/"/g, '&quot;')}', this)">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                         </button>
@@ -4180,7 +4180,7 @@ function onPlayerStateChange(event) {
             if (albums.length > 0) {
                 if (cat === 'all') {
                     const headerHtml = `<div class="section-header">
-                        <div class="sr-section-title" style="margin:0;">ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¿ Albums</div>
+                        <div class="sr-section-title" style="margin:0;">💿 Albums</div>
                         <button class="see-all-btn" onclick="document.querySelector('.sr-tab[data-cat=\\'album\\']').click()">See All</button>
                     </div>`;
                     contentEl.insertAdjacentHTML('beforeend', headerHtml);
@@ -4289,7 +4289,7 @@ function onPlayerStateChange(event) {
                 if (data.status === 'success' && data.artist) {
                     const artist = data.artist;
                     const thumb = artist.thumbnails && artist.thumbnails.length > 0 ? getCoverUrl(artist.name, artist.thumbnails[artist.thumbnails.length-1].url) : 'default_cover.jpg';
-                    const subs = artist.subscribers ? ` Ã¢â‚¬Â¢ ${artist.subscribers}` : '';
+                    const subs = artist.subscribers ? ` • ${artist.subscribers}` : '';
                     
                     let html = `
                         <div class="hero-banner">
@@ -4397,7 +4397,7 @@ function onPlayerStateChange(event) {
                                 <img src="${thumb}" alt="${album.title}" class="hero-album-cover anim-pop">
                                 <div class="hero-info">
                                     <h1 class="anim-slide-up" style="animation-delay: 0.1s">${album.title}</h1>
-                                    <p class="anim-slide-up" style="animation-delay: 0.2s">${artistName} Ã¢â‚¬Â¢ ${album.year || ''} Ã¢â‚¬Â¢ ${album.trackCount || 0} tracks</p>
+                                    <p class="anim-slide-up" style="animation-delay: 0.2s">${artistName} • ${album.year || ''} • ${album.trackCount || 0} tracks</p>
                                     <div class="apple-btn-row anim-slide-up" style="animation-delay: 0.3s">
                                         <button class="apple-btn apple-play-btn" onclick="playFirstTrack()"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Play</button>
                                         <button class="apple-btn apple-shuffle-btn" onclick="playFirstTrack()"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10.59,9.17L5.41,4,4,5.41l5.17,5.17,1.42-1.41zM14.5,4l2.04,2.04L4,18.59,5.41,20l12.55-12.55L20,9.5V4h-5.5zm.33,9.41l-1.41,1.41,3.13,3.13L14.5,20H20v-5.5l-2.04,2.04-3.13-3.13z"/></svg> Shuffle</button>
@@ -4475,7 +4475,7 @@ function onPlayerStateChange(event) {
                 if (data.status === 'success' && data.playlist) {
                     const pl = data.playlist;
                     nameEl.textContent = pl.title;
-                    countEl.textContent = `${pl.trackCount || pl.tracks?.length || 0} songs  Ã¢â‚¬Â¢  Community Playlist`;
+                    countEl.textContent = `${pl.trackCount || pl.tracks?.length || 0} songs • Community Playlist`;
 
                     const thumb = pl.thumbnails && pl.thumbnails.length > 0 ? getCoverUrl(pl.title, pl.thumbnails[pl.thumbnails.length-1].url, playlistId) : 'default_cover.jpg';
                     artEl.innerHTML = `<img src="${thumb}" onerror="this.src='default_cover.jpg'">`;
@@ -6286,7 +6286,7 @@ const PartyEngine = {
         
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         msgDiv.innerHTML = `
-            <div class="msg-meta">${isSelf ? 'You' : sender} Ã¢â‚¬Â¢ ${timeStr}</div>
+            <div class="msg-meta">${isSelf ? 'You' : sender} • ${timeStr}</div>
             <div class="msg-bubble">${this.escapeHTML(text)}</div>
         `;
         
