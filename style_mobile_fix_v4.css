@@ -400,10 +400,10 @@
                 display: none !important;
             }
 
-            /* ── top-bar-wrapper: keep invisible on home, visible on other screens ── */
+            /* ── top-bar-wrapper: always visible and responsive on non-player screens ── */
             body:not(.player-screen-active) #top-bar-wrapper {
-                opacity: 0;
-                pointer-events: none;
+                opacity: 1 !important;
+                pointer-events: auto !important;
             }
         }
 

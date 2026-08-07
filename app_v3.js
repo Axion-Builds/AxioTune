@@ -1861,7 +1861,7 @@ function onPlayerStateChange(event) {
                 ghostCover.offsetHeight; 
                 
                 // --- BATCH WRITES 3 (Trigger Animation) ---
-                ghostCover.style.transition = 'all 0.85s cubic-bezier(0.33, 1, 0.68, 1)';
+                ghostCover.style.transition = 'all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
                 ghostCover.style.left = `${toRect.left}px`;
                 ghostCover.style.top = `${toRect.top}px`;
                 ghostCover.style.width = `${toRect.width}px`;
@@ -1874,7 +1874,7 @@ function onPlayerStateChange(event) {
                     toEl.style.transition = '';
                     fromEl.style.transition = '';
                     if(onComplete) onComplete();
-                }, 850);
+                }, 250);
             } catch (e) {
                 console.error("Animation error", e);
                 fromEl.style.opacity = '1';
@@ -3935,10 +3935,10 @@ function onPlayerStateChange(event) {
                     el.classList.add('active-screen');
                     document.body.classList.add(id + '-active');
                     
-                    // Sync top bar and logo scroll position for the new screen
+                    // Sync top bar scroll position for the new screen
                     const topBar = document.getElementById('top-bar-wrapper');
                     if (topBar) {
-                        topBar.style.transform = `translateY(${-el.scrollTop}px)`;
+                        topBar.style.transform = 'translateY(0)';
                     }
 
                 } else {
@@ -3947,6 +3947,21 @@ function onPlayerStateChange(event) {
                     document.body.classList.remove(id + '-active');
                 }
             });
+
+            // INSTANT MINI-PLAYER VISIBILITY SYNC
+            const miniPlayerEl = document.getElementById('mini-player');
+            if (miniPlayerEl) {
+                if (showId === 'player-screen') {
+                    miniPlayerEl.classList.add('hidden-mini');
+                    document.body.classList.add('player-screen-active');
+                } else {
+                    document.body.classList.remove('player-screen-active');
+                    if (typeof isSongLoaded !== 'undefined' && isSongLoaded) {
+                        miniPlayerEl.classList.remove('hidden-mini');
+                    }
+                }
+            }
+
             if (typeof closeQueue === 'function') closeQueue();
         }
         window.showScreen = showScreenExcept;
