@@ -350,12 +350,15 @@ async def multi_search(q: str):
         if not item.get("thumbnails"):
             vid = item.get("videoId")
             if vid:
-                return f"https://img.youtube.com/vi/{vid}/sddefault.jpg"
+                return f"https://img.youtube.com/vi/{vid}/maxresdefault.jpg"
             return ""
         url = item["thumbnails"][-1]["url"]
-        if "lh3.googleusercontent.com" in url and "=" in url:
-            base = url.split("=")[0]
-            return f"{base}=w500-h500-l90-rj"
+        if "googleusercontent.com" in url or "ggpht.com" in url:
+            if "=" in url:
+                base = url.split("=")[0]
+                return f"{base}=w800-h800-l90-rj"
+        elif "img.youtube.com/vi/" in url or "i.ytimg.com/vi/" in url:
+            url = url.replace('/hqdefault.jpg', '/maxresdefault.jpg').replace('/mqdefault.jpg', '/maxresdefault.jpg').replace('/sddefault.jpg', '/maxresdefault.jpg')
         return url
 
     def fetch_songs():

@@ -1147,30 +1147,38 @@ function onPlayerStateChange(event) {
                 if (size === 'medium') return base + '=w400-h400-l90-rj';
                 if (size === 'large') return base + '=w1400-h1400-l100-rj';
             }
-            if (ytThumb.includes('img.youtube.com/vi/')) {
-                if (size === 'large') {
-                    return ytThumb.replace('/hqdefault.jpg', '/maxresdefault.jpg').replace('/mqdefault.jpg', '/maxresdefault.jpg');
-                } else if (size === 'medium') {
-                    return ytThumb.replace('/hqdefault.jpg', '/sddefault.jpg').replace('/mqdefault.jpg', '/sddefault.jpg');
+        function resolveYtThumb(ytThumb, size) {
+            if (!ytThumb) return '';
+            
+            // Upgrade Spotify & Google/YouTube Music thumbnail sizes to 800x800 HD
+            if (ytThumb.includes('googleusercontent.com') || ytThumb.includes('ggpht.com') || ytThumb.includes('scdn.co')) {
+                if (ytThumb.includes('=')) {
+                    ytThumb = ytThumb.split('=')[0] + '=w800-h800-l90-rj';
                 }
+                ytThumb = ytThumb.replace('ab67616d0000b273', 'ab67616d00001e02');
+            }
+
+            if (ytThumb.includes('img.youtube.com/vi/') || ytThumb.includes('i.ytimg.com/vi/')) {
+                return ytThumb.replace('/hqdefault.jpg', '/maxresdefault.jpg')
+                              .replace('/mqdefault.jpg', '/maxresdefault.jpg')
+                              .replace('/sddefault.jpg', '/maxresdefault.jpg');
             }
             return ytThumb;
         }
 
         function getCoverUrl(query, ytThumb, vid, isPlayerScreen = false) {
-            const targetSize = isPlayerScreen ? 'large' : 'medium';
-            let thumb = resolveYtThumb(ytThumb, targetSize);
+            let thumb = resolveYtThumb(ytThumb);
             
             if (!thumb && vid) {
-                thumb = `https://i.ytimg.com/vi/${vid}/sddefault.jpg`;
+                thumb = `https://i.ytimg.com/vi/${vid}/maxresdefault.jpg`;
             }
             
             if (thumb && thumb.startsWith('http')) {
-                return thumb; // Fast direct CDN loading
+                return thumb; // Fast direct CDN HD loading
             }
 
             if (vid) {
-                return `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+                return `https://i.ytimg.com/vi/${vid}/maxresdefault.jpg`;
             }
             
             const params = new URLSearchParams();
@@ -1188,7 +1196,7 @@ function onPlayerStateChange(event) {
             let thumb = resolveYtThumb(entry.cover) || resolveYtThumb(entry.ytThumb) || '';
             const videoId = entry.videoId || entry.id;
             if (!thumb && videoId) {
-                thumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                thumb = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
             }
             return getCoverUrl(query, thumb, videoId);
         }
@@ -1196,6 +1204,21 @@ function onPlayerStateChange(event) {
         document.addEventListener('error', (e) => {
             const img = e.target;
             if (img.tagName !== 'IMG' || img.dataset.fallbackDone === '1') return;
+            
+            // Smart HD Fallback Step-Down: maxresdefault -> hq720 -> sddefault -> hqdefault
+            if (img.src.includes('/maxresdefault.jpg')) {
+                img.src = img.src.replace('/maxresdefault.jpg', '/hq720.jpg');
+                return;
+            }
+            if (img.src.includes('/hq720.jpg')) {
+                img.src = img.src.replace('/hq720.jpg', '/sddefault.jpg');
+                return;
+            }
+            if (img.src.includes('/sddefault.jpg')) {
+                img.src = img.src.replace('/sddefault.jpg', '/hqdefault.jpg');
+                return;
+            }
+            
             const q = img.dataset.query || img.closest('[data-query]')?.getAttribute('data-query');
             if (q) {
                 img.dataset.fallbackDone = '1';
@@ -4705,7 +4728,7 @@ function onPlayerStateChange(event) {
 
             // NOW PLAYING CARD
             const nowVid = nowSong.id || nowSong.videoId || '';
-            const nowFb = nowVid ? `https://i.ytimg.com/vi/${nowVid}/hqdefault.jpg` : 'default_cover.jpg';
+            const nowFb = nowVid ? `https://i.ytimg.com/vi/${nowVid}/maxresdefault.jpg` : 'default_cover.jpg';
             const playerScreenCover = document.getElementById('cover-art')?.src;
             const nowThumb = (playerScreenCover && playerScreenCover.startsWith('http') && !playerScreenCover.includes('default_cover.jpg'))
                 ? playerScreenCover
@@ -4751,7 +4774,7 @@ function onPlayerStateChange(event) {
                 const pos = idx - currentQueueIndex;
                 const isNext = pos === 1;
                 const songVid = song.id || song.videoId || '';
-                const songFb = songVid ? `https://i.ytimg.com/vi/${songVid}/hqdefault.jpg` : 'default_cover.jpg';
+                const songFb = songVid ? `https://i.ytimg.com/vi/${songVid}/maxresdefault.jpg` : 'default_cover.jpg';
                 const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', songVid);
                 const numLabel = pos < 10 ? '0' + pos : pos;
                 const card = document.createElement('div');
@@ -6863,7 +6886,7 @@ function initMajoniChatbot() {
         const card = document.createElement('div');
         card.className = 'majoni-song-card';
         card.innerHTML = `
-            <img src="${song.cover || 'https://img.youtube.com/vi/' + song.videoId + '/hqdefault.jpg'}" class="majoni-song-thumb" alt="${safeTitle}">
+            <img src="${song.cover || 'https://img.youtube.com/vi/' + song.videoId + '/maxresdefault.jpg'}" class="majoni-song-thumb" alt="${safeTitle}">
             <div class="majoni-song-info">
                 <div class="majoni-song-title">${song.title}</div>
                 <div class="majoni-song-artist">${song.artist}</div>
