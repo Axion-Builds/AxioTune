@@ -1135,27 +1135,16 @@ function onPlayerStateChange(event) {
         // This proxy: 1) fetches iTunes artwork, 2) falls back to YT thumb
         // No CORS, no expiry, works from any device on the network!
         // ============================================================
-        function resolveYtThumb(ytThumb, size='large') {
+        function resolveYtThumb(ytThumb, size = 'large') {
             if (!ytThumb || typeof ytThumb !== 'string') return '';
             if (ytThumb.includes('/api/cover')) return ''; // Avoid double proxying
-            
-            if (ytThumb.includes('lh3.googleusercontent.com') && ytThumb.includes('=')) {
-                // If the original URL is already provided by backend, it's the largest available.
-                // We only resize for small/medium to save bandwidth. For large, use a standard high-res size!
-                const base = ytThumb.split('=')[0];
-                if (size === 'small') return base + '=w180-h180-l90-rj';
-                if (size === 'medium') return base + '=w400-h400-l90-rj';
-                if (size === 'large') return base + '=w1400-h1400-l100-rj';
-            }
-        function resolveYtThumb(ytThumb, size) {
-            if (!ytThumb) return '';
             
             // Upgrade Spotify & Google/YouTube Music thumbnail sizes to 800x800 HD
             if (ytThumb.includes('googleusercontent.com') || ytThumb.includes('ggpht.com') || ytThumb.includes('scdn.co')) {
                 if (ytThumb.includes('=')) {
-                    ytThumb = ytThumb.split('=')[0] + '=w800-h800-l90-rj';
+                    return ytThumb.split('=')[0] + '=w800-h800-l90-rj';
                 }
-                ytThumb = ytThumb.replace('ab67616d0000b273', 'ab67616d00001e02');
+                return ytThumb.replace('ab67616d0000b273', 'ab67616d00001e02');
             }
 
             if (ytThumb.includes('img.youtube.com/vi/') || ytThumb.includes('i.ytimg.com/vi/')) {
