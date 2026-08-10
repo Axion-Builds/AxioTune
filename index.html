@@ -34,7 +34,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=160">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=161">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -42,257 +42,217 @@
          INTRO SPLASH SCREEN — CSS Motion Graphic
     ═══════════════════════════════════════════════════════════ -->
     <style>
-        /* ── Intro wrapper ───────────────────────────────────────── */
+        /* ── Intro wrapper — Motion Graphics Entrance ──────────────── */
         #intro-splash-screen {
             position: fixed;
             inset: 0;
             z-index: 999999;
             overflow: hidden;
-            background: #04020c;
+            background: #03010a;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             opacity: 1;
-            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(1);
+            filter: blur(0px);
+            transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.4s ease;
         }
-        #intro-splash-screen.fade-out { opacity: 0; pointer-events: none; }
+        #intro-splash-screen.fade-out {
+            opacity: 0;
+            transform: scale(1.08);
+            filter: blur(14px);
+            pointer-events: none;
+        }
 
         /* ── Deep gradient base ──────────────────────────────────── */
         .intro-bg {
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse 120% 80% at 50% 60%,
-                #0f0529 0%,
-                #060118 50%,
-                #000009 100%);
+            background: radial-gradient(ellipse 130% 90% at 50% 50%,
+                #120633 0%,
+                #060118 60%,
+                #020008 100%);
         }
 
         /* ── Animated nebula orbs ────────────────────────────────── */
         .intro-orb {
             position: absolute;
             border-radius: 50%;
-            filter: blur(90px);
+            filter: blur(80px);
             opacity: 0;
-            animation: orb-appear 1.4s forwards ease-out;
+            animation: orb-appear 1.2s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .intro-orb-1 {
-            width: 55vw; height: 55vw;
-            top: -10%; left: -12%;
-            background: radial-gradient(circle, #5b0fff 0%, #1a006e 60%, transparent 100%);
-            animation-delay: 0.1s;
-            animation-duration: 1.6s;
+            width: 50vw; height: 50vw;
+            top: -15%; left: -10%;
+            background: radial-gradient(circle, rgba(168,85,247,0.7) 0%, rgba(91,15,255,0.4) 60%, transparent 100%);
+            animation-delay: 0.05s;
         }
         .intro-orb-2 {
-            width: 50vw; height: 50vw;
-            bottom: -10%; right: -10%;
-            background: radial-gradient(circle, #00c2ff 0%, #004a8f 55%, transparent 100%);
-            animation-delay: 0.3s;
-            animation-duration: 1.6s;
+            width: 45vw; height: 45vw;
+            bottom: -15%; right: -10%;
+            background: radial-gradient(circle, rgba(0,240,255,0.6) 0%, rgba(0,116,204,0.3) 60%, transparent 100%);
+            animation-delay: 0.1s;
         }
         .intro-orb-3 {
-            width: 40vw; height: 40vw;
-            top: 35%; left: 30%;
-            background: radial-gradient(circle, #ff8c00 0%, #7a2600 55%, transparent 100%);
-            opacity: 0;
-            animation: orb-pulse 2s 0.6s forwards ease-out;
-        }
-        .intro-orb-4 {
-            width: 30vw; height: 30vw;
-            top: 5%; right: 5%;
-            background: radial-gradient(circle, #00ffcc 0%, #006655 60%, transparent 100%);
-            animation-delay: 0.5s;
+            width: 35vw; height: 35vw;
+            top: 30%; left: 32%;
+            background: radial-gradient(circle, rgba(255,45,85,0.5) 0%, rgba(255,149,0,0.2) 60%, transparent 100%);
+            animation-delay: 0.15s;
         }
         @keyframes orb-appear {
-            0% { opacity: 0; transform: scale(0.7); }
-            100% { opacity: 0.55; transform: scale(1); }
-        }
-        @keyframes orb-pulse {
-            0% { opacity: 0; transform: scale(0.5); }
-            60% { opacity: 0.35; transform: scale(1.1); }
-            100% { opacity: 0.22; transform: scale(1); }
+            0% { opacity: 0; transform: scale(0.6); }
+            100% { opacity: 0.65; transform: scale(1); }
         }
 
-        /* ── Particle grid (dot mesh) ────────────────────────────── */
+        /* ── Cyber dot grid ──────────────────────────────────────── */
         .intro-grid {
             position: absolute;
             inset: 0;
-            background-image:
-                radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px);
-            background-size: 38px 38px;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.22) 1.2px, transparent 1.2px);
+            background-size: 32px 32px;
             opacity: 0;
-            animation: grid-in 1.2s 0.4s forwards ease-out;
+            animation: grid-in 0.8s 0.1s forwards ease-out;
             mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
             -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
         }
         @keyframes grid-in {
-            to { opacity: 0.12; }
+            to { opacity: 0.15; }
         }
 
-        /* ── Horizontal scan line ────────────────────────────────── */
+        /* ── Laser Scan Line ─────────────────────────────────────── */
         .intro-scan {
             position: absolute;
             left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent 0%, #00c2ff 30%, #a855f7 70%, transparent 100%);
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, #00f0ff 30%, #a855f7 70%, transparent 100%);
             top: -2px;
             opacity: 0;
-            animation: scan-sweep 1.8s 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
-            filter: blur(0.5px);
-            box-shadow: 0 0 18px 6px rgba(0,194,255,0.5);
+            animation: scan-sweep 1.2s 0.2s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
+            filter: drop-shadow(0 0 12px #00f0ff);
         }
         @keyframes scan-sweep {
             0% { top: -2px; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
             100% { top: 100%; opacity: 0; }
         }
 
-        /* ── Center logo content ─────────────────────────────────── */
+        /* ── Center logo container ───────────────────────────────── */
         .intro-center {
             position: relative;
             z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0;
             text-align: center;
         }
 
-        /* ── Logo icon — animated sound-wave ring ────────────────── */
+        /* ── Icon Logo — Animated Soundwave Prism Ø Ring ───────── */
         .intro-logo-ring {
-            width: 88px; height: 88px;
+            width: 105px; height: 105px;
             position: relative;
-            margin-bottom: 28px;
+            margin-bottom: 22px;
             opacity: 0;
-            animation: logo-pop 0.8s 1.0s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation: logo-pop 0.6s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         @keyframes logo-pop {
-            0% { opacity: 0; transform: scale(0.3) rotate(-30deg); }
+            0% { opacity: 0; transform: scale(0.3) rotate(-25deg); }
             100% { opacity: 1; transform: scale(1) rotate(0deg); }
         }
         .intro-logo-ring svg {
             width: 100%; height: 100%;
-            filter: drop-shadow(0 0 18px #a855f7) drop-shadow(0 0 8px #00c2ff);
-        }
-        /* Pulsing ring behind the icon */
-        .intro-logo-ring::before,
-        .intro-logo-ring::after {
-            content: '';
-            position: absolute;
-            inset: -14px;
-            border-radius: 50%;
-            border: 1.5px solid rgba(168,85,247,0.5);
-            opacity: 0;
-            animation: ring-expand 2.4s 1.6s infinite ease-out;
-        }
-        .intro-logo-ring::after {
-            inset: -28px;
-            border-color: rgba(0,194,255,0.3);
-            animation-delay: 2.2s;
-        }
-        @keyframes ring-expand {
-            0% { opacity: 0.7; transform: scale(0.9); }
-            100% { opacity: 0; transform: scale(1.5); }
+            filter: drop-shadow(0 0 25px rgba(168,85,247,0.7)) drop-shadow(0 0 12px rgba(0,240,255,0.8));
         }
 
-        /* ── Brand name ──────────────────────────────────────────── */
-        .intro-brand {
-            font-family: 'Clash Display', 'Outfit', sans-serif;
-            font-size: clamp(2.6rem, 8vw, 4.2rem);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1;
-            color: #fff;
+        /* Shockwave pulsing ring behind logo */
+        .intro-logo-ring::before {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 2px solid rgba(0,240,255,0.6);
             opacity: 0;
-            animation: text-rise 0.9s 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            background: linear-gradient(135deg, #ffffff 0%, #c0aaff 45%, #00c2ff 100%);
+            animation: shockwave 1.4s 0.5s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        @keyframes shockwave {
+            0% { opacity: 0.8; transform: scale(0.85); }
+            100% { opacity: 0; transform: scale(1.45); }
+        }
+
+        /* ── Brand name — Futuristic Ø Typography ────────────────── */
+        .intro-brand {
+            font-family: 'Syncopate', 'Bebas Neue', sans-serif;
+            font-size: clamp(2.5rem, 7vw, 4rem);
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            line-height: 1;
+            opacity: 0;
+            animation: brand-appear 0.6s 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            background: linear-gradient(135deg, #ffffff 0%, #d8b4fe 45%, #00f0ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            filter: drop-shadow(0 2px 24px rgba(168,85,247,0.5));
+            filter: drop-shadow(0 0 20px rgba(168,85,247,0.5));
         }
-        @keyframes text-rise {
-            0% { opacity: 0; transform: translateY(28px); }
-            100% { opacity: 1; transform: translateY(0); }
+        @keyframes brand-appear {
+            0% { opacity: 0; transform: translateY(20px) scale(0.95); filter: blur(8px); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
 
-        /* ── Tagline ─────────────────────────────────────────────── */
+        /* ── Sub-Tagline ─────────────────────────────────────────── */
         .intro-tagline {
-            margin-top: 10px;
+            margin-top: 12px;
             font-family: 'Outfit', 'Inter', sans-serif;
-            font-size: clamp(0.75rem, 2.2vw, 1rem);
-            font-weight: 400;
-            letter-spacing: 0.22em;
+            font-size: clamp(0.75rem, 2vw, 0.92rem);
+            font-weight: 600;
+            letter-spacing: 0.32em;
             text-transform: uppercase;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.6);
             opacity: 0;
-            animation: text-rise 0.9s 1.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation: brand-appear 0.6s 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
-        /* ── Loading bar ─────────────────────────────────────────── */
+        /* ── Fast Motion Loader Bar ──────────────────────────────── */
         .intro-loader-track {
-            margin-top: 52px;
-            width: clamp(140px, 30vw, 220px);
-            height: 2px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
+            margin-top: 36px;
+            width: clamp(160px, 32vw, 240px);
+            height: 3px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
             overflow: hidden;
             opacity: 0;
-            animation: text-rise 0.6s 1.7s ease forwards;
+            animation: brand-appear 0.4s 0.65s ease forwards;
         }
         .intro-loader-fill {
             height: 100%;
             width: 0%;
-            border-radius: 2px;
-            background: linear-gradient(90deg, #a855f7, #00c2ff, #ffa500);
+            border-radius: 3px;
+            background: linear-gradient(90deg, #a855f7, #00f0ff, #ff2d55);
             background-size: 200% 100%;
-            animation:
-                loader-fill 2.2s 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
-                loader-shimmer 1.5s 1.8s linear infinite;
-            box-shadow: 0 0 12px 2px rgba(168,85,247,0.6);
+            animation: loader-fill 1.0s 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            box-shadow: 0 0 14px 2px rgba(0,240,255,0.8);
         }
         @keyframes loader-fill {
             0% { width: 0%; }
             100% { width: 100%; }
         }
-        @keyframes loader-shimmer {
-            0% { background-position: 200% center; }
-            100% { background-position: -200% center; }
-        }
 
-        /* ── Floating music notes (decorative) ──────────────────── */
-        .intro-note {
-            position: absolute;
-            font-size: 1.4rem;
-            opacity: 0;
-            pointer-events: none;
-            animation: note-float 3s ease-in-out forwards;
-            filter: blur(0.5px);
-        }
-        .n1 { left: 12%; bottom: 20%; color: #a855f7; animation-delay: 1.4s; }
-        .n2 { right: 14%; bottom: 28%; color: #00c2ff; animation-delay: 1.7s; font-size: 1rem; }
-        .n3 { left: 22%; top: 22%; color: #ffa500; animation-delay: 2.0s; font-size: 1.1rem; }
-        .n4 { right: 22%; top: 18%; color: #a855f7; animation-delay: 1.9s; font-size: 0.9rem; }
-        @keyframes note-float {
-            0% { opacity: 0; transform: translateY(20px) rotate(-10deg); }
-            30% { opacity: 0.7; }
-            100% { opacity: 0; transform: translateY(-60px) rotate(15deg); }
-        }
-
-        /* ── Corner accent lines ─────────────────────────────────── */
+        /* ── Corner Accent Frames ────────────────────────────────── */
         .intro-corner {
             position: absolute;
-            width: 48px; height: 48px;
+            width: 42px; height: 42px;
             opacity: 0;
-            animation: corner-in 0.6s 0.8s ease forwards;
+            animation: corner-in 0.5s 0.3s ease forwards;
         }
-        .intro-corner.tl { top: 24px; left: 24px; border-top: 1.5px solid rgba(168,85,247,0.6); border-left: 1.5px solid rgba(168,85,247,0.6); }
-        .intro-corner.tr { top: 24px; right: 24px; border-top: 1.5px solid rgba(0,194,255,0.6); border-right: 1.5px solid rgba(0,194,255,0.6); }
-        .intro-corner.bl { bottom: 24px; left: 24px; border-bottom: 1.5px solid rgba(0,194,255,0.6); border-left: 1.5px solid rgba(0,194,255,0.6); }
-        .intro-corner.br { bottom: 24px; right: 24px; border-bottom: 1.5px solid rgba(168,85,247,0.6); border-right: 1.5px solid rgba(168,85,247,0.6); }
+        .intro-corner.tl { top: 24px; left: 24px; border-top: 2px solid rgba(168,85,247,0.7); border-left: 2px solid rgba(168,85,247,0.7); }
+        .intro-corner.tr { top: 24px; right: 24px; border-top: 2px solid rgba(0,240,255,0.7); border-right: 2px solid rgba(0,240,255,0.7); }
+        .intro-corner.bl { bottom: 24px; left: 24px; border-bottom: 2px solid rgba(0,240,255,0.7); border-left: 2px solid rgba(0,240,255,0.7); }
+        .intro-corner.br { bottom: 24px; right: 24px; border-bottom: 2px solid rgba(168,85,247,0.7); border-right: 2px solid rgba(168,85,247,0.7); }
         @keyframes corner-in {
-            0% { opacity: 0; transform: scale(0.5); }
+            0% { opacity: 0; transform: scale(0.6); }
             100% { opacity: 1; transform: scale(1); }
         }
     </style>
@@ -303,7 +263,6 @@
         <div class="intro-orb intro-orb-1"></div>
         <div class="intro-orb intro-orb-2"></div>
         <div class="intro-orb intro-orb-3"></div>
-        <div class="intro-orb intro-orb-4"></div>
         <div class="intro-grid"></div>
         <div class="intro-scan"></div>
 
@@ -313,38 +272,47 @@
         <div class="intro-corner bl"></div>
         <div class="intro-corner br"></div>
 
-        <!-- Floating notes -->
-        <span class="intro-note n1">♪</span>
-        <span class="intro-note n2">♫</span>
-        <span class="intro-note n3">♩</span>
-        <span class="intro-note n4">♬</span>
-
         <!-- Main logo content -->
         <div class="intro-center">
             <div class="intro-logo-ring">
-                <!-- Stylised waveform / music icon SVG -->
-                <svg viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="44" cy="44" r="40" stroke="url(#g1)" stroke-width="1.5" opacity="0.5"/>
-                    <rect x="18" y="36" width="5" height="16" rx="2.5" fill="url(#g2)"/>
-                    <rect x="28" y="28" width="5" height="32" rx="2.5" fill="url(#g2)"/>
-                    <rect x="38" y="22" width="5" height="44" rx="2.5" fill="url(#g2)"/>
-                    <rect x="48" y="30" width="5" height="28" rx="2.5" fill="url(#g2)"/>
-                    <rect x="58" y="38" width="5" height="12" rx="2.5" fill="url(#g2)"/>
+                <!-- OFFICIAL AXIØTUNE AUDIO PRISM SVG LOGO -->
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="44" stroke="url(#axio-g1)" stroke-width="2" opacity="0.6"/>
+                    <circle cx="50" cy="50" r="36" stroke="url(#axio-g2)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>
+                    
+                    <!-- Soundwave Equalizer Ø Core -->
+                    <rect x="26" y="42" width="4.5" height="16" rx="2.2" fill="url(#axio-bar-g)"/>
+                    <rect x="34" y="32" width="4.5" height="36" rx="2.2" fill="url(#axio-bar-g)"/>
+                    <rect x="42" y="24" width="4.5" height="52" rx="2.2" fill="url(#axio-bar-g)"/>
+                    <rect x="50" y="20" width="5.5" height="60" rx="2.7" fill="url(#axio-bar-g)"/>
+                    <rect x="58" y="28" width="4.5" height="44" rx="2.2" fill="url(#axio-bar-g)"/>
+                    <rect x="66" y="36" width="4.5" height="28" rx="2.2" fill="url(#axio-bar-g)"/>
+                    <rect x="74" y="44" width="4.5" height="12" rx="2.2" fill="url(#axio-bar-g)"/>
+
+                    <!-- Slash Ø line -->
+                    <line x1="28" y1="72" x2="72" y2="28" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+
                     <defs>
-                        <linearGradient id="g1" x1="4" y1="4" x2="84" y2="84" gradientUnits="userSpaceOnUse">
+                        <linearGradient id="axio-g1" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
                             <stop stop-color="#a855f7"/>
-                            <stop offset="1" stop-color="#00c2ff"/>
+                            <stop offset="0.5" stop-color="#00f0ff"/>
+                            <stop offset="1" stop-color="#ff2d55"/>
                         </linearGradient>
-                        <linearGradient id="g2" x1="0" y1="0" x2="0" y2="88" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#a855f7"/>
-                            <stop offset="0.5" stop-color="#00c2ff"/>
-                            <stop offset="1" stop-color="#ffa500"/>
+                        <linearGradient id="axio-g2" x1="100" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#00f0ff"/>
+                            <stop offset="1" stop-color="#a855f7"/>
+                        </linearGradient>
+                        <linearGradient id="axio-bar-g" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#ffffff"/>
+                            <stop offset="0.3" stop-color="#d8b4fe"/>
+                            <stop offset="0.7" stop-color="#00f0ff"/>
+                            <stop offset="1" stop-color="#a855f7"/>
                         </linearGradient>
                     </defs>
                 </svg>
             </div>
-            <div class="intro-brand">AxioTune</div>
-            <div class="intro-tagline">Premium Music Experience</div>
+            <div class="intro-brand">AXIØTUNE</div>
+            <div class="intro-tagline">AI Social & Lofi Audio Radar</div>
             <div class="intro-loader-track">
                 <div class="intro-loader-fill"></div>
             </div>
@@ -354,15 +322,14 @@
     <script>
         (function() {
             const splash = document.getElementById('intro-splash-screen');
-            // Total animation duration: ~4.1s (loader finishes at 1.8+2.2=4.0s)
-            // Add a tiny pause then fade out
-            const INTRO_DURATION = 4400;
+            // Snappy 1.8s Motion Graphic Duration (1850ms)
+            const INTRO_DURATION = 1850;
             const fadeOut = () => {
                 if (!splash || !splash.parentNode) return;
                 splash.classList.add('fade-out');
                 setTimeout(() => {
                     if (splash && splash.parentNode) splash.remove();
-                }, 1050);
+                }, 450);
             };
             setTimeout(fadeOut, INTRO_DURATION);
         })();
@@ -1571,7 +1538,7 @@
     </div>
     <div id="queue-backdrop"></div>
 
-    <script src="app_v3.js?v=160"></script>
+    <script src="app_v3.js?v=161"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
