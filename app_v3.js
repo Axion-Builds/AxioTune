@@ -6388,28 +6388,33 @@ function applyTheme(theme) {
     document.body.classList.remove('theme-dynamic', 'theme-static', 'pitch-black-mode');
     document.documentElement.classList.remove('pitch-black-mode');
     const btn = document.getElementById('dark-mode-btn');
-    const iconPath = document.getElementById('theme-icon-path');
-    if (!btn || !iconPath) return;
+    const iconPath = document.getElementById('theme-icon-path') || document.getElementById('pch-theme-icon');
 
     if (theme === 'static') {
         document.body.classList.add('theme-static');
-        btn.style.background = 'rgba(255, 152, 0, 0.15)'; 
-        btn.style.color = '#ff9800';
-        iconPath.setAttribute('d', 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'); 
-        btn.title = "Static Wallpaper (YT Music Style)";
+        if (btn) {
+            btn.style.background = 'rgba(255, 152, 0, 0.15)'; 
+            btn.style.color = '#ff9800';
+            btn.title = "Static Wallpaper (YT Music Style)";
+        }
+        if (iconPath) iconPath.setAttribute('d', 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'); 
     } else if (theme === 'dark') {
         document.body.classList.add('pitch-black-mode');
         document.documentElement.classList.add('pitch-black-mode');
-        btn.style.background = 'rgba(255, 71, 109, 0.15)'; 
-        btn.style.color = '#ff476d';
-        iconPath.setAttribute('d', 'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z'); 
-        btn.title = "Pitch Black Mode";
+        if (btn) {
+            btn.style.background = 'rgba(255, 71, 109, 0.15)'; 
+            btn.style.color = '#ff476d';
+            btn.title = "Pitch Black Mode";
+        }
+        if (iconPath) iconPath.setAttribute('d', 'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z'); 
     } else {
         document.body.classList.add('theme-dynamic');
-        btn.style.background = 'rgba(255, 255, 255, 0.05)';
-        btn.style.color = 'rgba(255,255,255,0.6)';
-        iconPath.setAttribute('d', 'M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z'); 
-        btn.title = "Dynamic Wallpaper (Apple Music Style)";
+        if (btn) {
+            btn.style.background = 'rgba(255, 255, 255, 0.05)';
+            btn.style.color = 'rgba(255,255,255,0.6)';
+            btn.title = "Dynamic Wallpaper (Apple Music Style)";
+        }
+        if (iconPath) iconPath.setAttribute('d', 'M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z'); 
     }
 }
 
