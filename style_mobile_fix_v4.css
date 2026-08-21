@@ -914,14 +914,14 @@
 
         /* Left Panel */
         #left-panel {
-            width: 45%; height: 100%; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; padding: 40px; padding-top: 80px; padding-left: 100px;
+            width: 48%; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 30px 40px 40px 100px;
             transition: padding-left 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         #cover-wrapper {
-            position: relative; margin-bottom: 30px; display: flex; justify-content: center;
-            align-items: center; width: clamp(180px, 50%, 380px); aspect-ratio: 1;
+            position: relative; margin-bottom: 28px; display: flex; justify-content: center;
+            align-items: center; width: clamp(220px, 58%, 430px); aspect-ratio: 1;
         }
 
         /* Cover art 3D perspective container */
@@ -931,7 +931,7 @@
             position: relative;
         }
         #cover-art-container {
-            width: 100%; height: 100%; border-radius: 20px;
+            width: 100%; height: 100%; border-radius: 24px;
             overflow: hidden; background: transparent;
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             display: flex; align-items: center; justify-content: center; position: relative; z-index: 2;
@@ -960,28 +960,28 @@
 
         /* Player Controls Under Cover */
         #player-controls {
-            width: clamp(180px, 50%, 380px); display: flex; flex-direction: column; gap: 15px;
+            width: clamp(220px, 58%, 430px); display: flex; flex-direction: column; gap: 16px;
         }
 
-        #track-info { text-align: left; margin-bottom: 5px; }
+        #track-info { text-align: left; margin-bottom: 4px; }
         #track-title {
             font-family: var(--font-display);
-            font-size: 1.75rem; font-weight: 700;
-            margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            letter-spacing: -0.02em;
+            font-size: 2.15rem; font-weight: 700;
+            margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: -0.025em; line-height: 1.15;
         }
-        #track-artist { font-size: 1.05rem; color: rgba(255,255,255,0.65); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
+        #track-artist { font-size: 1.2rem; color: rgba(255,255,255,0.7); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
 
         #progress-container {
-            width: 100%; height: 5px; background: rgba(255,255,255,0.15);
-            border-radius: 4px; cursor: pointer; position: relative;
+            width: 100%; height: 6px; background: rgba(255,255,255,0.18);
+            border-radius: 5px; cursor: pointer; position: relative;
             transition: height 0.2s ease, background 0.2s ease;
         }
-        #progress-container:hover { height: 7px; background: rgba(255,255,255,0.25); }
+        #progress-container:hover { height: 8px; background: rgba(255,255,255,0.28); }
         #progress-bar {
             height: 100%;
             background: rgba(255, 255, 255, 1);
-            border-radius: 4px; width: 0%;
+            border-radius: 5px; width: 0%;
             pointer-events: none;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 0 20px rgba(255, 255, 255, 0.2);
             position: relative;
@@ -995,15 +995,16 @@
         }
         
         .time-display {
-            display: flex; justify-content: space-between; font-size: 0.85rem;
-            color: rgba(255,255,255,0.6); font-weight: 500; font-variant-numeric: tabular-nums;
+            display: flex; justify-content: space-between; font-size: 0.92rem;
+            color: rgba(255,255,255,0.65); font-weight: 500; font-variant-numeric: tabular-nums;
+            margin-top: 4px;
         }
 
-        .playback-buttons { display: flex; justify-content: center; align-items: center; gap: 35px; margin-top: 0; }
+        .playback-buttons { display: flex; justify-content: center; align-items: center; gap: 36px; margin-top: 0; }
         
         .btn-icon {
             background: transparent !important; border: none !important; border-radius: 0 !important;
-            width: 56px !important; height: 56px !important; display: flex !important; align-items: center !important; justify-content: center !important;
+            width: 60px !important; height: 60px !important; display: flex !important; align-items: center !important; justify-content: center !important;
             cursor: pointer; transition: transform 0.2s ease, opacity 0.2s ease; color: rgba(255,255,255,0.9) !important;
             box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
             padding: 0 !important;
@@ -1025,7 +1026,7 @@
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
             border-radius: 0 !important;
-            width: 84px !important; height: 84px !important;
+            width: 88px !important; height: 88px !important;
             padding: 0 !important; position: relative !important;
             display: flex !important; align-items: center !important; justify-content: center !important;
             transition: transform 0.2s ease, opacity 0.2s ease !important;
@@ -1036,7 +1037,7 @@
         .glass-play-bg { display: none; }
 
         #play-pause-btn .play-icon, #play-pause-btn .pause-icon {
-            width: 52px !important; height: 52px !important;
+            width: 56px !important; height: 56px !important;
             fill: white !important;
             filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)) !important;
             transition: transform 0.2s;
@@ -1060,14 +1061,14 @@
             box-shadow: none !important;
             padding: 0 !important;
             transition: transform 0.2s, opacity 0.2s;
-            width: 56px !important; height: 56px !important;
+            width: 60px !important; height: 60px !important;
             display: flex !important; align-items: center !important; justify-content: center !important;
         }
         #prev-btn:hover:not(:disabled), #next-btn:hover:not(:disabled) { transform: scale(1.08) !important; }
         #prev-btn:active:not(:disabled), #next-btn:active:not(:disabled) { transform: scale(0.92) !important; opacity: 0.72 !important; }
 
         #prev-btn svg, #next-btn svg { 
-            width: 32px !important; height: 32px !important; fill: currentColor !important;
+            width: 35px !important; height: 35px !important; fill: currentColor !important;
             filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)) !important;
         }
 
@@ -2508,7 +2509,7 @@ body.offline-mode .offline-hide {
         /* ── Playback Controls Row: Shuffle | Prev | Play | Next | Repeat ── */
         .playback-buttons-row {
             display: flex; align-items: center; justify-content: center;
-            gap: 18px; margin-top: -2px;
+            gap: 22px; margin-top: 2px;
         }
         /* Track title row with inline like button */
         #track-title-row {
@@ -2518,15 +2519,15 @@ body.offline-mode .offline-hide {
             flex: 1; min-width: 0;
         }
         .like-inline {
-            flex-shrink: 0; width: 34px !important; height: 34px !important;
+            flex-shrink: 0; width: 36px !important; height: 36px !important;
         }
         .ctrl-btn {
             background: transparent; border: none; cursor: pointer;
-            width: 40px; height: 40px; border-radius: 50%;
+            width: 44px; height: 44px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            color: rgba(255,255,255,0.55); transition: color 0.25s, transform 0.2s, background 0.25s;
+            color: rgba(255,255,255,0.6); transition: color 0.25s, transform 0.2s, background 0.25s;
         }
-        .ctrl-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .ctrl-btn svg { width: 22px; height: 22px; fill: currentColor; }
         .ctrl-btn:hover { color: white; transform: scale(1.15); }
         .ctrl-btn.active { color: var(--accent); }
         /* Like button special animation */
