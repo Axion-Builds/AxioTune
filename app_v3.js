@@ -2183,13 +2183,13 @@ function onPlayerStateChange(event) {
         const topRightQueueBtn = document.getElementById('top-right-queue-btn');
         if (topRightQueueBtn) topRightQueueBtn.addEventListener('click', toggleQueue);
         
-        closeQueueBtn.addEventListener('click', closeQueue);
+        closeQueueBtn?.addEventListener('click', closeQueue);
         
         // Close when clicking backdrop
-        queueBackdrop.addEventListener('click', closeQueue);
+        queueBackdrop?.addEventListener('click', closeQueue);
         
         document.addEventListener('click', (e) => {
-            if (queueOpen && !queuePanel.contains(e.target) && !queueNavBtn.contains(e.target) && !queueBackdrop.contains(e.target)) {
+            if (queueOpen && !queuePanel?.contains(e.target) && !queueNavBtn?.contains(e.target) && !queueBackdrop?.contains(e.target)) {
                 closeQueue();
             }
         });
