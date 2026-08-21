@@ -1,4 +1,4 @@
 @echo off
-cd /d "C:\Users\Adarsh shukla\.gemini\antigravity\scratch\apple_music_streamer"
+cd /d "%~dp0"
 start "" "http://localhost:10000"
 python backend.py

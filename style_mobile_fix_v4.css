@@ -47,24 +47,11 @@
         }
 
         #background-layer {
-            position: fixed;
-            top: -10%;
-            left: -10%;
-            width: 120%;
-            height: 120%;
-            background-size: cover;
-            background-position: center;
-            filter: blur(50px) saturate(1.4) brightness(var(--bg-brightness, 0.45));
-            opacity: 0;
-            transition: opacity 1.2s ease, background-image 1s ease-in-out;
-            pointer-events: none;
-            z-index: 0; /* Keep behind everything */
-            will-change: transform, opacity, background-image;
-            transform: translate3d(0, 0, 0);
+            display: none !important;
         }
 
         body.song-playing:not(.pitch-black-mode) #background-layer {
-            opacity: 0.85;
+            display: none !important;
         }
 
         body.song-playing:not(.pitch-black-mode):not(.performance-mode):not(.disable-animations) #background-layer {
@@ -81,29 +68,22 @@
             display: none !important;
         }
 
-        /* --- CSS Aurora Background (Lag Free) --- */
-        #css-aurora-container {
+        /* --- Better-Lyrics WebGL Shader Canvas (Mesh Gradient + Beat Sync) --- */
+        #webgl-shader-canvas {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
             pointer-events: none;
             overflow: hidden;
-            background: linear-gradient(135deg, #0a0415 0%, #080d1e 50%, #0c0618 100%);
             opacity: 1;
-            transition: opacity 1.4s cubic-bezier(0.25, 1, 0.5, 1);
-            will-change: opacity;
+            transition: opacity 0.8s ease;
         }
 
-        /* Song chal raha hai — album art BG le leta hai, aurora completely disabled */
-        body.song-playing #css-aurora-container {
-            display: none !important;
-        }
-
-        body.pitch-black-mode #css-aurora-container {
-            display: none !important;
+        body.pitch-black-mode #webgl-shader-canvas {
+            opacity: 0.12 !important;
         }
 
         .aurora-orb {
@@ -4149,22 +4129,8 @@ h1, h2, h3, h4, h5, h6,
 }
 
 
-/* --- macOS Dynamic Wallpaper --- */
+/* --- macOS Dynamic Wallpaper (Replaced by WebGL Shader Engine) --- */
 #macos-wallpaper {
-    position: fixed;
-    top: -15%; left: -15%; width: 130vw; height: 130vh;
-    background-image: url('macos-bg2.jpg');
-    background-size: cover;
-    background-position: center;
-    z-index: 0;
-    pointer-events: none;
-    filter: blur(15px) brightness(0.6) saturate(130%);
-    will-change: transform;
-    animation: macos-enter 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, macos-breathe 25s ease-in-out 1.5s infinite alternate;
-    transition: opacity 1s ease-in-out;
-}
-
-body.song-playing #macos-wallpaper {
     display: none !important;
 }
 

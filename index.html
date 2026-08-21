@@ -34,375 +34,473 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=162">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=200">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
-    <!-- ═══════════════════════════════════════════════════════════
-         INTRO SPLASH SCREEN — CSS Motion Graphic
-    ═══════════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════════════════════
+         CINEMATIC INTRO — Multi-Phase Full-Screen Experience v3
+    ══════════════════════════════════════════════════════════════ -->
     <style>
-        /* ── 3D KINETIC MOTION GRAPHICS INTRO (COBRAKINETIC VEP EDIT STYLE) ────── */
-        #intro-splash-screen {
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-            overflow: hidden;
-            background: #020008;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            perspective: 1000px;
-            opacity: 1;
-            transform-style: preserve-3d;
-            transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease;
-        }
-        #intro-splash-screen.fade-out {
-            opacity: 0;
-            transform: perspective(1000px) translateZ(800px) scale(2.2);
-            filter: blur(20px);
-            pointer-events: none;
-        }
+    *,*::before,*::after{box-sizing:border-box}
+    #ISS{
+        position:fixed;inset:0;z-index:9999999;background:#000;
+        overflow:hidden;cursor:none;
+    }
+    /* Phase canvas layers */
+    #ISS canvas{position:absolute;inset:0;width:100%;height:100%;}
+    #ISS-bg{z-index:1;}
+    #ISS-fx{z-index:3;pointer-events:none;}
 
-        /* ── Deep Cyber Nebula & Particle Field ──────────────────── */
-        .intro-bg {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 50% 50%, #17073d 0%, #08021a 50%, #010005 100%);
-        }
+    /* ── Phase containers ── */
+    .iss-phase{
+        position:absolute;inset:0;z-index:5;
+        display:flex;align-items:center;justify-content:center;
+        opacity:0;pointer-events:none;
+    }
 
-        /* Ambient Glowing Nebula Orbs */
-        .intro-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(90px);
-            opacity: 0;
-            animation: kinetic-nebula 2s forwards cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .intro-orb-1 {
-            width: 60vw; height: 60vw;
-            top: -20%; left: -15%;
-            background: radial-gradient(circle, rgba(168,85,247,0.85) 0%, rgba(91,15,255,0.4) 60%, transparent 100%);
-        }
-        .intro-orb-2 {
-            width: 55vw; height: 55vw;
-            bottom: -20%; right: -15%;
-            background: radial-gradient(circle, rgba(0,240,255,0.8) 0%, rgba(0,116,204,0.3) 60%, transparent 100%);
-            animation-delay: 0.1s;
-        }
-        .intro-orb-3 {
-            width: 45vw; height: 45vw;
-            top: 25%; left: 28%;
-            background: radial-gradient(circle, rgba(255,45,85,0.7) 0%, rgba(255,149,0,0.25) 60%, transparent 100%);
-            animation-delay: 0.2s;
-        }
-        @keyframes kinetic-nebula {
-            0% { opacity: 0; transform: scale(0.4) rotate(-10deg); }
-            100% { opacity: 0.75; transform: scale(1.1) rotate(5deg); }
-        }
+    /* ─── PHASE 1: WORDMARK SLAM ─── */
+    #ISP1{flex-direction:column;gap:0;}
+    .iss-axio{
+        font-family:'Syncopate','Bebas Neue',monospace;
+        font-size:clamp(5rem,18vw,14rem);
+        font-weight:700;
+        letter-spacing:0.18em;
+        color:#fff;
+        line-height:0.85;
+        transform:translateY(-120px) scaleY(1.4);
+        opacity:0;
+        display:block;
+        text-shadow:0 0 80px rgba(168,85,247,0.8),0 0 160px rgba(168,85,247,0.4);
+    }
+    .iss-tune{
+        font-family:'Syncopate','Bebas Neue',monospace;
+        font-size:clamp(5rem,18vw,14rem);
+        font-weight:700;
+        letter-spacing:0.18em;
+        line-height:0.85;
+        transform:translateY(120px) scaleY(1.4);
+        opacity:0;
+        display:block;
+        background:linear-gradient(135deg,#a855f7 0%,#00f0ff 50%,#ff2d55 100%);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+        filter:drop-shadow(0 0 40px rgba(0,240,255,0.7));
+    }
+    .iss-slash{
+        position:absolute;
+        left:0;right:0;
+        top:50%;
+        height:3px;
+        background:linear-gradient(90deg,transparent,#a855f7 20%,#fff 50%,#00f0ff 80%,transparent);
+        transform:scaleX(0);transform-origin:center;
+        box-shadow:0 0 30px #a855f7,0 0 60px #00f0ff;
+        opacity:0;
+    }
 
-        /* ── 3D Wireframe Cyber Grid ──────────────────────────────── */
-        .intro-grid {
-            position: absolute;
-            inset: -50%;
-            background-image: 
-                linear-gradient(rgba(0, 240, 255, 0.15) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(168, 85, 247, 0.15) 1px, transparent 1px);
-            background-size: 60px 60px;
-            transform: perspective(500px) rotateX(60deg) translateY(-100px);
-            opacity: 0;
-            animation: grid-fly 2s 0.1s forwards cubic-bezier(0.16, 1, 0.3, 1);
-            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 90%);
-            -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 90%);
-        }
-        @keyframes grid-fly {
-            0% { opacity: 0; transform: perspective(500px) rotateX(75deg) translateY(0); }
-            100% { opacity: 0.25; transform: perspective(500px) rotateX(60deg) translateY(-180px); }
-        }
+    /* ─── PHASE 2: LOGO + RINGS ─── */
+    #ISP2{flex-direction:column;align-items:center;gap:32px;}
+    #iss-logo-wrap{
+        position:relative;
+        width:clamp(180px,35vw,280px);
+        height:clamp(180px,35vw,280px);
+        opacity:0;transform:scale(0.2) rotate(-30deg);
+    }
+    #iss-logo-svg{width:100%;height:100%;
+        filter:drop-shadow(0 0 60px rgba(168,85,247,1)) drop-shadow(0 0 120px rgba(0,240,255,0.7));
+    }
+    .iss-ring{
+        position:absolute;
+        border-radius:50%;
+        border:1.5px solid transparent;
+        top:50%;left:50%;
+        transform:translate(-50%,-50%) scale(0);
+        opacity:0;
+    }
+    .iss-ring-1{width:130%;height:130%;border-color:rgba(168,85,247,0.6);}
+    .iss-ring-2{width:165%;height:165%;border-color:rgba(0,240,255,0.4);border-style:dashed;}
+    .iss-ring-3{width:200%;height:200%;border-color:rgba(255,45,85,0.3);}
 
-        /* ── Chromatic Laser Slice Line ───────────────────────────── */
-        .intro-scan {
-            position: absolute;
-            left: -10%; right: -10%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent 0%, #00f0ff 25%, #ffffff 50%, #a855f7 75%, transparent 100%);
-            top: 50%;
-            opacity: 0;
-            transform: translateY(-50%) scaleX(0.2);
-            animation: laser-slash 1.4s 0.3s forwards cubic-bezier(0.16, 1, 0.3, 1);
-            filter: drop-shadow(0 0 15px #00f0ff) drop-shadow(0 0 30px #a855f7);
-        }
-        @keyframes laser-slash {
-            0% { opacity: 0; transform: translateY(-50%) scaleX(0.1); }
-            40% { opacity: 1; transform: translateY(-50%) scaleX(1); }
-            100% { opacity: 0; transform: translateY(-50%) scaleX(1.3); }
-        }
+    #iss-tagline{
+        font-family:'Syncopate',monospace;
+        font-size:clamp(0.6rem,2.2vw,1rem);
+        letter-spacing:0.6em;
+        text-transform:uppercase;
+        color:rgba(255,255,255,0);
+        font-weight:700;
+    }
+    #iss-progress-bar{
+        position:absolute;
+        bottom:0;left:0;
+        height:3px;
+        width:0%;
+        background:linear-gradient(90deg,#a855f7,#00f0ff,#ff2d55);
+        box-shadow:0 0 20px #a855f7,0 0 40px #00f0ff;
+    }
 
-        /* ── Main Kinetic Stage ──────────────────────────────────── */
-        .intro-kinetic-stage {
-            position: relative;
-            z-index: 20;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transform-style: preserve-3d;
-        }
+    /* ─── PHASE 3: FULL SCREEN GLITCH EXIT ─── */
+    #ISP3{
+        background:transparent;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+    }
+    #iss-glitch-text{
+        font-family:'Syncopate','Bebas Neue',monospace;
+        font-size:clamp(6rem,22vw,18rem);
+        font-weight:700;
+        letter-spacing:0.1em;
+        color:#fff;
+        position:relative;
+        opacity:0;
+        text-transform:uppercase;
+    }
+    #iss-glitch-text::before{
+        content:'AXIØTUNE';
+        position:absolute;inset:0;
+        color:#ff2d55;
+        clip-path:polygon(0 30%,100% 30%,100% 50%,0 50%);
+        transform:translate(-6px,0);
+        mix-blend-mode:screen;
+        animation:iss-glitch-r 0.15s steps(2) infinite;
+    }
+    #iss-glitch-text::after{
+        content:'AXIØTUNE';
+        position:absolute;inset:0;
+        color:#00f0ff;
+        clip-path:polygon(0 60%,100% 60%,100% 80%,0 80%);
+        transform:translate(6px,0);
+        mix-blend-mode:screen;
+        animation:iss-glitch-b 0.18s steps(3) infinite;
+    }
+    @keyframes iss-glitch-r{
+        0%{clip-path:polygon(0 25%,100% 25%,100% 45%,0 45%);transform:translate(-8px,2px);}
+        50%{clip-path:polygon(0 55%,100% 55%,100% 70%,0 70%);transform:translate(5px,-3px);}
+        100%{clip-path:polygon(0 30%,100% 30%,100% 50%,0 50%);transform:translate(-6px,0);}
+    }
+    @keyframes iss-glitch-b{
+        0%{clip-path:polygon(0 65%,100% 65%,100% 80%,0 80%);transform:translate(9px,-2px);}
+        50%{clip-path:polygon(0 20%,100% 20%,100% 35%,0 35%);transform:translate(-4px,4px);}
+        100%{clip-path:polygon(0 60%,100% 60%,100% 80%,0 80%);transform:translate(6px,0);}
+    }
 
-        /* ── 3D Audio Prism Logo Ring ────────────────────────────── */
-        .intro-prism-box {
-            width: 120px; height: 120px;
-            position: relative;
-            margin-bottom: 24px;
-            opacity: 0;
-            transform-style: preserve-3d;
-            animation: prism-entrance 0.7s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-        @keyframes prism-entrance {
-            0% { opacity: 0; transform: perspective(800px) translateZ(-400px) rotateY(-90deg) scale(0.3); }
-            100% { opacity: 1; transform: perspective(800px) translateZ(0) rotateY(0deg) scale(1); }
-        }
-        .intro-prism-box svg {
-            width: 100%; height: 100%;
-            filter: drop-shadow(0 0 30px rgba(0,240,255,0.8)) drop-shadow(0 0 45px rgba(168,85,247,0.7));
-        }
-
-        /* Rotating Shockwave Pulse Rings */
-        .intro-prism-box::before,
-        .intro-prism-box::after {
-            content: '';
-            position: absolute;
-            inset: -16px;
-            border-radius: 50%;
-            border: 2px dashed rgba(0,240,255,0.7);
-            opacity: 0;
-            animation: ring-spin-pulse 2s 0.4s infinite linear;
-        }
-        .intro-prism-box::after {
-            inset: -32px;
-            border: 1.5px solid rgba(168,85,247,0.5);
-            animation-duration: 3s;
-            animation-direction: reverse;
-        }
-        @keyframes ring-spin-pulse {
-            0% { opacity: 0.8; transform: rotate(0deg) scale(0.9); }
-            50% { opacity: 0.4; transform: rotate(180deg) scale(1.1); }
-            100% { opacity: 0.8; transform: rotate(360deg) scale(0.9); }
-        }
-
-        /* ── Kinetic Typography Header (Split Stack) ─────────────── */
-        .intro-kinetic-title {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 0.88;
-            font-family: 'Syncopate', 'Bebas Neue', sans-serif;
-            text-transform: uppercase;
-            font-weight: 700;
-            perspective: 800px;
-        }
-        .kinetic-line {
-            display: inline-block;
-            font-size: clamp(2.8rem, 8vw, 4.8rem);
-            letter-spacing: 0.25em;
-            opacity: 0;
-            background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 40%, #00f0ff 80%, #ff2d55 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 0 25px rgba(168,85,247,0.6));
-            transform-style: preserve-3d;
-        }
-        .kinetic-line.top-word {
-            animation: slam-top 0.65s 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .kinetic-line.bottom-word {
-            animation: slam-bottom 0.65s 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            font-size: clamp(3.2rem, 9vw, 5.4rem);
-            letter-spacing: 0.35em;
-            background: linear-gradient(135deg, #00f0ff 0%, #ffffff 50%, #a855f7 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        @keyframes slam-top {
-            0% { opacity: 0; transform: perspective(800px) rotateX(-60deg) translateZ(200px) translateY(-30px); filter: blur(12px); }
-            100% { opacity: 1; transform: perspective(800px) rotateX(0deg) translateZ(0) translateY(0); filter: blur(0); }
-        }
-        @keyframes slam-bottom {
-            0% { opacity: 0; transform: perspective(800px) rotateX(60deg) translateZ(200px) translateY(30px); filter: blur(12px); }
-            100% { opacity: 1; transform: perspective(800px) rotateX(0deg) translateZ(0) translateY(0); filter: blur(0); }
-        }
-
-        /* ── Kinetic Tagline & Equalizer Frequency Bars ───────────── */
-        .intro-kinetic-sub {
-            margin-top: 18px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            opacity: 0;
-            animation: sub-fade 0.5s 0.65s ease forwards;
-        }
-        .kinetic-badge {
-            font-family: 'Outfit', sans-serif;
-            font-size: clamp(0.72rem, 1.8vw, 0.88rem);
-            font-weight: 700;
-            letter-spacing: 0.35em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.7);
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.15);
-            padding: 5px 14px;
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 20px rgba(0,240,255,0.2);
-        }
-        .kinetic-eq-bars {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            height: 14px;
-        }
-        .kinetic-bar {
-            width: 3px;
-            height: 100%;
-            background: #00f0ff;
-            border-radius: 2px;
-            animation: eq-bounce 0.8s infinite ease-in-out alternate;
-            box-shadow: 0 0 8px #00f0ff;
-        }
-        .kinetic-bar:nth-child(1) { animation-delay: 0.1s; background: #a855f7; }
-        .kinetic-bar:nth-child(2) { animation-delay: 0.3s; background: #00f0ff; height: 70%; }
-        .kinetic-bar:nth-child(3) { animation-delay: 0.2s; background: #ff2d55; height: 100%; }
-        .kinetic-bar:nth-child(4) { animation-delay: 0.4s; background: #00f0ff; height: 50%; }
-        @keyframes eq-bounce {
-            0% { transform: scaleY(0.3); }
-            100% { transform: scaleY(1.2); }
-        }
-        @keyframes sub-fade {
-            0% { opacity: 0; transform: translateY(12px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── Corner Cyber Frames ─────────────────────────────────── */
-        .intro-corner {
-            position: absolute;
-            width: 48px; height: 48px;
-            opacity: 0;
-            animation: corner-appear 0.5s 0.25s ease forwards;
-        }
-        .intro-corner.tl { top: 28px; left: 28px; border-top: 2.5px solid rgba(0,240,255,0.8); border-left: 2.5px solid rgba(0,240,255,0.8); }
-        .intro-corner.tr { top: 28px; right: 28px; border-top: 2.5px solid rgba(168,85,247,0.8); border-right: 2.5px solid rgba(168,85,247,0.8); }
-        .intro-corner.bl { bottom: 28px; left: 28px; border-bottom: 2.5px solid rgba(168,85,247,0.8); border-left: 2.5px solid rgba(168,85,247,0.8); }
-        .intro-corner.br { bottom: 28px; right: 28px; border-bottom: 2.5px solid rgba(0,240,255,0.8); border-right: 2.5px solid rgba(0,240,255,0.8); }
-        @keyframes corner-appear {
-            0% { opacity: 0; transform: scale(0.5); }
-            100% { opacity: 1; transform: scale(1); }
-        }
+    /* Flash overlay */
+    #iss-flash{
+        position:absolute;inset:0;z-index:20;
+        background:#fff;opacity:0;pointer-events:none;
+    }
     </style>
 
-    <!-- 3D KINETIC MOTION GRAPHICS INTRO STAGE -->
-    <div id="intro-splash-screen">
-        <!-- Ambient Background Layers -->
-        <div class="intro-bg"></div>
-        <div class="intro-orb intro-orb-1"></div>
-        <div class="intro-orb intro-orb-2"></div>
-        <div class="intro-orb intro-orb-3"></div>
-        <div class="intro-grid"></div>
-        <div class="intro-scan"></div>
+    <div id="ISS">
+        <canvas id="ISS-bg"></canvas>
+        <canvas id="ISS-fx"></canvas>
 
-        <!-- Cyber Corner Brackets -->
-        <div class="intro-corner tl"></div>
-        <div class="intro-corner tr"></div>
-        <div class="intro-corner bl"></div>
-        <div class="intro-corner br"></div>
+        <!-- Phase 1: Dual-word slam -->
+        <div class="iss-phase" id="ISP1">
+            <span class="iss-axio" id="iss-axio">AXIO</span>
+            <div class="iss-slash" id="iss-slash"></div>
+            <span class="iss-tune" id="iss-tune">TUNE</span>
+        </div>
 
-        <!-- Main Kinetic Content Stage -->
-        <div class="intro-kinetic-stage">
-            <!-- 3D Holographic Audio Prism Ring -->
-            <div class="intro-prism-box">
-                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="44" stroke="url(#k-g1)" stroke-width="2.5" opacity="0.7"/>
-                    <circle cx="50" cy="50" r="36" stroke="url(#k-g2)" stroke-width="1.8" stroke-dasharray="8 5" opacity="0.9"/>
-                    
-                    <!-- Soundwave Equalizer Ø Core -->
-                    <rect x="24" y="40" width="5" height="20" rx="2.5" fill="url(#k-bar)"/>
-                    <rect x="33" y="30" width="5" height="40" rx="2.5" fill="url(#k-bar)"/>
-                    <rect x="42" y="22" width="5" height="56" rx="2.5" fill="url(#k-bar)"/>
-                    <rect x="51" y="16" width="6" height="68" rx="3" fill="url(#k-bar)"/>
-                    <rect x="60" y="26" width="5" height="48" rx="2.5" fill="url(#k-bar)"/>
-                    <rect x="69" y="34" width="5" height="32" rx="2.5" fill="url(#k-bar)"/>
-                    <rect x="78" y="42" width="5" height="16" rx="2.5" fill="url(#k-bar)"/>
-
-                    <!-- Slash Ø line -->
-                    <line x1="26" y1="74" x2="74" y2="26" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" filter="drop-shadow(0 0 8px #00f0ff)"/>
-
+        <!-- Phase 2: Logo reveal -->
+        <div class="iss-phase" id="ISP2">
+            <div id="iss-logo-wrap">
+                <svg id="iss-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="44" stroke="url(#il2-g1)" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="36" stroke="url(#il2-g2)" stroke-width="1.5" stroke-dasharray="7 4"/>
+                    <rect x="24" y="40" width="5" height="20" rx="2.5" fill="url(#il2-b)"/>
+                    <rect x="33" y="30" width="5" height="40" rx="2.5" fill="url(#il2-b)"/>
+                    <rect x="42" y="22" width="5" height="56" rx="2.5" fill="url(#il2-b)"/>
+                    <rect x="51" y="16" width="6" height="68" rx="3"   fill="url(#il2-b)"/>
+                    <rect x="60" y="26" width="5" height="48" rx="2.5" fill="url(#il2-b)"/>
+                    <rect x="69" y="34" width="5" height="32" rx="2.5" fill="url(#il2-b)"/>
+                    <rect x="78" y="42" width="5" height="16" rx="2.5" fill="url(#il2-b)"/>
+                    <line x1="26" y1="74" x2="74" y2="26" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
                     <defs>
-                        <linearGradient id="k-g1" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#a855f7"/>
-                            <stop offset="0.5" stop-color="#00f0ff"/>
-                            <stop offset="1" stop-color="#ff2d55"/>
+                        <linearGradient id="il2-g1" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#a855f7"/><stop offset="0.5" stop-color="#00f0ff"/><stop offset="1" stop-color="#ff2d55"/>
                         </linearGradient>
-                        <linearGradient id="k-g2" x1="100" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#00f0ff"/>
-                            <stop offset="1" stop-color="#a855f7"/>
+                        <linearGradient id="il2-g2" x1="100" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#00f0ff"/><stop offset="1" stop-color="#a855f7"/>
                         </linearGradient>
-                        <linearGradient id="k-bar" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#ffffff"/>
-                            <stop offset="0.3" stop-color="#d8b4fe"/>
-                            <stop offset="0.7" stop-color="#00f0ff"/>
-                            <stop offset="1" stop-color="#a855f7"/>
+                        <linearGradient id="il2-b" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#fff"/><stop offset="0.4" stop-color="#d8b4fe"/><stop offset="1" stop-color="#00f0ff"/>
                         </linearGradient>
                     </defs>
                 </svg>
+                <div class="iss-ring iss-ring-1" id="iss-r1"></div>
+                <div class="iss-ring iss-ring-2" id="iss-r2"></div>
+                <div class="iss-ring iss-ring-3" id="iss-r3"></div>
             </div>
-
-            <!-- Kinetic 3D Slammed Typography -->
-            <div class="intro-kinetic-title">
-                <span class="kinetic-line top-word">AXIØ</span>
-                <span class="kinetic-line bottom-word">TUNE</span>
-            </div>
-
-            <!-- Subtitle Badge & Real-Time Beat Equalizer -->
-            <div class="intro-kinetic-sub">
-                <span class="kinetic-badge">Visual Extended Audio</span>
-                <div class="kinetic-eq-bars">
-                    <div class="kinetic-bar"></div>
-                    <div class="kinetic-bar"></div>
-                    <div class="kinetic-bar"></div>
-                    <div class="kinetic-bar"></div>
-                </div>
-            </div>
+            <div id="iss-tagline">Premium Music Experience</div>
         </div>
+
+        <!-- Phase 3: Massive glitch exit text -->
+        <div class="iss-phase" id="ISP3">
+            <div id="iss-glitch-text">AXIØTUNE</div>
+        </div>
+
+        <!-- Flash overlay + progress bar -->
+        <div id="iss-flash"></div>
+        <div id="iss-progress-bar"></div>
     </div>
 
     <script>
-        (function() {
-            const splash = document.getElementById('intro-splash-screen');
-            // After-Effects Kinetic Reel Duration: ~2.1s (2100ms)
-            const INTRO_DURATION = 2100;
-            const fadeOut = () => {
-                if (!splash || !splash.parentNode) return;
-                splash.classList.add('fade-out');
-                setTimeout(() => {
-                    if (splash && splash.parentNode) splash.remove();
-                }, 600);
-            };
-            setTimeout(fadeOut, INTRO_DURATION);
-        })();
+    (function(){
+    'use strict';
+
+    /* ── CANVAS: Particle Storm ── */
+    var bgC=document.getElementById('ISS-bg'),bgX=bgC.getContext('2d');
+    var fxC=document.getElementById('ISS-fx'),fxX=fxC.getContext('2d');
+    var W,H,animId;
+    function rsz(){
+        W=bgC.width=fxC.width=window.innerWidth;
+        H=bgC.height=fxC.height=window.innerHeight;
+    }
+    rsz();window.addEventListener('resize',rsz);
+
+    var CL=['#a855f7','#00f0ff','#ff2d55','#fff','#c084fc','#818cf8'];
+    function rnd(a,b){return Math.random()*(b-a)+a;}
+    function rndC(){return CL[Math.floor(Math.random()*CL.length)];}
+
+    /* Particles */
+    var PS=[];
+    for(var i=0;i<400;i++) PS.push({
+        x:rnd(0,1000),y:rnd(0,800),
+        r:rnd(.3,2.2),vx:rnd(-.6,.6),vy:rnd(-.6,.6),
+        alpha:rnd(.1,.7),color:rndC(),life:rnd(.3,1),decay:rnd(.001,.004)
+    });
+
+    /* Energy beams */
+    var BEAMS=[];
+    for(var b=0;b<5;b++) BEAMS.push(newBeam());
+    function newBeam(){
+        return{x:rnd(0,1000),y:rnd(0,800),
+            angle:rnd(0,Math.PI*2),speed:rnd(4,10),
+            len:rnd(80,200),width:rnd(.5,2),
+            color:rndC(),life:1,decay:rnd(.015,.03),alpha:rnd(.4,.9)};
+    }
+
+    var bgTime=0;
+    function drawBg(){
+        bgTime+=.005;
+        bgX.clearRect(0,0,W,H);
+        /* Deep nebula */
+        var g=bgX.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H));
+        g.addColorStop(0,'#1a0840');
+        g.addColorStop(.4,'#08021c');
+        g.addColorStop(.8,'#020008');
+        g.addColorStop(1,'#000');
+        bgX.fillStyle=g;bgX.fillRect(0,0,W,H);
+        /* Pulsing orbs */
+        var p1=Math.sin(bgTime)*0.15+0.7;
+        var og=bgX.createRadialGradient(W*.2,H*.25,0,W*.2,H*.25,W*.5);
+        og.addColorStop(0,'rgba(168,85,247,'+p1*.18+')');
+        og.addColorStop(1,'transparent');
+        bgX.fillStyle=og;bgX.fillRect(0,0,W,H);
+        var og2=bgX.createRadialGradient(W*.8,H*.75,0,W*.8,H*.75,W*.5);
+        og2.addColorStop(0,'rgba(0,240,255,'+(Math.sin(bgTime+1)*.1+.12)+')');
+        og2.addColorStop(1,'transparent');
+        bgX.fillStyle=og2;bgX.fillRect(0,0,W,H);
+    }
+
+    function drawFx(){
+        fxX.clearRect(0,0,W,H);
+        /* Particles */
+        for(var i=0;i<PS.length;i++){
+            var p=PS[i];
+            p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;
+            if(p.life<=0){
+                p.x=Math.random()*W;p.y=Math.random()*H;
+                p.r=rnd(.3,2.2);p.vx=rnd(-.6,.6);p.vy=rnd(-.6,.6);
+                p.alpha=rnd(.1,.7);p.color=rndC();p.life=rnd(.5,1);p.decay=rnd(.001,.004);
+            } else {
+                fxX.save();
+                fxX.globalAlpha=p.alpha*p.life;
+                fxX.shadowColor=p.color;fxX.shadowBlur=12;
+                fxX.fillStyle=p.color;
+                fxX.beginPath();fxX.arc(p.x,p.y,p.r,0,Math.PI*2);fxX.fill();
+                fxX.restore();
+            }
+        }
+        /* Energy beams */
+        for(var j=0;j<BEAMS.length;j++){
+            var s=BEAMS[j];
+            s.x+=Math.cos(s.angle)*s.speed;
+            s.y+=Math.sin(s.angle)*s.speed;
+            s.life-=s.decay;
+            if(s.life<=0||s.x<-300||s.x>W+300||s.y<-300||s.y>H+300) BEAMS[j]=newBeam();
+            else{
+                fxX.save();fxX.globalAlpha=s.alpha*s.life;
+                var sg=fxX.createLinearGradient(
+                    s.x-Math.cos(s.angle)*s.len,s.y-Math.sin(s.angle)*s.len,s.x,s.y);
+                sg.addColorStop(0,'transparent');sg.addColorStop(1,s.color);
+                fxX.strokeStyle=sg;fxX.lineWidth=s.width;
+                fxX.shadowColor=s.color;fxX.shadowBlur=15;
+                fxX.beginPath();
+                fxX.moveTo(s.x-Math.cos(s.angle)*s.len,s.y-Math.sin(s.angle)*s.len);
+                fxX.lineTo(s.x,s.y);fxX.stroke();fxX.restore();
+            }
+        }
+    }
+
+    function loop(){drawBg();drawFx();animId=requestAnimationFrame(loop);}
+    animId=requestAnimationFrame(loop);
+
+    /* ── DOM refs ── */
+    var ISS=document.getElementById('ISS');
+    var ISP1=document.getElementById('ISP1');
+    var ISP2=document.getElementById('ISP2');
+    var ISP3=document.getElementById('ISP3');
+    var axio=document.getElementById('iss-axio');
+    var tune=document.getElementById('iss-tune');
+    var slash=document.getElementById('iss-slash');
+    var logo=document.getElementById('iss-logo-wrap');
+    var r1=document.getElementById('iss-r1');
+    var r2=document.getElementById('iss-r2');
+    var r3=document.getElementById('iss-r3');
+    var tag=document.getElementById('iss-tagline');
+    var gt=document.getElementById('iss-glitch-text');
+    var flash=document.getElementById('iss-flash');
+    var prog=document.getElementById('iss-progress-bar');
+
+    function setT(el,props){Object.assign(el.style,props);}
+    function ease(t){return t<.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;}
+    function spring(t){var s=1.70158;return(s+1)*t*t*t-s*t*t;}
+
+    function animate(el,from,to,dur,delay,propFn,done){
+        setTimeout(function(){
+            var start=null;
+            function step(ts){
+                if(!start)start=ts;
+                var t=Math.min((ts-start)/dur,1);
+                propFn(el,from+(to-from)*ease(t));
+                if(t<1)requestAnimationFrame(step);
+                else if(done)done();
+            }
+            requestAnimationFrame(step);
+        },delay);
+    }
+
+    function flashScreen(intensity,dur,cb){
+        setT(flash,{transition:'none',opacity:String(intensity)});
+        setTimeout(function(){
+            setT(flash,{transition:'opacity '+dur+'ms ease',opacity:'0'});
+            if(cb)setTimeout(cb,dur);
+        },30);
+    }
+
+    /* ── PROGRESS BAR ── */
+    var totalDur=4500;
+    var progStart=performance.now();
+    function updateProg(){
+        if(!prog.parentNode)return;
+        var t=Math.min((performance.now()-progStart)/totalDur,1);
+        prog.style.width=(t*100)+'%';
+        if(t<1)requestAnimationFrame(updateProg);
+    }
+    requestAnimationFrame(updateProg);
+
+    /* ══════════════════════════════════════
+       PHASE 1 — SLAM (0ms)
+       AXIO crashes down from top
+       TUNE crashes up from bottom
+       White slash splits them
+    ══════════════════════════════════════ */
+    setT(ISP1,{opacity:'1'});
+    /* AXIO slam in */
+    setTimeout(function(){
+        setT(axio,{transition:'opacity .05s,transform .55s cubic-bezier(.22,1.8,.36,1),text-shadow .5s',opacity:'1',transform:'translateY(0) scaleY(1)'});
+    },80);
+    /* TUNE slam in */
+    setTimeout(function(){
+        setT(tune,{transition:'opacity .05s,transform .55s cubic-bezier(.22,1.8,.36,1)',opacity:'1',transform:'translateY(0) scaleY(1)'});
+    },140);
+    /* Slash expand */
+    setTimeout(function(){
+        setT(slash,{transition:'opacity .15s,transform .5s cubic-bezier(.16,1,.3,1)',opacity:'1',transform:'scaleX(1)'});
+    },300);
+    /* Shockwave flash on impact */
+    setTimeout(function(){flashScreen(0.55,200);},160);
+
+    /* ── Vibrate effect – small nudges ── */
+    setTimeout(function(){
+        var v=0,vi=setInterval(function(){
+            var d=v%2===0?3:-3;
+            setT(axio,{transform:'translateY('+d+'px) scaleY(1)'});
+            setT(tune,{transform:'translateY('+(-d)+'px) scaleY(1)'});
+            v++;if(v>5){clearInterval(vi);setT(axio,{transform:'translateY(0) scaleY(1)'});setT(tune,{transform:'translateY(0) scaleY(1)'});}
+        },55);
+    },300);
+
+    /* ══════════════════════════════════════
+       PHASE 1 → 2 transition (1100ms)
+       Flash white → swap to logo phase
+    ══════════════════════════════════════ */
+    setTimeout(function(){
+        flashScreen(0.9,120,function(){
+            setT(ISP1,{opacity:'0'});
+            setT(ISP2,{opacity:'1'});
+            /* Logo spring in */
+            setT(logo,{transition:'opacity .1s,transform .7s cubic-bezier(.34,1.56,.64,1)',opacity:'1',transform:'scale(1) rotate(0deg)'});
+            /* Rings expand */
+            setTimeout(function(){setT(r1,{transition:'all .6s cubic-bezier(.22,1,.36,1)',transform:'translate(-50%,-50%) scale(1)',opacity:'1'});},150);
+            setTimeout(function(){setT(r2,{transition:'all .7s cubic-bezier(.22,1,.36,1)',transform:'translate(-50%,-50%) scale(1)',opacity:'1'});},250);
+            setTimeout(function(){setT(r3,{transition:'all .8s cubic-bezier(.22,1,.36,1)',transform:'translate(-50%,-50%) scale(1)',opacity:'1'});},350);
+            /* Tagline */
+            setTimeout(function(){
+                setT(tag,{transition:'color .8s ease',color:'rgba(255,255,255,0.55)'});
+            },600);
+            /* Logo slow spin */
+            var angle=0,spinId=setInterval(function(){
+                angle+=0.5;
+                logo.style.transform='scale(1) rotate('+angle+'deg)';
+                if(angle>=720)clearInterval(spinId);
+            },16);
+        });
+    },1100);
+
+    /* ══════════════════════════════════════
+       PHASE 2 → 3 transition (2700ms)
+       Flash → full-screen glitch text
+    ══════════════════════════════════════ */
+    setTimeout(function(){
+        flashScreen(1.0,80,function(){
+            setT(ISP2,{opacity:'0'});
+            setT(ISP3,{opacity:'1'});
+            /* Massive text blasts in */
+            setT(gt,{transition:'opacity .1s,transform .4s cubic-bezier(.22,1.5,.36,1)',opacity:'1',transform:'scale(1)'});
+        });
+    },2700);
+
+    /* Chromatic shudder on glitch text */
+    setTimeout(function(){
+        var sh=0,shid=setInterval(function(){
+            var ox=(Math.random()-.5)*20,oy=(Math.random()-.5)*8;
+            gt.style.textShadow=''+(-ox)+'px '+(-oy)+'px 0 #ff2d55,'+(ox)+'px '+(oy)+'px 0 #00f0ff';
+            sh++;
+            if(sh>12){clearInterval(shid);gt.style.textShadow='';}
+        },50);
+    },2820);
+
+    /* ══════════════════════════════════════
+       FINAL EXIT — Warp zoom out (4000ms)
+    ══════════════════════════════════════ */
+    setTimeout(function(){
+        flashScreen(1.0,60,function(){
+            setT(ISS,{transition:'transform .6s cubic-bezier(.4,0,.2,1),opacity .6s ease,filter .6s ease',
+                transform:'scale(2)',filter:'blur(25px) brightness(3)',opacity:'0'});
+            setTimeout(function(){
+                cancelAnimationFrame(animId);
+                if(ISS.parentNode)ISS.remove();
+            },650);
+        });
+    },4000);
+
+    })();
     </script>
 
-    <!-- CSS Aurora Background (Replaces Heavy Canvas) -->
-    <div id="css-aurora-container">
-        <div class="aurora-orb orb-1"></div>
-        <div class="aurora-orb orb-2"></div>
-        <div class="aurora-orb orb-3"></div>
-        <div class="aurora-orb orb-4"></div>
-        <div class="aurora-orb orb-5"></div>
-    </div>
-
+    <!-- Better-Lyrics WebGL Shader Canvas Engine (Liquid Mesh Gradient + Beat Reactivity) -->
+    <canvas id="webgl-shader-canvas"></canvas>
     <div id="macos-wallpaper"></div>
     <div id="background-layer"></div>
     
@@ -1595,9 +1693,8 @@
         </div>
         <div id="queue-list"></div>
     </div>
-    <div id="queue-backdrop"></div>
-
-    <script src="app_v3.js?v=162"></script>
+    <script src="kawarp.js?v=200"></script>
+    <script src="app_v3.js?v=200"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -1,7 +1,120 @@
 let _errCnt=0; window.onerror=function(m,u,l){if(++_errCnt>5)return false;console.error(m,l);let e=document.createElement('div');e.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);background:red;color:white;padding:10px;z-index:999999;border-radius:8px;font-size:12px;';e.textContent='Err: '+m+' (L'+l+')';document.body.appendChild(e);setTimeout(()=>e.remove(),5000);return false;};
 window.onunhandledrejection = function(event) { console.error('Promise Rejection: ', event.reason); };
 window._localNetworkIp = null;
-fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});// --- YOUTUBE IFRAME API MOCK AUDIO PLAYER ---
+fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});
+
+/* ══════════════════════════════════════════════════════════════════
+   AXIOTUNE WEBGL SHADER ENGINE — Powered by Official Kawarp (@kawarp/core)
+   Fluid Animated Background + Domain Warping + Kawase Blur + Audio Reactivity
+   ══════════════════════════════════════════════════════════════════ */
+window.AxioShaderEngine = (function() {
+    let canvas, kawarp;
+    let isRunning = false;
+    let currentImage = null;
+    let beatPulse = 0.0;
+    let animId = null;
+
+    function init() {
+        canvas = document.getElementById('webgl-shader-canvas');
+        if (!canvas) return;
+
+        try {
+            if (typeof window.Kawarp !== 'undefined') {
+                kawarp = new window.Kawarp(canvas, {
+                    warpIntensity: 1.4,
+                    blurPasses: 8,
+                    animationSpeed: 2.2,
+                    saturation: 1.8,
+                    dithering: 0.008,
+                    transitionDuration: 800
+                });
+
+                // Load initial vibrant gradient
+                kawarp.loadGradient(['#8a2be2', '#00f0ff', '#ff2d55', '#1a0a40']);
+                kawarp.start();
+                isRunning = true;
+                startBeatLoop();
+            } else {
+                console.warn('Kawarp library not loaded yet, retrying...');
+                setTimeout(init, 100);
+            }
+        } catch(e) {
+            console.warn('Kawarp init error:', e);
+        }
+    }
+
+    function startBeatLoop() {
+        function loop() {
+            if (kawarp && isRunning) {
+                if (typeof audioPlayer !== 'undefined' && !audioPlayer.paused) {
+                    const t = performance.now() * 0.001;
+                    const rPulse = (Math.sin(t * 7.5) * 0.5 + 0.5) * 0.7 + (Math.sin(t * 14.0) * 0.5 + 0.5) * 0.5;
+                    beatPulse = Math.max(beatPulse, rPulse);
+                    kawarp.warpIntensity = 1.3 + beatPulse * 0.8;
+                    kawarp.animationSpeed = 1.8 + beatPulse * 1.4;
+                } else if (kawarp) {
+                    kawarp.warpIntensity = 1.3;
+                    kawarp.animationSpeed = 1.5;
+                }
+                beatPulse *= 0.94;
+            }
+            animId = requestAnimationFrame(loop);
+        }
+        animId = requestAnimationFrame(loop);
+    }
+
+    function loadImage(url) {
+        if (!kawarp || !url || url === currentImage) return;
+        currentImage = url;
+        try {
+            kawarp.loadImage(url).catch(e => {
+                kawarp.loadGradient(['#8a2be2', '#00f0ff', '#ff2d55', '#1a0a40']);
+            });
+        } catch(e) {}
+    }
+
+    function setTargetColors(colors) {
+        if (!kawarp) return;
+        if (!currentImage) {
+            const hexArr = colors.map(c => `rgb(${c[0]},${c[1]},${c[2]})`);
+            try {
+                kawarp.loadGradient(hexArr);
+            } catch(e) {}
+        }
+    }
+
+    function triggerBeat(intensity = 1.0) {
+        beatPulse = Math.min(2.0, beatPulse + intensity * 0.8);
+    }
+
+    function start() {
+        if (kawarp) kawarp.start();
+        isRunning = true;
+    }
+
+    function stop() {
+        if (kawarp) kawarp.stop();
+        isRunning = false;
+    }
+
+    if (document.getElementById('webgl-shader-canvas')) {
+        setTimeout(init, 10);
+    } else if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        window.addEventListener('load', init);
+    }
+
+    return {
+        init,
+        start,
+        stop,
+        loadImage,
+        setTargetColors,
+        triggerBeat,
+        get instance() { return kawarp; }
+    };
+})();
 let ytPlayer;
 const audioPlayer = {
     _src: '',
@@ -3022,6 +3135,9 @@ function onPlayerStateChange(event) {
             if (!audioPlayer.duration) return;
             progressBar.style.width = `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`;
             durationEl.textContent = formatTime(audioPlayer.duration);
+            if (window.AxioShaderEngine && !audioPlayer.paused) {
+                window.AxioShaderEngine.triggerBeat(0.4);
+            }
         }
 
         function convertLrcToJson(lrcText) {
@@ -3315,14 +3431,18 @@ function onPlayerStateChange(event) {
                 const avgG = Math.round(gSum / 100);
                 const avgB = Math.round(bSum / 100);
                 
-                // Set CSS variables for CSS Aurora Orbs
-                const auroraContainer = document.getElementById('css-aurora-container');
-                if (auroraContainer) {
-                    auroraContainer.style.setProperty('--aurora-1', `rgba(${avgR}, ${avgG}, ${avgB}, 0.95)`);
-                    auroraContainer.style.setProperty('--aurora-2', `rgba(${Math.min(255, avgR + 40)}, ${Math.max(0, avgG - 20)}, ${Math.min(255, avgB + 20)}, 0.95)`);
-                    auroraContainer.style.setProperty('--aurora-3', `rgba(${Math.max(0, avgR - 30)}, ${Math.min(255, avgG + 40)}, ${Math.max(0, avgB - 10)}, 0.95)`);
-                    auroraContainer.style.setProperty('--aurora-4', `rgba(${Math.min(255, avgR + 20)}, ${Math.max(0, avgG - 30)}, ${Math.min(255, avgB + 50)}, 0.95)`);
-                    auroraContainer.style.setProperty('--aurora-5', `rgba(${Math.max(0, avgR - 10)}, ${Math.min(255, avgG + 20)}, ${Math.max(0, avgB - 40)}, 0.95)`);
+                // Extract 5 distinct sample point colors across the 10x10 bitmap for WebGL Mesh Shader
+                const getRgb = (pixelIdx) => [data[pixelIdx * 4], data[pixelIdx * 4 + 1], data[pixelIdx * 4 + 2]];
+                
+                const p0 = getRgb(5);   // Top-Left region
+                const p1 = getRgb(18);  // Top-Right region
+                const p2 = getRgb(45);  // Center region
+                const p3 = getRgb(82);  // Bottom-Left region
+                const p4 = getRgb(95);  // Bottom-Right region
+
+                if (window.AxioShaderEngine) {
+                    window.AxioShaderEngine.loadImage(coverArt.src);
+                    window.AxioShaderEngine.setTargetColors([p0, p1, p2, p3, p4]);
                 }
 
                 // Set very subtle chameleon glow to avoid "weird" navbar coloring
