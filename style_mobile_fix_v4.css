@@ -966,9 +966,12 @@
         }
 
         .lyric-line {
-            font-size: var(--lyrics-font-size, 1.85rem); font-weight: 700; line-height: 1.35;
-            font-family: var(--lyrics-font-family, 'Inter', 'Outfit', sans-serif);
-            letter-spacing: -0.02em; margin-bottom: 1.5rem; transform-origin: left center; position: relative;
+            font-size: var(--lyrics-font-size, 1.85rem); font-weight: 700; line-height: 1.6;
+            font-family: var(--lyrics-font-family, -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans Devanagari', 'Poppins', 'Outfit', sans-serif);
+            letter-spacing: -0.01em; margin-bottom: 1.5rem; transform-origin: left center; position: relative;
+            padding-top: 0.35em;
+            padding-bottom: 0.35em;
+            overflow: visible;
             transition:
                 filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
                 opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -1016,7 +1019,10 @@
 
         .lyric-word {
             display: inline-block;
-            padding: 0 1px;
+            padding: 0.35em 0.08em 0.25em 0.08em;
+            margin: -0.35em 0.24em -0.25em 0;
+            vertical-align: baseline;
+            overflow: visible;
             background: linear-gradient(to right, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.35) 100%);
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
             transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease;
@@ -5577,7 +5583,10 @@ body.player-screen-active #top-bar:focus-within {
     .lyric-line {
         text-align: left !important;
         font-size: 1.8rem !important;
-        line-height: 1.4 !important;
+        line-height: 1.6 !important;
+        padding-top: 0.35em !important;
+        padding-bottom: 0.35em !important;
+        overflow: visible !important;
         opacity: 0.4 !important;
         padding-left: 0 !important;
         border-left: none !important;
@@ -5761,7 +5770,7 @@ body.player-screen-active #top-bar:focus-within {
 body.player-screen-active #top-bar-wrapper { justify-content: flex-start !important; padding-left: 20px !important; padding-right: 300px !important; }
 
 
-.lyric-line { transform-origin: left center !important; filter: blur(3px) !important; opacity: 0.45 !important; transform: scale(0.96) !important; padding-left: 0 !important; border-left: none !important; } .lyric-line.active-line { filter: blur(0px) !important; opacity: 1 !important; transform: scale(1) !important; padding-left: 0 !important; border-left: none !important; } .lyric-line.active-line::before { display: none !important; }
+.lyric-line { transform-origin: left center !important; filter: blur(3px) !important; opacity: 0.45 !important; transform: scale(0.96) !important; padding-left: 0 !important; border-left: none !important; line-height: 1.6 !important; padding-top: 0.35em !important; padding-bottom: 0.35em !important; overflow: visible !important; } .lyric-line.active-line { filter: blur(0px) !important; opacity: 1 !important; transform: scale(1) !important; padding-left: 0 !important; border-left: none !important; overflow: visible !important; } .lyric-line.active-line::before { display: none !important; }
 
 
 .q-hero-card { position: relative; width: 100%; height: 200px; border-radius: 12px; overflow: hidden; margin-bottom: 24px; display: flex; align-items: flex-end; box-shadow: 0 10px 30px rgba(0,0,0,0.3); flex-shrink: 0; cursor: pointer; }
@@ -5852,7 +5861,10 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 /* --- PURE APPLE MUSIC CRISP TYPOGRAPHY LYRICS --- */
 .lyric-word {
     display: inline-block !important;
-    margin-right: 6px !important;
+    padding: 0.35em 0.08em 0.25em 0.08em !important;
+    margin: -0.35em 0.24em -0.25em 0 !important;
+    vertical-align: baseline !important;
+    overflow: visible !important;
     background: linear-gradient(
         to right,
         rgba(255, 255, 255, 0.35) 0%,
