@@ -1,4 +1,4 @@
-# 🎵 AxioTune (Formerly Streamify)
+# 🎵 AxioTune 
 
 Welcome to **AxioTune**! This is a state-of-the-art, feature-rich, and visually stunning web-based music streaming application. Designed with a premium "Liquid Glass" aesthetic, it gives you the absolute best audio and visual experience possible.
 
