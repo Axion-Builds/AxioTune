@@ -4,250 +4,93 @@ window._localNetworkIp = null;
 fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});
 
 /* ══════════════════════════════════════════════════════════════════
-   AXIOTUNE WEBGL SHADER ENGINE — High-Definition Liquid Mesh Gradient
-   Vibrant Poster Color Morphing + 60FPS Hardware Swirl + Audio Beat Pulse
+   AXIOTUNE WEBGL SHADER ENGINE — Powered by Official Kawarp (@kawarp/core)
+   Fluid Animated Background + Multi-Pass Kawase Blur + Simplex Domain Warping
    ══════════════════════════════════════════════════════════════════ */
 window.AxioShaderEngine = (function() {
-    let canvas, gl, program;
-    let uResolution, uTime, uBeat;
-    let uColors = [];
+    let canvas, kawarp;
     let isRunning = false;
-    let animId = null;
-    let startTime = performance.now();
+    let currentImage = null;
     let beatPulse = 0.0;
-    
-    let currentColors = [
-        [0.85, 0.20, 0.35], // Rich Red
-        [0.98, 0.45, 0.20], // Vivid Orange
-        [0.70, 0.15, 0.90], // Neon Purple
-        [0.15, 0.10, 0.30], // Deep Velvet
-        [0.95, 0.90, 0.85]  // Bright Highlight
-    ];
-    
-    let targetColors = JSON.parse(JSON.stringify(currentColors));
-
-    const VS_SOURCE = `
-        attribute vec2 a_position;
-        void main() {
-            gl_Position = vec4(a_position, 0.0, 1.0);
-        }
-    `;
-
-    const FS_SOURCE = `
-        precision highp float;
-        uniform vec2 u_resolution;
-        uniform float u_time;
-        uniform float u_beat;
-        uniform vec3 u_c0;
-        uniform vec3 u_c1;
-        uniform vec3 u_c2;
-        uniform vec3 u_c3;
-        uniform vec3 u_c4;
-
-        mat2 rotate2D(float angle) {
-            return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-        }
-
-        vec3 saturateColor(vec3 rgb, float adjustment) {
-            vec3 W = vec3(0.2125, 0.7154, 0.0721);
-            vec3 intensity = vec3(dot(rgb, W));
-            return mix(intensity, rgb, adjustment);
-        }
-
-        void main() {
-            vec2 st = gl_FragCoord.xy / u_resolution.xy;
-            st.y = 1.0 - st.y;
-            
-            // Dynamic, clearly visible fluid animation speed
-            float t = u_time * 0.75;
-            float b = u_beat * 0.50;
-            
-            // Continuous center fluid rotation
-            vec2 p = st - 0.5;
-            p = rotate2D(t * 0.22 + b * 0.20) * p;
-            p += 0.5;
-            
-            // Rich multi-octave organic liquid distortion
-            vec2 q = vec2(
-                sin(p.x * 3.6 + t * 1.0 + b * 1.1) * 0.5 + 0.5,
-                cos(p.y * 3.6 + t * 1.1 - b * 0.8) * 0.5 + 0.5
-            );
-            
-            vec2 r = vec2(
-                sin(p.x * 4.8 + q.x * 3.8 + t * 0.85) * 0.5 + 0.5,
-                cos(p.y * 4.8 + q.y * 3.8 - t * 0.95 + b * 1.2) * 0.5 + 0.5
-            );
-            
-            // 4 Orbiting Mesh Color Orbs with distinct fluid contrast
-            vec2 pos0 = vec2(0.5 + 0.38 * sin(t * 0.80 + b * 0.4), 0.5 + 0.38 * cos(t * 0.65));
-            vec2 pos1 = vec2(0.5 - 0.40 * cos(t * 0.70 + 1.2), 0.5 + 0.36 * sin(t * 0.85 + 0.5 + b));
-            vec2 pos2 = vec2(0.5 + 0.34 * sin(t * 1.05 + 2.1), 0.5 - 0.38 * cos(t * 0.75 + 1.8));
-            vec2 pos3 = vec2(0.5 - 0.36 * sin(t * 0.85 + 4.0 - b), 0.5 - 0.34 * sin(t * 1.10 + 3.2));
-            
-            // Distinct fluid blending radiuses for clearly visible swirling currents
-            float d0 = smoothstep(0.0, 0.78 + b * 0.20, distance(r, pos0));
-            float d1 = smoothstep(0.0, 0.82 + b * 0.20, distance(r, pos1));
-            float d2 = smoothstep(0.0, 0.78 + b * 0.20, distance(r, pos2));
-            float d3 = smoothstep(0.0, 0.86 + b * 0.20, distance(r, pos3));
-            
-            vec3 col = u_c0;
-            col = mix(col, u_c1, 1.0 - d0);
-            col = mix(col, u_c2, 1.0 - d1);
-            col = mix(col, u_c3, 1.0 - d2);
-            col = mix(col, u_c4, (1.0 - d3) * 0.85);
-            
-            // Rich dynamic liquid wave highlights
-            float wave = sin(r.x * 5.5 + t * 1.3) * cos(r.y * 5.5 - t * 1.2);
-            wave = wave * 0.5 + 0.5;
-            col += (wave * 0.16 + b * 0.14) * u_c1;
-            
-            // Boost vibrancy
-            col = saturateColor(col, 1.35);
-            
-            gl_FragColor = vec4(col, 1.0);
-        }
-    `;
-
-    function createShader(gl, type, source) {
-        const s = gl.createShader(type);
-        gl.shaderSource(s, source);
-        gl.compileShader(s);
-        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-            console.warn('AxioShader compile error:', gl.getShaderInfoLog(s));
-            gl.deleteShader(s);
-            return null;
-        }
-        return s;
-    }
+    let animId = null;
 
     function init() {
         canvas = document.getElementById('webgl-shader-canvas');
         if (!canvas) return;
 
         try {
-            gl = canvas.getContext('webgl', { alpha: false, depth: false, antialias: false, powerPreference: 'high-performance' }) ||
-                 canvas.getContext('experimental-webgl');
-        } catch(e) {}
+            if (typeof window.Kawarp !== 'undefined') {
+                kawarp = new window.Kawarp(canvas, {
+                    warpIntensity: 1.25,
+                    blurPasses: 8,
+                    animationSpeed: 1.1,
+                    saturation: 1.4,
+                    dithering: 0.008,
+                    transitionDuration: 1000
+                });
 
-        if (!gl) return;
-
-        const vs = createShader(gl, gl.VERTEX_SHADER, VS_SOURCE);
-        const fs = createShader(gl, gl.FRAGMENT_SHADER, FS_SOURCE);
-        if (!vs || !fs) return;
-
-        program = gl.createProgram();
-        gl.attachShader(program, vs);
-        gl.attachShader(program, fs);
-        gl.linkProgram(program);
-
-        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
-
-        gl.useProgram(program);
-
-        const buf = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            -1, -1,  1, -1, -1,  1,
-            -1,  1,  1, -1,  1,  1
-        ]), gl.STATIC_DRAW);
-
-        const aPos = gl.getAttribLocation(program, 'a_position');
-        gl.enableVertexAttribArray(aPos);
-        gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-
-        uResolution = gl.getUniformLocation(program, 'u_resolution');
-        uTime       = gl.getUniformLocation(program, 'u_time');
-        uBeat       = gl.getUniformLocation(program, 'u_beat');
-
-        uColors = [
-            gl.getUniformLocation(program, 'u_c0'),
-            gl.getUniformLocation(program, 'u_c1'),
-            gl.getUniformLocation(program, 'u_c2'),
-            gl.getUniformLocation(program, 'u_c3'),
-            gl.getUniformLocation(program, 'u_c4')
-        ];
-
-        resize();
-        window.addEventListener('resize', resize);
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) stop();
-            else start();
-        });
-
-        start();
-    }
-
-    function resize() {
-        if (!canvas || !gl) return;
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        if (canvas.width !== w || canvas.height !== h) {
-            canvas.width = w;
-            canvas.height = h;
-            gl.viewport(0, 0, w, h);
-        }
-    }
-
-    function lerp(a, b, t) { return a + (b - a) * t; }
-
-    function render(now) {
-        if (!isRunning || !gl) return;
-
-        const time = (now - startTime) * 0.001;
-
-        for (let i = 0; i < 5; i++) {
-            currentColors[i][0] = lerp(currentColors[i][0], targetColors[i][0], 0.06);
-            currentColors[i][1] = lerp(currentColors[i][1], targetColors[i][1], 0.06);
-            currentColors[i][2] = lerp(currentColors[i][2], targetColors[i][2], 0.06);
-            gl.uniform3fv(uColors[i], currentColors[i]);
-        }
-
-        // Continuous audio beat reactivity during playback
-        if (typeof audioPlayer !== 'undefined' && !audioPlayer.paused) {
-            const rPulse = (Math.sin(time * 7.5) * 0.5 + 0.5) * 0.7 + (Math.sin(time * 14.0) * 0.5 + 0.5) * 0.5;
-            beatPulse = Math.max(beatPulse, rPulse);
-        }
-
-        beatPulse *= 0.94;
-
-        gl.uniform2f(uResolution, canvas.width, canvas.height);
-        gl.uniform1f(uTime, time);
-        gl.uniform1f(uBeat, beatPulse);
-
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-        animId = requestAnimationFrame(render);
-    }
-
-    function start() {
-        if (isRunning || !gl) return;
-        isRunning = true;
-        animId = requestAnimationFrame(render);
-    }
-
-    function stop() {
-        isRunning = false;
-        if (animId) cancelAnimationFrame(animId);
-    }
-
-    function setTargetColors(newRgbArray) {
-        if (!newRgbArray || newRgbArray.length < 5) return;
-        for (let i = 0; i < 5; i++) {
-            let [r, g, b] = newRgbArray[i];
-            // Only clamp if completely blinding pure white
-            const minC = Math.min(r, g, b);
-            if (minC > 215) {
-                r = Math.round(r * 0.70);
-                g = Math.round(g * 0.70);
-                b = Math.round(b * 0.70);
+                kawarp.start();
+                isRunning = true;
+                startBeatLoop();
+                
+                // If a cover image is already loaded, load it immediately into Kawarp
+                const coverArt = document.getElementById('cover-art');
+                if (coverArt && coverArt.src && coverArt.src !== window.location.href) {
+                    const title = (document.getElementById('track-title')?.textContent || '').trim();
+                    const artist = (document.getElementById('track-artist')?.textContent || '').trim();
+                    const proxyUrl = '/api/cover?yt_thumb=' + encodeURIComponent(coverArt.src) + '&q=' + encodeURIComponent(title + ' ' + artist);
+                    loadImage(proxyUrl);
+                }
+            } else {
+                setTimeout(init, 80);
             }
-            targetColors[i] = [r / 255, g / 255, b / 255];
+        } catch(e) {
+            console.warn('Kawarp init error:', e);
         }
+    }
+
+    function startBeatLoop() {
+        function loop() {
+            if (kawarp && isRunning) {
+                if (typeof audioPlayer !== 'undefined' && !audioPlayer.paused) {
+                    const t = performance.now() * 0.001;
+                    const rPulse = (Math.sin(t * 7.5) * 0.5 + 0.5) * 0.7 + (Math.sin(t * 14.0) * 0.5 + 0.5) * 0.5;
+                    beatPulse = Math.max(beatPulse, rPulse);
+                    kawarp.warpIntensity = 1.2 + beatPulse * 0.45;
+                    kawarp.animationSpeed = 1.1 + beatPulse * 0.5;
+                } else if (kawarp) {
+                    kawarp.warpIntensity = 1.2;
+                    kawarp.animationSpeed = 1.0;
+                }
+                beatPulse *= 0.94;
+            }
+            animId = requestAnimationFrame(loop);
+        }
+        animId = requestAnimationFrame(loop);
+    }
+
+    function loadImage(url) {
+        if (!kawarp || !url || url === currentImage) return;
+        currentImage = url;
+        try {
+            kawarp.loadImage(url).catch(e => {
+                console.warn('Kawarp loadImage failed:', e);
+            });
+        } catch(e) {}
     }
 
     function triggerBeat(intensity = 1.0) {
         beatPulse = Math.min(2.0, beatPulse + intensity * 0.8);
+    }
+
+    function start() {
+        if (kawarp) kawarp.start();
+        isRunning = true;
+    }
+
+    function stop() {
+        if (kawarp) kawarp.stop();
+        isRunning = false;
     }
 
     if (document.getElementById('webgl-shader-canvas')) {
@@ -262,8 +105,9 @@ window.AxioShaderEngine = (function() {
         init,
         start,
         stop,
-        setTargetColors,
-        triggerBeat
+        loadImage,
+        triggerBeat,
+        get instance() { return kawarp; }
     };
 })();
 let ytPlayer;
@@ -3622,51 +3466,32 @@ function onPlayerStateChange(event) {
                 const title = (trackTitleEl?.textContent || '').trim();
                 const artist = (trackArtistEl?.textContent || '').trim();
                 
-                // Guaranteed CORS-enabled proxy URL
+                // Guaranteed CORS-enabled proxy URL for Kawarp WebGL texture
                 const proxyUrl = '/api/cover?yt_thumb=' + encodeURIComponent(coverArt.src) + '&q=' + encodeURIComponent(title + ' ' + artist);
                 
+                if (window.AxioShaderEngine) {
+                    window.AxioShaderEngine.loadImage(proxyUrl);
+                }
+                
+                // Subtle chameleon glow on navbar
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
-                
                 img.onload = () => {
                     try {
                         const canvas = document.createElement('canvas');
-                        canvas.width = 48; canvas.height = 48;
+                        canvas.width = 16; canvas.height = 16;
                         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                        ctx.drawImage(img, 0, 0, 48, 48);
-                        
-                        const palette = extractVibrantPalette(ctx, 48, 48);
-                        if (palette && palette.length >= 5 && window.AxioShaderEngine) {
-                            window.AxioShaderEngine.setTargetColors(palette);
-                            
-                            const dom = palette[0];
-                            sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${dom[0]},${dom[1]},${dom[2]},0.15)`);
+                        ctx.drawImage(img, 0, 0, 16, 16);
+                        const data = ctx.getImageData(0, 0, 16, 16).data;
+                        let rSum = 0, gSum = 0, bSum = 0;
+                        for (let i = 0; i < data.length; i += 4) {
+                            rSum += data[i]; gSum += data[i+1]; bSum += data[i+2];
                         }
-                    } catch(err) {
-                        tryDirectExtraction(coverArt);
-                    }
+                        const count = data.length / 4;
+                        sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${Math.round(rSum/count)},${Math.round(gSum/count)},${Math.round(bSum/count)},0.12)`);
+                    } catch(e) {}
                 };
-                
-                img.onerror = () => {
-                    tryDirectExtraction(coverArt);
-                };
-                
                 img.src = proxyUrl;
-            } catch(e) {
-                tryDirectExtraction(coverArt);
-            }
-        }
-
-        function tryDirectExtraction(imgElement) {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = 32; canvas.height = 32;
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                ctx.drawImage(imgElement, 0, 0, 32, 32);
-                const palette = extractVibrantPalette(ctx, 32, 32);
-                if (palette && palette.length >= 5 && window.AxioShaderEngine) {
-                    window.AxioShaderEngine.setTargetColors(palette);
-                }
             } catch(e) {}
         }
         

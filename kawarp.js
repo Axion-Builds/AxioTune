@@ -177,7 +177,7 @@ const OUTPUT_SHADER = `
     gl_FragColor = color;
   }
 `;
-export class Kawarp {
+class Kawarp {
     canvas;
     gl;
     halfFloatExt = null;
