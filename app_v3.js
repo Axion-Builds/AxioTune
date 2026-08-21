@@ -245,17 +245,11 @@ window.AxioShaderEngine = (function() {
         if (!newRgbArray || newRgbArray.length < 5) return;
         for (let i = 0; i < 5; i++) {
             let [r, g, b] = newRgbArray[i];
-            const maxC = Math.max(r, g, b);
-            if (maxC < 55) {
-                r = Math.min(255, r + 75);
-                g = Math.min(255, g + 55);
-                b = Math.min(255, b + 85);
-            }
-            // Clamp and enrich overexposed white/light grey colors
+            // Only clamp if completely blinding pure white
             const minC = Math.min(r, g, b);
-            if (minC > 180) {
-                r = Math.round(r * 0.65);
-                g = Math.round(g * 0.55);
+            if (minC > 215) {
+                r = Math.round(r * 0.70);
+                g = Math.round(g * 0.70);
                 b = Math.round(b * 0.70);
             }
             targetColors[i] = [r / 255, g / 255, b / 255];
@@ -3573,78 +3567,117 @@ function onPlayerStateChange(event) {
             });
         });
 
-        // Dynamic Colors Extraction (Chameleon Glow + Mesh Background)
+        // True Vibrant Color Palette Extractor (Better-Lyrics / Apple Music Accuracy)
+        function extractVibrantPalette(ctx, width, height) {
+            const imgData = ctx.getImageData(0, 0, width, height).data;
+            const buckets = [];
+            
+            for (let i = 0; i < imgData.length; i += 4) {
+                const r = imgData[i];
+                const g = imgData[i + 1];
+                const b = imgData[i + 2];
+                const a = imgData[i + 3];
+                if (a < 128) continue;
+                
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                const delta = max - min;
+                const sat = max === 0 ? 0 : delta / max;
+                const lum = (max + min) / 510;
+                
+                // Prioritize vibrant saturated and rich contrast tones
+                const score = sat * 3.0 + (lum > 0.12 && lum < 0.88 ? 1.2 : 0.1);
+                buckets.push({ r, g, b, sat, lum, score });
+            }
+            
+            if (buckets.length === 0) return null;
+            
+            buckets.sort((a, b) => b.score - a.score);
+            
+            function dist(c1, c2) {
+                const dr = c1.r - c2.r;
+                const dg = c1.g - c2.g;
+                const db = c1.b - c2.b;
+                return Math.sqrt(dr * dr * 0.3 + dg * dg * 0.59 + db * db * 0.11);
+            }
+            
+            const palette = [];
+            for (const c of buckets) {
+                let distinct = true;
+                for (const p of palette) {
+                    if (dist(c, p) < 32) {
+                        distinct = false;
+                        break;
+                    }
+                }
+                if (distinct) {
+                    palette.push(c);
+                    if (palette.length >= 5) break;
+                }
+            }
+            
+            // Fill remaining if needed
+            while (palette.length < 5) {
+                const idx = Math.floor((palette.length / 5) * (buckets.length - 1));
+                palette.push(buckets[idx]);
+            }
+            
+            return palette.map(p => [p.r, p.g, p.b]);
+        }
+
         async function updateDynamicColors() {
             try {
                 if (!coverArt.src || coverArt.src === window.location.href) return;
                 
+                const title = (trackTitleEl?.textContent || '').trim();
+                const artist = (trackArtistEl?.textContent || '').trim();
+                
+                // Guaranteed CORS-enabled proxy URL
+                const proxyUrl = '/api/cover?yt_thumb=' + encodeURIComponent(coverArt.src) + '&q=' + encodeURIComponent(title + ' ' + artist);
+                
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
+                
                 img.onload = () => {
                     try {
                         const canvas = document.createElement('canvas');
-                        canvas.width = 12; canvas.height = 12;
+                        canvas.width = 48; canvas.height = 48;
                         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                        ctx.drawImage(img, 0, 0, 12, 12);
-                        const data = ctx.getImageData(0, 0, 12, 12).data;
+                        ctx.drawImage(img, 0, 0, 48, 48);
                         
-                        let rSum = 0, gSum = 0, bSum = 0;
-                        for (let i = 0; i < data.length; i += 4) {
-                            rSum += data[i]; gSum += data[i+1]; bSum += data[i+2];
+                        const palette = extractVibrantPalette(ctx, 48, 48);
+                        if (palette && palette.length >= 5 && window.AxioShaderEngine) {
+                            window.AxioShaderEngine.setTargetColors(palette);
+                            
+                            const dom = palette[0];
+                            sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${dom[0]},${dom[1]},${dom[2]},0.15)`);
                         }
-                        const count = data.length / 4;
-                        const avgR = Math.round(rSum / count);
-                        const avgG = Math.round(gSum / count);
-                        const avgB = Math.round(bSum / count);
-                        
-                        const getRgb = (pixelIdx) => [data[pixelIdx * 4], data[pixelIdx * 4 + 1], data[pixelIdx * 4 + 2]];
-                        const p0 = getRgb(8);    // Top-Left
-                        const p1 = getRgb(22);   // Top-Right
-                        const p2 = getRgb(72);   // Center
-                        const p3 = getRgb(122);  // Bottom-Left
-                        const p4 = getRgb(136);  // Bottom-Right
-                        
-                        if (window.AxioShaderEngine) {
-                            window.AxioShaderEngine.setTargetColors([p0, p1, p2, p3, p4]);
-                        }
-                        sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${avgR},${avgG},${avgB},0.12)`);
                     } catch(err) {
-                        fallbackSongColors();
+                        tryDirectExtraction(coverArt);
                     }
                 };
+                
                 img.onerror = () => {
-                    fallbackSongColors();
+                    tryDirectExtraction(coverArt);
                 };
-                img.src = coverArt.src;
+                
+                img.src = proxyUrl;
             } catch(e) {
-                fallbackSongColors();
+                tryDirectExtraction(coverArt);
             }
         }
 
-        function fallbackSongColors() {
-            const title = (trackTitleEl?.textContent || '').toLowerCase();
-            const artist = (trackArtistEl?.textContent || '').toLowerCase();
-            const text = title + ' ' + artist;
-            
-            let p = [
-                [225, 29, 72],   // Rose Red
-                [249, 115, 22],  // Orange
-                [168, 85, 247],  // Purple
-                [67, 20, 60],    // Velvet
-                [245, 158, 11]   // Warm Amber Gold
-            ];
-            
-            if (text.includes('chill') || text.includes('lofi') || text.includes('sleep') || text.includes('sad')) {
-                p = [[59, 130, 246], [147, 51, 234], [6, 182, 212], [15, 23, 42], [147, 51, 234]];
-            } else if (text.includes('desi') || text.includes('punjabi') || text.includes('dance') || text.includes('seedhe') || text.includes('tt')) {
-                p = [[239, 68, 68], [245, 158, 11], [236, 72, 153], [88, 28, 45], [220, 38, 38]];
-            } else if (text.includes('romantic') || text.includes('love') || text.includes('arijit')) {
-                p = [[244, 63, 94], [251, 146, 60], [217, 70, 239], [76, 15, 50], [244, 63, 94]];
-            }
-            
-            if (window.AxioShaderEngine) {
-                window.AxioShaderEngine.setTargetColors(p);
-            }
+        function tryDirectExtraction(imgElement) {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 32; canvas.height = 32;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(imgElement, 0, 0, 32, 32);
+                const palette = extractVibrantPalette(ctx, 32, 32);
+                if (palette && palette.length >= 5 && window.AxioShaderEngine) {
+                    window.AxioShaderEngine.setTargetColors(palette);
+                }
+            } catch(e) {}
         }
         
         coverArt.addEventListener('load', updateDynamicColors);
