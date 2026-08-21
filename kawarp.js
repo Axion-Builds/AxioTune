@@ -110,7 +110,7 @@ const DOMAIN_WARP_SHADER = `
 
   void main() {
     vec2 uv = v_texCoord;
-    float t = u_time * 0.75;
+    float t = u_time * 0.40;
 
     // Center-pivot subtle swirl
     vec2 p = uv - 0.5;

@@ -21,12 +21,12 @@ window.AxioShaderEngine = (function() {
         try {
             if (typeof window.Kawarp !== 'undefined') {
                 kawarp = new window.Kawarp(canvas, {
-                    warpIntensity: 1.25,
+                    warpIntensity: 0.95,
                     blurPasses: 8,
-                    animationSpeed: 1.1,
-                    saturation: 1.4,
+                    animationSpeed: 0.35,
+                    saturation: 1.35,
                     dithering: 0.008,
-                    transitionDuration: 1000
+                    transitionDuration: 1200
                 });
 
                 kawarp.start();
@@ -54,15 +54,15 @@ window.AxioShaderEngine = (function() {
             if (kawarp && isRunning) {
                 if (typeof audioPlayer !== 'undefined' && !audioPlayer.paused) {
                     const t = performance.now() * 0.001;
-                    const rPulse = (Math.sin(t * 7.5) * 0.5 + 0.5) * 0.7 + (Math.sin(t * 14.0) * 0.5 + 0.5) * 0.5;
+                    const rPulse = (Math.sin(t * 4.5) * 0.5 + 0.5) * 0.4;
                     beatPulse = Math.max(beatPulse, rPulse);
-                    kawarp.warpIntensity = 1.2 + beatPulse * 0.45;
-                    kawarp.animationSpeed = 1.1 + beatPulse * 0.5;
+                    kawarp.warpIntensity = 0.95 + beatPulse * 0.15;
+                    kawarp.animationSpeed = 0.35 + beatPulse * 0.12;
                 } else if (kawarp) {
-                    kawarp.warpIntensity = 1.2;
-                    kawarp.animationSpeed = 1.0;
+                    kawarp.warpIntensity = 0.95;
+                    kawarp.animationSpeed = 0.32;
                 }
-                beatPulse *= 0.94;
+                beatPulse *= 0.95;
             }
             animId = requestAnimationFrame(loop);
         }
