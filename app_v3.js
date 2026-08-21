@@ -23,7 +23,7 @@ window.AxioShaderEngine = (function() {
                 kawarp = new window.Kawarp(canvas, {
                     warpIntensity: 0.95,
                     blurPasses: 8,
-                    animationSpeed: 0.35,
+                    animationSpeed: 0.28,
                     saturation: 1.35,
                     dithering: 0.008,
                     transitionDuration: 1200
@@ -54,13 +54,13 @@ window.AxioShaderEngine = (function() {
             if (kawarp && isRunning) {
                 if (typeof audioPlayer !== 'undefined' && !audioPlayer.paused) {
                     const t = performance.now() * 0.001;
-                    const rPulse = (Math.sin(t * 4.5) * 0.5 + 0.5) * 0.4;
+                    const rPulse = (Math.sin(t * 4.5) * 0.5 + 0.5) * 0.35;
                     beatPulse = Math.max(beatPulse, rPulse);
-                    kawarp.warpIntensity = 0.95 + beatPulse * 0.15;
-                    kawarp.animationSpeed = 0.35 + beatPulse * 0.12;
+                    kawarp.warpIntensity = 0.95 + beatPulse * 0.12;
+                    kawarp.animationSpeed = 0.28 + beatPulse * 0.08;
                 } else if (kawarp) {
                     kawarp.warpIntensity = 0.95;
-                    kawarp.animationSpeed = 0.32;
+                    kawarp.animationSpeed = 0.26;
                 }
                 beatPulse *= 0.95;
             }
