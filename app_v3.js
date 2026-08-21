@@ -58,61 +58,51 @@ window.AxioShaderEngine = (function() {
             vec2 st = gl_FragCoord.xy / u_resolution.xy;
             st.y = 1.0 - st.y;
             
-            // Silky smooth, gentle fluid animation speed
-            float t = u_time * 0.40;
-            float b = u_beat * 0.35;
+            // Dynamic, clearly visible fluid animation speed
+            float t = u_time * 0.75;
+            float b = u_beat * 0.50;
             
-            // Continuous gentle center rotation
+            // Continuous center fluid rotation
             vec2 p = st - 0.5;
-            p = rotate2D(t * 0.14 + b * 0.15) * p;
+            p = rotate2D(t * 0.22 + b * 0.20) * p;
             p += 0.5;
             
-            // Ultra-smooth multi-frequency organic liquid distortion
+            // Rich multi-octave organic liquid distortion
             vec2 q = vec2(
-                sin(p.x * 2.8 + t * 0.8 + b * 0.8) * 0.5 + 0.5,
-                cos(p.y * 2.8 + t * 0.9 - b * 0.6) * 0.5 + 0.5
+                sin(p.x * 3.6 + t * 1.0 + b * 1.1) * 0.5 + 0.5,
+                cos(p.y * 3.6 + t * 1.1 - b * 0.8) * 0.5 + 0.5
             );
             
             vec2 r = vec2(
-                sin(p.x * 3.6 + q.x * 3.0 + t * 0.65) * 0.5 + 0.5,
-                cos(p.y * 3.6 + q.y * 3.0 - t * 0.75 + b * 0.9) * 0.5 + 0.5
+                sin(p.x * 4.8 + q.x * 3.8 + t * 0.85) * 0.5 + 0.5,
+                cos(p.y * 4.8 + q.y * 3.8 - t * 0.95 + b * 1.2) * 0.5 + 0.5
             );
             
-            // 4 Orbiting Mesh Color Orbs across screen with massive blur blending
-            vec2 pos0 = vec2(0.5 + 0.42 * sin(t * 0.65 + b * 0.3), 0.5 + 0.42 * cos(t * 0.50));
-            vec2 pos1 = vec2(0.5 - 0.44 * cos(t * 0.55 + 1.2), 0.5 + 0.40 * sin(t * 0.70 + 0.5 + b));
-            vec2 pos2 = vec2(0.5 + 0.38 * sin(t * 0.85 + 2.1), 0.5 - 0.42 * cos(t * 0.60 + 1.8));
-            vec2 pos3 = vec2(0.5 - 0.40 * sin(t * 0.70 + 4.0 - b), 0.5 - 0.38 * sin(t * 0.90 + 3.2));
+            // 4 Orbiting Mesh Color Orbs with distinct fluid contrast
+            vec2 pos0 = vec2(0.5 + 0.38 * sin(t * 0.80 + b * 0.4), 0.5 + 0.38 * cos(t * 0.65));
+            vec2 pos1 = vec2(0.5 - 0.40 * cos(t * 0.70 + 1.2), 0.5 + 0.36 * sin(t * 0.85 + 0.5 + b));
+            vec2 pos2 = vec2(0.5 + 0.34 * sin(t * 1.05 + 2.1), 0.5 - 0.38 * cos(t * 0.75 + 1.8));
+            vec2 pos3 = vec2(0.5 - 0.36 * sin(t * 0.85 + 4.0 - b), 0.5 - 0.34 * sin(t * 1.10 + 3.2));
             
-            // Extra large smoothstep radius for dreamy, velvety blur blending
-            float d0 = smoothstep(0.0, 1.45 + b * 0.25, distance(r, pos0));
-            float d1 = smoothstep(0.0, 1.50 + b * 0.25, distance(r, pos1));
-            float d2 = smoothstep(0.0, 1.45 + b * 0.25, distance(r, pos2));
-            float d3 = smoothstep(0.0, 1.55 + b * 0.25, distance(r, pos3));
+            // Distinct fluid blending radiuses for clearly visible swirling currents
+            float d0 = smoothstep(0.0, 0.78 + b * 0.20, distance(r, pos0));
+            float d1 = smoothstep(0.0, 0.82 + b * 0.20, distance(r, pos1));
+            float d2 = smoothstep(0.0, 0.78 + b * 0.20, distance(r, pos2));
+            float d3 = smoothstep(0.0, 0.86 + b * 0.20, distance(r, pos3));
             
             vec3 col = u_c0;
             col = mix(col, u_c1, 1.0 - d0);
             col = mix(col, u_c2, 1.0 - d1);
             col = mix(col, u_c3, 1.0 - d2);
-            col = mix(col, u_c4, (1.0 - d3) * 0.75);
+            col = mix(col, u_c4, (1.0 - d3) * 0.85);
             
-            // Gentle wave highlights
-            float wave = sin(r.x * 4.5 + t * 0.9) * cos(r.y * 4.5 - t * 0.8);
+            // Rich dynamic liquid wave highlights
+            float wave = sin(r.x * 5.5 + t * 1.3) * cos(r.y * 5.5 - t * 1.2);
             wave = wave * 0.5 + 0.5;
-            col += (wave * 0.08 + b * 0.08) * u_c1;
+            col += (wave * 0.16 + b * 0.14) * u_c1;
             
             // Boost vibrancy
-            col = saturateColor(col, 1.30);
-            
-            // Contrast vignette around edges and text regions for perfect contrast
-            float vig = 1.0 - length((st - 0.5) * vec2(1.15, 0.95)) * 0.42;
-            col *= clamp(vig, 0.45, 1.0);
-            
-            // Luminance ceiling — guarantees white text/lyrics never wash out
-            float lum = dot(col, vec3(0.299, 0.587, 0.114));
-            if (lum > 0.65) {
-                col *= (0.65 / lum);
-            }
+            col = saturateColor(col, 1.35);
             
             gl_FragColor = vec4(col, 1.0);
         }
