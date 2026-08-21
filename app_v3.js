@@ -4,97 +4,247 @@ window._localNetworkIp = null;
 fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});
 
 /* ══════════════════════════════════════════════════════════════════
-   AXIOTUNE WEBGL SHADER ENGINE — Powered by Official Kawarp (@kawarp/core)
-   Fluid Animated Background + Domain Warping + Kawase Blur + Audio Reactivity
+   AXIOTUNE WEBGL SHADER ENGINE — High-Definition Liquid Mesh Gradient
+   Vibrant Poster Color Morphing + 60FPS Hardware Swirl + Audio Beat Pulse
    ══════════════════════════════════════════════════════════════════ */
 window.AxioShaderEngine = (function() {
-    let canvas, kawarp;
+    let canvas, gl, program;
+    let uResolution, uTime, uBeat;
+    let uColors = [];
     let isRunning = false;
-    let currentImage = null;
-    let beatPulse = 0.0;
     let animId = null;
+    let startTime = performance.now();
+    let beatPulse = 0.0;
+    
+    let currentColors = [
+        [0.85, 0.20, 0.35], // Rich Red
+        [0.98, 0.45, 0.20], // Vivid Orange
+        [0.70, 0.15, 0.90], // Neon Purple
+        [0.15, 0.10, 0.30], // Deep Velvet
+        [0.95, 0.90, 0.85]  // Bright Highlight
+    ];
+    
+    let targetColors = JSON.parse(JSON.stringify(currentColors));
+
+    const VS_SOURCE = `
+        attribute vec2 a_position;
+        void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    `;
+
+    const FS_SOURCE = `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform float u_beat;
+        uniform vec3 u_c0;
+        uniform vec3 u_c1;
+        uniform vec3 u_c2;
+        uniform vec3 u_c3;
+        uniform vec3 u_c4;
+
+        mat2 rotate2D(float angle) {
+            return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+        }
+
+        vec3 saturateColor(vec3 rgb, float adjustment) {
+            vec3 W = vec3(0.2125, 0.7154, 0.0721);
+            vec3 intensity = vec3(dot(rgb, W));
+            return mix(intensity, rgb, adjustment);
+        }
+
+        void main() {
+            vec2 st = gl_FragCoord.xy / u_resolution.xy;
+            st.y = 1.0 - st.y;
+            
+            float t = u_time * 0.95;
+            float b = u_beat * 0.55;
+            
+            // Continuous center rotation
+            vec2 p = st - 0.5;
+            p = rotate2D(t * 0.20 + b * 0.25) * p;
+            p += 0.5;
+            
+            // Multi-frequency organic liquid distortion
+            vec2 q = vec2(
+                sin(p.x * 3.8 + t * 1.1 + b * 1.3) * 0.5 + 0.5,
+                cos(p.y * 3.8 + t * 1.3 - b * 1.0) * 0.5 + 0.5
+            );
+            
+            vec2 r = vec2(
+                sin(p.x * 5.0 + q.x * 4.0 + t * 0.9) * 0.5 + 0.5,
+                cos(p.y * 5.0 + q.y * 4.0 - t * 1.1 + b * 1.5) * 0.5 + 0.5
+            );
+            
+            // 4 Orbiting Mesh Color Orbs across screen
+            vec2 pos0 = vec2(0.5 + 0.40 * sin(t * 0.85 + b * 0.5), 0.5 + 0.40 * cos(t * 0.65));
+            vec2 pos1 = vec2(0.5 - 0.42 * cos(t * 0.75 + 1.2), 0.5 + 0.38 * sin(t * 0.95 + 0.5 + b));
+            vec2 pos2 = vec2(0.5 + 0.36 * sin(t * 1.15 + 2.1), 0.5 - 0.40 * cos(t * 0.85 + 1.8));
+            vec2 pos3 = vec2(0.5 - 0.38 * sin(t * 0.95 + 4.0 - b), 0.5 - 0.36 * sin(t * 1.25 + 3.2));
+            
+            float d0 = smoothstep(0.0, 0.85 + b * 0.25, distance(r, pos0));
+            float d1 = smoothstep(0.0, 0.90 + b * 0.25, distance(r, pos1));
+            float d2 = smoothstep(0.0, 0.85 + b * 0.25, distance(r, pos2));
+            float d3 = smoothstep(0.0, 0.95 + b * 0.25, distance(r, pos3));
+            
+            vec3 col = u_c0;
+            col = mix(col, u_c1, 1.0 - d0);
+            col = mix(col, u_c2, 1.0 - d1);
+            col = mix(col, u_c3, 1.0 - d2);
+            col = mix(col, u_c4, (1.0 - d3) * 0.85);
+            
+            // Dynamic liquid wave highlights
+            float wave = sin(r.x * 6.5 + t * 1.5) * cos(r.y * 6.5 - t * 1.3);
+            wave = wave * 0.5 + 0.5;
+            col += (wave * 0.12 + b * 0.12) * u_c1;
+            
+            // Boost vibrancy & saturation
+            col = saturateColor(col, 1.35);
+            
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `;
+
+    function createShader(gl, type, source) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, source);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            console.warn('AxioShader compile error:', gl.getShaderInfoLog(s));
+            gl.deleteShader(s);
+            return null;
+        }
+        return s;
+    }
 
     function init() {
         canvas = document.getElementById('webgl-shader-canvas');
         if (!canvas) return;
 
         try {
-            if (typeof window.Kawarp !== 'undefined') {
-                kawarp = new window.Kawarp(canvas, {
-                    warpIntensity: 1.4,
-                    blurPasses: 8,
-                    animationSpeed: 2.2,
-                    saturation: 1.8,
-                    dithering: 0.008,
-                    transitionDuration: 800
-                });
-
-                // Load initial vibrant gradient
-                kawarp.loadGradient(['#8a2be2', '#00f0ff', '#ff2d55', '#1a0a40']);
-                kawarp.start();
-                isRunning = true;
-                startBeatLoop();
-            } else {
-                console.warn('Kawarp library not loaded yet, retrying...');
-                setTimeout(init, 100);
-            }
-        } catch(e) {
-            console.warn('Kawarp init error:', e);
-        }
-    }
-
-    function startBeatLoop() {
-        function loop() {
-            if (kawarp && isRunning) {
-                if (typeof audioPlayer !== 'undefined' && !audioPlayer.paused) {
-                    const t = performance.now() * 0.001;
-                    const rPulse = (Math.sin(t * 7.5) * 0.5 + 0.5) * 0.7 + (Math.sin(t * 14.0) * 0.5 + 0.5) * 0.5;
-                    beatPulse = Math.max(beatPulse, rPulse);
-                    kawarp.warpIntensity = 1.3 + beatPulse * 0.8;
-                    kawarp.animationSpeed = 1.8 + beatPulse * 1.4;
-                } else if (kawarp) {
-                    kawarp.warpIntensity = 1.3;
-                    kawarp.animationSpeed = 1.5;
-                }
-                beatPulse *= 0.94;
-            }
-            animId = requestAnimationFrame(loop);
-        }
-        animId = requestAnimationFrame(loop);
-    }
-
-    function loadImage(url) {
-        if (!kawarp || !url || url === currentImage) return;
-        currentImage = url;
-        try {
-            kawarp.loadImage(url).catch(e => {
-                kawarp.loadGradient(['#8a2be2', '#00f0ff', '#ff2d55', '#1a0a40']);
-            });
+            gl = canvas.getContext('webgl', { alpha: false, depth: false, antialias: false, powerPreference: 'high-performance' }) ||
+                 canvas.getContext('experimental-webgl');
         } catch(e) {}
+
+        if (!gl) return;
+
+        const vs = createShader(gl, gl.VERTEX_SHADER, VS_SOURCE);
+        const fs = createShader(gl, gl.FRAGMENT_SHADER, FS_SOURCE);
+        if (!vs || !fs) return;
+
+        program = gl.createProgram();
+        gl.attachShader(program, vs);
+        gl.attachShader(program, fs);
+        gl.linkProgram(program);
+
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+
+        gl.useProgram(program);
+
+        const buf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1,  1, -1, -1,  1,
+            -1,  1,  1, -1,  1,  1
+        ]), gl.STATIC_DRAW);
+
+        const aPos = gl.getAttribLocation(program, 'a_position');
+        gl.enableVertexAttribArray(aPos);
+        gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+        uResolution = gl.getUniformLocation(program, 'u_resolution');
+        uTime       = gl.getUniformLocation(program, 'u_time');
+        uBeat       = gl.getUniformLocation(program, 'u_beat');
+
+        uColors = [
+            gl.getUniformLocation(program, 'u_c0'),
+            gl.getUniformLocation(program, 'u_c1'),
+            gl.getUniformLocation(program, 'u_c2'),
+            gl.getUniformLocation(program, 'u_c3'),
+            gl.getUniformLocation(program, 'u_c4')
+        ];
+
+        resize();
+        window.addEventListener('resize', resize);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stop();
+            else start();
+        });
+
+        start();
     }
 
-    function setTargetColors(colors) {
-        if (!kawarp) return;
-        if (!currentImage) {
-            const hexArr = colors.map(c => `rgb(${c[0]},${c[1]},${c[2]})`);
-            try {
-                kawarp.loadGradient(hexArr);
-            } catch(e) {}
+    function resize() {
+        if (!canvas || !gl) return;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+            gl.viewport(0, 0, w, h);
+        }
+    }
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    function render(now) {
+        if (!isRunning || !gl) return;
+
+        const time = (now - startTime) * 0.001;
+
+        for (let i = 0; i < 5; i++) {
+            currentColors[i][0] = lerp(currentColors[i][0], targetColors[i][0], 0.06);
+            currentColors[i][1] = lerp(currentColors[i][1], targetColors[i][1], 0.06);
+            currentColors[i][2] = lerp(currentColors[i][2], targetColors[i][2], 0.06);
+            gl.uniform3fv(uColors[i], currentColors[i]);
+        }
+
+        // Continuous audio beat reactivity during playback
+        if (typeof audioPlayer !== 'undefined' && !audioPlayer.paused) {
+            const rPulse = (Math.sin(time * 7.5) * 0.5 + 0.5) * 0.7 + (Math.sin(time * 14.0) * 0.5 + 0.5) * 0.5;
+            beatPulse = Math.max(beatPulse, rPulse);
+        }
+
+        beatPulse *= 0.94;
+
+        gl.uniform2f(uResolution, canvas.width, canvas.height);
+        gl.uniform1f(uTime, time);
+        gl.uniform1f(uBeat, beatPulse);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        animId = requestAnimationFrame(render);
+    }
+
+    function start() {
+        if (isRunning || !gl) return;
+        isRunning = true;
+        animId = requestAnimationFrame(render);
+    }
+
+    function stop() {
+        isRunning = false;
+        if (animId) cancelAnimationFrame(animId);
+    }
+
+    function setTargetColors(newRgbArray) {
+        if (!newRgbArray || newRgbArray.length < 5) return;
+        for (let i = 0; i < 5; i++) {
+            let [r, g, b] = newRgbArray[i];
+            const maxC = Math.max(r, g, b);
+            if (maxC < 60) {
+                r = Math.min(255, r + 80);
+                g = Math.min(255, g + 60);
+                b = Math.min(255, b + 90);
+            }
+            targetColors[i] = [r / 255, g / 255, b / 255];
         }
     }
 
     function triggerBeat(intensity = 1.0) {
         beatPulse = Math.min(2.0, beatPulse + intensity * 0.8);
-    }
-
-    function start() {
-        if (kawarp) kawarp.start();
-        isRunning = true;
-    }
-
-    function stop() {
-        if (kawarp) kawarp.stop();
-        isRunning = false;
     }
 
     if (document.getElementById('webgl-shader-canvas')) {
@@ -109,10 +259,8 @@ window.AxioShaderEngine = (function() {
         init,
         start,
         stop,
-        loadImage,
         setTargetColors,
-        triggerBeat,
-        get instance() { return kawarp; }
+        triggerBeat
     };
 })();
 let ytPlayer;
@@ -3411,45 +3559,72 @@ function onPlayerStateChange(event) {
             try {
                 if (!coverArt.src || coverArt.src === window.location.href) return;
                 
-                // Fast async decoding off-main-thread to prevent UI lag
-                const bitmap = await window.createImageBitmap(coverArt, { resizeWidth: 10, resizeHeight: 10, resizeQuality: 'low' });
-                
-                const canvas = document.createElement('canvas');
-                canvas.width = 10; canvas.height = 10;
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                ctx.drawImage(bitmap, 0, 0);
-                bitmap.close();
-                
-                const data = ctx.getImageData(0, 0, 10, 10).data;
-                
-                let rSum = 0, gSum = 0, bSum = 0;
-                for (let i = 0; i < data.length; i += 4) {
-                    rSum += data[i]; gSum += data[i+1]; bSum += data[i+2];
-                }
-                
-                const avgR = Math.round(rSum / 100);
-                const avgG = Math.round(gSum / 100);
-                const avgB = Math.round(bSum / 100);
-                
-                // Extract 5 distinct sample point colors across the 10x10 bitmap for WebGL Mesh Shader
-                const getRgb = (pixelIdx) => [data[pixelIdx * 4], data[pixelIdx * 4 + 1], data[pixelIdx * 4 + 2]];
-                
-                const p0 = getRgb(5);   // Top-Left region
-                const p1 = getRgb(18);  // Top-Right region
-                const p2 = getRgb(45);  // Center region
-                const p3 = getRgb(82);  // Bottom-Left region
-                const p4 = getRgb(95);  // Bottom-Right region
-
-                if (window.AxioShaderEngine) {
-                    window.AxioShaderEngine.loadImage(coverArt.src);
-                    window.AxioShaderEngine.setTargetColors([p0, p1, p2, p3, p4]);
-                }
-
-                // Set very subtle chameleon glow to avoid "weird" navbar coloring
-                sideNavEl.style.setProperty('--chameleon-glow', `rgba(${avgR},${avgG},${avgB},0.08)`);
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 12; canvas.height = 12;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        ctx.drawImage(img, 0, 0, 12, 12);
+                        const data = ctx.getImageData(0, 0, 12, 12).data;
+                        
+                        let rSum = 0, gSum = 0, bSum = 0;
+                        for (let i = 0; i < data.length; i += 4) {
+                            rSum += data[i]; gSum += data[i+1]; bSum += data[i+2];
+                        }
+                        const count = data.length / 4;
+                        const avgR = Math.round(rSum / count);
+                        const avgG = Math.round(gSum / count);
+                        const avgB = Math.round(bSum / count);
+                        
+                        const getRgb = (pixelIdx) => [data[pixelIdx * 4], data[pixelIdx * 4 + 1], data[pixelIdx * 4 + 2]];
+                        const p0 = getRgb(8);    // Top-Left
+                        const p1 = getRgb(22);   // Top-Right
+                        const p2 = getRgb(72);   // Center
+                        const p3 = getRgb(122);  // Bottom-Left
+                        const p4 = getRgb(136);  // Bottom-Right
+                        
+                        if (window.AxioShaderEngine) {
+                            window.AxioShaderEngine.setTargetColors([p0, p1, p2, p3, p4]);
+                        }
+                        sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${avgR},${avgG},${avgB},0.12)`);
+                    } catch(err) {
+                        fallbackSongColors();
+                    }
+                };
+                img.onerror = () => {
+                    fallbackSongColors();
+                };
+                img.src = coverArt.src;
             } catch(e) {
-                // Fallback
-                sideNavEl.style.setProperty('--chameleon-glow', `rgba(255,255,255,0.02)`);
+                fallbackSongColors();
+            }
+        }
+
+        function fallbackSongColors() {
+            const title = (trackTitleEl?.textContent || '').toLowerCase();
+            const artist = (trackArtistEl?.textContent || '').toLowerCase();
+            const text = title + ' ' + artist;
+            
+            let p = [
+                [225, 29, 72],   // Rose Red
+                [249, 115, 22],  // Orange
+                [168, 85, 247],  // Purple
+                [67, 20, 60],    // Velvet
+                [254, 240, 138]  // Warm White
+            ];
+            
+            if (text.includes('chill') || text.includes('lofi') || text.includes('sleep') || text.includes('sad')) {
+                p = [[59, 130, 246], [147, 51, 234], [6, 182, 212], [15, 23, 42], [192, 132, 252]];
+            } else if (text.includes('desi') || text.includes('punjabi') || text.includes('dance') || text.includes('seedhe') || text.includes('tt')) {
+                p = [[239, 68, 68], [245, 158, 11], [236, 72, 153], [88, 28, 45], [255, 255, 255]];
+            } else if (text.includes('romantic') || text.includes('love') || text.includes('arijit')) {
+                p = [[244, 63, 94], [251, 146, 60], [217, 70, 239], [76, 15, 50], [254, 205, 211]];
+            }
+            
+            if (window.AxioShaderEngine) {
+                window.AxioShaderEngine.setTargetColors(p);
             }
         }
         
