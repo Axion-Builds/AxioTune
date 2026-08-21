@@ -795,39 +795,51 @@ function onPlayerStateChange(event) {
             const downloads = await getDownloadedSongs();
             const allSongs = [...liked, ...downloads];
             const artistMap = {};
-            
+
+            // Include explicitly followed artists
+            const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
+            followed.forEach(fa => {
+                if (fa && fa.name) {
+                    artistMap[fa.name] = { name: fa.name, cover: fa.thumb || fa.cover || '', count: 1, browseId: fa.browseId, isFollowed: true };
+                }
+            });
+
             allSongs.forEach(song => {
-                if (song.artist && song.artist !== 'Unknown') {
-                    if (!artistMap[song.artist]) {
-                        artistMap[song.artist] = { name: song.artist, cover: song.cover || '', count: 1 };
+                const aName = (song.artist || '').trim();
+                if (aName && aName !== 'Unknown' && aName !== 'Artist') {
+                    if (!artistMap[aName]) {
+                        artistMap[aName] = { name: aName, cover: song.cover || song.thumbnail || '', count: 1, browseId: null, isFollowed: false };
                     } else {
-                        artistMap[song.artist].count++;
+                        artistMap[aName].count++;
+                        if (!artistMap[aName].cover && (song.cover || song.thumbnail)) {
+                            artistMap[aName].cover = song.cover || song.thumbnail;
+                        }
                     }
                 }
             });
 
-            const artists = Object.values(artistMap).sort((a, b) => b.count - a.count);
+            const artists = Object.values(artistMap).sort((a, b) => (b.isFollowed ? 1000 : 0) + b.count - ((a.isFollowed ? 1000 : 0) + a.count));
 
             if (artists.length === 0) {
-                container.innerHTML = '<div class="empty-state lib-empty" style="grid-column: 1/-1;">No artists yet.<br><span>Like or download songs to automatically save artists.</span></div>';
+                container.innerHTML = '<div class="empty-state lib-empty" style="grid-column: 1/-1;">No artists yet.<br><span>Follow artists or like songs to automatically save artists.</span></div>';
                 return;
             }
 
             container.innerHTML = '';
             artists.forEach((artist, idx) => {
-                const coverUrl = getCoverUrl(artist.name, artist.cover);
+                const coverUrl = artist.cover ? (artist.cover.startsWith('http') ? artist.cover : getCoverUrl(artist.name, artist.cover)) : getCoverUrl(artist.name, '');
                 const card = document.createElement('div');
                 card.className = 'artist-card';
                 card.style.animationDelay = `${idx * 0.05}s`;
                 card.innerHTML = `
                     <div class="artist-card-img-wrapper" style="width: 100%; aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <img src="${coverUrl}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="${coverUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'120\\' height=\\'120\\' fill=\\'%23555\\'><circle cx=\\'60\\' cy=\\'60\\' r=\\'60\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'55%\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' fill=\\'%23fff\\' font-size=\\'36\\'>🎙️</text></svg>'">
                     </div>
                     <div class="artist-card-name" style="font-weight: 600; font-size: 1rem; color: white; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${artist.name}</div>
-                    <div class="artist-card-count" style="font-size: 0.8rem; color: rgba(255,255,255,0.6); text-align: center; margin-top: 4px;">${artist.count} song${artist.count !== 1 ? 's' : ''}</div>
+                    <div class="artist-card-count" style="font-size: 0.8rem; color: rgba(255,255,255,0.6); text-align: center; margin-top: 4px;">${artist.isFollowed ? '★ Followed' : `${artist.count} song${artist.count !== 1 ? 's' : ''}`}</div>
                 `;
                 card.addEventListener('click', () => {
-                    showArtistPage(artist.name); // we use name as query fallback if no browseId
+                    showArtistPage(artist.browseId || artist.name);
                 });
                 container.appendChild(card);
             });
@@ -3783,160 +3795,98 @@ function onPlayerStateChange(event) {
             });
         }
 
-        // 🌸 MATERIAL DESIGN 3 FLOWER SHAPE CARDS — For Globally Viral & India Trending Songs
-        function populateFlowerCards(containerId, entries) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = '';
-            container.className = 'md3-flower-scroll-container';
 
-            entries.forEach((item, idx) => {
-                const title = item.title || item.name || 'Unknown';
-                const subtitle = item.artist || item.uploader || 'Artist';
-                const videoId = item.videoId || item.id;
-                let rawThumb = item.cover || item.thumbnail || item.thumb || '';
-                if (!rawThumb && videoId) rawThumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
-                const fallbackThumb = `/api/cover?vid=${videoId || ''}&q=${encodeURIComponent(title + ' ' + subtitle)}`;
-                const safeTitle = title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                const safeArtist = subtitle.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-                const card = document.createElement('div');
-                card.className = 'md3-flower-card';
-                card.style.animationDelay = `${idx * 0.04}s`;
-                card.innerHTML = `
-                    <div class="md3-flower-poster-wrap">
-                        <img src="${thumb}" class="md3-flower-img" alt="${safeTitle}" loading="lazy" decoding="async"
-                             onerror="this.onerror=null;this.src='${fallbackThumb}'">
-                        <div class="md3-flower-play">
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                    </div>
-                    <div class="md3-flower-meta">
-                        <div class="md3-flower-artist">${safeArtist}</div>
-                        <div class="md3-flower-title-row">
-                            <div class="md3-flower-title">${safeTitle}</div>
-                            <button class="md3-flower-more" title="Options" onclick="event.stopPropagation(); if(typeof openSongOptions==='function') openSongOptions('${videoId}', '${safeTitle.replace(/'/g, "\\'")}', '${safeArtist.replace(/'/g, "\\'")}', '${thumb}');">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                card.onclick = () => {
-                    if (videoId) {
-                        const songJson = JSON.stringify({title, artist: subtitle, cover: thumb, videoId}).replace(/"/g, '&quot;');
-                        window.playSong(videoId, songJson, card);
-                    } else {
-                        songSearchInput.value = `${title} ${subtitle}`; searchBtn.click();
-                    }
-                };
-                container.appendChild(card);
-            });
-        }
-
-        // Fetch Globally Viral Songs & India Trending Hits (Instant 2025/2026 Chart Toppers + Live API Search)
-        async function fetchTrendingAndViralSongs() {
-            const defaultGlobalViral = [
-                { videoId: 'e-ORhEE9VVg', title: 'Die With A Smile', artist: 'Lady Gaga & Bruno Mars', cover: 'https://i.scdn.co/image/ab67616d0000b27382ea2e9e1858aa9a2f3812d1' },
-                { videoId: 'KEG7b8up1jM', title: 'Taste', artist: 'Sabrina Carpenter', cover: 'https://i.scdn.co/image/ab67616d0000b273fd8d7aed31db214690e54d33' },
-                { videoId: 't7w8Z_M-2fU', title: 'BIRDS OF A FEATHER', artist: 'Billie Eilish', cover: 'https://i.scdn.co/image/ab67616d0000b27371d62ea7ea8a5be92d3c1f62' },
-                { videoId: 'vBgiv2bH5d0', title: 'APT.', artist: 'ROSÉ & Bruno Mars', cover: 'https://i.scdn.co/image/ab67616d0000b27329fb8444a7f058ab33b5c61a' },
-                { videoId: 'NPq41X9W67c', title: 'Not Like Us', artist: 'Kendrick Lamar', cover: 'https://i.scdn.co/image/ab67616d0000b2731ea0c6b993d04e54e4c2f10b' },
-                { videoId: 'hT_nvWreIhg', title: 'Espresso', artist: 'Sabrina Carpenter', cover: 'https://i.scdn.co/image/ab67616d0000b273fd8d7aed31db214690e54d33' },
-                { videoId: '1-7gK8L9W0w', title: 'Good Luck, Babe!', artist: 'Chappell Roan', cover: 'https://i.scdn.co/image/ab67616d0000b2735f992490b6a8397a6e133c94' },
-                { videoId: 'Oa_RSwwpPaA', title: 'Beautiful Things', artist: 'Benson Boone', cover: 'https://i.scdn.co/image/ab67616d0000b273b5e4070a7b458ae58729007f' }
-            ];
-
-            const defaultIndiaTrending = [
-                { videoId: '3yMPb_8q6K0', title: 'Tauba Tauba', artist: 'Karan Aujla', cover: 'https://i.scdn.co/image/ab67616d0000b27302484a0d926fb9fb641a9bc2' },
-                { videoId: 'hoh13_110j0', title: 'Big Dawgs', artist: 'Hanumankind ft. Kalmi', cover: 'https://i.scdn.co/image/ab67616d0000b273c52e67a00f2791be7f05d5d8' },
-                { videoId: '1zKj13100j0', title: 'Millionaire', artist: 'Yo Yo Honey Singh', cover: 'https://i.scdn.co/image/ab67616d0000b2730ca782161f38fa093f41ae9a' },
-                { videoId: 'gLMC4TzN34k', title: 'Soulmate', artist: 'Badshah ft. Arijit Singh', cover: 'https://i.scdn.co/image/ab67616d0000b273ee029a14d59a80b0fb30d7f5' },
-                { videoId: 'k1z77110Lqa', title: 'Sajni (Laapataa Ladies)', artist: 'Arijit Singh, Ram Sampath', cover: 'https://i.scdn.co/image/ab67616d0000b273fa439401be9d3752e2586b3e' },
-                { videoId: '2rN2h3Zz2Y0', title: 'Putt Jatt Da', artist: 'Diljit Dosanjh', cover: 'https://i.scdn.co/image/ab67616d0000b273fa439401be9d3752e2586b3e' },
-                { videoId: '0zN3a78f2Q1', title: 'Husn', artist: 'Anuv Jain', cover: 'https://i.scdn.co/image/ab67616d0000b273e970a25695fa9fa6067756f7' },
-                { videoId: '8zK00213l8Q', title: 'Ve Kamleya', artist: 'Arijit Singh, Shreya Ghoshal', cover: 'https://i.scdn.co/image/ab67616d0000b27339d6718d09f7a77e5bc87b5a' }
-            ];
-
-            // 0ms Instant Load
-            populateFlowerCards('home-global-viral-container', defaultGlobalViral);
-            populateFlowerCards('home-india-trending-container', defaultIndiaTrending);
-
-            try {
-                // Live Background API Search Update
-                const globalRes = await fetch('/api/search?q=' + encodeURIComponent('Billboard Hot 100 Top Songs 2025 2026'));
-                const globalData = await globalRes.json();
-                if (globalData.status === 'success' && globalData.results && globalData.results.length > 0) {
-                    const songs = globalData.results.filter(r => r.videoId && !r.title.toLowerCase().includes('compilation') && !r.title.toLowerCase().includes('jukebox')).map(r => ({
-                        videoId: r.videoId, title: r.title, artist: r.artist || r.uploader || 'Artist', cover: r.cover || r.thumbnail || ''
-                    }));
-                    if (songs.length > 4) populateFlowerCards('home-global-viral-container', songs.slice(0, 20));
-                }
-
-                const indiaRes = await fetch('/api/search?q=' + encodeURIComponent('Top Indian Trending Songs 2025 2026 Arijit Karan Aujla Honey Singh'));
-                const indiaData = await indiaRes.json();
-                if (indiaData.status === 'success' && indiaData.results && indiaData.results.length > 0) {
-                    const songs = indiaData.results.filter(r => r.videoId && !r.title.toLowerCase().includes('compilation') && !r.title.toLowerCase().includes('jukebox')).map(r => ({
-                        videoId: r.videoId, title: r.title, artist: r.artist || r.uploader || 'Artist', cover: r.cover || r.thumbnail || ''
-                    }));
-                    if (songs.length > 4) populateFlowerCards('home-india-trending-container', songs.slice(0, 20));
-                }
-            } catch (err) {
-                console.warn("Live trending update failed, using curated defaults:", err);
-            }
-        }
-
-        fetchTrendingAndViralSongs();
 
         async function populateHomeTopArtists() {
             const container = document.getElementById('home-top-artists-container');
             const section = document.getElementById('home-top-artists-section');
-            if(!container || !section) return;
-            const liked = getLikedSongs();
-            const downloads = await getDownloadedSongs();
-            const allSongs = [...liked, ...downloads];
+            if (!container || !section) return;
+
             const artistMap = {};
-            
+
+            // 1. Explicitly Followed Artists (Highest Priority)
+            const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
+            followed.forEach(fa => {
+                if (fa && fa.name) {
+                    artistMap[fa.name] = { 
+                        name: fa.name, 
+                        cover: fa.thumb || fa.cover || '', 
+                        count: 1000, 
+                        browseId: fa.browseId,
+                        isFollowed: true 
+                    };
+                }
+            });
+
+            // 2. Artists from Liked Songs, Downloads, and Listening History
+            const liked = typeof getLikedSongs === 'function' ? getLikedSongs() : [];
+            const downloads = typeof getDownloadedSongs === 'function' ? await getDownloadedSongs() : [];
+            const history = JSON.parse(localStorage.getItem('music_history_full') || '[]');
+            const allSongs = [...liked, ...downloads, ...history];
+
             allSongs.forEach(song => {
-                if (song.artist && song.artist !== 'Unknown') {
-                    if (!artistMap[song.artist]) {
-                        artistMap[song.artist] = { name: song.artist, cover: song.cover || '', count: 1 };
+                const artistName = (song.artist || song.uploader || '').trim();
+                if (artistName && artistName !== 'Unknown' && artistName !== 'Artist' && !artistName.includes('Topic')) {
+                    if (!artistMap[artistName]) {
+                        artistMap[artistName] = { 
+                            name: artistName, 
+                            cover: song.cover || song.thumbnail || '', 
+                            count: 1, 
+                            browseId: song.browseId || null,
+                            isFollowed: false 
+                        };
                     } else {
-                        artistMap[song.artist].count++;
+                        artistMap[artistName].count++;
+                        if (!artistMap[artistName].cover && (song.cover || song.thumbnail)) {
+                            artistMap[artistName].cover = song.cover || song.thumbnail;
+                        }
                     }
                 }
             });
 
-            // Also include explicitly followed artists with high priority
-            const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
-            followed.forEach(fa => {
-                if (!artistMap[fa.name]) {
-                    artistMap[fa.name] = { name: fa.name, cover: fa.thumb, count: 500, browseId: fa.browseId };
-                } else {
-                    artistMap[fa.name].count += 500;
-                    artistMap[fa.name].browseId = fa.browseId;
+            // 3. Curated Popular Fallback Artists if user hasn't followed or played many artists yet
+            const curatedArtists = [
+                { name: 'Arijit Singh', cover: 'https://i.scdn.co/image/ab6761610000e5eb0261696c5df3be99da6ed3f3', browseId: 'UCbZkz0y_p3c2Qc_Z5pL0z2Q' },
+                { name: 'Karan Aujla', cover: 'https://i.scdn.co/image/ab6761610000e5eb9bb2586684803714dfbf056e', browseId: 'UC6yQp10-f1-6h5Z2w55f52g' },
+                { name: 'Diljit Dosanjh', cover: 'https://i.scdn.co/image/ab6761610000e5eb4f4c8038c11e74a81093bf78', browseId: 'UC2wK5zM6m7z9z5pL0z2Q' },
+                { name: 'Seedhe Maut', cover: 'https://i.scdn.co/image/ab6761610000e5ebb775796df3f24bf7c5cae5c8', browseId: 'UC3eM8p4n32Z9z5pL0z2Q' },
+                { name: 'Talwiinder', cover: 'https://i.scdn.co/image/ab6761610000e5eb4d7a8d5dbad4e7102e2b9c7b', browseId: 'UC4tZ9w2z5pL0z2Q8z9w2z' },
+                { name: 'AP Dhillon', cover: 'https://i.scdn.co/image/ab6761610000e5ebff2d2508ebaa7d488e0b25e7', browseId: 'UC5aZ9w2z5pL0z2Q8z9w2z' },
+                { name: 'Shreya Ghoshal', cover: 'https://i.scdn.co/image/ab6761610000e5eb1d248b610c1c876b39d1b092', browseId: 'UC6sZ9w2z5pL0z2Q8z9w2z' },
+                { name: 'The Weeknd', cover: 'https://i.scdn.co/image/ab6761610000e5eb214f3cf1cbe7139c1e26ffbb', browseId: 'UC7wZ9w2z5pL0z2Q8z9w2z' },
+                { name: 'Travis Scott', cover: 'https://i.scdn.co/image/ab6761610000e5ebe707b87e3f65e0321c0094d2', browseId: 'UC8wZ9w2z5pL0z2Q8z9w2z' },
+                { name: 'Taylor Swift', cover: 'https://i.scdn.co/image/ab6761610000e5eb859e4c14fa59296c8649e0e4', browseId: 'UC9wZ9w2z5pL0z2Q8z9w2z' }
+            ];
+
+            curatedArtists.forEach(ca => {
+                if (!artistMap[ca.name]) {
+                    artistMap[ca.name] = { name: ca.name, cover: ca.cover, count: 0, browseId: ca.browseId, isFollowed: false };
                 }
             });
 
             const artists = Object.values(artistMap).sort((a, b) => b.count - a.count);
-            if (artists.length === 0) return;
-            
             section.style.display = 'block';
             container.innerHTML = '';
-            artists.slice(0, 15).forEach((artist, idx) => {
-                const coverUrl = getCoverUrl(artist.name, artist.cover);
+
+            artists.slice(0, 18).forEach((artist, idx) => {
+                const coverUrl = artist.cover ? (artist.cover.startsWith('http') ? artist.cover : getCoverUrl(artist.name, artist.cover)) : getCoverUrl(artist.name, '');
                 const card = document.createElement('div');
-                card.className = 'artist-scalloped-item';
-                card.style.animation = `slideUpFadeIn 0.5s ease forwards`;
-                card.style.animationDelay = `${idx * 0.05}s`;
+                card.className = 'artist-circle-card';
+                card.style.animation = `slideUpFadeIn 0.4s ease forwards`;
+                card.style.animationDelay = `${idx * 0.04}s`;
                 card.innerHTML = `
-                    <img src="${coverUrl}" alt="${artist.name}" title="${artist.name}">
-                    <div class="artist-scalloped-name">${artist.name}</div>
+                    <div class="artist-avatar-wrap">
+                        <img src="${coverUrl}" alt="${artist.name}" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'120\\' height=\\'120\\' fill=\\'%23555\\'><circle cx=\\'60\\' cy=\\'60\\' r=\\'60\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'55%\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' fill=\\'%23fff\\' font-size=\\'36\\'>🎙️</text></svg>'">
+                    </div>
+                    <div class="artist-name-label" title="${artist.name}">${artist.name}</div>
+                    <div class="artist-sub-label">${artist.isFollowed ? '★ Followed' : 'Artist'}</div>
                 `;
                 card.onclick = () => showArtistPage(artist.browseId || artist.name);
                 container.appendChild(card);
             });
         }
+
+        populateHomeTopArtists();
 
         // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SMART RECOMMENDATION ENGINE ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
         // 1) Taste Mix: picks 5 diverse songs from history, fetches recs for each, shuffles all together

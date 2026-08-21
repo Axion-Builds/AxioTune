@@ -4790,67 +4790,76 @@ body.song-playing #ambient-wrapper {
     width: 32px; height: 32px; fill: white; margin-bottom: 8px;
 }
 
-/* --- Artist Scalloped UI --- */
-.artist-scalloped-row {
+/* --- Apple Music Circular Artists Section --- */
+.artist-circle-scroll-container {
     display: flex;
+    gap: 22px;
     overflow-x: auto;
-    gap: 0;
-    padding: 60px 20px;
-    align-items: center;
-    justify-content: center;
+    padding: 10px 4px 20px 4px;
     scrollbar-width: none;
-    min-height: 250px;
+    -webkit-overflow-scrolling: touch;
 }
-.artist-scalloped-row::-webkit-scrollbar { display: none; }
-.artist-scalloped-item {
-    position: relative;
-    margin-right: -10px; /* Overlap effect */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0.3s, filter 0.3s;
+.artist-circle-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.artist-circle-card {
+    flex: 0 0 135px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
     cursor: pointer;
-    flex-shrink: 0;
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.6));
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.artist-scalloped-item:hover {
-    transform: scale(1.15) translateY(-15px);
-    z-index: 20 !important;
-    filter: drop-shadow(0 15px 25px rgba(255,255,255,0.2));
+.artist-circle-card:hover {
+    transform: translateY(-6px);
 }
-.artist-scalloped-item img {
+.artist-circle-card .artist-avatar-wrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 10px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+    border: 2.5px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.artist-circle-card:hover .artist-avatar-wrap {
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 255, 255, 0.25);
+    transform: scale(1.06);
+}
+.artist-circle-card .artist-avatar-wrap img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-    animation: morphBlob 8s ease-in-out infinite;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;
-    filter: brightness(0.85) contrast(1.1);
+    display: block;
+    transition: transform 0.4s ease;
 }
-
-@keyframes morphBlob {
-    0%, 100% {
-        border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-    }
-    34% {
-        border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%;
-    }
-    67% {
-        border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%;
-    }
+.artist-circle-card:hover .artist-avatar-wrap img {
+    transform: scale(1.08);
 }
-
-.artist-scalloped-name {
-    display: none; /* Hide names based on photo 2 */
+.artist-circle-card .artist-name-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    margin-bottom: 3px;
+    letter-spacing: -0.01em;
 }
-
-/* Pseudo-random sizing and vertical offset for Scalloped look */
-.artist-scalloped-item:nth-child(1) { width: 220px; height: 220px; z-index: 5; margin-top: 10px; }
-.artist-scalloped-item:nth-child(2) { width: 140px; height: 140px; z-index: 4; margin-top: -60px; margin-left: -30px; }
-.artist-scalloped-item:nth-child(3) { width: 160px; height: 160px; z-index: 3; margin-top: 40px; margin-left: -20px; }
-.artist-scalloped-item:nth-child(4) { width: 240px; height: 240px; z-index: 6; margin-top: -30px; margin-left: -40px; }
-.artist-scalloped-item:nth-child(5) { width: 200px; height: 200px; z-index: 5; margin-top: 20px; margin-left: -30px; }
-.artist-scalloped-item:nth-child(6) { width: 180px; height: 180px; z-index: 4; margin-top: -40px; margin-left: -20px; }
-.artist-scalloped-item:nth-child(7) { width: 150px; height: 150px; z-index: 3; margin-top: 50px; margin-left: -25px; }
-.artist-scalloped-item:nth-child(8) { width: 210px; height: 210px; z-index: 6; margin-top: -10px; margin-left: -30px; }
-.artist-scalloped-item:nth-child(n+9) { width: 170px; height: 170px; z-index: 2; margin-top: 0; margin-left: -20px; }
+.artist-circle-card .artist-sub-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
 
 
 /* ========================================================

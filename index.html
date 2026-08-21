@@ -34,7 +34,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=226">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=230">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -811,40 +811,16 @@
             <div class="cinematic-scroll-container" id="home-taste-mix-container"></div>
         </div>
 
-        <!-- 🌸 MATERIAL DESIGN 3 FLOWER SHAPE SVG DEFINITION 🌸 -->
-        <svg width="0" height="0" style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
-            <defs>
-                <clipPath id="md3-flower-clip" clipPathUnits="objectBoundingBox">
-                    <path d="M 0.28,0.04 C 0.40,0.14 0.60,0.14 0.72,0.04 C 0.88,-0.04 1.04,0.12 0.96,0.28 C 0.86,0.40 0.86,0.60 0.96,0.72 C 1.04,0.88 0.88,1.04 0.72,0.96 C 0.60,0.86 0.40,0.86 0.28,0.96 C 0.12,1.04 -0.04,0.88 0.04,0.72 C 0.14,0.60 0.14,0.40 0.04,0.28 C -0.04,0.12 0.12,-0.04 0.28,0.04 Z" />
-                </clipPath>
-            </defs>
-        </svg>
-
-        <!-- 🌎 GLOBALLY VIRAL SONGS (Material You 3 Flower Shape) -->
-        <div class="home-section" id="home-global-viral-section" style="margin-bottom:36px;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                <div style="background: linear-gradient(135deg, #00c2ff, #0072ff); padding:6px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#fff;">🌎 Global</div>
-                <h2 class="section-title" style="margin:0;">Globally Viral Hits</h2>
-            </div>
-            <div class="md3-flower-scroll-container" id="home-global-viral-container"></div>
-        </div>
-
-        <!-- 🇮🇳 INDIA TRENDING SONGS (Material You 3 Flower Shape) -->
-        <div class="home-section" id="home-india-trending-section" style="margin-bottom:36px;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                <div style="background: linear-gradient(135deg, #ff9933, #ff3366); padding:6px 14px; border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#fff;">🇮🇳 Trending</div>
-                <h2 class="section-title" style="margin:0;">India Trending Hits</h2>
-            </div>
-            <div class="md3-flower-scroll-container" id="home-india-trending-container"></div>
-        </div>
-
-        <!-- Dynamic Dynamic Because You Listened To Rows -->
+        <!-- Dynamic Because You Listened To Rows -->
         <div id="home-because-rows-container"></div>
 
-        <div class="home-section" id="home-top-artists-section" style="display:none; margin-bottom:40px; margin-top:30px;">
-            <h2 class="section-title" style="letter-spacing: 4px; text-transform: uppercase; text-align: center; font-size: 1.4rem;">A R T I S T S</h2>
-            <div class="artist-scalloped-row" id="home-top-artists-container">
-                <!-- Populated dynamically -->
+        <!-- 🎙️ ARTISTS & FOLLOWED TALENT ROW -->
+        <div class="home-section" id="home-top-artists-section" style="margin-bottom:38px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h2 class="section-title" style="margin:0; font-size:1.35rem; font-weight:800; letter-spacing:-0.02em;">🎙️ Followed & Favorite Artists</h2>
+            </div>
+            <div class="artist-circle-scroll-container" id="home-top-artists-container">
+                <!-- Populated dynamically by JS -->
             </div>
         </div>
 
@@ -1705,8 +1681,8 @@
     </div>
     <div id="queue-backdrop"></div>
 
-    <script src="kawarp.js?v=226"></script>
-    <script src="app_v3.js?v=226"></script>
+    <script src="kawarp.js?v=230"></script>
+    <script src="app_v3.js?v=230"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
