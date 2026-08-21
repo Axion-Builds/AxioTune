@@ -79,6 +79,8 @@
             pointer-events: none;
             overflow: hidden;
             opacity: 1;
+            filter: blur(32px);
+            transform: scale(1.08);
             transition: opacity 0.8s ease;
         }
 
@@ -852,15 +854,26 @@
             font-size: 1.75rem; font-weight: 700;
             margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             letter-spacing: -0.02em;
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9), 0 1px 4px rgba(0, 0, 0, 0.95);
         }
-        #track-artist { font-size: 1.05rem; color: rgba(255,255,255,0.55); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
+        #track-artist { 
+            font-size: 1.05rem; 
+            color: rgba(255,255,255,0.85); 
+            font-weight: 400; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            letter-spacing: 0.01em; 
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.95);
+        }
 
         #progress-container {
-            width: 100%; height: 5px; background: rgba(255,255,255,0.15);
+            width: 100%; height: 5px; background: rgba(255,255,255,0.25);
             border-radius: 4px; cursor: pointer; position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
             transition: height 0.2s ease, background 0.2s ease;
         }
-        #progress-container:hover { height: 7px; background: rgba(255,255,255,0.25); }
+        #progress-container:hover { height: 7px; background: rgba(255,255,255,0.35); }
         #progress-bar {
             height: 100%;
             background: rgba(255, 255, 255, 1);
@@ -879,7 +892,8 @@
         
         .time-display {
             display: flex; justify-content: space-between; font-size: 0.85rem;
-            color: rgba(255,255,255,0.5); font-weight: 500; font-variant-numeric: tabular-nums;
+            color: rgba(255,255,255,0.8); font-weight: 500; font-variant-numeric: tabular-nums;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
         }
 
         .playback-buttons { display: flex; justify-content: center; align-items: center; gap: 35px; margin-top: 0; }
@@ -889,6 +903,7 @@
             width: 56px !important; height: 56px !important; display: flex !important; align-items: center !important; justify-content: center !important;
             cursor: pointer; transition: transform 0.2s ease, opacity 0.2s ease; color: rgba(255,255,255,0.9) !important;
             box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7)) !important;
             padding: 0 !important;
         }
         .btn-icon:hover:not(:disabled) { 
@@ -980,6 +995,7 @@
             color: rgba(255,255,255,0.7);
             padding-left: 0;
             border-left: 3px solid transparent;
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85), 0 1px 3px rgba(0, 0, 0, 0.95);
         }
 
         .lyric-line:hover { opacity: 0.7; filter: blur(1px); transform: scale(0.99); }
@@ -991,6 +1007,7 @@
             color: white;
             padding-left: 14px;
             border-left-color: var(--accent);
+            text-shadow: 0 2px 18px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 1);
         }
         /* Subtle pulse on the active line's left bar */
         .lyric-line.active-line::before {

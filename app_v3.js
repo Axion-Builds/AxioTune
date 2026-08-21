@@ -58,49 +58,61 @@ window.AxioShaderEngine = (function() {
             vec2 st = gl_FragCoord.xy / u_resolution.xy;
             st.y = 1.0 - st.y;
             
-            float t = u_time * 0.95;
-            float b = u_beat * 0.55;
+            // Silky smooth, gentle fluid animation speed
+            float t = u_time * 0.40;
+            float b = u_beat * 0.35;
             
-            // Continuous center rotation
+            // Continuous gentle center rotation
             vec2 p = st - 0.5;
-            p = rotate2D(t * 0.20 + b * 0.25) * p;
+            p = rotate2D(t * 0.14 + b * 0.15) * p;
             p += 0.5;
             
-            // Multi-frequency organic liquid distortion
+            // Ultra-smooth multi-frequency organic liquid distortion
             vec2 q = vec2(
-                sin(p.x * 3.8 + t * 1.1 + b * 1.3) * 0.5 + 0.5,
-                cos(p.y * 3.8 + t * 1.3 - b * 1.0) * 0.5 + 0.5
+                sin(p.x * 2.8 + t * 0.8 + b * 0.8) * 0.5 + 0.5,
+                cos(p.y * 2.8 + t * 0.9 - b * 0.6) * 0.5 + 0.5
             );
             
             vec2 r = vec2(
-                sin(p.x * 5.0 + q.x * 4.0 + t * 0.9) * 0.5 + 0.5,
-                cos(p.y * 5.0 + q.y * 4.0 - t * 1.1 + b * 1.5) * 0.5 + 0.5
+                sin(p.x * 3.6 + q.x * 3.0 + t * 0.65) * 0.5 + 0.5,
+                cos(p.y * 3.6 + q.y * 3.0 - t * 0.75 + b * 0.9) * 0.5 + 0.5
             );
             
-            // 4 Orbiting Mesh Color Orbs across screen
-            vec2 pos0 = vec2(0.5 + 0.40 * sin(t * 0.85 + b * 0.5), 0.5 + 0.40 * cos(t * 0.65));
-            vec2 pos1 = vec2(0.5 - 0.42 * cos(t * 0.75 + 1.2), 0.5 + 0.38 * sin(t * 0.95 + 0.5 + b));
-            vec2 pos2 = vec2(0.5 + 0.36 * sin(t * 1.15 + 2.1), 0.5 - 0.40 * cos(t * 0.85 + 1.8));
-            vec2 pos3 = vec2(0.5 - 0.38 * sin(t * 0.95 + 4.0 - b), 0.5 - 0.36 * sin(t * 1.25 + 3.2));
+            // 4 Orbiting Mesh Color Orbs across screen with massive blur blending
+            vec2 pos0 = vec2(0.5 + 0.42 * sin(t * 0.65 + b * 0.3), 0.5 + 0.42 * cos(t * 0.50));
+            vec2 pos1 = vec2(0.5 - 0.44 * cos(t * 0.55 + 1.2), 0.5 + 0.40 * sin(t * 0.70 + 0.5 + b));
+            vec2 pos2 = vec2(0.5 + 0.38 * sin(t * 0.85 + 2.1), 0.5 - 0.42 * cos(t * 0.60 + 1.8));
+            vec2 pos3 = vec2(0.5 - 0.40 * sin(t * 0.70 + 4.0 - b), 0.5 - 0.38 * sin(t * 0.90 + 3.2));
             
-            float d0 = smoothstep(0.0, 0.85 + b * 0.25, distance(r, pos0));
-            float d1 = smoothstep(0.0, 0.90 + b * 0.25, distance(r, pos1));
-            float d2 = smoothstep(0.0, 0.85 + b * 0.25, distance(r, pos2));
-            float d3 = smoothstep(0.0, 0.95 + b * 0.25, distance(r, pos3));
+            // Extra large smoothstep radius for dreamy, velvety blur blending
+            float d0 = smoothstep(0.0, 1.45 + b * 0.25, distance(r, pos0));
+            float d1 = smoothstep(0.0, 1.50 + b * 0.25, distance(r, pos1));
+            float d2 = smoothstep(0.0, 1.45 + b * 0.25, distance(r, pos2));
+            float d3 = smoothstep(0.0, 1.55 + b * 0.25, distance(r, pos3));
             
             vec3 col = u_c0;
             col = mix(col, u_c1, 1.0 - d0);
             col = mix(col, u_c2, 1.0 - d1);
             col = mix(col, u_c3, 1.0 - d2);
-            col = mix(col, u_c4, (1.0 - d3) * 0.85);
+            col = mix(col, u_c4, (1.0 - d3) * 0.75);
             
-            // Dynamic liquid wave highlights
-            float wave = sin(r.x * 6.5 + t * 1.5) * cos(r.y * 6.5 - t * 1.3);
+            // Gentle wave highlights
+            float wave = sin(r.x * 4.5 + t * 0.9) * cos(r.y * 4.5 - t * 0.8);
             wave = wave * 0.5 + 0.5;
-            col += (wave * 0.12 + b * 0.12) * u_c1;
+            col += (wave * 0.08 + b * 0.08) * u_c1;
             
-            // Boost vibrancy & saturation
-            col = saturateColor(col, 1.35);
+            // Boost vibrancy
+            col = saturateColor(col, 1.30);
+            
+            // Contrast vignette around edges and text regions for perfect contrast
+            float vig = 1.0 - length((st - 0.5) * vec2(1.15, 0.95)) * 0.42;
+            col *= clamp(vig, 0.45, 1.0);
+            
+            // Luminance ceiling — guarantees white text/lyrics never wash out
+            float lum = dot(col, vec3(0.299, 0.587, 0.114));
+            if (lum > 0.65) {
+                col *= (0.65 / lum);
+            }
             
             gl_FragColor = vec4(col, 1.0);
         }
@@ -234,10 +246,17 @@ window.AxioShaderEngine = (function() {
         for (let i = 0; i < 5; i++) {
             let [r, g, b] = newRgbArray[i];
             const maxC = Math.max(r, g, b);
-            if (maxC < 60) {
-                r = Math.min(255, r + 80);
-                g = Math.min(255, g + 60);
-                b = Math.min(255, b + 90);
+            if (maxC < 55) {
+                r = Math.min(255, r + 75);
+                g = Math.min(255, g + 55);
+                b = Math.min(255, b + 85);
+            }
+            // Clamp and enrich overexposed white/light grey colors
+            const minC = Math.min(r, g, b);
+            if (minC > 180) {
+                r = Math.round(r * 0.65);
+                g = Math.round(g * 0.55);
+                b = Math.round(b * 0.70);
             }
             targetColors[i] = [r / 255, g / 255, b / 255];
         }
@@ -3612,15 +3631,15 @@ function onPlayerStateChange(event) {
                 [249, 115, 22],  // Orange
                 [168, 85, 247],  // Purple
                 [67, 20, 60],    // Velvet
-                [254, 240, 138]  // Warm White
+                [245, 158, 11]   // Warm Amber Gold
             ];
             
             if (text.includes('chill') || text.includes('lofi') || text.includes('sleep') || text.includes('sad')) {
-                p = [[59, 130, 246], [147, 51, 234], [6, 182, 212], [15, 23, 42], [192, 132, 252]];
+                p = [[59, 130, 246], [147, 51, 234], [6, 182, 212], [15, 23, 42], [147, 51, 234]];
             } else if (text.includes('desi') || text.includes('punjabi') || text.includes('dance') || text.includes('seedhe') || text.includes('tt')) {
-                p = [[239, 68, 68], [245, 158, 11], [236, 72, 153], [88, 28, 45], [255, 255, 255]];
+                p = [[239, 68, 68], [245, 158, 11], [236, 72, 153], [88, 28, 45], [220, 38, 38]];
             } else if (text.includes('romantic') || text.includes('love') || text.includes('arijit')) {
-                p = [[244, 63, 94], [251, 146, 60], [217, 70, 239], [76, 15, 50], [254, 205, 211]];
+                p = [[244, 63, 94], [251, 146, 60], [217, 70, 239], [76, 15, 50], [244, 63, 94]];
             }
             
             if (window.AxioShaderEngine) {
