@@ -2505,7 +2505,7 @@ function onPlayerStateChange(event) {
                     `;
                     item.onclick = (e) => {
                         e.stopPropagation();
-                        window.switchLyricsSource(sIdx);
+                        window.switchLyricsSource(sIdx, e);
                         if (popup) popup.classList.add('hidden');
                     };
                     listEl.appendChild(item);
@@ -2513,7 +2513,64 @@ function onPlayerStateChange(event) {
             }
         };
 
-        window.switchLyricsSource = async function(index) {
+        window.toggleLyricsSourcesPopup = function(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            const popup = document.getElementById('lyrics-sources-popup');
+            if (popup) {
+                popup.classList.toggle('hidden');
+            }
+        };
+
+        window.toggleLyricsTranslation = async function(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            window._lyricsTranslationEnabled = !window._lyricsTranslationEnabled;
+            localStorage.setItem('axio_lyrics_translate', window._lyricsTranslationEnabled ? 'true' : 'false');
+            
+            const translateBtn = document.getElementById('lyrics-translate-btn');
+            if (translateBtn) translateBtn.classList.toggle('active', !!window._lyricsTranslationEnabled);
+
+            if (window._lyricsTranslationEnabled) {
+                showToast("🌐 Translation: Fetching subtitles...");
+                if (lyricsData && lyricsData.length > 0) {
+                    const needsFetch = lyricsData.some(l => !l.isInstrumental && !l.translation);
+                    if (needsFetch) {
+                        await window.fetchTranslationsForLines(lyricsData);
+                    }
+                }
+                renderLyrics();
+                showToast("🌐 Real-Time Lyrics Translation ON");
+            } else {
+                renderLyrics();
+                showToast("🌐 Translation OFF");
+            }
+            window.updateLyricsDockUI();
+        };
+
+        window.toggleLyricsRomanization = function(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            window._lyricsRomanizationEnabled = !window._lyricsRomanizationEnabled;
+            localStorage.setItem('axio_lyrics_romanize', window._lyricsRomanizationEnabled ? 'true' : 'false');
+            
+            const romanizeBtn = document.getElementById('lyrics-romanize-btn');
+            if (romanizeBtn) romanizeBtn.classList.toggle('active', !!window._lyricsRomanizationEnabled);
+            
+            renderLyrics();
+            showToast(window._lyricsRomanizationEnabled ? "🔤 Romanization ON" : "🔤 Romanization OFF");
+            window.updateLyricsDockUI();
+        };
+
+        window.adjustLyricsOffset = function(delta, e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            window._lyricsTimeOffset = Math.round(((window._lyricsTimeOffset || 0) + delta) * 10) / 10;
+            const offsetDisplay = document.getElementById('lyrics-offset-display');
+            if (offsetDisplay) {
+                offsetDisplay.textContent = `${window._lyricsTimeOffset > 0 ? '+' : ''}${window._lyricsTimeOffset.toFixed(1)}s`;
+            }
+            showToast(`⏱ Offset: ${window._lyricsTimeOffset.toFixed(1)}s`);
+        };
+
+        window.switchLyricsSource = async function(index, e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
             const sources = window._availableLyricsSources || [];
             if (!sources || sources.length === 0) return;
             if (index < 0) index = sources.length - 1;
@@ -2547,7 +2604,7 @@ function onPlayerStateChange(event) {
                 showToast(`🎤 Lyrics: ${chosen.name || chosen.provider}`);
             }
 
-            if (window._lyricsTranslationEnabled) {
+            if (window._lyricsTranslationEnabled && lyricsData.length > 0) {
                 await window.fetchTranslationsForLines(lyricsData);
                 renderLyrics();
             }
@@ -2557,7 +2614,7 @@ function onPlayerStateChange(event) {
 
         window.fetchTranslationsForLines = async function(linesList) {
             if (!linesList || linesList.length === 0) return;
-            const textLines = linesList.map(l => l.isInstrumental ? '' : l.text);
+            const textLines = linesList.map(l => l.isInstrumental ? '• • •' : (l.text || ''));
             try {
                 const res = await fetch('/api/translate-lyrics', {
                     method: 'POST',
@@ -2566,9 +2623,11 @@ function onPlayerStateChange(event) {
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.status === 'success' && data.translations) {
+                    if (data.status === 'success' && Array.isArray(data.translations)) {
                         data.translations.forEach((t, i) => {
-                            if (linesList[i]) linesList[i].translation = t;
+                            if (linesList[i] && !linesList[i].isInstrumental && t) {
+                                linesList[i].translation = t;
+                            }
                         });
                     }
                 }
@@ -2587,73 +2646,23 @@ function onPlayerStateChange(event) {
             const minusBtn = document.getElementById('lyrics-offset-minus-btn');
             const plusBtn = document.getElementById('lyrics-offset-plus-btn');
 
-            if (prevBtn) {
-                prevBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    window.switchLyricsSource(window._currentLyricsSourceIndex - 1);
-                };
-            }
-            if (nextBtn) {
-                nextBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    window.switchLyricsSource(window._currentLyricsSourceIndex + 1);
-                };
-            }
-            if (badgeBtn && popup) {
-                badgeBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    popup.classList.toggle('hidden');
-                };
-            }
+            if (prevBtn) prevBtn.onclick = (e) => window.switchLyricsSource((window._currentLyricsSourceIndex || 0) - 1, e);
+            if (nextBtn) nextBtn.onclick = (e) => window.switchLyricsSource((window._currentLyricsSourceIndex || 0) + 1, e);
+            if (badgeBtn) badgeBtn.onclick = (e) => window.toggleLyricsSourcesPopup(e);
+            if (translateBtn) translateBtn.onclick = (e) => window.toggleLyricsTranslation(e);
+            if (romanizeBtn) romanizeBtn.onclick = (e) => window.toggleLyricsRomanization(e);
+            if (minusBtn) minusBtn.onclick = (e) => window.adjustLyricsOffset(-0.1, e);
+            if (plusBtn) plusBtn.onclick = (e) => window.adjustLyricsOffset(0.1, e);
+
             document.addEventListener('click', (e) => {
                 if (popup && !popup.contains(e.target) && badgeBtn && !badgeBtn.contains(e.target)) {
                     popup.classList.add('hidden');
                 }
             });
-
-            if (translateBtn) {
-                translateBtn.onclick = async (e) => {
-                    e.stopPropagation();
-                    window._lyricsTranslationEnabled = !window._lyricsTranslationEnabled;
-                    localStorage.setItem('axio_lyrics_translate', window._lyricsTranslationEnabled ? 'true' : 'false');
-                    showToast(window._lyricsTranslationEnabled ? "🌐 Real-Time Translation ON" : "🌐 Translation OFF");
-                    
-                    if (window._lyricsTranslationEnabled && lyricsData && lyricsData.length > 0) {
-                        await window.fetchTranslationsForLines(lyricsData);
-                    }
-                    renderLyrics();
-                    window.updateLyricsDockUI();
-                };
-            }
-
-            if (romanizeBtn) {
-                romanizeBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    window._lyricsRomanizationEnabled = !window._lyricsRomanizationEnabled;
-                    localStorage.setItem('axio_lyrics_romanize', window._lyricsRomanizationEnabled ? 'true' : 'false');
-                    showToast(window._lyricsRomanizationEnabled ? "🔤 Romanization ON" : "🔤 Romanization OFF");
-                    renderLyrics();
-                    window.updateLyricsDockUI();
-                };
-            }
-
-            if (minusBtn) {
-                minusBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    window._lyricsTimeOffset = Math.round((window._lyricsTimeOffset - 0.1) * 10) / 10;
-                    window.updateLyricsDockUI();
-                    showToast(`⏱ Offset: ${window._lyricsTimeOffset.toFixed(1)}s`);
-                };
-            }
-            if (plusBtn) {
-                plusBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    window._lyricsTimeOffset = Math.round((window._lyricsTimeOffset + 0.1) * 10) / 10;
-                    window.updateLyricsDockUI();
-                    showToast(`⏱ Offset: ${window._lyricsTimeOffset.toFixed(1)}s`);
-                };
-            }
         };
+
+        // Self-initialize Better-Lyrics dock listeners
+        try { window.initBetterLyricsDock(); } catch(e) {}
 
         // — Background Tasks for Queue Playback (Asynchronous to prevent autoplay blocks) —
         async function fetchLyricsForQueueSong(title, artist, videoId) {

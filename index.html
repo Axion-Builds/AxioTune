@@ -34,7 +34,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=242">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=244">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -909,16 +909,16 @@
             </div>
 
             <!-- 🎤 BETTER-LYRICS FLOATING CONTROL PILL DOCK (Exact VisionOS UI) -->
-            <div id="lyrics-floating-dock" class="lyrics-floating-dock">
-                <!-- Source Selector Pill -->
+            <div id="lyrics-floating-dock" class="lyrics-floating-dock hidden">
+                <!-- Source Selector Pill (Expands on Hover) -->
                 <div class="lyrics-dock-source-group" id="lyrics-dock-source-group">
-                    <button id="lyrics-source-prev-btn" class="lyrics-dock-arrow-btn" title="Previous Lyric Version">‹</button>
-                    <button id="lyrics-source-badge-btn" class="lyrics-dock-source-badge" title="Click to Switch Lyrics Provider">
+                    <button id="lyrics-source-prev-btn" class="lyrics-dock-arrow-btn" title="Previous Lyric Version" onclick="if(typeof switchLyricsSource==='function') switchLyricsSource(window._currentLyricsSourceIndex - 1, event)">‹</button>
+                    <button id="lyrics-source-badge-btn" class="lyrics-dock-source-badge" title="Click to Switch Lyrics Provider" onclick="if(typeof toggleLyricsSourcesPopup==='function') toggleLyricsSourcesPopup(event)">
                         <svg class="dock-source-icon" viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
                         <span id="lyrics-source-name">LRCLib</span>
                         <span id="lyrics-source-count" class="source-count-tag">1/1</span>
                     </button>
-                    <button id="lyrics-source-next-btn" class="lyrics-dock-arrow-btn" title="Next Lyric Version">›</button>
+                    <button id="lyrics-source-next-btn" class="lyrics-dock-arrow-btn" title="Next Lyric Version" onclick="if(typeof switchLyricsSource==='function') switchLyricsSource(window._currentLyricsSourceIndex + 1, event)">›</button>
 
                     <!-- Popup Menu for Switching Sources -->
                     <div id="lyrics-sources-popup" class="lyrics-sources-popup hidden">
@@ -930,26 +930,26 @@
                 <!-- Separator -->
                 <div class="lyrics-dock-sep"></div>
 
-                <!-- Translation Toggle Button [文A] -->
-                <button id="lyrics-translate-btn" class="lyrics-dock-btn" title="Toggle Real-Time Translation">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                        <path d="M12.87 15.07l-2.54-2.51.03-.08c1.74-1.94 2.98-4.17 3.71-6.49H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
-                    </svg>
-                </button>
-
                 <!-- Romanization Script Toggle Button [==] -->
-                <button id="lyrics-romanize-btn" class="lyrics-dock-btn" title="Toggle Pronunciation / Romanization">
+                <button id="lyrics-romanize-btn" class="lyrics-dock-btn" title="Toggle Romanization / Pronunciation" onclick="if(typeof toggleLyricsRomanization==='function') toggleLyricsRomanization(event)">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
                         <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
                     </svg>
                 </button>
 
+                <!-- Translation Toggle Button [文A] -->
+                <button id="lyrics-translate-btn" class="lyrics-dock-btn" title="Toggle Real-Time Translation" onclick="if(typeof toggleLyricsTranslation==='function') toggleLyricsTranslation(event)">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                        <path d="M12.87 15.07l-2.54-2.51.03-.08c1.74-1.94 2.98-4.17 3.71-6.49H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+                    </svg>
+                </button>
+
                 <!-- Timing Offset Adjustment [⏱] [-] 0.0s [+] -->
-                <div class="lyrics-dock-offset-group">
+                <div class="lyrics-dock-offset-group" id="lyrics-dock-offset-group">
                     <svg class="dock-clock-icon" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-                    <button id="lyrics-offset-minus-btn" class="lyrics-offset-btn" title="Shift Lyrics Earlier (-0.1s)">−</button>
+                    <button id="lyrics-offset-minus-btn" class="lyrics-offset-btn" title="Shift Lyrics Earlier (-0.1s)" onclick="if(typeof adjustLyricsOffset==='function') adjustLyricsOffset(-0.1, event)">−</button>
                     <span id="lyrics-offset-display" class="lyrics-offset-val" title="Current Timing Offset">0.0s</span>
-                    <button id="lyrics-offset-plus-btn" class="lyrics-offset-btn" title="Shift Lyrics Later (+0.1s)">+</button>
+                    <button id="lyrics-offset-plus-btn" class="lyrics-offset-btn" title="Shift Lyrics Later (+0.1s)" onclick="if(typeof adjustLyricsOffset==='function') adjustLyricsOffset(0.1, event)">+</button>
                 </div>
             </div>
         </div>
@@ -1740,8 +1740,8 @@
     </div>
     <div id="queue-backdrop"></div>
 
-    <script src="kawarp.js?v=242"></script>
-    <script src="app_v3.js?v=242"></script>
+    <script src="kawarp.js?v=244"></script>
+    <script src="app_v3.js?v=244"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

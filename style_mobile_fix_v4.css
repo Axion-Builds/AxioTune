@@ -1112,45 +1112,47 @@
         }
 
         /* ══════════════════════════════════════════════════════════════════
-           🎤 BETTER-LYRICS FLOATING CONTROL PILL DOCK (Exact VisionOS Glass)
+           🎤 BETTER-LYRICS COMPACT GLASS FLOATING DOCK (VisionOS Style)
            ══════════════════════════════════════════════════════════════════ */
         .lyrics-floating-dock {
             position: absolute;
-            bottom: 30px;
-            right: 45px;
+            bottom: 28px;
+            right: 40px;
             z-index: 120;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 6px 10px;
-            background: rgba(18, 18, 26, 0.72);
+            gap: 5px;
+            padding: 5px 8px;
+            background: rgba(18, 18, 26, 0.78);
             backdrop-filter: blur(28px) saturate(200%) contrast(110%);
             -webkit-backdrop-filter: blur(28px) saturate(200%) contrast(110%);
             border: 1px solid rgba(255, 255, 255, 0.14);
             border-top: 1px solid rgba(255, 255, 255, 0.35);
             border-radius: 30px;
             box-shadow:
-                0 16px 36px -6px rgba(0, 0, 0, 0.65),
+                0 14px 34px -6px rgba(0, 0, 0, 0.65),
                 0 4px 12px rgba(0, 0, 0, 0.4),
                 inset 0 1px 1px rgba(255, 255, 255, 0.35);
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
             user-select: none;
+            overflow: visible;
         }
 
         .lyrics-floating-dock.hidden {
-            opacity: 0;
-            pointer-events: none;
+            opacity: 0 !important;
+            pointer-events: none !important;
             transform: translateY(12px) scale(0.95);
         }
 
-        .lyrics-floating-dock:hover {
-            border-color: rgba(255, 255, 255, 0.25);
+        .lyrics-floating-dock:hover,
+        .lyrics-floating-dock.expanded {
+            border-color: rgba(255, 255, 255, 0.28);
             box-shadow:
-                0 22px 45px -8px rgba(0, 0, 0, 0.75),
+                0 20px 45px -8px rgba(0, 0, 0, 0.8),
                 inset 0 1px 1.5px rgba(255, 255, 255, 0.5);
         }
 
-        /* Source Selector Group */
+        /* Source Selector Group — Hidden/Collapsed in compact state, expands smoothly on hover */
         .lyrics-dock-source-group {
             position: relative;
             display: flex;
@@ -1158,13 +1160,25 @@
             gap: 2px;
             background: rgba(255, 255, 255, 0.06);
             border-radius: 20px;
-            padding: 2px 4px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: background 0.2s ease, border-color 0.2s ease;
+            padding: 0;
+            border: 0px solid rgba(255, 255, 255, 0.08);
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+            transition: max-width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+            margin: 0;
         }
-        .lyrics-dock-source-group:hover {
-            background: rgba(255, 255, 255, 0.10);
-            border-color: rgba(255, 255, 255, 0.18);
+
+        .lyrics-floating-dock:hover .lyrics-dock-source-group,
+        .lyrics-floating-dock.expanded .lyrics-dock-source-group {
+            max-width: 220px;
+            opacity: 1;
+            overflow: visible;
+            pointer-events: auto;
+            padding: 2px 4px;
+            border-width: 1px;
+            margin-right: 3px;
         }
 
         .lyrics-dock-arrow-btn {
@@ -1202,7 +1216,7 @@
             align-items: center;
             gap: 5px;
             white-space: nowrap;
-            max-width: 170px;
+            max-width: 160px;
             overflow: hidden;
             text-overflow: ellipsis;
             border-radius: 14px;
@@ -1242,8 +1256,8 @@
             transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .lyrics-sources-popup.hidden {
-            opacity: 0;
-            pointer-events: none;
+            opacity: 0 !important;
+            pointer-events: none !important;
             transform: translateY(8px) scale(0.95);
         }
         .sources-popup-header {
@@ -1305,7 +1319,18 @@
             width: 1px;
             height: 18px;
             background: rgba(255, 255, 255, 0.14);
-            margin: 0 2px;
+            margin: 0 1px;
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .lyrics-floating-dock:hover .lyrics-dock-sep,
+        .lyrics-floating-dock.expanded .lyrics-dock-sep {
+            max-width: 1px;
+            opacity: 1;
+            margin: 0 3px;
         }
 
         /* Translation / Romanize Action Buttons */
@@ -1313,37 +1338,38 @@
             background: transparent;
             border: 1px solid transparent;
             color: rgba(255, 255, 255, 0.65);
-            width: 32px;
-            height: 32px;
-            border-radius: 16px;
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+            flex-shrink: 0;
         }
         .lyrics-dock-btn:hover {
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.14);
             transform: scale(1.08);
         }
         .lyrics-dock-btn:active {
             transform: scale(0.92);
         }
         .lyrics-dock-btn.active {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.45);
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.28) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
             box-shadow:
-                0 0 14px rgba(255, 255, 255, 0.3),
-                inset 0 1px 1px rgba(255, 255, 255, 0.6);
+                0 0 14px rgba(255, 255, 255, 0.35),
+                inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
         }
 
         /* Timing Offset Controls */
         .lyrics-dock-offset-group {
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
             background: rgba(255, 255, 255, 0.06);
             border-radius: 18px;
             padding: 2px 6px;
@@ -1352,21 +1378,33 @@
         .dock-clock-icon {
             color: rgba(255, 255, 255, 0.55);
             margin-right: 2px;
+            flex-shrink: 0;
         }
         .lyrics-offset-btn {
             background: transparent;
             border: none;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.75);
             font-size: 0.95rem;
             font-weight: 700;
-            width: 18px;
+            width: 0;
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
             height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             border-radius: 6px;
-            transition: all 0.15s ease;
+            transition: all 0.25s ease;
+            padding: 0;
+            margin: 0;
+        }
+        .lyrics-floating-dock:hover .lyrics-offset-btn,
+        .lyrics-floating-dock.expanded .lyrics-offset-btn {
+            width: 18px;
+            max-width: 18px;
+            opacity: 1;
         }
         .lyrics-offset-btn:hover {
             color: #ffffff;

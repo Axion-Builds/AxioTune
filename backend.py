@@ -1117,7 +1117,7 @@ async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
 
 @app.post("/api/translate-lyrics")
 async def translate_lyrics_endpoint(request: Request):
-    """Batch-translates lyric text lines into target language with fast caching."""
+    """Batch-translates lyric text lines into target language with fast in-memory caching."""
     try:
         body = await request.json()
         lines = body.get("lines", [])
@@ -1126,26 +1126,49 @@ async def translate_lyrics_endpoint(request: Request):
         if not lines:
             return {"status": "success", "translations": []}
 
-        cache_id = f"{target_lang}_{'|'.join([str(l)[:30] for l in lines[:10]])}"
+        cache_id = f"{target_lang}_{hash(tuple(lines[:25]))}"
         if cache_id in TRANSLATION_CACHE:
             return {"status": "success", "translations": TRANSLATION_CACHE[cache_id]}
 
-        # Batch translate with newline separator
-        full_text = "\n".join([l.strip() if l and l != "• • •" else "" for l in lines])
         translations = [""] * len(lines)
+        valid_indices = []
+        valid_texts = []
 
-        async with httpx.AsyncClient(timeout=4.0) as client:
-            r = await client.get("https://translate.googleapis.com/translate_a/single", params={
-                "client": "gtx", "sl": "auto", "tl": target_lang, "dt": "t", "q": full_text
-            })
-            if r.status_code == 200:
-                data = r.json()
-                if isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
-                    translated_joined = "".join([item[0] for item in data[0] if item and item[0]])
-                    translated_parts = translated_joined.split("\n")
-                    for i in range(min(len(lines), len(translated_parts))):
-                        if lines[i] and lines[i] != "• • •":
-                            translations[i] = translated_parts[i].strip()
+        for idx, l in enumerate(lines):
+            text = (l or "").strip()
+            if text and text != "• • •" and len(text) > 1:
+                valid_indices.append(idx)
+                valid_texts.append(text)
+
+        if not valid_texts:
+            return {"status": "success", "translations": translations}
+
+        # Translate in batches of 30 lines with delimiter
+        delim = " __NL__ "
+        batch_size = 30
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            for b_start in range(0, len(valid_texts), batch_size):
+                b_end = min(b_start + batch_size, len(valid_texts))
+                chunk_texts = valid_texts[b_start:b_end]
+                chunk_indices = valid_indices[b_start:b_end]
+                
+                payload = delim.join(chunk_texts)
+                try:
+                    r = await client.get("https://translate.googleapis.com/translate_a/single", params={
+                        "client": "gtx", "sl": "auto", "tl": target_lang, "dt": "t", "q": payload
+                    })
+                    if r.status_code == 200:
+                        data = r.json()
+                        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
+                            joined = "".join([item[0] for item in data[0] if item and item[0]])
+                            # Split by delimiter (handling case variations)
+                            parts = re.split(r'\s*__\s*nl\s*__\s*', joined, flags=re.IGNORECASE)
+                            for p_idx, part in enumerate(parts):
+                                if p_idx < len(chunk_indices):
+                                    real_idx = chunk_indices[p_idx]
+                                    translations[real_idx] = part.strip()
+                except Exception as b_err:
+                    print("Batch translation error:", b_err)
 
         TRANSLATION_CACHE[cache_id] = translations
         return {"status": "success", "translations": translations}
