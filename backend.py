@@ -849,10 +849,83 @@ async def get_playlist(id: str):
 
 LYRICS_CACHE = {}
 LYRICS_CACHE_TTL = 86400  # 24 hours
+TRANSLATION_CACHE = {}
+
+def parse_time_str(t_str: str) -> float:
+    """Parses timestamps like '00:01:23.456', '01:23.45', '12.34s' into float seconds."""
+    if not t_str:
+        return 0.0
+    t_str = t_str.strip().rstrip('s')
+    if ':' in t_str:
+        parts = t_str.split(':')
+        if len(parts) == 3:
+            return round(int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2]), 2)
+        elif len(parts) == 2:
+            return round(int(parts[0]) * 60 + float(parts[1]), 2)
+    try:
+        return round(float(t_str), 2)
+    except Exception:
+        return 0.0
+
+def parse_ttml_lyrics(ttml_text: str):
+    """Parses Apple Music TTML (Timed Text Markup Language) into structured line and word objects."""
+    import re
+    if not ttml_text or '<tt' not in ttml_text.lower():
+        return []
+    lines = []
+    # Match <p begin="..." end="..."> ... </p>
+    p_matches = re.findall(r'<p\s+[^>]*begin="([^"]+)"[^>]*>(.*?)</p>', ttml_text, re.DOTALL | re.IGNORECASE)
+    if not p_matches:
+        # Alternative pattern with begin and end anywhere in <p>
+        p_matches = re.findall(r'<p\s+[^>]*begin=["\']([^"\']+)["\'][^>]*>(.*?)</p>', ttml_text, re.DOTALL | re.IGNORECASE)
+
+    for b_str, content in p_matches:
+        line_start = parse_time_str(b_str)
+        # Extract <span> word tags if available: <span begin="..." end="...">word</span>
+        span_matches = re.findall(r'<span\s+[^>]*begin=["\']([^"\']+)["\'][^>]*>(.*?)</span>', content, re.DOTALL | re.IGNORECASE)
+        words = []
+        clean_text = re.sub(r'<[^>]+>', '', content).strip()
+        if not clean_text:
+            continue
+
+        if span_matches:
+            for s_begin, s_text in span_matches:
+                w_clean = re.sub(r'<[^>]+>', '', s_text).strip()
+                if w_clean:
+                    words.append({
+                        "word": w_clean,
+                        "time": parse_time_str(s_begin)
+                    })
+        else:
+            w_list = clean_text.split()
+            step = 0.45
+            for w_idx, w in enumerate(w_list):
+                words.append({
+                    "word": w,
+                    "time": round(line_start + (w_idx * step), 2)
+                })
+
+        lines.append({
+            "time": line_start,
+            "text": clean_text,
+            "isInstrumental": False,
+            "words": words
+        })
+
+    return lines
 
 def parse_synced_lrc(lrc_text: str):
     """Parses LRC timestamped lyrics string into line and word objects with smart vocal timing & 3-dot instrumental indicators."""
     import re
+    if not lrc_text:
+        return []
+
+    # Check if text is actually TTML XML
+    if '<tt' in lrc_text.lower() or '<p begin=' in lrc_text.lower():
+        ttml_res = parse_ttml_lyrics(lrc_text)
+        if ttml_res:
+            return ttml_res
+
     parsed_raw = []
     raw_lines = lrc_text.splitlines()
     for line in raw_lines:
@@ -864,9 +937,21 @@ def parse_synced_lrc(lrc_text: str):
             minutes = int(match.group(1))
             seconds = float(match.group(2))
             timestamp = round(minutes * 60 + seconds, 2)
-            text = match.group(3).strip()
-            if text:
-                parsed_raw.append({"time": timestamp, "text": text})
+            content = match.group(3).strip()
+            if content:
+                # Check for inline word timestamps e.g. <00:12.34>word <00:13.00>word
+                word_matches = re.findall(r'<(\d+):(\d+(?:\.\d+)?)>\s*([^<]+)', content)
+                inline_words = []
+                if word_matches:
+                    for wm in word_matches:
+                        w_time = round(int(wm[0]) * 60 + float(wm[1]), 2)
+                        w_text = wm[2].strip()
+                        if w_text:
+                            inline_words.append({"word": w_text, "time": w_time})
+                    clean_text = re.sub(r'<\d+:\d+(?:\.\d+)?>', '', content).strip()
+                else:
+                    clean_text = content
+                parsed_raw.append({"time": timestamp, "text": clean_text, "inline_words": inline_words})
 
     if not parsed_raw:
         return []
@@ -884,8 +969,7 @@ def parse_synced_lrc(lrc_text: str):
     for idx, item in enumerate(parsed_raw):
         timestamp = item["time"]
         text = item["text"]
-        words_list = text.split()
-        num_words = len(words_list)
+        inline_words = item.get("inline_words", [])
 
         # Next line timestamp
         next_time = timestamp + 3.5
@@ -893,16 +977,20 @@ def parse_synced_lrc(lrc_text: str):
             next_time = parsed_raw[idx + 1]["time"]
 
         raw_gap = max(next_time - timestamp, 0.5)
-        # Vocal singing duration: clamp to natural singing speed (0.48s/word)
-        vocal_dur = min(num_words * 0.48, raw_gap * 0.70)
+        words_list = text.split()
+        num_words = len(words_list)
+        vocal_dur = min(num_words * 0.48, raw_gap * 0.75)
         if vocal_dur < 0.8:
             vocal_dur = min(raw_gap, 1.2)
 
-        step = vocal_dur / max(num_words, 1)
-        words = []
-        for w_idx, w in enumerate(words_list):
-            w_time = round(timestamp + (w_idx * step), 2)
-            words.append({"word": w, "time": w_time})
+        if inline_words:
+            words = inline_words
+        else:
+            step = vocal_dur / max(num_words, 1)
+            words = []
+            for w_idx, w in enumerate(words_list):
+                w_time = round(timestamp + (w_idx * step), 2)
+                words.append({"word": w, "time": w_time})
 
         lines.append({
             "time": timestamp,
@@ -911,9 +999,9 @@ def parse_synced_lrc(lrc_text: str):
             "words": words
         })
 
-        # 2. Mid-song Instrumental break check (if gap before next line is >= 3.5s)
+        # 2. Mid-song Instrumental break check (if gap before next line is >= 2.8s)
         vocal_end = round(timestamp + vocal_dur + 0.2, 2)
-        if (next_time - vocal_end) >= 2.5 and idx + 1 < len(parsed_raw):
+        if (next_time - vocal_end) >= 2.6 and idx + 1 < len(parsed_raw):
             lines.append({
                 "time": vocal_end,
                 "text": "• • •",
@@ -930,44 +1018,61 @@ async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
     if cache_key in LYRICS_CACHE and (now - LYRICS_CACHE[cache_key]['time']) < LYRICS_CACHE_TTL:
         return LYRICS_CACHE[cache_key]['data']
 
-    # Priority 1: Fast Word-by-Word Synced Lyrics check (2.0s timeout)
-    word_synced_data = None
-    if title or artist:
-        c_title = clean_cover_search_term(title or "")
-        c_artist = clean_cover_search_term((artist or "").split(',')[0].split('&')[0])
-        queries = [
-            f"{c_title} {c_artist}".strip(),
-            c_title
-        ]
-        try:
-            async with httpx.AsyncClient(timeout=2.0, headers={"User-Agent": "Mozilla/5.0"}) as client:
-                for q in queries:
-                    if not q:
-                        continue
-                    r = await client.get("https://lrclib.net/api/search", params={"q": q})
-                    if r.status_code == 200:
-                        data = r.json()
-                        if isinstance(data, list):
-                            best = next((item for item in data if item.get("syncedLyrics")), None)
-                            if best and best.get("syncedLyrics"):
-                                parsed_lines = parse_synced_lrc(best["syncedLyrics"])
-                                if parsed_lines:
-                                    word_synced_data = {
-                                        "status": "success",
+    sources = []
+    c_title = clean_cover_search_term(title or "")
+    c_artist = clean_cover_search_term((artist or "").split(',')[0].split('&')[0])
+    queries = [
+        f"{c_title} {c_artist}".strip(),
+        c_title
+    ]
+
+    # Fetch LRCLIB Candidate Matches
+    try:
+        async with httpx.AsyncClient(timeout=3.0, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}) as client:
+            for q in queries:
+                if not q:
+                    continue
+                r = await client.get("https://lrclib.net/api/search", params={"q": q})
+                if r.status_code == 200:
+                    data = r.json()
+                    if isinstance(data, list):
+                        seen_lrc = set()
+                        for item in data:
+                            synced_text = item.get("syncedLyrics")
+                            plain_text = item.get("plainLyrics")
+                            track_name = item.get("trackName") or title
+                            artist_name = item.get("artistName") or artist
+                            album_name = item.get("albumName", "")
+
+                            if synced_text and synced_text not in seen_lrc:
+                                seen_lrc.add(synced_text)
+                                parsed = parse_synced_lrc(synced_text)
+                                if parsed:
+                                    s_name = f"LRCLib • {artist_name}"
+                                    if album_name:
+                                        s_name += f" ({album_name})"
+                                    sources.append({
+                                        "id": f"lrclib_{len(sources)+1}",
+                                        "provider": "LRCLib",
+                                        "name": s_name,
                                         "type": "word_synced",
-                                        "lines": parsed_lines,
-                                        "raw_lrc": best["syncedLyrics"],
-                                        "source": "synced"
-                                    }
-                                    break
-        except Exception:
-            pass
+                                        "lines": parsed,
+                                        "raw_lrc": synced_text
+                                    })
+                            elif plain_text and not synced_text and len(sources) < 6:
+                                sources.append({
+                                    "id": f"lrclib_plain_{len(sources)+1}",
+                                    "provider": "LRCLib",
+                                    "name": f"LRCLib (Plain) • {artist_name}",
+                                    "type": "plain_text",
+                                    "lyrics": plain_text
+                                })
+                if sources:
+                    break
+    except Exception:
+        pass
 
-    if word_synced_data:
-        LYRICS_CACHE[cache_key] = {'time': time.time(), 'data': word_synced_data}
-        return word_synced_data
-
-    # Priority 2 (Main Official): Instant YouTube Official Plain Text Lyrics Fallback
+    # Fetch YouTube Music Official Lyrics
     try:
         def fetch_yt_lyrics():
             if not videoId:
@@ -977,21 +1082,75 @@ async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
             if lyrics_id:
                 return ytmusic.get_lyrics(lyrics_id)
             return None
-            
+
         lyrics_data = await asyncio.to_thread(fetch_yt_lyrics)
         if lyrics_data and lyrics_data.get("lyrics"):
-            res = {
-                "status": "success",
+            sources.append({
+                "id": f"ytmusic_{len(sources)+1}",
+                "provider": "YouTube",
+                "name": "YouTube Music (Official)",
                 "type": "plain_text",
-                "lyrics": lyrics_data.get("lyrics", ""),
-                "source": "ytmusic"
-            }
-            LYRICS_CACHE[cache_key] = {'time': time.time(), 'data': res}
-            return res
-            
-        return {"status": "error", "message": "No lyrics found"}
+                "lyrics": lyrics_data.get("lyrics", "")
+            })
+    except Exception:
+        pass
+
+    if sources:
+        # Prioritize word_synced sources first
+        synced_sources = [s for s in sources if s.get("type") == "word_synced"]
+        active_source = synced_sources[0] if synced_sources else sources[0]
+
+        res = {
+            "status": "success",
+            "type": active_source.get("type"),
+            "lines": active_source.get("lines", []),
+            "lyrics": active_source.get("lyrics", ""),
+            "raw_lrc": active_source.get("raw_lrc", ""),
+            "source": active_source.get("name"),
+            "provider": active_source.get("provider"),
+            "sources": sources
+        }
+        LYRICS_CACHE[cache_key] = {'time': time.time(), 'data': res}
+        return res
+
+    return {"status": "error", "message": "No lyrics found", "sources": []}
+
+@app.post("/api/translate-lyrics")
+async def translate_lyrics_endpoint(request: Request):
+    """Batch-translates lyric text lines into target language with fast caching."""
+    try:
+        body = await request.json()
+        lines = body.get("lines", [])
+        target_lang = body.get("target_lang", "en")
+
+        if not lines:
+            return {"status": "success", "translations": []}
+
+        cache_id = f"{target_lang}_{'|'.join([str(l)[:30] for l in lines[:10]])}"
+        if cache_id in TRANSLATION_CACHE:
+            return {"status": "success", "translations": TRANSLATION_CACHE[cache_id]}
+
+        # Batch translate with newline separator
+        full_text = "\n".join([l.strip() if l and l != "• • •" else "" for l in lines])
+        translations = [""] * len(lines)
+
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            r = await client.get("https://translate.googleapis.com/translate_a/single", params={
+                "client": "gtx", "sl": "auto", "tl": target_lang, "dt": "t", "q": full_text
+            })
+            if r.status_code == 200:
+                data = r.json()
+                if isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
+                    translated_joined = "".join([item[0] for item in data[0] if item and item[0]])
+                    translated_parts = translated_joined.split("\n")
+                    for i in range(min(len(lines), len(translated_parts))):
+                        if lines[i] and lines[i] != "• • •":
+                            translations[i] = translated_parts[i].strip()
+
+        TRANSLATION_CACHE[cache_id] = translations
+        return {"status": "success", "translations": translations}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": str(e), "translations": []}
 
 def format_headers(raw_input: str) -> str:
     raw_input = raw_input.strip()

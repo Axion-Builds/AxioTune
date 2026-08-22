@@ -1111,6 +1111,316 @@
             font-size: 1.5rem; color: rgba(255,255,255,0.6); text-align: left; font-weight: 500;
         }
 
+        /* ══════════════════════════════════════════════════════════════════
+           🎤 BETTER-LYRICS FLOATING CONTROL PILL DOCK (Exact VisionOS Glass)
+           ══════════════════════════════════════════════════════════════════ */
+        .lyrics-floating-dock {
+            position: absolute;
+            bottom: 30px;
+            right: 45px;
+            z-index: 120;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: rgba(18, 18, 26, 0.72);
+            backdrop-filter: blur(28px) saturate(200%) contrast(110%);
+            -webkit-backdrop-filter: blur(28px) saturate(200%) contrast(110%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-top: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 30px;
+            box-shadow:
+                0 16px 36px -6px rgba(0, 0, 0, 0.65),
+                0 4px 12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.35);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            user-select: none;
+        }
+
+        .lyrics-floating-dock.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(12px) scale(0.95);
+        }
+
+        .lyrics-floating-dock:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow:
+                0 22px 45px -8px rgba(0, 0, 0, 0.75),
+                inset 0 1px 1.5px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Source Selector Group */
+        .lyrics-dock-source-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 2px 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .lyrics-dock-source-group:hover {
+            background: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .lyrics-dock-arrow-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 1.15rem;
+            line-height: 1;
+            padding: 2px 6px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: color 0.15s, transform 0.15s, background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .lyrics-dock-arrow-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.15);
+        }
+        .lyrics-dock-arrow-btn:active {
+            transform: scale(0.9);
+        }
+
+        .lyrics-dock-source-badge {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            max-width: 170px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-radius: 14px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .lyrics-dock-source-badge:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .lyrics-dock-source-badge .dock-source-icon {
+            opacity: 0.8;
+            flex-shrink: 0;
+        }
+        .source-count-tag {
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.55);
+            margin-left: 2px;
+        }
+
+        /* Source Popup Dropdown */
+        .lyrics-sources-popup {
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 0;
+            min-width: 230px;
+            max-width: 320px;
+            background: rgba(22, 22, 32, 0.95);
+            backdrop-filter: blur(28px) saturate(210%);
+            -webkit-backdrop-filter: blur(28px) saturate(210%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 18px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            z-index: 200;
+            transform-origin: bottom left;
+            transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .lyrics-sources-popup.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px) scale(0.95);
+        }
+        .sources-popup-header {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 6px 10px 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 4px;
+        }
+        .sources-list {
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .source-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            gap: 8px;
+        }
+        .source-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            transform: translateX(2px);
+        }
+        .source-item.active {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
+        }
+        .source-item-tag {
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+        }
+        .source-item.active .source-item-tag {
+            background: var(--accent, #ff476d);
+            color: #ffffff;
+        }
+
+        /* Separator */
+        .lyrics-dock-sep {
+            width: 1px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.14);
+            margin: 0 2px;
+        }
+
+        /* Translation / Romanize Action Buttons */
+        .lyrics-dock-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.65);
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .lyrics-dock-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+            transform: scale(1.08);
+        }
+        .lyrics-dock-btn:active {
+            transform: scale(0.92);
+        }
+        .lyrics-dock-btn.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.45);
+            box-shadow:
+                0 0 14px rgba(255, 255, 255, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.6);
+        }
+
+        /* Timing Offset Controls */
+        .lyrics-dock-offset-group {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 18px;
+            padding: 2px 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .dock-clock-icon {
+            color: rgba(255, 255, 255, 0.55);
+            margin-right: 2px;
+        }
+        .lyrics-offset-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            font-weight: 700;
+            width: 18px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+        }
+        .lyrics-offset-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.18);
+            transform: scale(1.15);
+        }
+        .lyrics-offset-val {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            font-variant-numeric: tabular-nums;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        /* ── Subtitle Translation & Romanization line ── */
+        .lyric-sub-translation {
+            display: block;
+            font-size: clamp(0.95rem, 1.3vw, 1.25rem);
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.65);
+            margin-top: 4px;
+            letter-spacing: 0.01em;
+            line-height: 1.4;
+            transition: color 0.3s ease, opacity 0.3s ease;
+        }
+        .active-line .lyric-sub-translation {
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+        }
+
+        .lyric-sub-roman {
+            display: block;
+            font-size: clamp(0.85rem, 1.1vw, 1.1rem);
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.55);
+            margin-bottom: 2px;
+            letter-spacing: 0.02em;
+        }
+        .active-line .lyric-sub-roman {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Mobile adjustments for dock */
+        @media (max-width: 768px) {
+            .lyrics-floating-dock {
+                bottom: 85px;
+                right: 20px;
+                left: auto;
+                transform: scale(0.92);
+                transform-origin: bottom right;
+            }
+        }
+
         /* Additional elements */
         .premium-list-item {
             display: flex; align-items: center; padding: 12px 15px; gap: 15px;

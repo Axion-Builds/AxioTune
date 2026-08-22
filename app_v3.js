@@ -1597,6 +1597,19 @@ function onPlayerStateChange(event) {
                 appSettings.lyricsStyle = e.target.value;
                 saveSettings(appSettings); applySettings(appSettings);
             });
+            // Lyrics Translation Language
+            document.getElementById('lyrics-translate-lang-select')?.addEventListener('change', async (e) => {
+                window._lyricsTargetLang = e.target.value;
+                localStorage.setItem('axio_lyrics_target_lang', e.target.value);
+                if (window._lyricsTranslationEnabled && lyricsData && lyricsData.length > 0) {
+                    await window.fetchTranslationsForLines(lyricsData);
+                    renderLyrics();
+                }
+            });
+            // Lyrics Default Provider
+            document.getElementById('lyrics-default-provider-select')?.addEventListener('change', (e) => {
+                localStorage.setItem('axio_lyrics_default_provider', e.target.value);
+            });
             // Mini player style
             document.getElementById('mini-player-style-select')?.addEventListener('change', (e) => {
                 appSettings.miniPlayerStyle = e.target.value;
@@ -1910,6 +1923,7 @@ function onPlayerStateChange(event) {
         // Apply on boot
         applySettings(appSettings);
         initSettingsListeners();
+        if (typeof window.initBetterLyricsDock === 'function') window.initBetterLyricsDock();
         syncSettingsUI(appSettings);
 
         // Screen Switch Logic & Mini Player Logic
@@ -2320,7 +2334,7 @@ function onPlayerStateChange(event) {
                 return true;
             } catch (e) {
                 console.warn('Stream refresh failed:', e);
-                showToast('Could not refresh stream ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â try searching again');
+                showToast('Could not refresh stream — try searching again');
                 return false;
             } finally {
                 streamRefreshInProgress = false;
@@ -2340,115 +2354,53 @@ function onPlayerStateChange(event) {
             }
         }
 
-        // ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¬ CINEMATIC CARDS UPDATER ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¬
         // 🎵 CINEMATIC CARDS UPDATER 🎵
         window.updateCinematicCards = function() {
             const prevContainer = document.getElementById('cinematic-prev');
             const nextContainer = document.getElementById('cinematic-next');
             if (!prevContainer || !nextContainer) return;
 
-           async function fetchLyricsForQueueSong(title, artist, videoId) {
-            try {
-                if (currentVideoId !== videoId && videoId) return;
-                lyricsContainer.innerHTML = `
-                    <div class="empty-state loading-state-wrapper" style="margin-top:0;">
-                        <div class="premium-glass-loader"></div>
-                        <div style="font-size:0.95rem; font-weight:600; color:rgba(255,255,255,0.85); margin-top:12px; letter-spacing:0.02em;">
-                            Finding lyrics...
-                        </div>
-                    </div>
-                `;
+            const prevImg = prevContainer.querySelector('img');
+            const nextImg = nextContainer.querySelector('img');
 
-                const cleanTitle = (title || '').split('(')[0].split('[')[0].split('|')[0].trim();
-                const cleanArtist = (artist || '').replace(/VEVO|Official|Topic|Music/gi, '').trim();
-
-                let fetchedLines = null;
-                let lyricsType = 'none';
-                let plainTextLyrics = '';
-
-                // STEP 1: Try /api/lyrics (backend API)
-                try {
-                    const ytRes = await fetch(`/api/lyrics?videoId=${encodeURIComponent(videoId || '')}&title=${encodeURIComponent(cleanTitle)}&artist=${encodeURIComponent(cleanArtist)}`);
-                    if (ytRes.ok) {
-                        const ytData = await ytRes.json();
-                        if (ytData.status === 'success') {
-                            if (ytData.type === 'word_synced' && ytData.lines && ytData.lines.length > 0) {
-                                fetchedLines = ytData.lines.map((l, lineIdx, lineArr) => {
-                                    const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
-                                    return {
-                                        start: l.time,
-                                        end: nextLineTime,
-                                        text: l.text,
-                                        isInstrumental: !!l.isInstrumental,
-                                        words: (l.words || []).map((w, idx, arr) => {
-                                            let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
-                                            if (nextTime <= w.time) nextTime = w.time + 0.3;
-                                            return { text: w.word, start: w.time, end: nextTime };
-                                        })
-                                    };
-                                });
-                                lyricsType = 'word_synced';
-                            } else if (ytData.type === 'plain_text' && ytData.lyrics) {
-                                plainTextLyrics = ytData.lyrics;
-                                lyricsType = 'plain_text';
-                            }
-                        }
-                    }
-                } catch(e) { console.warn("API /api/lyrics unavailable, falling back to LRCLIB:", e); }
-
-                // STEP 2: Fallback to LRCLIB Public API if step 1 produced no lines
-                if (!fetchedLines && !plainTextLyrics) {
-                    try {
-                        const lrcRes = await fetch(`https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`);
-                        if (lrcRes.ok) {
-                            const lrcData = await lrcRes.json();
-                            if (lrcData.syncedLyrics) {
-                                fetchedLines = parseLrcString(lrcData.syncedLyrics);
-                                lyricsType = 'synced';
-                            } else if (lrcData.plainLyrics) {
-                                plainTextLyrics = lrcData.plainLyrics;
-                                lyricsType = 'plain_text';
-                            }
-                        }
-                        // Secondary LRCLIB Search fallback query
-                        if (!fetchedLines && !plainTextLyrics) {
-                            const searchRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle + ' ' + cleanArtist)}`);
-                            if (searchRes.ok) {
-                                const searchResults = await searchRes.json();
-                                if (Array.isArray(searchResults) && searchResults.length > 0) {
-                                    const match = searchResults.find(s => s.syncedLyrics) || searchResults[0];
-                                    if (match.syncedLyrics) {
-                                        fetchedLines = parseLrcString(match.syncedLyrics);
-                                        lyricsType = 'synced';
-                                    } else if (match.plainLyrics) {
-                                        plainTextLyrics = match.plainLyrics;
-                                        lyricsType = 'plain_text';
-                                    }
-                                }
-                            }
-                        }
-                    } catch (lrcErr) { console.warn("LRCLIB fallback failed:", lrcErr); }
-                }
-
-                if (currentVideoId !== videoId && videoId) return;
-
-                if (fetchedLines && fetchedLines.length > 0) {
-                    lyricsData = fetchedLines;
-                    renderLyrics();
-                    showToast(lyricsType === 'word_synced' ? "✨ Word-by-Word Lyrics Active" : "🎵 Synced Lyrics Active");
-                } else if (plainTextLyrics) {
-                    lyricsData = [];
-                    lyricsContainer.innerHTML = `<div style="padding: 20px; font-size: 1.35rem; line-height: 2; color: rgba(255,255,255,0.85); white-space: pre-wrap; font-weight: 500;">${plainTextLyrics}</div>`;
-                    showToast("🎤 Official Lyrics Active");
-                } else {
-                    lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this song.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
-                }
-            } catch (err) {
-                console.error("Lyrics Error:", err);
-                if (currentVideoId !== videoId && videoId) return;
-                lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this song.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+            if (!queueList || queueList.length === 0) {
+                prevContainer.style.opacity = '0';
+                nextContainer.style.opacity = '0';
+                return;
             }
-        }
+
+            // Prev Card
+            if (currentQueueIndex > 0) {
+                const prevSong = queueList[currentQueueIndex - 1];
+                if (prevImg) prevImg.src = getCoverUrl(`${prevSong.title} ${prevSong.artist}`, prevSong.cover || '', prevSong.id || prevSong.videoId);
+                prevContainer.style.opacity = '';
+                prevContainer.onclick = () => playQueueIndex(currentQueueIndex - 1);
+            } else {
+                prevContainer.style.opacity = '0';
+                prevContainer.onclick = null;
+            }
+
+            // Next Card
+            if (currentQueueIndex < queueList.length - 1) {
+                const nextSong = queueList[currentQueueIndex + 1];
+                if (nextImg) nextImg.src = getCoverUrl(`${nextSong.title} ${nextSong.artist}`, nextSong.cover || '', nextSong.id || nextSong.videoId);
+                nextContainer.style.opacity = '';
+                nextContainer.onclick = () => playQueueIndex(currentQueueIndex + 1);
+            } else {
+                nextContainer.style.opacity = '0';
+                nextContainer.onclick = null;
+            }
+        };
+
+        // ══════════════════════════════════════════════════════════════════
+        // 🎤 BETTER-LYRICS MULTI-PROVIDER & FLOATING CONTROLS ENGINE
+        // ══════════════════════════════════════════════════════════════════
+        window._availableLyricsSources = [];
+        window._currentLyricsSourceIndex = 0;
+        window._lyricsTimeOffset = 0.0;
+        window._lyricsTranslationEnabled = localStorage.getItem('axio_lyrics_translate') === 'true';
+        window._lyricsRomanizationEnabled = localStorage.getItem('axio_lyrics_romanize') === 'true';
+        window._lyricsTargetLang = localStorage.getItem('axio_lyrics_target_lang') || 'en';
 
         // Helper to parse standard LRC string ([00:12.34] lyric text) into lyricsData structure
         function parseLrcString(lrcStr) {
@@ -2472,19 +2424,14 @@ function onPlayerStateChange(event) {
             return parsedLines.map((l, lineIdx, lineArr) => {
                 const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.8);
                 const lineDuration = Math.max(1.2, nextLineTime - l.time);
-                
-                // Split line into raw words
                 const rawWords = l.text.split(/\s+/).filter(w => w.length > 0);
                 
-                // Calculate phonetic & syllable weight for each word (vowels & length)
                 const wordWeights = rawWords.map(w => {
                     const vowels = (w.match(/[aeiouyàáâãäåèéêëìíîïòóôõöùúûü]/gi) || []).length;
                     return Math.max(1, w.length + (vowels * 0.8));
                 });
                 
                 const totalWeight = wordWeights.reduce((a, b) => a + b, 0) || 1;
-                
-                // Allocate lineDuration proportionally according to word weight
                 let currentWordTime = l.time;
                 const words = rawWords.map((w, idx) => {
                     const allocatedDur = (wordWeights[idx] / totalWeight) * lineDuration;
@@ -2504,42 +2451,215 @@ function onPlayerStateChange(event) {
             });
         }
 
-            const prevImg = prevContainer.querySelector('img');
-            const nextImg = nextContainer.querySelector('img');
+        window.updateLyricsDockUI = function() {
+            const dock = document.getElementById('lyrics-floating-dock');
+            const sourceNameEl = document.getElementById('lyrics-source-name');
+            const sourceCountEl = document.getElementById('lyrics-source-count');
+            const popup = document.getElementById('lyrics-sources-popup');
+            const listEl = document.getElementById('lyrics-sources-list');
+            const translateBtn = document.getElementById('lyrics-translate-btn');
+            const romanizeBtn = document.getElementById('lyrics-romanize-btn');
+            const offsetDisplay = document.getElementById('lyrics-offset-display');
 
-            if (queueList.length === 0) {
-                prevContainer.style.opacity = '0';
-                nextContainer.style.opacity = '0';
+            if (!dock) return;
+
+            if (!lyricsData || lyricsData.length === 0) {
+                dock.classList.add('hidden');
                 return;
             }
+            dock.classList.remove('hidden');
 
-            // Prev Card
-            if (currentQueueIndex > 0) {
-                const prevSong = queueList[currentQueueIndex - 1];
-                prevImg.src = getCoverUrl(`${prevSong.title} ${prevSong.artist}`, prevSong.cover || '', prevSong.id || prevSong.videoId);
-                prevContainer.style.opacity = '';
-                prevContainer.onclick = () => playQueueIndex(currentQueueIndex - 1);
-            } else {
-                prevContainer.style.opacity = '0';
-                prevContainer.onclick = null;
+            const sources = window._availableLyricsSources || [];
+            const idx = window._currentLyricsSourceIndex || 0;
+            const currentSrc = sources[idx];
+
+            if (sourceNameEl) {
+                sourceNameEl.textContent = currentSrc ? (currentSrc.provider || currentSrc.name || 'LRCLib') : 'LRCLib';
+            }
+            if (sourceCountEl) {
+                sourceCountEl.textContent = sources.length > 0 ? `${idx + 1}/${sources.length}` : '1/1';
             }
 
-            // Next Card
-            if (currentQueueIndex < queueList.length - 1) {
-                const nextSong = queueList[currentQueueIndex + 1];
-                nextImg.src = getCoverUrl(`${nextSong.title} ${nextSong.artist}`, nextSong.cover || '', nextSong.id || nextSong.videoId);
-                nextContainer.style.opacity = '';
-                nextContainer.onclick = () => playQueueIndex(currentQueueIndex + 1);
-            } else {
-                nextContainer.style.opacity = '0';
-                nextContainer.onclick = null;
+            if (offsetDisplay) {
+                const off = window._lyricsTimeOffset || 0;
+                offsetDisplay.textContent = `${off > 0 ? '+' : ''}${off.toFixed(1)}s`;
+            }
+
+            if (translateBtn) {
+                translateBtn.classList.toggle('active', !!window._lyricsTranslationEnabled);
+            }
+            if (romanizeBtn) {
+                romanizeBtn.classList.toggle('active', !!window._lyricsRomanizationEnabled);
+            }
+
+            // Populate popup list
+            if (listEl && sources.length > 0) {
+                listEl.innerHTML = '';
+                sources.forEach((src, sIdx) => {
+                    const item = document.createElement('div');
+                    item.className = `source-item ${sIdx === idx ? 'active' : ''}`;
+                    const tag = src.type === 'word_synced' ? 'Word Synced' : (src.type === 'plain_text' ? 'Plain' : 'Synced');
+                    item.innerHTML = `
+                        <span>⚡ ${src.name || src.provider || 'Source'}</span>
+                        <span class="source-item-tag">${tag}</span>
+                    `;
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        window.switchLyricsSource(sIdx);
+                        if (popup) popup.classList.add('hidden');
+                    };
+                    listEl.appendChild(item);
+                });
+            }
+        };
+
+        window.switchLyricsSource = async function(index) {
+            const sources = window._availableLyricsSources || [];
+            if (!sources || sources.length === 0) return;
+            if (index < 0) index = sources.length - 1;
+            if (index >= sources.length) index = 0;
+
+            window._currentLyricsSourceIndex = index;
+            const chosen = sources[index];
+
+            if (chosen.type === 'word_synced' && chosen.lines && chosen.lines.length > 0) {
+                lyricsData = chosen.lines.map((l, lineIdx, lineArr) => {
+                    const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
+                    return {
+                        start: l.time,
+                        end: nextLineTime,
+                        text: l.text,
+                        translation: l.translation || '',
+                        romanization: l.romanization || '',
+                        isInstrumental: !!l.isInstrumental,
+                        words: (l.words || []).map((w, idx, arr) => {
+                            let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
+                            if (nextTime <= w.time) nextTime = w.time + 0.3;
+                            return { text: w.word, start: w.time, end: nextTime };
+                        })
+                    };
+                });
+                renderLyrics();
+                showToast(`🎤 Lyrics: ${chosen.name || chosen.provider}`);
+            } else if (chosen.type === 'plain_text' && chosen.lyrics) {
+                lyricsData = [];
+                lyricsContainer.innerHTML = `<div style="padding: 20px; font-size: 1.35rem; line-height: 2; color: rgba(255,255,255,0.85); white-space: pre-wrap; font-weight: 500;">${chosen.lyrics}</div>`;
+                showToast(`🎤 Lyrics: ${chosen.name || chosen.provider}`);
+            }
+
+            if (window._lyricsTranslationEnabled) {
+                await window.fetchTranslationsForLines(lyricsData);
+                renderLyrics();
+            }
+
+            window.updateLyricsDockUI();
+        };
+
+        window.fetchTranslationsForLines = async function(linesList) {
+            if (!linesList || linesList.length === 0) return;
+            const textLines = linesList.map(l => l.isInstrumental ? '' : l.text);
+            try {
+                const res = await fetch('/api/translate-lyrics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lines: textLines, target_lang: window._lyricsTargetLang || 'en' })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'success' && data.translations) {
+                        data.translations.forEach((t, i) => {
+                            if (linesList[i]) linesList[i].translation = t;
+                        });
+                    }
+                }
+            } catch (err) {
+                console.warn("Translation failed:", err);
+            }
+        };
+
+        window.initBetterLyricsDock = function() {
+            const prevBtn = document.getElementById('lyrics-source-prev-btn');
+            const nextBtn = document.getElementById('lyrics-source-next-btn');
+            const badgeBtn = document.getElementById('lyrics-source-badge-btn');
+            const popup = document.getElementById('lyrics-sources-popup');
+            const translateBtn = document.getElementById('lyrics-translate-btn');
+            const romanizeBtn = document.getElementById('lyrics-romanize-btn');
+            const minusBtn = document.getElementById('lyrics-offset-minus-btn');
+            const plusBtn = document.getElementById('lyrics-offset-plus-btn');
+
+            if (prevBtn) {
+                prevBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window.switchLyricsSource(window._currentLyricsSourceIndex - 1);
+                };
+            }
+            if (nextBtn) {
+                nextBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window.switchLyricsSource(window._currentLyricsSourceIndex + 1);
+                };
+            }
+            if (badgeBtn && popup) {
+                badgeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    popup.classList.toggle('hidden');
+                };
+            }
+            document.addEventListener('click', (e) => {
+                if (popup && !popup.contains(e.target) && badgeBtn && !badgeBtn.contains(e.target)) {
+                    popup.classList.add('hidden');
+                }
+            });
+
+            if (translateBtn) {
+                translateBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    window._lyricsTranslationEnabled = !window._lyricsTranslationEnabled;
+                    localStorage.setItem('axio_lyrics_translate', window._lyricsTranslationEnabled ? 'true' : 'false');
+                    showToast(window._lyricsTranslationEnabled ? "🌐 Real-Time Translation ON" : "🌐 Translation OFF");
+                    
+                    if (window._lyricsTranslationEnabled && lyricsData && lyricsData.length > 0) {
+                        await window.fetchTranslationsForLines(lyricsData);
+                    }
+                    renderLyrics();
+                    window.updateLyricsDockUI();
+                };
+            }
+
+            if (romanizeBtn) {
+                romanizeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window._lyricsRomanizationEnabled = !window._lyricsRomanizationEnabled;
+                    localStorage.setItem('axio_lyrics_romanize', window._lyricsRomanizationEnabled ? 'true' : 'false');
+                    showToast(window._lyricsRomanizationEnabled ? "🔤 Romanization ON" : "🔤 Romanization OFF");
+                    renderLyrics();
+                    window.updateLyricsDockUI();
+                };
+            }
+
+            if (minusBtn) {
+                minusBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window._lyricsTimeOffset = Math.round((window._lyricsTimeOffset - 0.1) * 10) / 10;
+                    window.updateLyricsDockUI();
+                    showToast(`⏱ Offset: ${window._lyricsTimeOffset.toFixed(1)}s`);
+                };
+            }
+            if (plusBtn) {
+                plusBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window._lyricsTimeOffset = Math.round((window._lyricsTimeOffset + 0.1) * 10) / 10;
+                    window.updateLyricsDockUI();
+                    showToast(`⏱ Offset: ${window._lyricsTimeOffset.toFixed(1)}s`);
+                };
             }
         };
 
         // — Background Tasks for Queue Playback (Asynchronous to prevent autoplay blocks) —
         async function fetchLyricsForQueueSong(title, artist, videoId) {
             try {
-                if (currentVideoId !== videoId) return;
+                if (currentVideoId !== videoId && videoId) return;
+                window._lyricsTimeOffset = 0.0;
                 lyricsContainer.innerHTML = `
                     <div class="empty-state loading-state-wrapper" style="margin-top:0;">
                         <div class="premium-glass-loader"></div>
@@ -2548,41 +2668,100 @@ function onPlayerStateChange(event) {
                         </div>
                     </div>
                 `;
-                const ytRes = await fetch(`/api/lyrics?videoId=${encodeURIComponent(videoId || '')}&title=${encodeURIComponent(title || '')}&artist=${encodeURIComponent(artist || '')}`);
-                const ytData = await ytRes.json();
-                if (currentVideoId !== videoId) return;
-                
-                if (ytData.status === 'success') {
-                    if (ytData.type === 'word_synced' && ytData.lines && ytData.lines.length > 0) {
-                        lyricsData = ytData.lines.map((l, lineIdx, lineArr) => {
-                            const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
-                            return {
-                                start: l.time,
-                                end: nextLineTime,
-                                text: l.text,
-                                isInstrumental: !!l.isInstrumental,
-                                words: (l.words || []).map((w, idx, arr) => {
-                                    let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
-                                    if (nextTime <= w.time) nextTime = w.time + 0.3;
-                                    return { text: w.word, start: w.time, end: nextTime };
-                                })
-                            };
-                        });
-                        renderLyrics();
-                        showToast("✨ Word-by-Word Lyrics Active");
-                    } else if (ytData.type === 'plain_text' && ytData.lyrics) {
-                        lyricsData = [];
-                        lyricsContainer.innerHTML = `<div style="padding: 0 20px 100px 20px; font-size: 1.5rem; line-height: 2; color: rgba(255,255,255,0.7); white-space: pre-wrap; font-weight: 500;">${ytData.lyrics}</div>`;
-                        showToast("Ã°Å¸Å½Â¤ Official Line-by-Line Lyrics");
-                    } else {
-                        lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this song.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+
+                const cleanTitle = (title || '').split('(')[0].split('[')[0].split('|')[0].trim();
+                const cleanArtist = (artist || '').replace(/VEVO|Official|Topic|Music/gi, '').trim();
+
+                let fetchedLines = null;
+                let lyricsType = 'none';
+                let plainTextLyrics = '';
+                window._availableLyricsSources = [];
+                window._currentLyricsSourceIndex = 0;
+
+                // STEP 1: Try /api/lyrics (backend multi-provider API)
+                try {
+                    const ytRes = await fetch(`/api/lyrics?videoId=${encodeURIComponent(videoId || '')}&title=${encodeURIComponent(cleanTitle)}&artist=${encodeURIComponent(cleanArtist)}`);
+                    if (ytRes.ok) {
+                        const ytData = await ytRes.json();
+                        if (ytData.status === 'success') {
+                            if (ytData.sources && Array.isArray(ytData.sources)) {
+                                window._availableLyricsSources = ytData.sources;
+                            }
+                            if (ytData.type === 'word_synced' && ytData.lines && ytData.lines.length > 0) {
+                                fetchedLines = ytData.lines.map((l, lineIdx, lineArr) => {
+                                    const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
+                                    return {
+                                        start: l.time,
+                                        end: nextLineTime,
+                                        text: l.text,
+                                        translation: l.translation || '',
+                                        romanization: l.romanization || '',
+                                        isInstrumental: !!l.isInstrumental,
+                                        words: (l.words || []).map((w, idx, arr) => {
+                                            let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
+                                            if (nextTime <= w.time) nextTime = w.time + 0.3;
+                                            return { text: w.word, start: w.time, end: nextTime };
+                                        })
+                                    };
+                                });
+                            } else if (ytData.type === 'plain_text' && ytData.lyrics) {
+                                plainTextLyrics = ytData.lyrics;
+                                lyricsType = 'plain_text';
+                            }
+                        }
                     }
+                } catch(e) { console.warn("API /api/lyrics unavailable, falling back to LRCLIB:", e); }
+
+                // STEP 2: Fallback to LRCLIB Public API if step 1 produced no lines
+                if (!fetchedLines && !plainTextLyrics) {
+                    try {
+                        const lrcRes = await fetch(`https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`);
+                        if (lrcRes.ok) {
+                            const lrcData = await lrcRes.json();
+                            if (lrcData.syncedLyrics) {
+                                fetchedLines = parseLrcString(lrcData.syncedLyrics);
+                                lyricsType = 'synced';
+                                window._availableLyricsSources.push({
+                                    id: 'lrclib_fallback',
+                                    provider: 'LRCLib',
+                                    name: `LRCLib • ${cleanArtist}`,
+                                    type: 'word_synced',
+                                    lines: fetchedLines
+                                });
+                            } else if (lrcData.plainLyrics) {
+                                plainTextLyrics = lrcData.plainLyrics;
+                                lyricsType = 'plain_text';
+                            }
+                        }
+                    } catch (lrcErr) { console.warn("LRCLIB fallback failed:", lrcErr); }
+                }
+
+                if (currentVideoId !== videoId && videoId) return;
+
+                if (fetchedLines && fetchedLines.length > 0) {
+                    lyricsData = fetchedLines;
+                    if (window._lyricsTranslationEnabled) {
+                        await window.fetchTranslationsForLines(lyricsData);
+                    }
+                    renderLyrics();
+                    window.updateLyricsDockUI();
+                    showToast(lyricsType === 'word_synced' ? "✨ Word-by-Word Lyrics Active" : "🎵 Synced Lyrics Active");
+                } else if (plainTextLyrics) {
+                    lyricsData = [];
+                    lyricsContainer.innerHTML = `<div style="padding: 20px; font-size: 1.35rem; line-height: 2; color: rgba(255,255,255,0.85); white-space: pre-wrap; font-weight: 500;">${plainTextLyrics}</div>`;
+                    window.updateLyricsDockUI();
+                    showToast("🎤 Official Lyrics Active");
                 } else {
+                    lyricsData = [];
                     lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this song.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+                    window.updateLyricsDockUI();
                 }
             } catch (err) {
-                if (currentVideoId !== videoId) return;
+                console.error("Lyrics Error:", err);
+                if (currentVideoId !== videoId && videoId) return;
+                lyricsData = [];
                 lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this song.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
+                window.updateLyricsDockUI();
             }
         }
 
@@ -3232,18 +3411,39 @@ function onPlayerStateChange(event) {
                     lineDiv.classList.add('instrumental-line');
                     lineDiv.innerHTML = '<span class="instrumental-dots"><span>&bull;</span><span>&bull;</span><span>&bull;</span></span>';
                 } else {
+                    // Optional Romanization pronunciation on top
+                    if (window._lyricsRomanizationEnabled && line.romanization) {
+                        const romSpan = document.createElement('span');
+                        romSpan.className = 'lyric-sub-roman';
+                        romSpan.textContent = line.romanization;
+                        lineDiv.appendChild(romSpan);
+                    }
+
+                    // Main Words
+                    const wordsWrapper = document.createElement('span');
+                    wordsWrapper.className = 'lyric-words-row';
+
                     line.words.forEach((word) => {
                         const wordSpan = document.createElement('span');
                         wordSpan.className = 'lyric-word';
                         wordSpan.textContent = word.text;
                         wordSpan.dataset.start = word.start;
                         wordSpan.dataset.end = word.end;
-                        lineDiv.appendChild(wordSpan);
-                        lineDiv.appendChild(document.createTextNode(' '));
+                        wordsWrapper.appendChild(wordSpan);
+                        wordsWrapper.appendChild(document.createTextNode(' '));
                         const wData = { el: wordSpan, start: word.start, end: word.end, state: 'future' };
                         wordElements.push(wData);
                         lineWords.push(wData);
                     });
+                    lineDiv.appendChild(wordsWrapper);
+
+                    // Optional Real-Time Translation subtitle on bottom
+                    if (window._lyricsTranslationEnabled && line.translation) {
+                        const transSpan = document.createElement('span');
+                        transSpan.className = 'lyric-sub-translation';
+                        transSpan.textContent = line.translation;
+                        lineDiv.appendChild(transSpan);
+                    }
                 }
 
                 frag.appendChild(lineDiv);
@@ -3280,7 +3480,8 @@ function onPlayerStateChange(event) {
         }
 
         function processLyricsFrame(e) {
-            const time = audioPlayer.currentTime;
+            // Apply live timing offset from Better-Lyrics floating dock
+            const time = Math.max(0, (audioPlayer.currentTime || 0) + (window._lyricsTimeOffset || 0));
             let currentLineIndex = -1;
 
             for (let i = 0; i < lineElements.length; i++) {
