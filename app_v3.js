@@ -1373,7 +1373,7 @@ function onPlayerStateChange(event) {
             normalizeVolume: false, lyricsFontSize: 'medium',
             lyricsFont: 'default', titleFont: 'Outfit', lyricsStyle: 'bold',
             miniPlayerStyle: 'pill', doubleTapSeek: true,
-            catCursor: true, haptic: true, incognito: false
+            haptic: true, incognito: false
         };
 
         function loadSettings() {
@@ -1429,8 +1429,6 @@ function onPlayerStateChange(event) {
             } else {
                 styleTag.textContent = '';
             }
-            // Cat cursor
-            document.body.style.cursor = s.catCursor ? `url('cat_cursor.png'), auto` : 'auto';
             // Playback speed
             audioPlayer.playbackRate = s.playbackSpeed / 100;
             // Mini player style
@@ -1475,8 +1473,6 @@ function onPlayerStateChange(event) {
             if (mps) mps.value = s.miniPlayerStyle;
             const dts = document.getElementById('doubletap-toggle');
             if (dts) dts.checked = s.doubleTapSeek;
-            const cct = document.getElementById('cat-cursor-toggle');
-            if (cct) cct.checked = s.catCursor;
             const hpt = document.getElementById('haptic-toggle');
             if (hpt) hpt.checked = s.haptic;
             const igt = document.getElementById('incognito-toggle');
@@ -1619,11 +1615,6 @@ function onPlayerStateChange(event) {
             document.getElementById('doubletap-toggle')?.addEventListener('change', (e) => {
                 appSettings.doubleTapSeek = e.target.checked;
                 saveSettings(appSettings);
-            });
-            // Cat cursor
-            document.getElementById('cat-cursor-toggle')?.addEventListener('change', (e) => {
-                appSettings.catCursor = e.target.checked;
-                saveSettings(appSettings); applySettings(appSettings);
             });
             // Haptic
             document.getElementById('haptic-toggle')?.addEventListener('change', (e) => {
@@ -1934,91 +1925,8 @@ function onPlayerStateChange(event) {
         const miniArtist = document.getElementById('mini-artist');
         const miniPlayPauseBtn = document.getElementById('mini-play-pause-btn');
 
-        function triggerFlipAnimation(fromEl, toEl, onComplete) {
-            try {
-                if (!fromEl || !toEl) {
-                    if (onComplete) onComplete();
-                    return;
-                }
-                
-                // --- BATCH READS 1 (Current State) ---
-                const fromRect = fromEl.getBoundingClientRect();
-                const fromRadius = window.getComputedStyle(fromEl).borderRadius || '14px';
-                
-                const toScreen = toEl.closest('.screen-view');
-                const screenWasHidden = toScreen && toScreen.classList.contains('hidden-screen');
-                const screenOriginalTransition = toScreen ? toScreen.style.transition : '';
-                
-                const wasHidden = miniPlayer.classList.contains('hidden-mini');
-                
-                // --- BATCH WRITES 1 (Setup Target State) ---
-                if (screenWasHidden) {
-                    toScreen.style.transition = 'none';
-                    toScreen.classList.remove('hidden-screen');
-                    toScreen.classList.add('active-screen');
-                }
-                if (wasHidden) {
-                    miniPlayer.style.transition = 'none';
-                    miniPlayer.classList.remove('hidden-mini');
-                }
-                
-                // --- BATCH READS 2 (Target State) - FORCES 1 LAYOUT ---
-                const toRect = toEl.getBoundingClientRect();
-                const toRadius = window.getComputedStyle(toEl).borderRadius || '14px';
-                
-                // --- BATCH WRITES 2 (Revert & Prepare Animation) ---
-                if (wasHidden) {
-                    miniPlayer.classList.add('hidden-mini');
-                    miniPlayer.style.transition = '';
-                }
-                if (screenWasHidden) {
-                    toScreen.classList.remove('active-screen');
-                    toScreen.classList.add('hidden-screen');
-                    toScreen.style.transition = screenOriginalTransition;
-                }
-                
-                ghostCover.src = coverArt.src || 'default_cover.jpg';
-                ghostCover.style.transition = 'none';
-                ghostCover.style.left = `${fromRect.left}px`;
-                ghostCover.style.top = `${fromRect.top}px`;
-                ghostCover.style.width = `${fromRect.width}px`;
-                ghostCover.style.height = `${fromRect.height}px`;
-                ghostCover.style.borderRadius = fromRadius;
-                ghostCover.style.opacity = '1';
-                
-                fromEl.style.transition = 'none';
-                toEl.style.transition = 'none';
-                fromEl.style.opacity = '0';
-                toEl.style.opacity = '0';
-                
-                // --- FORCES 2ND LAYOUT (Commit initial coords) ---
-                ghostCover.offsetHeight; 
-                
-                // --- BATCH WRITES 3 (Trigger Animation) ---
-                ghostCover.style.transition = 'all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
-                ghostCover.style.left = `${toRect.left}px`;
-                ghostCover.style.top = `${toRect.top}px`;
-                ghostCover.style.width = `${toRect.width}px`;
-                ghostCover.style.height = `${toRect.height}px`;
-                ghostCover.style.borderRadius = toRadius;
-                
-                setTimeout(() => {
-                    ghostCover.style.opacity = '0';
-                    toEl.style.opacity = '1';
-                    toEl.style.transition = '';
-                    fromEl.style.transition = '';
-                    if(onComplete) onComplete();
-                }, 250);
-            } catch (e) {
-                console.error("Animation error", e);
-                fromEl.style.opacity = '1';
-                toEl.style.opacity = '1';
-                if(onComplete) onComplete();
-            }
-        }
-
         miniPlayer.addEventListener('click', (e) => {
-            if(e.target.closest('.mini-btn')) return;
+            if (e.target.closest('.mini-btn')) return;
             showPlayer();
         });
         
@@ -2034,29 +1942,20 @@ function onPlayerStateChange(event) {
         });
 
         function showHome() {
-            if(playerScreen.classList.contains('active-screen') && isSongLoaded) {
-                triggerFlipAnimation(coverArtContainer, miniCover, () => { coverArtContainer.style.opacity = '1'; });
-                miniPlayer.classList.remove('hidden-mini');
-            } else if (isSongLoaded) {
+            if (isSongLoaded) {
                 miniPlayer.classList.remove('hidden-mini');
             }
             showScreenExcept('home-screen');
         }
 
         function showPlayer() {
-            if(!playerScreen.classList.contains('active-screen') && isSongLoaded) {
-                triggerFlipAnimation(miniCover, coverArtContainer, () => { miniCover.style.opacity = '1'; });
-            }
             miniPlayer.classList.add('hidden-mini');
             showScreenExcept('player-screen');
         }
         window.showPlayer = showPlayer;
 
         function showHistory() {
-            if(playerScreen.classList.contains('active-screen') && isSongLoaded) {
-                triggerFlipAnimation(coverArtContainer, miniCover, () => { coverArtContainer.style.opacity = '1'; });
-            }
-            if(isSongLoaded) {
+            if (isSongLoaded) {
                 miniPlayer.classList.remove('hidden-mini');
             }
             showScreenExcept('history-screen');
@@ -2064,10 +1963,7 @@ function onPlayerStateChange(event) {
         }
 
         function showSettings() {
-            if(playerScreen.classList.contains('active-screen') && isSongLoaded) {
-                triggerFlipAnimation(coverArtContainer, miniCover, () => { coverArtContainer.style.opacity = '1'; });
-            }
-            if(isSongLoaded) miniPlayer.classList.remove('hidden-mini');
+            if (isSongLoaded) miniPlayer.classList.remove('hidden-mini');
             showScreenExcept('settings-screen');
             syncSettingsUI(appSettings);
         }
@@ -3218,7 +3114,6 @@ function onPlayerStateChange(event) {
             playPauseBtn.classList.add('playing');
             coverArtContainer.classList.add('playing');
             document.getElementById('cover-wrapper').classList.add('playing');
-            if (typeof window.showCatWidget === 'function') window.showCatWidget();
             
             // Auto-open player screen ONLY for the first song played in the session
             if (!window.hasPlayedFirstSong) {
@@ -3237,7 +3132,6 @@ function onPlayerStateChange(event) {
             playPauseBtn.classList.remove('playing');
             coverArtContainer.classList.remove('playing');
             document.getElementById('cover-wrapper').classList.remove('playing');
-            if (typeof window.hideCatWidget === 'function') window.hideCatWidget();
         });
         
         // Auto Next Song + Repeat Logic
@@ -6907,339 +6801,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-/* 🐾 AXIØTUNE CUTE LOFI CAT PET COMPANION CONTROLLER 🐾 */
-function initCatCompanion() {
-    const catPet = document.getElementById('axio-cat-pet');
-    const pupilLeft = document.getElementById('cat-pupil-left');
-    const pupilRight = document.getElementById('cat-pupil-right');
-    const headGroup = document.getElementById('cat-head-group');
-    const eyesAwake = document.getElementById('cat-eyes-awake');
-    const eyesAsleep = document.getElementById('cat-eyes-asleep');
-    const bubble = document.getElementById('cat-speech-bubble');
 
-    if (!catPet || !pupilLeft || !pupilRight) return;
-
-    let targetDxLeft = 0, targetDyLeft = 0;
-    let targetDxRight = 0, targetDyRight = 0;
-    let headAngle = 0;
-    let lastDxLeft = null, lastDyLeft = null;
-    let mouseMoveScheduled = false;
-
-    // Mouse movement pupil tracking & head tilt (Throttled for 60FPS smoothness)
-    window.addEventListener('mousemove', (e) => {
-        if (mouseMoveScheduled) return;
-        mouseMoveScheduled = true;
-        requestAnimationFrame(() => {
-            mouseMoveScheduled = false;
-            const rect = catPet.getBoundingClientRect();
-            // Left Eye SVG Center
-            const leftEyeX = rect.left + (45 / 120) * rect.width;
-            const leftEyeY = rect.top + (48 / 120) * rect.height;
-            // Right Eye SVG Center
-            const rightEyeX = rect.left + (75 / 120) * rect.width;
-            const rightEyeY = rect.top + (48 / 120) * rect.height;
-
-            const angleLeft = Math.atan2(e.clientY - leftEyeY, e.clientX - leftEyeX);
-            const distLeft = Math.min(3.8, Math.hypot(e.clientX - leftEyeX, e.clientY - leftEyeY) / 60);
-            targetDxLeft = Math.cos(angleLeft) * distLeft;
-            targetDyLeft = Math.sin(angleLeft) * distLeft;
-
-            const angleRight = Math.atan2(e.clientY - rightEyeY, e.clientX - rightEyeX);
-            const distRight = Math.min(3.8, Math.hypot(e.clientX - rightEyeX, e.clientY - rightEyeY) / 60);
-            targetDxRight = Math.cos(angleRight) * distRight;
-            targetDyRight = Math.sin(angleRight) * distRight;
-
-            // Head tilt angle calculation
-            const headCenterX = rect.left + (60 / 120) * rect.width;
-            headAngle = Math.max(-12, Math.min(12, (e.clientX - headCenterX) / 45));
-        });
-    }, { passive: true });
-
-    // Smooth Animation Frame Loop (Only mutates DOM when values actually change!)
-    let beatTime = 0;
-    function catAnimLoop() {
-        if (pupilLeft && pupilRight && (lastDxLeft !== targetDxLeft || lastDyLeft !== targetDyLeft)) {
-            lastDxLeft = targetDxLeft;
-            lastDyLeft = targetDyLeft;
-            pupilLeft.style.transform = `translate(${targetDxLeft.toFixed(2)}px, ${targetDyLeft.toFixed(2)}px)`;
-            pupilRight.style.transform = `translate(${targetDxRight.toFixed(2)}px, ${targetDyRight.toFixed(2)}px)`;
-        }
-
-        const isPlaying = audioPlayer && !audioPlayer.paused;
-
-        if (isPlaying) {
-            // Awake Mode
-            if (eyesAwake && eyesAwake.style.display !== 'inline') eyesAwake.style.display = 'inline';
-            if (eyesAsleep && eyesAsleep.style.display !== 'none') eyesAsleep.style.display = 'none';
-
-            // Music Beat-Bop Head Movement
-            beatTime += 0.12;
-            const bopY = Math.sin(beatTime * 3) * 3;
-            const headRot = headAngle + (Math.cos(beatTime * 2.5) * 3);
-            if (headGroup) headGroup.style.transform = `translateY(${bopY.toFixed(1)}px) rotate(${headRot.toFixed(1)}deg)`;
-
-            if (bubble && Math.random() < 0.015) {
-                const notes = ['🎵', '🎶', '✨', '🔥', '💖', '🐾'];
-                bubble.textContent = notes[Math.floor(Math.random() * notes.length)];
-            }
-        } else {
-            // Sleeping Mode
-            beatTime = 0;
-            if (eyesAwake && eyesAwake.style.display !== 'none') eyesAwake.style.display = 'none';
-            if (eyesAsleep && eyesAsleep.style.display !== 'inline') eyesAsleep.style.display = 'inline';
-            if (headGroup) headGroup.style.transform = `rotate(${headAngle.toFixed(1)}deg)`;
-            if (bubble && bubble.textContent !== 'Zzz...') bubble.textContent = 'Zzz...';
-        }
-
-        requestAnimationFrame(catAnimLoop);
-    }
-    requestAnimationFrame(catAnimLoop);
-
-    // Global Window Function to Toggle Majoni Chat Modal
-    window.toggleMajoniChatModal = function(e) {
-        if (e && e.stopPropagation) e.stopPropagation();
-        const modal = document.getElementById('majoni-chat-modal');
-        if (modal) {
-            modal.classList.toggle('active');
-            const chatInput = document.getElementById('majoni-chat-input');
-            if (modal.classList.contains('active') && chatInput) {
-                setTimeout(() => chatInput.focus(), 100);
-            }
-        }
-        
-        // Spawn Floating Heart Particle
-        const heart = document.createElement('div');
-        heart.textContent = '💖';
-        heart.style.cssText = 'position:fixed; bottom:90px; left:40px; font-size:1.4rem; z-index:1000000; pointer-events:none; transition: all 1s ease-out; opacity:1;';
-        document.body.appendChild(heart);
-        requestAnimationFrame(() => {
-            heart.style.transform = 'translateY(-60px) scale(1.5)';
-            heart.style.opacity = '0';
-        });
-        setTimeout(() => heart.remove(), 1000);
-    };
-
-    if (catPet) {
-        catPet.onclick = window.toggleMajoniChatModal;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', initCatCompanion);
-setTimeout(initCatCompanion, 1000);
-
-// 🐱 MAJONI AI CHATBOT & AUDIO RECOGNITION CONTROLLER 🐱
-function initMajoniChatbot() {
-    const modal = document.getElementById('majoni-chat-modal');
-    const closeBtn = document.getElementById('majoni-close-btn');
-    const sendBtn = document.getElementById('majoni-send-btn');
-    const micBtn = document.getElementById('majoni-mic-btn');
-    const chatInput = document.getElementById('majoni-chat-input');
-    const messagesLog = document.getElementById('majoni-messages-log');
-    const chips = document.querySelectorAll('.majoni-chip');
-
-    if (!modal) return;
-
-    if (closeBtn) {
-        closeBtn.onclick = (e) => window.toggleMajoniChatModal(e);
-    }
-
-    // Quick Chips Click
-    chips.forEach(chip => {
-        chip.addEventListener('click', () => {
-            const query = chip.dataset.query || chip.textContent;
-            handleUserQuery(query);
-        });
-    });
-
-    // Send Message Handler
-    function sendMessage() {
-        const text = chatInput.value.trim();
-        if (!text) return;
-        chatInput.value = '';
-        handleUserQuery(text);
-    }
-
-    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-    if (chatInput) {
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-    }
-
-    // Audio Recognition Handler (Shazam-Style Mic)
-    let isListening = false;
-    if (micBtn) {
-        micBtn.addEventListener('click', async () => {
-            if (isListening) return;
-            isListening = true;
-            micBtn.classList.add('listening');
-            appendUserMessage("🎙️ Identifying audio around me...");
-            appendBotMessage("Listening to audio around you... 🎧 Please keep audio playing near your mic for 4 seconds! 🐾");
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                setTimeout(() => {
-                    stream.getTracks().forEach(t => t.stop());
-                    micBtn.classList.remove('listening');
-                    isListening = false;
-                    
-                    // Return Matched Viral Song
-                    const topMatches = [
-                        { title: 'Die With A Smile', artist: 'Lady Gaga & Bruno Mars', videoId: 'e-ORhEE9VVg', cover: 'https://i.scdn.co/image/ab67616d0000b27382ea2e9e1858aa9a2f3812d1' },
-                        { title: 'Big Dawgs', artist: 'Hanumankind ft. Kalmi', videoId: 'hoh13_110j0', cover: 'https://i.scdn.co/image/ab67616d0000b273c52e67a00f2791be7f05d5d8' },
-                        { title: 'Tauba Tauba', artist: 'Karan Aujla', videoId: '3yMPb_8q6K0', cover: 'https://i.scdn.co/image/ab67616d0000b27302484a0d926fb9fb641a9bc2' },
-                        { title: 'Soulmate', artist: 'Badshah ft. Arijit Singh', videoId: 'gLMC4TzN34k', cover: 'https://i.scdn.co/image/ab67616d0000b273ee029a14d59a80b0fb30d7f5' }
-                    ];
-                    const match = topMatches[Math.floor(Math.random() * topMatches.length)];
-                    appendBotMessage(`Match Found! 🐾 <b>${match.title}</b> by <i>${match.artist}</i>`, match);
-                }, 4000);
-            } catch (err) {
-                micBtn.classList.remove('listening');
-                isListening = false;
-                appendBotMessage("Meow! Microphone access is needed to identify audio. Please allow mic permissions! 🐾");
-            }
-        });
-    }
-
-    // Core Query Handler (Conversational AI + Creator Info + Intent Routing + Music Search)
-    async function handleUserQuery(userText) {
-        appendUserMessage(userText);
-
-        const queryLower = userText.toLowerCase().trim();
-
-        // 1. Creator & Identity Questions
-        if (queryLower.includes('creator') || queryLower.includes('banaya') || queryLower.includes('built you') || queryLower.includes('made you') || queryLower.includes('who are you') || queryLower.includes('kon ho') || queryLower.includes('kya karti ho')) {
-            appendBotMessage("Meow! 🐾 I am <b>Majoni 🐱</b>, your AI Music Companion & Social Audio Radar!<br>I was created by <b>Adarsh (Axion Builds)</b>! I track viral Reels audio, recognize songs playing near you with my 🎙️ mic, and play music for you 24/7! Purrrr! 💖");
-            return;
-        }
-
-        // 2. Greetings & Casual AI Chit-Chat
-        if (/^(hi|hello|hey|heyy|heyyy|kaise ho|kya haal|kya kar rahe ho|gm|good morning|ge|good evening|bye|thx|thanks|thank you)/i.test(queryLower)) {
-            const greetings = [
-                "Meow! Hey there! 🐾 I'm <b>Majoni</b>! Want me to play Reels viral hits, hard edit phonk tracks, or recognize a song near you?",
-                "Purrrr! Hi! 🐱 Tell me what vibe you're in today — sad songs, gym workout hype, or Instagram trending audio?",
-                "Meow! Everything's groovin'! 🎶 Ask me for Reels viral hits or click the 🎙️ mic button to identify any song playing around you!"
-            ];
-            appendBotMessage(greetings[Math.floor(Math.random() * greetings.length)]);
-            return;
-        }
-
-        // 3. Jokes, Fun Facts & Entertainment
-        if (queryLower.includes('joke') || queryLower.includes('chutkula') || queryLower.includes('bored') || queryLower.includes('fun fact')) {
-            const jokes = [
-                "Meow! Why did the music cat go to space? To find the bass-ronaut! 🐱🚀",
-                "Purrrr! Fun Fact: Cats spend 70% of their lives sleeping, but I spend 100% of my time listening to bangers with you! 🎧",
-                "Why don't cats play cards in the jungle? Too many cheetahs! Meow! 🐾"
-            ];
-            appendBotMessage(jokes[Math.floor(Math.random() * jokes.length)]);
-            return;
-        }
-
-        // 4. App Help & Feature Guide
-        if (queryLower.includes('download') || queryLower.includes('offline') || queryLower.includes('lyrics') || queryLower.includes('vinyl') || queryLower.includes('help')) {
-            appendBotMessage("Meow! Here is how to use AxioTune like a pro! 🐾<br>• <b>Offline Downloads</b>: Click 💾 on any song card to save offline.<br>• <b>Synced Lyrics</b>: Click 💬 in the player for live word-by-word lyrics.<br>• <b>3D Vinyl</b>: Click 📀 to spin the vinyl player!");
-            return;
-        }
-
-        // 5. Reel / Viral Trending Queries
-        if (queryLower.includes('reels') || queryLower.includes('viral') || queryLower.includes('trending')) {
-            appendBotMessage("Here are the top <b>Instagram Reels & Edits Trending Audio</b> right now! 🔥");
-            const reelSongs = [
-                { title: 'Big Dawgs (Speed Up)', artist: 'Hanumankind', videoId: 'hoh13_110j0', cover: 'https://i.scdn.co/image/ab67616d0000b273c52e67a00f2791be7f05d5d8' },
-                { title: 'Tauba Tauba (Reels Edit)', artist: 'Karan Aujla', videoId: '3yMPb_8q6K0', cover: 'https://i.scdn.co/image/ab67616d0000b27302484a0d926fb9fb641a9bc2' },
-                { title: 'Millionaire', artist: 'Yo Yo Honey Singh', videoId: '1zKj13100j0', cover: 'https://i.scdn.co/image/ab67616d0000b2730ca782161f38fa093f41ae9a' }
-            ];
-            reelSongs.forEach(s => appendSongCard(s));
-            return;
-        }
-
-        // 6. Phonk / Car Edits
-        if (queryLower.includes('phonk') || queryLower.includes('car') || queryLower.includes('edit')) {
-            appendBotMessage("Meow! Here are hard <b>Car Edit & Phonk Tracks</b> viral on social media! 🏎️⚡");
-            const editSongs = [
-                { title: 'Big Dawgs', artist: 'Hanumankind', videoId: 'hoh13_110j0', cover: 'https://i.scdn.co/image/ab67616d0000b273c52e67a00f2791be7f05d5d8' },
-                { title: 'Putt Jatt Da (Speed Up)', artist: 'Diljit Dosanjh', videoId: '2rN2h3Zz2Y0', cover: 'https://i.scdn.co/image/ab67616d0000b273fa439401be9d3752e2586b3e' }
-            ];
-            editSongs.forEach(s => appendSongCard(s));
-            return;
-        }
-
-        // 7. Slowed Reverb / Aesthetic
-        if (queryLower.includes('slowed') || queryLower.includes('reverb') || queryLower.includes('aesthetic') || queryLower.includes('sad')) {
-            appendBotMessage("Playing aesthetic <b>Slowed + Reverb Vibe</b> tracks! 🌙✨");
-            const slowedSongs = [
-                { title: 'Husn (Slowed + Reverb)', artist: 'Anuv Jain', videoId: '0zN3a78f2Q1', cover: 'https://i.scdn.co/image/ab67616d0000b273e970a25695fa9fa6067756f7' },
-                { title: 'Ve Kamleya (Lofi Reverb)', artist: 'Arijit Singh', videoId: '8zK00213l8Q', cover: 'https://i.scdn.co/image/ab67616d0000b27339d6718d09f7a77e5bc87b5a' }
-            ];
-            slowedSongs.forEach(s => appendSongCard(s));
-            return;
-        }
-
-        // 8. Live API Music Search Query
-        try {
-            const res = await fetch('/api/search?q=' + encodeURIComponent(userText));
-            const data = await res.json();
-            if (data.status === 'success' && data.results && data.results.length > 0) {
-                appendBotMessage(`Found top tracks for <b>"${userText}"</b>! 🐾`);
-                data.results.slice(0, 3).forEach(r => {
-                    if (r.videoId) {
-                        appendSongCard({
-                            title: r.title, artist: r.artist || r.uploader || 'Artist', videoId: r.videoId, cover: r.cover || r.thumbnail || ''
-                        });
-                    }
-                });
-            } else {
-                appendBotMessage("Meow! That's an interesting question! 🐱 I am specialized in music discovery, Reels viral audio, and song matching! Try asking me for Reels hits or artist names! 🐾");
-            }
-        } catch (e) {
-            appendBotMessage("Purrrr! I am ready. Try typing a song name, asking who created me, or clicking the quick buttons above! 🐾");
-        }
-    }
-
-    function appendUserMessage(msg) {
-        if (!messagesLog) return;
-        const div = document.createElement('div');
-        div.className = 'majoni-msg user';
-        div.innerHTML = `<div class="majoni-bubble">${msg}</div>`;
-        messagesLog.appendChild(div);
-        messagesLog.scrollTop = messagesLog.scrollHeight;
-    }
-
-    function appendBotMessage(msg, songObj = null) {
-        if (!messagesLog) return;
-        const div = document.createElement('div');
-        div.className = 'majoni-msg bot';
-        div.innerHTML = `<div class="majoni-bubble">${msg}</div>`;
-        messagesLog.appendChild(div);
-        if (songObj) appendSongCard(songObj);
-        messagesLog.scrollTop = messagesLog.scrollHeight;
-    }
-
-    function appendSongCard(song) {
-        if (!messagesLog) return;
-        const safeTitle = (song.title || '').replace(/'/g, "\\'");
-        const safeArtist = (song.artist || '').replace(/'/g, "\\'");
-        const card = document.createElement('div');
-        card.className = 'majoni-song-card';
-        card.innerHTML = `
-            <img src="${song.cover || 'https://img.youtube.com/vi/' + song.videoId + '/maxresdefault.jpg'}" class="majoni-song-thumb" alt="${safeTitle}">
-            <div class="majoni-song-info">
-                <div class="majoni-song-title">${song.title}</div>
-                <div class="majoni-song-artist">${song.artist}</div>
-            </div>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="var(--accent, #ff2d55)"><path d="M8 5v14l11-7z"/></svg>
-        `;
-        card.onclick = () => {
-            const songJson = JSON.stringify({title: song.title, artist: song.artist, cover: song.cover, videoId: song.videoId}).replace(/"/g, '&quot;');
-            window.playSong(song.videoId, songJson, card);
-        };
-        messagesLog.appendChild(card);
-        messagesLog.scrollTop = messagesLog.scrollHeight;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', initMajoniChatbot);
-setTimeout(initMajoniChatbot, 1200);
 
 
 
