@@ -1,6 +1,6 @@
-﻿<div align="center">
+<div align="center">
 
-  <img src="logo.png" alt="AxioTune Logo" width="110" height="110" style="border-radius: 26px; box-shadow: 0 12px 35px rgba(255, 45, 85, 0.35);" />
+  <img src="logo.png?v=4" alt="AxioTune Logo" width="110" height="110" style="border-radius: 50%; box-shadow: 0 12px 35px rgba(255, 255, 255, 0.35);" />
 
   # ✦ A X I Ø T U N E ✦
   ### *The Next-Generation Audiophile Web Streaming Platform*

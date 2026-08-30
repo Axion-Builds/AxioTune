@@ -35,7 +35,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=248">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=250">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -205,29 +205,7 @@
         <!-- Phase 2: Logo reveal -->
         <div class="iss-phase" id="ISP2">
             <div id="iss-logo-wrap">
-                <svg id="iss-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="44" stroke="url(#il2-g1)" stroke-width="2"/>
-                    <circle cx="50" cy="50" r="36" stroke="url(#il2-g2)" stroke-width="1.5" stroke-dasharray="7 4"/>
-                    <rect x="24" y="40" width="5" height="20" rx="2.5" fill="url(#il2-b)"/>
-                    <rect x="33" y="30" width="5" height="40" rx="2.5" fill="url(#il2-b)"/>
-                    <rect x="42" y="22" width="5" height="56" rx="2.5" fill="url(#il2-b)"/>
-                    <rect x="51" y="16" width="6" height="68" rx="3"   fill="url(#il2-b)"/>
-                    <rect x="60" y="26" width="5" height="48" rx="2.5" fill="url(#il2-b)"/>
-                    <rect x="69" y="34" width="5" height="32" rx="2.5" fill="url(#il2-b)"/>
-                    <rect x="78" y="42" width="5" height="16" rx="2.5" fill="url(#il2-b)"/>
-                    <line x1="26" y1="74" x2="74" y2="26" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-                    <defs>
-                        <linearGradient id="il2-g1" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#a855f7"/><stop offset="0.5" stop-color="#00f0ff"/><stop offset="1" stop-color="#ff2d55"/>
-                        </linearGradient>
-                        <linearGradient id="il2-g2" x1="100" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#00f0ff"/><stop offset="1" stop-color="#a855f7"/>
-                        </linearGradient>
-                        <linearGradient id="il2-b" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#fff"/><stop offset="0.4" stop-color="#d8b4fe"/><stop offset="1" stop-color="#00f0ff"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
+                <img src="logo.png?v=4" id="iss-logo-svg" alt="AxioTune Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 0 50px rgba(255,255,255,0.9));">
                 <div class="iss-ring iss-ring-1" id="iss-r1"></div>
                 <div class="iss-ring iss-ring-2" id="iss-r2"></div>
                 <div class="iss-ring iss-ring-3" id="iss-r3"></div>
@@ -521,8 +499,9 @@
         <div class="pch-glass-bg"></div>
         <div class="pch-border-line"></div>
 
-        <!-- LEFT: AxioTune Logo (clone — original stays in home-screen for mobile) -->
-        <div class="pch-logo" id="pch-logo-wrap" title="AxioTune">
+        <!-- LEFT: AxioTune Logo -->
+        <div class="pch-logo" id="pch-logo-wrap" title="AxioTune" onclick="if(typeof showHome==='function') showHome();" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <img src="logo.png?v=4" alt="AxioTune" class="pch-logo-img" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; filter: drop-shadow(0 0 10px rgba(255,255,255,0.7)); flex-shrink: 0;">
             <div class="axio-word-wrap">
                 <span class="axio-letter">A</span>
                 <span class="axio-letter">X</span>
@@ -631,7 +610,8 @@
     <!-- Home Screen -->
     <div id="home-screen" class="screen-view active-screen">
         <!-- AXIØTUNE Holographic Logo -->
-        <div id="axiotune-logo" title="AXIØTUNE">
+        <div id="axiotune-logo" title="AXIØTUNE" style="display: flex; align-items: center; gap: 14px;">
+            <img src="logo.png?v=4" alt="AxioTune" class="home-logo-img" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; filter: drop-shadow(0 0 14px rgba(255,255,255,0.7)); flex-shrink: 0;">
             <div class="axio-word-wrap">
                 <span class="axio-letter">A</span>
                 <span class="axio-letter">X</span>
@@ -1615,8 +1595,8 @@
     </div>
     <div id="queue-backdrop"></div>
 
-    <script src="kawarp.js?v=248"></script>
-    <script src="app_v3.js?v=248"></script>
+    <script src="kawarp.js?v=250"></script>
+    <script src="app_v3.js?v=250"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
