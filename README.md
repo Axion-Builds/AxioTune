@@ -23,7 +23,7 @@
     <a href="#-key-innovations">✨ Key Features</a> •
     <a href="#-audiophile-dsp-suite">🎧 Audio DSP</a> •
     <a href="#-better-lyrics-engine">🎤 Better Lyrics</a> •
-    <a href="#-screenshots">📸 Screenshots</a> •
+    <a href="#-platform-comparison">📊 Comparison</a> •
     <a href="#-how-to-run-locally">⚙️ Quickstart</a> •
     <a href="#-keyboard-shortcuts">⌨️ Shortcuts</a>
   </p>
@@ -106,22 +106,6 @@ AxioTune comes equipped with an internal **Web Audio API Digital Signal Processi
 - 🔀 **Gapless Crossfade**: Configurable smart mixing (0s to 12s) for non-stop DJ transitions.
 - 🎚️ **Playback Speed & Pitch**: Variable tempo control (0.25x to 2.0x) with preservation of vocal timbre.
 - 🔊 **Volume Normalizer (ReplayGain)**: Automatically evens out loud and quiet tracks.
-
----
-
-## 📸 Screenshots
-
-<div align="center">
-
-| 🏠 Glassmorphism Home & Vinyl Carousel | 🎵 Full-Screen Player with Synced Lyrics |
-| :---: | :---: |
-| <img src="screenshots/home.png" width="460" alt="Home Screen" /> | <img src="screenshots/player.png" width="460" alt="Player Screen" /> |
-
-| 🔍 Live Search & Instant Suggestions | 💬 Syllable-by-Syllable Live Lyrics Wipe |
-| :---: | :---: |
-| <img src="screenshots/search.png" width="460" alt="Search Screen" /> | <img src="screenshots/lyrics.png" width="460" alt="Lyrics Screen" /> |
-
-</div>
 
 ---
 
