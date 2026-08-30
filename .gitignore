@@ -23,3 +23,8 @@ Thumbs.db
 # Editor
 .vscode/
 *.swp
+
+# SQLite local databases
+*.sqlite
+*.sqlite3
+*.db
