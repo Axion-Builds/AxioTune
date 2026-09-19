@@ -2485,8 +2485,7 @@ function onPlayerStateChange(event) {
             const currentSrc = sources[idx];
 
             if (sourceNameEl) {
-                const badge = window._lyricsProviderBadge || (currentSrc ? (currentSrc.provider_badge || currentSrc.provider || currentSrc.name || 'LRCLib') : 'LRCLib');
-                sourceNameEl.textContent = badge;
+                sourceNameEl.textContent = currentSrc ? (currentSrc.provider || currentSrc.name || 'LRCLib') : 'LRCLib';
             }
             if (sourceCountEl) {
                 sourceCountEl.textContent = sources.length > 0 ? `${idx + 1}/${sources.length}` : '1/1';
@@ -2725,11 +2724,9 @@ function onPlayerStateChange(event) {
                                         })
                                     };
                                 });
-                                window._lyricsProviderBadge = ytData.provider_badge || ytData.provider || 'LRCLib';
                             } else if (ytData.type === 'plain_text' && ytData.lyrics) {
                                 plainTextLyrics = ytData.lyrics;
                                 lyricsType = 'plain_text';
-                                window._lyricsProviderBadge = ytData.provider_badge || ytData.provider || 'Lyrics';
                             }
                         }
                     }
@@ -2768,18 +2765,12 @@ function onPlayerStateChange(event) {
                     }
                     renderLyrics();
                     window.updateLyricsDockUI();
-                    const badge = window._lyricsProviderBadge || 'LRCLib';
-                    showToast(lyricsType === 'word_synced' ? `✨ Word-by-Word Lyrics · ${badge}` : `🎵 Synced Lyrics · ${badge}`);
+                    showToast(lyricsType === 'word_synced' ? "✨ Word-by-Word Lyrics Active" : "🎵 Synced Lyrics Active");
                 } else if (plainTextLyrics) {
                     lyricsData = [];
-                    // Render section headers ([Verse 1], [Chorus], etc.) nicely
-                    const styledLyrics = plainTextLyrics
-                        .replace(/\[([^\]]+)\]/g, '<span style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.45);display:block;margin:1.4em 0 0.3em;">$1</span>')
-                        .replace(/\n/g, '<br>');
-                    const badge = window._lyricsProviderBadge || 'Lyrics';
-                    lyricsContainer.innerHTML = `<div style="padding: 20px; font-size: 1.25rem; line-height: 1.9; color: rgba(255,255,255,0.85); font-weight: 500;">${styledLyrics}</div>`;
+                    lyricsContainer.innerHTML = `<div style="padding: 20px; font-size: 1.35rem; line-height: 2; color: rgba(255,255,255,0.85); white-space: pre-wrap; font-weight: 500;">${plainTextLyrics}</div>`;
                     window.updateLyricsDockUI();
-                    showToast(`🎤 Lyrics via ${badge}`);
+                    showToast("🎤 Official Lyrics Active");
                 } else {
                     lyricsData = [];
                     lyricsContainer.innerHTML = '<div class="empty-state" style="margin-top:0;">No lyrics found for this song.<br><br><span style="font-size:1rem; opacity:0.7">Audio is playing beautifully though!</span></div>';
