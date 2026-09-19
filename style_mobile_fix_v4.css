@@ -7303,3 +7303,216 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     to { opacity: 1; transform: scale(1); }
 }
 
+/* ========================================================
+   🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL
+   ======================================================== */
+.radial-nav-container {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) translateX(-230px);
+    width: 360px;
+    height: 580px;
+    z-index: 99990;
+    pointer-events: none;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    border-radius: 0 290px 290px 0;
+}
+
+/* Atmospheric backdrop glow when expanded */
+.radial-nav-container:hover,
+.radial-nav-container.expanded {
+    transform: translateY(-50%) translateX(0) !important;
+    pointer-events: auto !important;
+    background: radial-gradient(ellipse at 0% 50%, rgba(10, 8, 18, 0.94) 0%, rgba(10, 8, 18, 0.82) 65%, transparent 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+/* Subtle edge peek indicator docked at left border when idle */
+.radial-nav-peek {
+    position: absolute;
+    left: 230px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.radial-peek-line {
+    width: 4px;
+    height: 48px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(255, 45, 85, 0.4), rgba(168, 85, 247, 0.9), rgba(0, 122, 255, 0.4));
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.7);
+    transition: width 0.2s, height 0.2s, box-shadow 0.2s;
+}
+
+.radial-peek-pip {
+    position: absolute;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff2d55;
+    box-shadow: 0 0 8px #ff2d55;
+}
+
+.radial-nav-container:hover .radial-nav-peek,
+.radial-nav-container.expanded .radial-nav-peek {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Semicircular Wheel Stage */
+.radial-wheel-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 580px;
+    pointer-events: auto;
+}
+
+/* Center indicator notch/pip */
+.radial-center-pointer {
+    position: absolute;
+    left: 246px;
+    top: 290px;
+    width: 14px;
+    height: 3px;
+    border-radius: 3px;
+    background: #ff2d55;
+    box-shadow: 0 0 12px #ff2d55, 0 0 24px rgba(255, 45, 85, 0.7);
+    pointer-events: none;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+/* SVG Clock-dial arc */
+.radial-dial-svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 580px;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.radial-dial-ticks line {
+    stroke-linecap: round;
+    transition: stroke 0.2s ease, opacity 0.2s ease;
+}
+
+/* Orbit items */
+.radial-items-orbit {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.radial-nav-item {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    pointer-events: auto;
+    user-select: none;
+    transform-origin: center center;
+    transition: opacity 0.15s ease, filter 0.2s ease;
+    will-change: transform, opacity;
+}
+
+.radial-item-icon-wrap {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(22, 20, 30, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-shrink: 0;
+}
+
+.radial-item-icon-wrap svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    transition: transform 0.2s ease;
+}
+
+.radial-item-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #ffffff;
+    background: rgba(14, 12, 22, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 4px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    white-space: nowrap;
+    opacity: 0.9;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Active & Center focus styles */
+.radial-nav-item.center-focus .radial-item-icon-wrap {
+    background: linear-gradient(135deg, rgba(255, 45, 85, 0.36), rgba(168, 85, 247, 0.48));
+    border-color: rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+    box-shadow: 0 0 24px rgba(255, 45, 85, 0.6), 0 12px 35px rgba(0, 0, 0, 0.85);
+}
+
+.radial-nav-item.center-focus .radial-item-label {
+    opacity: 1;
+    color: #ffffff;
+    border-color: rgba(255, 45, 85, 0.5);
+    box-shadow: 0 0 16px rgba(255, 45, 85, 0.3);
+    font-weight: 800;
+}
+
+.radial-nav-item:hover .radial-item-icon-wrap {
+    transform: scale(1.1);
+    border-color: #ffffff;
+    color: #ffffff;
+    box-shadow: 0 0 22px rgba(168, 85, 247, 0.7);
+}
+
+.radial-nav-item:hover .radial-item-label {
+    opacity: 1;
+    transform: translateX(4px);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .radial-nav-container {
+        display: none !important;
+    }
+}
+
+

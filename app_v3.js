@@ -3880,38 +3880,196 @@ function onPlayerStateChange(event) {
 
         requestAnimationFrame(animationLoop);
 
-        // --- SIDE NAV LOGIC ---
-        const sideNavEl = document.getElementById('side-nav');
-        const navOrb = document.getElementById('nav-orb');
-        const navBtns = document.querySelectorAll('.nav-btn');
+        // ══════════════════════════════════════════════════════════════
+        // 🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL
+        // ══════════════════════════════════════════════════════════════
+        function initRadialNavigation() {
+            const container = document.getElementById('radial-nav-container');
+            const stage = document.getElementById('radial-wheel-stage');
+            const ticksGroup = document.getElementById('radial-dial-ticks');
+            const items = Array.from(document.querySelectorAll('.radial-nav-item'));
 
-        // Hover Orb sliding logic
-        navBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                if (window.innerWidth > 768) { // Only slide on desktop
-                    const topPos = btn.offsetTop;
-                    navOrb.style.transform = `translateY(${topPos}px)`;
+            if (!container || !stage || items.length === 0) return;
+
+            // Geometry constants
+            const CX = 10;       // Center X
+            const CY = 280;      // Center Y (middle of 560px stage)
+            const R_DIAL = 240;  // Radius for clock tick marks
+            const R_ITEMS = 240; // Radius for buttons
+
+            // 1. Generate Clock-Dial Minute Ticks along the semicircle arc (||||||||||||)
+            if (ticksGroup) {
+                ticksGroup.innerHTML = '';
+                for (let deg = -74; deg <= 74; deg += 2.5) {
+                    const rad = deg * (Math.PI / 180);
+                    const isMajor = Math.abs(deg) % 10 < 1.5;
+                    const tickLen = isMajor ? 16 : 8;
+                    const strokeWidth = isMajor ? 2.0 : 1.2;
+                    const strokeColor = isMajor ? 'rgba(255, 255, 255, 0.78)' : 'rgba(255, 255, 255, 0.28)';
+
+                    const x1 = CX + (R_DIAL - tickLen) * Math.cos(rad);
+                    const y1 = CY + (R_DIAL - tickLen) * Math.sin(rad);
+                    const x2 = CX + R_DIAL * Math.cos(rad);
+                    const y2 = CY + R_DIAL * Math.sin(rad);
+
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x1.toFixed(1));
+                    line.setAttribute('y1', y1.toFixed(1));
+                    line.setAttribute('x2', x2.toFixed(1));
+                    line.setAttribute('y2', y2.toFixed(1));
+                    line.setAttribute('stroke', strokeColor);
+                    line.setAttribute('stroke-width', strokeWidth);
+                    line.setAttribute('stroke-linecap', 'round');
+                    ticksGroup.appendChild(line);
                 }
-            });
-            btn.addEventListener('click', () => {
-                if(btn.id === 'floating-queue-btn') return; // Handled separately
-                
-                navBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const index = btn.getAttribute('data-index');
-                if (index === "0") {
-                    showHome();
-                } else if (index === "1") {
-                    showLibrary();
-                } else if (index === "3") {
-                    showHistory();
-                } else if (index === "4") {
-                    showSettings();
+            }
+
+            // 2. Rotary Wheel Physics & State
+            let currentAngle = 0;
+            let targetAngle = 0;
+            let isAnimating = false;
+            let isDragging = false;
+            let startY = 0;
+            let startAngle = 0;
+            const ANGLE_STEP = 360 / items.length; // 72 deg
+
+            function updateItemsPosition() {
+                let closestIdx = 0;
+                let minDiff = Infinity;
+
+                items.forEach((item, idx) => {
+                    const itemAngle = currentAngle + (idx * ANGLE_STEP);
+                    const norm = ((itemAngle + 180) % 360 + 360) % 360 - 180;
+
+                    if (Math.abs(norm) <= 85) {
+                        const rad = norm * (Math.PI / 180);
+                        const x = CX + R_ITEMS * Math.cos(rad);
+                        const y = CY + R_ITEMS * Math.sin(rad);
+
+                        const dist = Math.abs(norm) / 85;
+                        const scale = (1.20 - (dist * 0.38)).toFixed(3);
+                        const opacity = (1 - Math.pow(dist, 1.8)).toFixed(3);
+
+                        item.style.display = 'flex';
+                        item.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translateY(-50%) scale(${scale})`;
+                        item.style.opacity = Math.max(0.18, opacity);
+
+                        if (Math.abs(norm) < minDiff) {
+                            minDiff = Math.abs(norm);
+                            closestIdx = idx;
+                        }
+                    } else {
+                        item.style.display = 'none';
+                        item.style.opacity = '0';
+                    }
+                });
+
+                items.forEach((item, idx) => {
+                    item.classList.toggle('center-focus', idx === closestIdx);
+                });
+            }
+
+            function animatePhysics() {
+                const diff = targetAngle - currentAngle;
+                if (Math.abs(diff) > 0.04) {
+                    currentAngle += diff * 0.16;
+                    updateItemsPosition();
+                    requestAnimationFrame(animatePhysics);
                 } else {
-                    showPlayer();
+                    currentAngle = targetAngle;
+                    updateItemsPosition();
+                    isAnimating = false;
+                }
+            }
+
+            function rotateBy(deltaDeg) {
+                targetAngle += deltaDeg;
+                if (!isAnimating) {
+                    isAnimating = true;
+                    requestAnimationFrame(animatePhysics);
+                }
+            }
+
+            function rotateToItem(idx) {
+                const itemAngle = targetAngle + (idx * ANGLE_STEP);
+                const norm = ((itemAngle + 180) % 360 + 360) % 360 - 180;
+                targetAngle -= norm;
+                if (!isAnimating) {
+                    isAnimating = true;
+                    requestAnimationFrame(animatePhysics);
+                }
+            }
+            window.rotateRadialToItem = rotateToItem;
+
+            // 3. 2-Finger Swipe & Mouse Wheel Scrolling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                rotateBy(-e.deltaY * 0.18);
+            }, { passive: false });
+
+            // 4. Pointer / Touch Dragging
+            stage.addEventListener('pointerdown', (e) => {
+                isDragging = true;
+                startY = e.clientY;
+                startAngle = targetAngle;
+                stage.setPointerCapture(e.pointerId);
+            });
+
+            stage.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                const dy = e.clientY - startY;
+                targetAngle = startAngle + (-dy * 0.35);
+                if (!isAnimating) {
+                    isAnimating = true;
+                    requestAnimationFrame(animatePhysics);
                 }
             });
-        });
+
+            const endDrag = (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                try { stage.releasePointerCapture(e.pointerId); } catch(err) {}
+            };
+            stage.addEventListener('pointerup', endDrag);
+            stage.addEventListener('pointercancel', endDrag);
+
+            // 5. Button Click Handlers
+            items.forEach((item, idx) => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = item.dataset.action;
+
+                    rotateToItem(idx);
+
+                    items.forEach(b => b.classList.remove('active'));
+                    item.classList.add('active');
+
+                    if (action === 'home') {
+                        showHome();
+                    } else if (action === 'library') {
+                        showLibrary();
+                    } else if (action === 'history') {
+                        showHistory();
+                    } else if (action === 'queue') {
+                        if (typeof window.toggleQueue === 'function') {
+                            window.toggleQueue();
+                        } else {
+                            const qBtn = document.getElementById('floating-queue-btn');
+                            if (qBtn) qBtn.click();
+                        }
+                    } else if (action === 'settings') {
+                        showSettings();
+                    }
+                });
+            });
+
+            // Initial positioning
+            updateItemsPosition();
+        }
+
+        // Initialize Radial Navigation
+        initRadialNavigation();
 
         // True Vibrant Color Palette Extractor (Better-Lyrics / Apple Music Accuracy)
         function extractVibrantPalette(ctx, width, height) {

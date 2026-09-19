@@ -412,36 +412,82 @@
 
 
     <!-- Navigation Pill -->
-    <nav id="side-nav">
-        <!-- True Liquid Glass Background Preview -->
-        <div id="nav-liquid-bg">
-            <div class="blob b1"></div>
-            <div class="blob b2"></div>
-            <div class="blob b3"></div>
+    <!-- 🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL -->
+    <div id="radial-nav-container" class="radial-nav-container collapsed">
+        <!-- Subtle peek handle on the left edge when idle/collapsed -->
+        <div class="radial-nav-peek" id="radial-nav-peek" title="Navigation Wheel">
+            <div class="radial-peek-line"></div>
+            <div class="radial-peek-pip"></div>
         </div>
-        <!-- Magic Hover Orb -->
-        <div class="hover-orb" id="nav-orb"></div>
 
-        
-        <button class="nav-btn active" data-index="0" title="Home">
-            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            <span class="nav-tooltip">Home</span>
-        </button>
-        <button class="nav-btn" data-index="1" title="Library">
-            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
-            <span class="nav-tooltip">Library</span>
-        </button>
-        <button class="nav-btn" data-index="4" title="Settings">
-            <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
-            <span class="nav-tooltip">Settings</span>
-        </button>
-    </nav>
-    
+        <!-- Semicircular Wheel Stage -->
+        <div class="radial-wheel-stage" id="radial-wheel-stage">
+            <!-- Center indicator needle/pip -->
+            <div class="radial-center-pointer"></div>
 
-    <button id="floating-queue-btn" class="nav-btn floating-side-btn" title="Queue">
-        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
-        <span class="nav-tooltip">Queue</span>
-    </button>
+            <!-- SVG Arc with Clock-Dial Minute Ticks (|||||||||||||) -->
+            <svg class="radial-dial-svg" id="radial-dial-svg" viewBox="0 0 340 560" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="radialDialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ff2d55" stop-opacity="0.6"/>
+                        <stop offset="50%" stop-color="#a855f7" stop-opacity="0.9"/>
+                        <stop offset="100%" stop-color="#007aff" stop-opacity="0.6"/>
+                    </linearGradient>
+                    <filter id="dialNeonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="3.5" result="blur"/>
+                        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                    </filter>
+                </defs>
+                <!-- Outer Arc Line -->
+                <path id="radial-main-arc" d="M 0 30 A 240 240 0 0 1 0 530" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+                <!-- Clock-dial ticks group (populated dynamically via JS with minute/second notches) -->
+                <g id="radial-dial-ticks" class="radial-dial-ticks"></g>
+            </svg>
+
+            <!-- 5 Orbit Navigation Items (Home, Library, History, Queue, Settings) -->
+            <div class="radial-items-orbit" id="radial-items-orbit">
+                <!-- 0: Home -->
+                <button class="radial-nav-item active" data-action="home" data-title="Home" title="Home">
+                    <div class="radial-item-icon-wrap">
+                        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    </div>
+                    <span class="radial-item-label">Home</span>
+                </button>
+
+                <!-- 1: Library -->
+                <button class="radial-nav-item" data-action="library" data-title="Library" title="Library">
+                    <div class="radial-item-icon-wrap">
+                        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+                    </div>
+                    <span class="radial-item-label">Library</span>
+                </button>
+
+                <!-- 2: History -->
+                <button class="radial-nav-item" data-action="history" data-title="History" title="History">
+                    <div class="radial-item-icon-wrap">
+                        <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                    </div>
+                    <span class="radial-item-label">History</span>
+                </button>
+
+                <!-- 3: Queue -->
+                <button class="radial-nav-item" data-action="queue" data-title="Queue" title="Queue">
+                    <div class="radial-item-icon-wrap">
+                        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
+                    </div>
+                    <span class="radial-item-label">Queue</span>
+                </button>
+
+                <!-- 4: Settings -->
+                <button class="radial-nav-item" data-action="settings" data-title="Settings" title="Settings">
+                    <div class="radial-item-icon-wrap">
+                        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    </div>
+                    <span class="radial-item-label">Settings</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Home Screen with 3D Vinyl Gallery -->
     <!-- Home Screen -->
