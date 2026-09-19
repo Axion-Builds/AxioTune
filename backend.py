@@ -1399,68 +1399,77 @@ async def get_lyrics(
 
     sources = []
     active_source = None
-    candidate_line_source = None
 
     async with httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0"}, timeout=7.0) as client:
+        # Build tasks for enabled providers
+        tasks = []
         for p_key in provider_keys:
-            res = None
             if p_key == "lyricsplus":
-                res = await fetch_lyricsplus_lyrics(c_title, c_artist, client)
+                tasks.append(("lyricsplus", fetch_lyricsplus_lyrics(c_title, c_artist, client)))
             elif p_key == "paxsenix":
-                res = await fetch_paxsenix_lyrics(c_title, c_artist, paxsenix_key, client)
+                tasks.append(("paxsenix", fetch_paxsenix_lyrics(c_title, c_artist, paxsenix_key, client)))
             elif p_key == "betterlyrics":
-                res = await fetch_betterlyrics_lyrics(c_title, c_artist, client)
+                tasks.append(("betterlyrics", fetch_betterlyrics_lyrics(c_title, c_artist, client)))
             elif p_key == "simpmusic":
-                res = await fetch_simpmusic_lyrics(videoId, client)
+                tasks.append(("simpmusic", fetch_simpmusic_lyrics(videoId, client)))
             elif p_key == "kugou":
-                res = await fetch_kugou_lyrics(c_title, c_artist, client)
+                tasks.append(("kugou", fetch_kugou_lyrics(c_title, c_artist, client)))
             elif p_key == "lrclib":
-                res = await fetch_lrclib_lyrics(c_title, c_artist, client)
+                tasks.append(("lrclib", fetch_lrclib_lyrics(c_title, c_artist, client)))
 
-            if res:
-                sources.append(res)
-                # Decision logic:
-                if prioritize_syllable:
-                    if res.get("type") == "word_synced":
-                        # Syllable match wins immediately!
-                        active_source = res
-                        break
-                    elif not candidate_line_source and (res.get("type") in ("line_synced", "plain_text")):
-                        # Hold first line-synced match, but keep searching for word_synced
-                        candidate_line_source = res
-                else:
-                    # First source with lyrics wins immediately
-                    active_source = res
-                    break
-
-    # If prioritize_syllable was True and no word_synced was found, use the first line_synced source
-    if not active_source and candidate_line_source:
-        active_source = candidate_line_source
-
-    # Official YouTube Music lyrics as ultimate fallback if nothing found
-    if not active_source and videoId:
-        try:
+        # Also fetch YouTube Music lyrics concurrently if videoId present
+        yt_task = None
+        if videoId:
             def fetch_yt_lyrics():
-                watch = ytmusic.get_watch_playlist(videoId=videoId)
-                lyrics_id = watch.get("lyrics")
-                if lyrics_id:
-                    return ytmusic.get_lyrics(lyrics_id)
+                try:
+                    watch = ytmusic.get_watch_playlist(videoId=videoId)
+                    lyrics_id = watch.get("lyrics")
+                    if lyrics_id:
+                        return ytmusic.get_lyrics(lyrics_id)
+                except Exception:
+                    pass
                 return None
+            yt_task = asyncio.to_thread(fetch_yt_lyrics)
 
-            lyrics_data = await asyncio.to_thread(fetch_yt_lyrics)
-            if lyrics_data and lyrics_data.get("lyrics"):
-                yt_src = {
+        # Run all provider fetches concurrently
+        coros = [t[1] for t in tasks]
+        if yt_task:
+            coros.append(yt_task)
+        results = await asyncio.gather(*coros, return_exceptions=True)
+
+        # Map provider results in user's priority order
+        provider_results = results[:len(tasks)]
+        for i, res in enumerate(provider_results):
+            if isinstance(res, dict) and res:
+                sources.append(res)
+
+        # Append YouTube Music official lyrics to sources if found
+        if yt_task and len(results) > len(tasks):
+            yt_res = results[-1]
+            if isinstance(yt_res, dict) and yt_res.get("lyrics"):
+                sources.append({
                     "id": "ytmusic",
                     "provider": "YouTube",
                     "provider_badge": "YT Music",
                     "name": "YouTube Music (Official)",
                     "type": "plain_text",
-                    "lyrics": lyrics_data.get("lyrics", "")
-                }
-                sources.append(yt_src)
-                active_source = yt_src
-        except Exception:
-            pass
+                    "lyrics": yt_res.get("lyrics", "")
+                })
+
+    # Pick active source based on user priority and prioritize_syllable
+    if sources:
+        if prioritize_syllable:
+            # First provider in user priority with syllable/word-by-word lyrics wins
+            for s in sources:
+                if s.get("type") == "word_synced":
+                    active_source = s
+                    break
+            # If no syllable lyrics, pick first line-synced or plain source in user priority
+            if not active_source:
+                active_source = sources[0]
+        else:
+            # First source in user priority wins
+            active_source = sources[0]
 
     if active_source:
         res = {

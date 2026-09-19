@@ -2737,9 +2737,66 @@ function onPlayerStateChange(event) {
             }
         };
 
-        window.toggleLyricsSourcesPopup = function(e) {
-            window.openLyricsSourcesModal(e);
+        window.switchLyricsSource = function(newIdx, e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            const sources = window._availableLyricsSources || [];
+            if (!sources || sources.length === 0) return;
+
+            if (newIdx < 0) newIdx = sources.length - 1;
+            if (newIdx >= sources.length) newIdx = 0;
+            window._currentLyricsSourceIndex = newIdx;
+
+            const src = sources[newIdx];
+            if (!src) return;
+
+            window._lyricsProviderBadge = src.provider_badge || src.provider || src.name || 'Lyrics';
+
+            if ((src.type === 'word_synced' || src.type === 'line_synced') && src.lines && src.lines.length > 0) {
+                lyricsData = src.lines.map((l, lineIdx, lineArr) => {
+                    const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
+                    return {
+                        start: l.time,
+                        end: nextLineTime,
+                        text: l.text,
+                        translation: l.translation || '',
+                        romanization: l.romanization || '',
+                        isInstrumental: !!l.isInstrumental,
+                        words: (l.words || []).map((w, idx, arr) => {
+                            let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
+                            if (nextTime <= w.time) nextTime = w.time + 0.3;
+                            return { text: w.word || w.text, start: w.time || w.start, end: nextTime };
+                        })
+                    };
+                });
+                renderLyrics();
+                window.updateLyricsDockUI();
+                showToast(`Switched to ${src.name || src.provider}`);
+            } else if (src.type === 'plain_text' && src.lyrics) {
+                lyricsData = [];
+                const styled = src.lyrics
+                    .replace(/\[([^\]]+)\]/g, '<span style="font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.45);display:block;margin:1.4em 0 0.3em;">$1</span>')
+                    .replace(/\n/g, '<br>');
+                lyricsContainer.innerHTML = `<div style="padding: 20px; font-size: 1.25rem; line-height: 1.9; color: rgba(255,255,255,0.85); font-weight: 500;">${styled}</div>`;
+                window.updateLyricsDockUI();
+                showToast(`Switched to ${src.name || src.provider}`);
+            }
         };
+
+        window.toggleLyricsSourcesPopup = function(e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            const popup = document.getElementById('lyrics-sources-popup');
+            if (popup) {
+                popup.classList.toggle('hidden');
+            }
+        };
+
+        // Close lyrics sources popup when clicking outside
+        document.addEventListener('click', (e) => {
+            const popup = document.getElementById('lyrics-sources-popup');
+            if (popup && !popup.classList.contains('hidden') && !e.target.closest('#lyrics-dock-source-group')) {
+                popup.classList.add('hidden');
+            }
+        });
 
         window.toggleLyricsTranslation = async function(e) {
             if (e) { e.preventDefault(); e.stopPropagation(); }
