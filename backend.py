@@ -1151,95 +1151,318 @@ def parse_synced_lrc(lrc_text: str):
 
     return lines
 
+# --- 6 LYRICS PROVIDERS (LyricsPlus, PaxSenix, BetterLyrics, SimpMusic, KuGou, LRCLIB) ---
+
+async def fetch_lyricsplus_lyrics(title: str, artist: str, client: httpx.AsyncClient):
+    """LyricsPlus: Syllable by syllable, community server (v2/lyrics/get)."""
+    mirrors = [
+        "https://lyricsplus.binimum.org",
+        "https://lyricsplus.prjktla.my.id",
+        "https://lyricsplus.atomix.one"
+    ]
+    for base in mirrors:
+        try:
+            url = f"{base}/v2/lyrics/get"
+            r = await client.get(url, params={"title": title, "artist": artist}, timeout=5.0)
+            if r.status_code == 200:
+                data = r.json()
+                raw_items = data.get("lyrics", [])
+                if not raw_items:
+                    continue
+                l_type = (data.get("type") or "").lower()
+                lines = []
+                for item in raw_items:
+                    start = round(item.get("time", 0) / 1000.0, 2)
+                    dur = item.get("duration", 0) / 1000.0
+                    words = []
+                    for syl in item.get("syllabus", []):
+                        w_text = syl.get("text", "").strip()
+                        if w_text:
+                            words.append({
+                                "word": w_text,
+                                "time": round(syl.get("time", 0) / 1000.0, 2)
+                            })
+                    if not words:
+                        for w_idx, w in enumerate(item.get("text", "").split()):
+                            words.append({
+                                "word": w,
+                                "time": round(start + (w_idx * 0.45), 2)
+                            })
+                    lines.append({
+                        "time": start,
+                        "text": item.get("text", "").strip(),
+                        "isInstrumental": False,
+                        "words": words
+                    })
+                if lines:
+                    return {
+                        "id": "lyricsplus",
+                        "provider": "LyricsPlus",
+                        "provider_badge": "LyricsPlus",
+                        "name": f"LyricsPlus • {artist}",
+                        "type": "word_synced" if l_type == "word" else "line_synced",
+                        "lines": lines
+                    }
+        except Exception:
+            continue
+    return None
+
+async def fetch_paxsenix_lyrics(title: str, artist: str, api_key: str, client: httpx.AsyncClient):
+    """PaxSenix: Apple Music timings through third-party proxy."""
+    headers = {"User-Agent": "Mozilla/5.0"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+        headers["X-API-Key"] = api_key
+    try:
+        url = "https://lyrics.paxsenix.org/lyrics/search"
+        r = await client.get(url, params={"q": f"{title} {artist}"}, headers=headers, timeout=5.0)
+        if r.status_code == 200:
+            data = r.json()
+            ttml = data.get("ttml") or data.get("lyrics")
+            if ttml and isinstance(ttml, str):
+                parsed = parse_synced_lrc(ttml)
+                if parsed:
+                    has_words = any(len(l.get("words", [])) > 1 for l in parsed)
+                    return {
+                        "id": "paxsenix",
+                        "provider": "PaxSenix",
+                        "provider_badge": "PaxSenix",
+                        "name": f"PaxSenix • {artist}",
+                        "type": "word_synced" if has_words else "line_synced",
+                        "lines": parsed
+                    }
+    except Exception:
+        pass
+    return None
+
+async def fetch_betterlyrics_lyrics(title: str, artist: str, client: httpx.AsyncClient):
+    """BetterLyrics: Apple Music timings, word by word (TTML)."""
+    try:
+        url = "https://lyrics-api.boidu.dev/getLyrics"
+        r = await client.get(url, params={"a": artist, "s": title}, headers={"User-Agent": "BetterLyrics/1.0"}, timeout=6.0)
+        if r.status_code == 200:
+            data = r.json()
+            ttml = data.get("ttml")
+            if ttml:
+                parsed = parse_ttml_lyrics(ttml)
+                if parsed:
+                    return {
+                        "id": "betterlyrics",
+                        "provider": "BetterLyrics",
+                        "provider_badge": "BetterLyrics",
+                        "name": f"BetterLyrics • {artist}",
+                        "type": "word_synced",
+                        "lines": parsed,
+                        "raw_lrc": ttml
+                    }
+    except Exception:
+        pass
+    return None
+
+async def fetch_simpmusic_lyrics(videoId: str, client: httpx.AsyncClient):
+    """SimpMusic: Matched on the video, so never wrong."""
+    if not videoId:
+        return None
+    try:
+        url = f"https://api-lyrics.simpmusic.org/v1/{videoId}"
+        r = await client.get(url, headers={"User-Agent": "SimpMusic/1.0"}, timeout=5.0)
+        if r.status_code == 200:
+            data = r.json()
+            lrc = data.get("lyrics") or data.get("data", {}).get("lyrics")
+            if lrc and isinstance(lrc, str):
+                parsed = parse_synced_lrc(lrc)
+                if parsed:
+                    return {
+                        "id": "simpmusic",
+                        "provider": "SimpMusic",
+                        "provider_badge": "SimpMusic",
+                        "name": "SimpMusic (Video Matched)",
+                        "type": "line_synced",
+                        "lines": parsed,
+                        "raw_lrc": lrc
+                    }
+    except Exception:
+        pass
+    return None
+
+async def fetch_kugou_lyrics(title: str, artist: str, client: httpx.AsyncClient):
+    """KuGou: Whole lines, strong outside the US/West."""
+    try:
+        kw = f"{title} {artist}".strip()
+        search_url = "http://mobileservice.kugou.com/api/v3/search/song"
+        r1 = await client.get(search_url, params={"keyword": kw, "page": 1, "pagesize": 2}, headers={"User-Agent": "KuGou/10.0"}, timeout=5.0)
+        if r1.status_code != 200:
+            return None
+        info = r1.json().get("data", {}).get("info", [])
+        if not info:
+            return None
+        hash_val = info[0].get("hash")
+        if not hash_val:
+            return None
+
+        # Step 2: Search lyrics candidates by hash
+        r2 = await client.get("http://lyrics.kugou.com/search", params={"ver": 1, "man": "yes", "client": "mobi", "hash": hash_val}, timeout=5.0)
+        if r2.status_code != 200:
+            return None
+        cands = r2.json().get("candidates", [])
+        if not cands:
+            return None
+        cand = cands[0]
+        lrc_id = cand.get("id")
+        accesskey = cand.get("accesskey")
+
+        # Step 3: Download LRC
+        r3 = await client.get("http://lyrics.kugou.com/download", params={"ver": 1, "client": "pc", "id": lrc_id, "accesskey": accesskey, "fmt": "lrc"}, timeout=5.0)
+        if r3.status_code != 200:
+            return None
+        b64 = r3.json().get("content", "")
+        if not b64:
+            return None
+        import base64
+        lrc_text = base64.b64decode(b64).decode("utf-8", errors="ignore")
+        parsed = parse_synced_lrc(lrc_text)
+        if parsed:
+            return {
+                "id": "kugou",
+                "provider": "KuGou",
+                "provider_badge": "KuGou",
+                "name": f"KuGou • {artist}",
+                "type": "line_synced",
+                "lines": parsed,
+                "raw_lrc": lrc_text
+            }
+    except Exception:
+        pass
+    return None
+
+async def fetch_lrclib_lyrics(title: str, artist: str, client: httpx.AsyncClient):
+    """LRCLIB: Whole lines only, and always up."""
+    queries = [f"{title} {artist}".strip(), title]
+    for q in queries:
+        if not q:
+            continue
+        try:
+            r = await client.get("https://lrclib.net/api/search", params={"q": q}, timeout=4.0)
+            if r.status_code == 200:
+                data = r.json()
+                if isinstance(data, list) and data:
+                    for item in data:
+                        synced = item.get("syncedLyrics")
+                        plain = item.get("plainLyrics")
+                        track_name = item.get("trackName") or title
+                        artist_name = item.get("artistName") or artist
+                        if synced:
+                            parsed = parse_synced_lrc(synced)
+                            if parsed:
+                                return {
+                                    "id": "lrclib",
+                                    "provider": "LRCLIB",
+                                    "provider_badge": "LRCLIB",
+                                    "name": f"LRCLIB • {artist_name}",
+                                    "type": "line_synced",
+                                    "lines": parsed,
+                                    "raw_lrc": synced
+                                }
+                        elif plain:
+                            return {
+                                "id": "lrclib_plain",
+                                "provider": "LRCLIB",
+                                "provider_badge": "LRCLIB",
+                                "name": f"LRCLIB (Plain) • {artist_name}",
+                                "type": "plain_text",
+                                "lyrics": plain
+                            }
+        except Exception:
+            continue
+    return None
+
 @app.get("/api/lyrics")
-async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
-    cache_key = f"lyrics_{videoId}_{title}_{artist}"
+async def get_lyrics(
+    videoId: str = "",
+    title: str = "",
+    artist: str = "",
+    order: str = "lyricsplus,paxsenix,betterlyrics,simpmusic,kugou,lrclib",
+    prioritize_syllable: bool = True,
+    paxsenix_key: str = ""
+):
+    cache_key = f"lyrics_{videoId}_{title}_{artist}_{order}_{prioritize_syllable}_{bool(paxsenix_key)}"
     now = time.time()
     if cache_key in LYRICS_CACHE and (now - LYRICS_CACHE[cache_key]['time']) < LYRICS_CACHE_TTL:
         return LYRICS_CACHE[cache_key]['data']
 
-    sources = []
     c_title = clean_cover_search_term(title or "")
     c_artist = clean_cover_search_term((artist or "").split(',')[0].split('&')[0])
-    queries = [
-        f"{c_title} {c_artist}".strip(),
-        c_title
-    ]
 
-    # Fetch LRCLIB Candidate Matches
-    try:
-        async with httpx.AsyncClient(timeout=3.0, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}) as client:
-            for q in queries:
-                if not q:
-                    continue
-                r = await client.get("https://lrclib.net/api/search", params={"q": q})
-                if r.status_code == 200:
-                    data = r.json()
-                    if isinstance(data, list):
-                        seen_lrc = set()
-                        for item in data:
-                            synced_text = item.get("syncedLyrics")
-                            plain_text = item.get("plainLyrics")
-                            track_name = item.get("trackName") or title
-                            artist_name = item.get("artistName") or artist
-                            album_name = item.get("albumName", "")
+    provider_keys = [k.strip().lower() for k in (order or "").split(",") if k.strip()]
+    if not provider_keys:
+        provider_keys = ["lyricsplus", "paxsenix", "betterlyrics", "simpmusic", "kugou", "lrclib"]
 
-                            if synced_text and synced_text not in seen_lrc:
-                                seen_lrc.add(synced_text)
-                                parsed = parse_synced_lrc(synced_text)
-                                if parsed:
-                                    s_name = f"LRCLib • {artist_name}"
-                                    if album_name:
-                                        s_name += f" ({album_name})"
-                                    sources.append({
-                                        "id": f"lrclib_{len(sources)+1}",
-                                        "provider": "LRCLib",
-                                        "name": s_name,
-                                        "type": "word_synced",
-                                        "lines": parsed,
-                                        "raw_lrc": synced_text
-                                    })
-                            elif plain_text and not synced_text and len(sources) < 6:
-                                sources.append({
-                                    "id": f"lrclib_plain_{len(sources)+1}",
-                                    "provider": "LRCLib",
-                                    "name": f"LRCLib (Plain) • {artist_name}",
-                                    "type": "plain_text",
-                                    "lyrics": plain_text
-                                })
-                if sources:
+    sources = []
+    active_source = None
+    candidate_line_source = None
+
+    async with httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0"}, timeout=7.0) as client:
+        for p_key in provider_keys:
+            res = None
+            if p_key == "lyricsplus":
+                res = await fetch_lyricsplus_lyrics(c_title, c_artist, client)
+            elif p_key == "paxsenix":
+                res = await fetch_paxsenix_lyrics(c_title, c_artist, paxsenix_key, client)
+            elif p_key == "betterlyrics":
+                res = await fetch_betterlyrics_lyrics(c_title, c_artist, client)
+            elif p_key == "simpmusic":
+                res = await fetch_simpmusic_lyrics(videoId, client)
+            elif p_key == "kugou":
+                res = await fetch_kugou_lyrics(c_title, c_artist, client)
+            elif p_key == "lrclib":
+                res = await fetch_lrclib_lyrics(c_title, c_artist, client)
+
+            if res:
+                sources.append(res)
+                # Decision logic:
+                if prioritize_syllable:
+                    if res.get("type") == "word_synced":
+                        # Syllable match wins immediately!
+                        active_source = res
+                        break
+                    elif not candidate_line_source and (res.get("type") in ("line_synced", "plain_text")):
+                        # Hold first line-synced match, but keep searching for word_synced
+                        candidate_line_source = res
+                else:
+                    # First source with lyrics wins immediately
+                    active_source = res
                     break
-    except Exception:
-        pass
 
-    # Fetch YouTube Music Official Lyrics
-    try:
-        def fetch_yt_lyrics():
-            if not videoId:
+    # If prioritize_syllable was True and no word_synced was found, use the first line_synced source
+    if not active_source and candidate_line_source:
+        active_source = candidate_line_source
+
+    # Official YouTube Music lyrics as ultimate fallback if nothing found
+    if not active_source and videoId:
+        try:
+            def fetch_yt_lyrics():
+                watch = ytmusic.get_watch_playlist(videoId=videoId)
+                lyrics_id = watch.get("lyrics")
+                if lyrics_id:
+                    return ytmusic.get_lyrics(lyrics_id)
                 return None
-            watch = ytmusic.get_watch_playlist(videoId=videoId)
-            lyrics_id = watch.get("lyrics")
-            if lyrics_id:
-                return ytmusic.get_lyrics(lyrics_id)
-            return None
 
-        lyrics_data = await asyncio.to_thread(fetch_yt_lyrics)
-        if lyrics_data and lyrics_data.get("lyrics"):
-            sources.append({
-                "id": f"ytmusic_{len(sources)+1}",
-                "provider": "YouTube",
-                "name": "YouTube Music (Official)",
-                "type": "plain_text",
-                "lyrics": lyrics_data.get("lyrics", "")
-            })
-    except Exception:
-        pass
+            lyrics_data = await asyncio.to_thread(fetch_yt_lyrics)
+            if lyrics_data and lyrics_data.get("lyrics"):
+                yt_src = {
+                    "id": "ytmusic",
+                    "provider": "YouTube",
+                    "provider_badge": "YT Music",
+                    "name": "YouTube Music (Official)",
+                    "type": "plain_text",
+                    "lyrics": lyrics_data.get("lyrics", "")
+                }
+                sources.append(yt_src)
+                active_source = yt_src
+        except Exception:
+            pass
 
-    if sources:
-        # Prioritize word_synced sources first
-        synced_sources = [s for s in sources if s.get("type") == "word_synced"]
-        active_source = synced_sources[0] if synced_sources else sources[0]
-
+    if active_source:
         res = {
             "status": "success",
             "type": active_source.get("type"),
@@ -1248,6 +1471,7 @@ async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
             "raw_lrc": active_source.get("raw_lrc", ""),
             "source": active_source.get("name"),
             "provider": active_source.get("provider"),
+            "provider_badge": active_source.get("provider_badge", active_source.get("provider", "")),
             "sources": sources
         }
         LYRICS_CACHE[cache_key] = {'time': time.time(), 'data': res}

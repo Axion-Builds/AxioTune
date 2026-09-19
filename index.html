@@ -734,18 +734,15 @@
                 <!-- Source Selector Pill (Expands on Hover) -->
                 <div class="lyrics-dock-source-group" id="lyrics-dock-source-group">
                     <button id="lyrics-source-prev-btn" class="lyrics-dock-arrow-btn" title="Previous Lyric Version" onclick="if(typeof switchLyricsSource==='function') switchLyricsSource(window._currentLyricsSourceIndex - 1, event)">‹</button>
-                    <button id="lyrics-source-badge-btn" class="lyrics-dock-source-badge" title="Click to Switch Lyrics Provider" onclick="if(typeof toggleLyricsSourcesPopup==='function') toggleLyricsSourcesPopup(event)">
+                    <button id="lyrics-source-badge-btn" class="lyrics-dock-source-badge" title="Click to View Lyrics Sources" onclick="if(typeof openLyricsSourcesModal==='function') openLyricsSourcesModal(event)">
                         <svg class="dock-source-icon" viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
                         <span id="lyrics-source-name">LRCLib</span>
                         <span id="lyrics-source-count" class="source-count-tag">1/1</span>
                     </button>
                     <button id="lyrics-source-next-btn" class="lyrics-dock-arrow-btn" title="Next Lyric Version" onclick="if(typeof switchLyricsSource==='function') switchLyricsSource(window._currentLyricsSourceIndex + 1, event)">›</button>
-
-                    <!-- Popup Menu for Switching Sources -->
-                    <div id="lyrics-sources-popup" class="lyrics-sources-popup hidden">
-                        <div class="sources-popup-header">Available Lyrics Sources</div>
-                        <div id="lyrics-sources-list" class="sources-list"></div>
-                    </div>
+                    <button id="lyrics-sources-settings-btn" class="lyrics-dock-arrow-btn" style="margin-left: 2px;" title="Configure Lyrics Sources & Priority" onclick="if(typeof openLyricsSourcesModal==='function') openLyricsSourcesModal(event)">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    </button>
                 </div>
 
                 <!-- Separator -->
@@ -1548,6 +1545,44 @@
         <div id="queue-list"></div>
     </div>
     <div id="queue-backdrop"></div>
+
+    <!-- 🎵 EXACT LYRICS SOURCES FALLBACK MODAL (Matches user screenshot) -->
+    <div id="lyrics-sources-modal" class="lyrics-sources-modal-overlay hidden" onclick="if(event.target === this) closeLyricsSourcesModal()">
+        <div class="lyrics-sources-modal-content">
+            <div class="lyrics-sources-modal-header">
+                <h2 class="lyrics-sources-modal-title">Lyrics sources</h2>
+                <p class="lyrics-sources-modal-subtitle">
+                    Sources are tried in this order. Drag to reorder them. The first source with lyrics wins unless syllable lyrics are prioritized.
+                </p>
+                <button class="lyrics-sources-modal-close" onclick="closeLyricsSourcesModal()" title="Close">✕</button>
+            </div>
+
+            <div id="lyrics-sources-drag-list" class="lyrics-sources-drag-list">
+                <!-- Dynamically populated from JavaScript -->
+            </div>
+
+            <!-- PaxSenix API key section -->
+            <div class="lyrics-sources-setting-row" id="paxsenix-key-row" onclick="promptPaxsenixKey()">
+                <div class="setting-row-info">
+                    <div class="setting-row-title" id="paxsenix-key-label">PaxSenix API key — optional, not configured</div>
+                    <div class="setting-row-desc">Apple Music timings through third-party proxy</div>
+                </div>
+                <span class="setting-row-chevron">›</span>
+            </div>
+
+            <!-- Prioritize syllable lyrics toggle -->
+            <div class="lyrics-sources-setting-row">
+                <div class="setting-row-info">
+                    <div class="setting-row-title">Prioritize syllable lyrics</div>
+                    <div class="setting-row-desc">Keep searching past a line-synced match for word-by-word lyrics</div>
+                </div>
+                <label class="apple-switch">
+                    <input type="checkbox" id="lyrics-prioritize-syllable-switch" checked onchange="togglePrioritizeSyllable(this.checked)">
+                    <span class="apple-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
 
     <script src="kawarp.js?v=252"></script>
     <script src="app_v3.js?v=255"></script>

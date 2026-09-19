@@ -6987,3 +6987,319 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     }
 }
 
+/* ========================================================
+   🎵 LYRICS SOURCES FALLBACK MODAL (Exact match to screenshot)
+   ======================================================== */
+.lyrics-sources-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lyrics-sources-modal-overlay.hidden {
+    display: none !important;
+}
+
+.lyrics-sources-modal-content {
+    width: 100%;
+    max-width: 440px;
+    background: #121214;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 28px;
+    padding: 26px 22px 24px 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.lyrics-sources-modal-header {
+    text-align: center;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.lyrics-sources-modal-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px 0;
+}
+
+.lyrics-sources-modal-subtitle {
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.62);
+    margin: 0;
+    padding: 0 8px;
+}
+
+.lyrics-sources-modal-close {
+    position: absolute;
+    top: -6px;
+    right: -2px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lyrics-sources-modal-close:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+}
+
+.lyrics-sources-drag-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 12px;
+}
+
+.lyrics-source-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    user-select: none;
+    transition: background 0.15s ease;
+    border-radius: 12px;
+}
+
+.lyrics-source-item.dragging {
+    opacity: 0.45;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.lyrics-source-item-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lyrics-source-handle {
+    cursor: grab;
+    color: rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    line-height: 1;
+    font-family: monospace;
+    letter-spacing: -2px;
+    width: 22px;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.lyrics-source-handle:hover {
+    color: #ffffff;
+}
+
+.lyrics-source-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.lyrics-source-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lyrics-source-badge-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.lyrics-source-badge-tag.syllable {
+    background: rgba(255, 45, 85, 0.18);
+    color: #ff2d55;
+    border: 1px solid rgba(255, 45, 85, 0.35);
+}
+
+.lyrics-source-badge-tag.lines {
+    background: rgba(0, 122, 255, 0.18);
+    color: #007aff;
+    border: 1px solid rgba(0, 122, 255, 0.35);
+}
+
+.lyrics-source-desc {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.48);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lyrics-source-item-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.lyrics-source-arrow-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.lyrics-source-arrow-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.lyrics-source-check {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.15rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.lyrics-source-check.inactive {
+    color: rgba(255, 255, 255, 0.15);
+}
+
+.lyrics-sources-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.lyrics-sources-setting-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.setting-row-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding-right: 14px;
+}
+
+.setting-row-title {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.setting-row-desc {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.48);
+    margin-top: 3px;
+    line-height: 1.35;
+}
+
+.setting-row-chevron {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 300;
+}
+
+/* Apple Switch */
+.apple-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.apple-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.apple-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.18);
+    transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 28px;
+}
+
+.apple-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.apple-switch input:checked + .apple-slider {
+    background-color: #30d158;
+}
+
+.apple-switch input:checked + .apple-slider:before {
+    transform: translateX(20px);
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
+}
+

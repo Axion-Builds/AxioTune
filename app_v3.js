@@ -2524,12 +2524,221 @@ function onPlayerStateChange(event) {
             }
         };
 
-        window.toggleLyricsSourcesPopup = function(e) {
-            if (e) { e.preventDefault(); e.stopPropagation(); }
-            const popup = document.getElementById('lyrics-sources-popup');
-            if (popup) {
-                popup.classList.toggle('hidden');
+        window.LYRICS_PROVIDERS_META = {
+            lyricsplus: {
+                id: 'lyricsplus',
+                name: 'LyricsPlus',
+                desc: 'Syllable by syllable, on community server',
+                tag: 'Syllable',
+                tagClass: 'syllable'
+            },
+            paxsenix: {
+                id: 'paxsenix',
+                name: 'PaxSenix',
+                desc: 'Apple Music timings through third-party proxy',
+                tag: 'Syllable',
+                tagClass: 'syllable'
+            },
+            betterlyrics: {
+                id: 'betterlyrics',
+                name: 'BetterLyrics',
+                desc: 'Apple Music timings, word by word',
+                tag: 'Syllable',
+                tagClass: 'syllable'
+            },
+            simpmusic: {
+                id: 'simpmusic',
+                name: 'SimpMusic',
+                desc: 'Matched on the video, so never wrong',
+                tag: 'Lines',
+                tagClass: 'lines'
+            },
+            kugou: {
+                id: 'kugou',
+                name: 'KuGou',
+                desc: 'Whole lines, strong outside the US/West',
+                tag: 'Lines',
+                tagClass: 'lines'
+            },
+            lrclib: {
+                id: 'lrclib',
+                name: 'LRCLIB',
+                desc: 'Whole lines only, and always up',
+                tag: 'Lines',
+                tagClass: 'lines'
             }
+        };
+
+        window.getLyricsSourcesOrder = function() {
+            try {
+                const saved = localStorage.getItem('axio_lyrics_sources_order');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            } catch(e) {}
+            return ['lyricsplus', 'paxsenix', 'betterlyrics', 'simpmusic', 'kugou', 'lrclib'];
+        };
+
+        window.getLyricsSourcesEnabled = function() {
+            try {
+                const saved = localStorage.getItem('axio_lyrics_sources_enabled');
+                if (saved) return JSON.parse(saved);
+            } catch(e) {}
+            return { lyricsplus: true, paxsenix: true, betterlyrics: true, simpmusic: true, kugou: true, lrclib: true };
+        };
+
+        window.getLyricsPrioritizeSyllable = function() {
+            const saved = localStorage.getItem('axio_lyrics_prioritize_syllable');
+            return saved !== null ? saved === 'true' : true;
+        };
+
+        window.getPaxsenixApiKey = function() {
+            return localStorage.getItem('axio_lyrics_paxsenix_key') || '';
+        };
+
+        window.openLyricsSourcesModal = function(e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            const modal = document.getElementById('lyrics-sources-modal');
+            if (!modal) return;
+            window.renderLyricsSourcesModal();
+            modal.classList.remove('hidden');
+        };
+
+        window.closeLyricsSourcesModal = function() {
+            const modal = document.getElementById('lyrics-sources-modal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.renderLyricsSourcesModal = function() {
+            const listEl = document.getElementById('lyrics-sources-drag-list');
+            if (!listEl) return;
+            const order = window.getLyricsSourcesOrder();
+            const enabled = window.getLyricsSourcesEnabled();
+
+            listEl.innerHTML = '';
+            order.forEach((key, idx) => {
+                const meta = window.LYRICS_PROVIDERS_META[key];
+                if (!meta) return;
+                const isEnabled = enabled[key] !== false;
+
+                const row = document.createElement('div');
+                row.className = 'lyrics-source-item';
+                row.setAttribute('draggable', 'true');
+                row.dataset.key = key;
+                row.dataset.index = idx;
+
+                row.innerHTML = `
+                    <div class="lyrics-source-item-left">
+                        <span class="lyrics-source-handle" title="Drag to reorder">＝</span>
+                        <div class="lyrics-source-info">
+                            <div class="lyrics-source-title">
+                                ${meta.name}
+                                <span class="lyrics-source-badge-tag ${meta.tagClass}">${meta.tag}</span>
+                            </div>
+                            <div class="lyrics-source-desc">${meta.desc}</div>
+                        </div>
+                    </div>
+                    <div class="lyrics-source-item-right">
+                        <button class="lyrics-source-arrow-btn" title="Move Up" onclick="window.moveLyricsSource(${idx}, -1, event)">▲</button>
+                        <button class="lyrics-source-arrow-btn" title="Move Down" onclick="window.moveLyricsSource(${idx}, 1, event)">▼</button>
+                        <div class="lyrics-source-check ${isEnabled ? '' : 'inactive'}" title="${isEnabled ? 'Disable source' : 'Enable source'}" onclick="window.toggleLyricsSourceEnabled('${key}', event)">
+                            ${isEnabled ? '✓' : '○'}
+                        </div>
+                    </div>
+                `;
+
+                // Drag and drop events
+                row.addEventListener('dragstart', (e) => {
+                    row.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', String(idx));
+                });
+                row.addEventListener('dragend', () => {
+                    row.classList.remove('dragging');
+                });
+                row.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+                row.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                    const toIdx = idx;
+                    if (!isNaN(fromIdx) && fromIdx !== toIdx) {
+                        const newOrder = [...order];
+                        const [moved] = newOrder.splice(fromIdx, 1);
+                        newOrder.splice(toIdx, 0, moved);
+                        localStorage.setItem('axio_lyrics_sources_order', JSON.stringify(newOrder));
+                        window.renderLyricsSourcesModal();
+                        if (currentVideoId && currentTrackTitle) {
+                            fetchLyricsForSong(currentTrackTitle, currentTrackArtist, currentVideoId);
+                        }
+                    }
+                });
+
+                listEl.appendChild(row);
+            });
+
+            // Update settings rows
+            const paxKey = window.getPaxsenixApiKey();
+            const paxLabel = document.getElementById('paxsenix-key-label');
+            if (paxLabel) {
+                paxLabel.textContent = paxKey ? `PaxSenix API key — Configured (${paxKey.slice(0, 4)}••••)` : 'PaxSenix API key — optional, not configured';
+            }
+            const sylSwitch = document.getElementById('lyrics-prioritize-syllable-switch');
+            if (sylSwitch) {
+                sylSwitch.checked = window.getLyricsPrioritizeSyllable();
+            }
+        };
+
+        window.moveLyricsSource = function(idx, direction, e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            const order = window.getLyricsSourcesOrder();
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= order.length) return;
+            const newOrder = [...order];
+            const [moved] = newOrder.splice(idx, 1);
+            newOrder.splice(targetIdx, 0, moved);
+            localStorage.setItem('axio_lyrics_sources_order', JSON.stringify(newOrder));
+            window.renderLyricsSourcesModal();
+            if (currentVideoId && currentTrackTitle) {
+                fetchLyricsForSong(currentTrackTitle, currentTrackArtist, currentVideoId);
+            }
+        };
+
+        window.toggleLyricsSourceEnabled = function(key, e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            const enabled = window.getLyricsSourcesEnabled();
+            enabled[key] = !enabled[key];
+            localStorage.setItem('axio_lyrics_sources_enabled', JSON.stringify(enabled));
+            window.renderLyricsSourcesModal();
+            if (currentVideoId && currentTrackTitle) {
+                fetchLyricsForSong(currentTrackTitle, currentTrackArtist, currentVideoId);
+            }
+        };
+
+        window.togglePrioritizeSyllable = function(checked) {
+            localStorage.setItem('axio_lyrics_prioritize_syllable', String(checked));
+            showToast(checked ? "Prioritizing syllable/word-by-word lyrics" : "Using first available lyrics source");
+            if (currentVideoId && currentTrackTitle) {
+                fetchLyricsForSong(currentTrackTitle, currentTrackArtist, currentVideoId);
+            }
+        };
+
+        window.promptPaxsenixKey = function() {
+            const current = window.getPaxsenixApiKey();
+            const val = prompt("Enter PaxSenix API Key (leave empty to remove):", current);
+            if (val !== null) {
+                localStorage.setItem('axio_lyrics_paxsenix_key', val.trim());
+                window.renderLyricsSourcesModal();
+                showToast(val.trim() ? "PaxSenix API key saved" : "PaxSenix API key cleared");
+                if (currentVideoId && currentTrackTitle) {
+                    fetchLyricsForSong(currentTrackTitle, currentTrackArtist, currentVideoId);
+                }
+            }
+        };
+
+        window.toggleLyricsSourcesPopup = function(e) {
+            window.openLyricsSourcesModal(e);
         };
 
         window.toggleLyricsTranslation = async function(e) {
@@ -2698,16 +2907,24 @@ function onPlayerStateChange(event) {
                 window._availableLyricsSources = [];
                 window._currentLyricsSourceIndex = 0;
 
-                // STEP 1: Try /api/lyrics (backend multi-provider API)
+                // STEP 1: Try /api/lyrics (backend multi-provider API with exact 6-source fallback chain)
                 try {
-                    const ytRes = await fetch(`/api/lyrics?videoId=${encodeURIComponent(videoId || '')}&title=${encodeURIComponent(cleanTitle)}&artist=${encodeURIComponent(cleanArtist)}`);
+                    const order = (window.getLyricsSourcesOrder ? window.getLyricsSourcesOrder() : ['lyricsplus', 'paxsenix', 'betterlyrics', 'simpmusic', 'kugou', 'lrclib'])
+                        .filter(k => (window.getLyricsSourcesEnabled ? window.getLyricsSourcesEnabled()[k] !== false : true))
+                        .join(',');
+                    const prioritize = window.getLyricsPrioritizeSyllable ? window.getLyricsPrioritizeSyllable() : true;
+                    const paxKey = window.getPaxsenixApiKey ? window.getPaxsenixApiKey() : '';
+
+                    const ytRes = await fetch(`/api/lyrics?videoId=${encodeURIComponent(videoId || '')}&title=${encodeURIComponent(cleanTitle)}&artist=${encodeURIComponent(cleanArtist)}&order=${encodeURIComponent(order)}&prioritize_syllable=${prioritize}&paxsenix_key=${encodeURIComponent(paxKey)}`);
                     if (ytRes.ok) {
                         const ytData = await ytRes.json();
                         if (ytData.status === 'success') {
                             if (ytData.sources && Array.isArray(ytData.sources)) {
                                 window._availableLyricsSources = ytData.sources;
                             }
-                            if (ytData.type === 'word_synced' && ytData.lines && ytData.lines.length > 0) {
+                            window._lyricsProviderBadge = ytData.provider_badge || ytData.provider || 'Lyrics';
+                            if ((ytData.type === 'word_synced' || ytData.type === 'line_synced') && ytData.lines && ytData.lines.length > 0) {
+                                lyricsType = ytData.type === 'word_synced' ? 'word_synced' : 'synced';
                                 fetchedLines = ytData.lines.map((l, lineIdx, lineArr) => {
                                     const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
                                     return {
