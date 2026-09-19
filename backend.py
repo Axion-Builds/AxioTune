@@ -991,6 +991,63 @@ LYRICS_CACHE = {}
 LYRICS_CACHE_TTL = 86400  # 24 hours
 TRANSLATION_CACHE = {}
 
+_GENIUS_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+async def fetch_genius_lyrics(title: str, artist: str, client: httpx.AsyncClient) -> str | None:
+    """Search Genius for plain-text lyrics. Returns lyrics string or None on failure."""
+    try:
+        query = f"{title} {artist}".strip()
+        search_url = "https://genius.com/api/search/song"
+        r = await client.get(search_url, params={"q": query, "per_page": 5}, headers=_GENIUS_HEADERS, timeout=5.0)
+        if r.status_code != 200:
+            return None
+        hits = r.json().get("response", {}).get("sections", [{}])[0].get("hits", [])
+        if not hits:
+            return None
+
+        # Pick the best hit — prefer title+artist match
+        song_url = None
+        for hit in hits:
+            result = hit.get("result", {})
+            h_title = (result.get("title") or "").lower()
+            h_artist = (result.get("primary_artist", {}).get("name") or "").lower()
+            if title.lower() in h_title or h_artist in artist.lower() or artist.lower() in h_artist:
+                song_url = result.get("url")
+                break
+        if not song_url:
+            song_url = hits[0].get("result", {}).get("url")
+        if not song_url:
+            return None
+
+        page_r = await client.get(song_url, headers=_GENIUS_HEADERS, timeout=8.0, follow_redirects=True)
+        if page_r.status_code != 200:
+            return None
+
+        html = page_r.text
+        # Extract lyrics from data-lyrics-container divs
+        containers = re.findall(r'data-lyrics-container="true"[^>]*>([\s\S]*?)</div>', html)
+        if not containers:
+            # Fallback: look for JSON embedded lyrics
+            m = re.search(r'"lyrics":\{"dom":\{"tag":"root","children":([\s\S]*?)\},"tracking_data"', html)
+            if not m:
+                return None
+            containers = [m.group(1)]
+
+        raw_html = " ".join(containers)
+        # Convert <br> to newlines, strip all other HTML tags
+        raw_html = re.sub(r"<br\s*/?>", "\n", raw_html)
+        raw_html = re.sub(r"<[^>]+>", "", raw_html)
+        # Decode HTML entities
+        raw_html = raw_html.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&apos;", "'").replace("&#x27;", "'").replace("&quot;", '"')
+        lyrics = raw_html.strip()
+        return lyrics if len(lyrics) > 30 else None
+    except Exception:
+        return None
+
 def parse_time_str(t_str: str) -> float:
     """Parses timestamps like '00:01:23.456', '01:23.45', '12.34s' into float seconds."""
     if not t_str:
@@ -1212,33 +1269,61 @@ async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
     except Exception:
         pass
 
-    # Fetch YouTube Music Official Lyrics
-    try:
-        def fetch_yt_lyrics():
-            if not videoId:
-                return None
-            watch = ytmusic.get_watch_playlist(videoId=videoId)
-            lyrics_id = watch.get("lyrics")
-            if lyrics_id:
-                return ytmusic.get_lyrics(lyrics_id)
-            return None
+    # Fetch Genius (plain text) + YouTube Music concurrently as fallback sources
+    # Only needed if LRCLib produced no synced lyrics
+    has_synced = any(s.get("type") == "word_synced" for s in sources)
 
-        lyrics_data = await asyncio.to_thread(fetch_yt_lyrics)
-        if lyrics_data and lyrics_data.get("lyrics"):
-            sources.append({
-                "id": f"ytmusic_{len(sources)+1}",
-                "provider": "YouTube",
-                "name": "YouTube Music (Official)",
-                "type": "plain_text",
-                "lyrics": lyrics_data.get("lyrics", "")
-            })
-    except Exception:
-        pass
+    async def _try_genius():
+        if has_synced:
+            return
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as g_client:
+                genius_text = await fetch_genius_lyrics(c_title, c_artist, g_client)
+                if genius_text:
+                    sources.append({
+                        "id": f"genius_{len(sources)+1}",
+                        "provider": "Genius",
+                        "name": f"Genius • {c_artist or artist}",
+                        "type": "plain_text",
+                        "lyrics": genius_text
+                    })
+        except Exception:
+            pass
+
+    async def _try_youtube_music():
+        try:
+            def fetch_yt_lyrics():
+                if not videoId:
+                    return None
+                watch = ytmusic.get_watch_playlist(videoId=videoId)
+                lyrics_id = watch.get("lyrics")
+                if lyrics_id:
+                    return ytmusic.get_lyrics(lyrics_id)
+                return None
+
+            lyrics_data = await asyncio.to_thread(fetch_yt_lyrics)
+            if lyrics_data and lyrics_data.get("lyrics"):
+                sources.append({
+                    "id": f"ytmusic_{len(sources)+1}",
+                    "provider": "YouTube",
+                    "name": "YouTube Music (Official)",
+                    "type": "plain_text",
+                    "lyrics": lyrics_data.get("lyrics", "")
+                })
+        except Exception:
+            pass
+
+    await asyncio.gather(_try_genius(), _try_youtube_music())
 
     if sources:
-        # Prioritize word_synced sources first
+        # Source priority: word_synced (LRCLib synced LRC) > plain_text in order (Genius > YouTube)
         synced_sources = [s for s in sources if s.get("type") == "word_synced"]
-        active_source = synced_sources[0] if synced_sources else sources[0]
+        plain_sources = [s for s in sources if s.get("type") == "plain_text"]
+        active_source = synced_sources[0] if synced_sources else (plain_sources[0] if plain_sources else sources[0])
+
+        # Provider badge: short label for the UI chip
+        provider_badge_map = {"LRCLib": "LRCLib", "Genius": "Genius", "YouTube": "YT Music"}
+        provider_badge = provider_badge_map.get(active_source.get("provider", ""), active_source.get("provider", ""))
 
         res = {
             "status": "success",
@@ -1248,6 +1333,7 @@ async def get_lyrics(videoId: str = "", title: str = "", artist: str = ""):
             "raw_lrc": active_source.get("raw_lrc", ""),
             "source": active_source.get("name"),
             "provider": active_source.get("provider"),
+            "provider_badge": provider_badge,
             "sources": sources
         }
         LYRICS_CACHE[cache_key] = {'time': time.time(), 'data': res}
