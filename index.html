@@ -426,20 +426,16 @@
             <div class="radial-center-pointer"></div>
 
             <!-- SVG Arc with Clock-Dial Minute Ticks (|||||||||||||) -->
-            <svg class="radial-dial-svg" id="radial-dial-svg" viewBox="0 0 340 560" xmlns="http://www.w3.org/2000/svg">
+            <svg class="radial-dial-svg" id="radial-dial-svg" viewBox="0 0 150 320" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="radialDialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#ff2d55" stop-opacity="0.6"/>
                         <stop offset="50%" stop-color="#a855f7" stop-opacity="0.9"/>
                         <stop offset="100%" stop-color="#007aff" stop-opacity="0.6"/>
                     </linearGradient>
-                    <filter id="dialNeonGlow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="3.5" result="blur"/>
-                        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                    </filter>
                 </defs>
-                <!-- Outer Arc Line -->
-                <path id="radial-main-arc" d="M 0 30 A 240 240 0 0 1 0 530" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+                <!-- Outer Arc Line (dynamically calculated and updated in JS) -->
+                <path id="radial-main-arc" d="M 0 35 A 85 85 0 0 1 0 285" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.2"/>
                 <!-- Clock-dial ticks group (populated dynamically via JS with minute/second notches) -->
                 <g id="radial-dial-ticks" class="radial-dial-ticks"></g>
             </svg>

@@ -7304,66 +7304,61 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 }
 
 /* ========================================================
-   🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL
+   🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL (Compact & Minimal)
    ======================================================== */
 .radial-nav-container {
     position: fixed;
     left: 0;
     top: 50%;
-    transform: translateY(-50%) translateX(-230px);
-    width: 360px;
-    height: 580px;
+    transform: translateY(-50%) translateX(-120px);
+    width: 150px;
+    height: 320px;
     z-index: 99990;
     pointer-events: none;
-    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
     user-select: none;
     -webkit-user-select: none;
-    border-radius: 0 290px 290px 0;
 }
 
-/* Atmospheric backdrop glow when expanded */
+/* When hovered or touched, wheel expands smoothly outward within left gutter */
 .radial-nav-container:hover,
 .radial-nav-container.expanded {
     transform: translateY(-50%) translateX(0) !important;
     pointer-events: auto !important;
-    background: radial-gradient(ellipse at 0% 50%, rgba(10, 8, 18, 0.94) 0%, rgba(10, 8, 18, 0.82) 65%, transparent 100%);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
 }
 
 /* Subtle edge peek indicator docked at left border when idle */
 .radial-nav-peek {
     position: absolute;
-    left: 230px;
+    left: 120px;
     top: 50%;
     transform: translateY(-50%);
-    width: 28px;
-    height: 80px;
+    width: 20px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     pointer-events: auto;
-    transition: opacity 0.25s ease, transform 0.25s ease;
+    transition: opacity 0.2s ease;
 }
 
 .radial-peek-line {
-    width: 4px;
-    height: 48px;
-    border-radius: 4px;
-    background: linear-gradient(180deg, rgba(255, 45, 85, 0.4), rgba(168, 85, 247, 0.9), rgba(0, 122, 255, 0.4));
-    box-shadow: 0 0 12px rgba(168, 85, 247, 0.7);
-    transition: width 0.2s, height 0.2s, box-shadow 0.2s;
+    width: 3px;
+    height: 36px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, rgba(255, 45, 85, 0.4), rgba(168, 85, 247, 0.85), rgba(0, 122, 255, 0.4));
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
 }
 
 .radial-peek-pip {
     position: absolute;
-    right: 4px;
-    width: 6px;
-    height: 6px;
+    right: 2px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: #ff2d55;
-    box-shadow: 0 0 8px #ff2d55;
+    box-shadow: 0 0 6px #ff2d55;
 }
 
 .radial-nav-container:hover .radial-nav-peek,
@@ -7377,21 +7372,28 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     position: absolute;
     left: 0;
     top: 0;
-    width: 360px;
-    height: 580px;
+    width: 150px;
+    height: 320px;
     pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.25s ease;
 }
 
-/* Center indicator notch/pip */
+.radial-nav-container:hover .radial-wheel-stage,
+.radial-nav-container.expanded .radial-wheel-stage {
+    opacity: 1;
+}
+
+/* Center indicator notch/pip on edge */
 .radial-center-pointer {
     position: absolute;
-    left: 246px;
-    top: 290px;
-    width: 14px;
+    left: 0;
+    top: 160px;
+    width: 6px;
     height: 3px;
-    border-radius: 3px;
+    border-radius: 0 2px 2px 0;
     background: #ff2d55;
-    box-shadow: 0 0 12px #ff2d55, 0 0 24px rgba(255, 45, 85, 0.7);
+    box-shadow: 0 0 8px #ff2d55, 0 0 16px rgba(255, 45, 85, 0.6);
     pointer-events: none;
     transform: translateY(-50%);
     z-index: 10;
@@ -7402,15 +7404,14 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     position: absolute;
     left: 0;
     top: 0;
-    width: 360px;
-    height: 580px;
+    width: 150px;
+    height: 320px;
     pointer-events: none;
     overflow: visible;
 }
 
 .radial-dial-ticks line {
     stroke-linecap: round;
-    transition: stroke 0.2s ease, opacity 0.2s ease;
 }
 
 /* Orbit items */
@@ -7424,7 +7425,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     position: absolute;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     background: transparent;
     border: none;
     padding: 0;
@@ -7432,80 +7433,74 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     cursor: pointer;
     pointer-events: auto;
     user-select: none;
-    transform-origin: center center;
-    transition: opacity 0.15s ease, filter 0.2s ease;
+    transform-origin: 18px 18px;
+    transition: opacity 0.15s ease;
     will-change: transform, opacity;
 }
 
 .radial-item-icon-wrap {
-    width: 52px;
-    height: 52px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: rgba(22, 20, 30, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: rgba(18, 16, 24, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    color: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     flex-shrink: 0;
 }
 
 .radial-item-icon-wrap svg {
-    width: 24px;
-    height: 24px;
+    width: 17px;
+    height: 17px;
     fill: currentColor;
-    transition: transform 0.2s ease;
 }
 
+/* Compact Tooltip Label — floats cleanly to the right */
 .radial-item-label {
-    font-size: 0.88rem;
+    font-size: 0.76rem;
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     color: #ffffff;
-    background: rgba(14, 12, 22, 0.85);
+    background: rgba(12, 10, 18, 0.88);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    padding: 4px 12px;
-    border-radius: 12px;
+    padding: 2px 8px;
+    border-radius: 8px;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
     white-space: nowrap;
-    opacity: 0.9;
+    opacity: 0;
+    transform: translateX(-4px);
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Show label only on center focus or hover */
+.radial-nav-item.center-focus .radial-item-label,
+.radial-nav-item:hover .radial-item-label {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 /* Active & Center focus styles */
 .radial-nav-item.center-focus .radial-item-icon-wrap {
-    background: linear-gradient(135deg, rgba(255, 45, 85, 0.36), rgba(168, 85, 247, 0.48));
+    background: linear-gradient(135deg, rgba(255, 45, 85, 0.4), rgba(168, 85, 247, 0.5));
     border-color: rgba(255, 255, 255, 0.6);
     color: #ffffff;
-    box-shadow: 0 0 24px rgba(255, 45, 85, 0.6), 0 12px 35px rgba(0, 0, 0, 0.85);
-}
-
-.radial-nav-item.center-focus .radial-item-label {
-    opacity: 1;
-    color: #ffffff;
-    border-color: rgba(255, 45, 85, 0.5);
-    box-shadow: 0 0 16px rgba(255, 45, 85, 0.3);
-    font-weight: 800;
+    box-shadow: 0 0 16px rgba(255, 45, 85, 0.55), 0 8px 24px rgba(0, 0, 0, 0.7);
 }
 
 .radial-nav-item:hover .radial-item-icon-wrap {
-    transform: scale(1.1);
+    transform: scale(1.12);
     border-color: #ffffff;
     color: #ffffff;
-    box-shadow: 0 0 22px rgba(168, 85, 247, 0.7);
-}
-
-.radial-nav-item:hover .radial-item-label {
-    opacity: 1;
-    transform: translateX(4px);
-    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.7);
 }
 
 /* Mobile Responsiveness */

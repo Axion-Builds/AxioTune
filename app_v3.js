@@ -3881,36 +3881,49 @@ function onPlayerStateChange(event) {
         requestAnimationFrame(animationLoop);
 
         // ══════════════════════════════════════════════════════════════
-        // 🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL
+        // 🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL (Compact & Minimal)
         // ══════════════════════════════════════════════════════════════
         function initRadialNavigation() {
             const container = document.getElementById('radial-nav-container');
             const stage = document.getElementById('radial-wheel-stage');
             const ticksGroup = document.getElementById('radial-dial-ticks');
+            const mainArc = document.getElementById('radial-main-arc');
             const items = Array.from(document.querySelectorAll('.radial-nav-item'));
 
             if (!container || !stage || items.length === 0) return;
 
-            // Geometry constants
-            const CX = 10;       // Center X
-            const CY = 280;      // Center Y (middle of 560px stage)
-            const R_DIAL = 240;  // Radius for clock tick marks
-            const R_ITEMS = 240; // Radius for buttons
+            // Geometry constants (Compact & Minimal — stays within 150px, zero overlap on posters)
+            const CX = -10;      // Center X (slightly behind viewport left border)
+            const CY = 160;      // Center Y (middle of 320px stage)
+            const R_DIAL = 85;   // Radius for clock tick marks
+            const R_ITEMS = 85;  // Radius for buttons
 
-            // 1. Generate Clock-Dial Minute Ticks along the semicircle arc (||||||||||||)
+            // 1. Build exact Semicircular Arc Path (-72° to +72°)
+            const arcStartRad = -72 * (Math.PI / 180);
+            const arcEndRad = 72 * (Math.PI / 180);
+            const arcX1 = CX + R_DIAL * Math.cos(arcStartRad);
+            const arcY1 = CY + R_DIAL * Math.sin(arcStartRad);
+            const arcX2 = CX + R_DIAL * Math.cos(arcEndRad);
+            const arcY2 = CY + R_DIAL * Math.sin(arcEndRad);
+
+            if (mainArc) {
+                mainArc.setAttribute('d', `M ${arcX1.toFixed(1)} ${arcY1.toFixed(1)} A ${R_DIAL} ${R_DIAL} 0 0 1 ${arcX2.toFixed(1)} ${arcY2.toFixed(1)}`);
+            }
+
+            // 2. Generate Clock-Dial Minute Ticks along the semicircle arc (||||||||||||)
             if (ticksGroup) {
                 ticksGroup.innerHTML = '';
-                for (let deg = -74; deg <= 74; deg += 2.5) {
+                for (let deg = -72; deg <= 72; deg += 3) {
                     const rad = deg * (Math.PI / 180);
-                    const isMajor = Math.abs(deg) % 10 < 1.5;
-                    const tickLen = isMajor ? 16 : 8;
-                    const strokeWidth = isMajor ? 2.0 : 1.2;
-                    const strokeColor = isMajor ? 'rgba(255, 255, 255, 0.78)' : 'rgba(255, 255, 255, 0.28)';
+                    const isMajor = Math.abs(deg) % 15 < 1.5;
+                    const tickHalfLen = isMajor ? 6 : 3.5;
+                    const strokeWidth = isMajor ? 1.5 : 0.8;
+                    const strokeColor = isMajor ? 'rgba(255, 255, 255, 0.75)' : 'rgba(255, 255, 255, 0.22)';
 
-                    const x1 = CX + (R_DIAL - tickLen) * Math.cos(rad);
-                    const y1 = CY + (R_DIAL - tickLen) * Math.sin(rad);
-                    const x2 = CX + R_DIAL * Math.cos(rad);
-                    const y2 = CY + R_DIAL * Math.sin(rad);
+                    const x1 = CX + (R_DIAL - tickHalfLen) * Math.cos(rad);
+                    const y1 = CY + (R_DIAL - tickHalfLen) * Math.sin(rad);
+                    const x2 = CX + (R_DIAL + tickHalfLen) * Math.cos(rad);
+                    const y2 = CY + (R_DIAL + tickHalfLen) * Math.sin(rad);
 
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', x1.toFixed(1));
@@ -3924,14 +3937,14 @@ function onPlayerStateChange(event) {
                 }
             }
 
-            // 2. Rotary Wheel Physics & State
+            // 3. Rotary Wheel Physics & State
             let currentAngle = 0;
             let targetAngle = 0;
             let isAnimating = false;
             let isDragging = false;
             let startY = 0;
             let startAngle = 0;
-            const ANGLE_STEP = 360 / items.length; // 72 deg
+            const ANGLE_STEP = 360 / items.length; // 72 deg for 5 items
 
             function updateItemsPosition() {
                 let closestIdx = 0;
@@ -3941,18 +3954,19 @@ function onPlayerStateChange(event) {
                     const itemAngle = currentAngle + (idx * ANGLE_STEP);
                     const norm = ((itemAngle + 180) % 360 + 360) % 360 - 180;
 
-                    if (Math.abs(norm) <= 85) {
+                    if (Math.abs(norm) <= 78) {
                         const rad = norm * (Math.PI / 180);
                         const x = CX + R_ITEMS * Math.cos(rad);
                         const y = CY + R_ITEMS * Math.sin(rad);
 
-                        const dist = Math.abs(norm) / 85;
-                        const scale = (1.20 - (dist * 0.38)).toFixed(3);
+                        const dist = Math.abs(norm) / 78;
+                        const scale = (1.15 - (dist * 0.35)).toFixed(3);
                         const opacity = (1 - Math.pow(dist, 1.8)).toFixed(3);
 
                         item.style.display = 'flex';
-                        item.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translateY(-50%) scale(${scale})`;
-                        item.style.opacity = Math.max(0.18, opacity);
+                        // Icon center sits precisely at (x, y) along the arc
+                        item.style.transform = `translate3d(${(x - 18).toFixed(1)}px, ${(y - 18).toFixed(1)}px, 0) scale(${scale})`;
+                        item.style.opacity = Math.max(0.2, opacity);
 
                         if (Math.abs(norm) < minDiff) {
                             minDiff = Math.abs(norm);
@@ -4001,14 +4015,14 @@ function onPlayerStateChange(event) {
             }
             window.rotateRadialToItem = rotateToItem;
 
-            // 3. 2-Finger Swipe & Mouse Wheel Scrolling
+            // 4. 2-Finger Swipe & Mouse Wheel Scrolling (Smooth Infinite Rotation)
             container.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 rotateBy(-e.deltaY * 0.18);
             }, { passive: false });
 
-            // 4. Pointer / Touch Dragging
+            // 5. Pointer / Touch Dragging
             stage.addEventListener('pointerdown', (e) => {
                 isDragging = true;
                 startY = e.clientY;
@@ -4034,7 +4048,7 @@ function onPlayerStateChange(event) {
             stage.addEventListener('pointerup', endDrag);
             stage.addEventListener('pointercancel', endDrag);
 
-            // 5. Button Click Handlers
+            // 6. Button Click Handlers
             items.forEach((item, idx) => {
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -4046,11 +4060,14 @@ function onPlayerStateChange(event) {
                     item.classList.add('active');
 
                     if (action === 'home') {
-                        showHome();
+                        if (typeof showHome === 'function') showHome();
+                        else if (typeof showScreenExcept === 'function') showScreenExcept('home-screen');
                     } else if (action === 'library') {
-                        showLibrary();
+                        if (typeof showLibrary === 'function') showLibrary();
+                        else if (typeof showScreenExcept === 'function') showScreenExcept('library-screen');
                     } else if (action === 'history') {
-                        showHistory();
+                        if (typeof showHistory === 'function') showHistory();
+                        else if (typeof showScreenExcept === 'function') showScreenExcept('history-screen');
                     } else if (action === 'queue') {
                         if (typeof window.toggleQueue === 'function') {
                             window.toggleQueue();
@@ -4059,7 +4076,8 @@ function onPlayerStateChange(event) {
                             if (qBtn) qBtn.click();
                         }
                     } else if (action === 'settings') {
-                        showSettings();
+                        if (typeof showSettings === 'function') showSettings();
+                        else if (typeof showScreenExcept === 'function') showScreenExcept('settings-screen');
                     }
                 });
             });
