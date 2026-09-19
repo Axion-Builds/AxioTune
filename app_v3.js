@@ -2162,7 +2162,7 @@ function onPlayerStateChange(event) {
             queueOpen = false;
             queuePanel.classList.remove('open');
             queueBackdrop.classList.remove('open');
-            queueNavBtn.classList.remove('active');
+            queueNavBtn?.classList.remove('active');
             document.body.classList.remove('queue-active');
             queuePanel.style.transform = '';
             if (queueBackdrop) queueBackdrop.style.background = '';
@@ -3898,6 +3898,57 @@ function onPlayerStateChange(event) {
             const R_DIAL = 85;   // Radius for clock tick marks
             const R_ITEMS = 85;  // Radius for buttons
 
+            // ── Satisfying Tactile Haptic Audio Synthesis (Web Audio API) ──
+            let audioCtx = null;
+            function getAudioContext() {
+                try {
+                    if (!audioCtx) {
+                        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                        if (AudioCtxClass) audioCtx = new AudioCtxClass();
+                    }
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                    return audioCtx;
+                } catch(e) {
+                    return null;
+                }
+            }
+
+            function playRotaryTickSound(isSnap = false) {
+                try {
+                    const ctx = getAudioContext();
+                    if (!ctx) return;
+                    const now = ctx.currentTime;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    if (isSnap) {
+                        // Resonant satisfying mechanical snap when centered
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(360, now);
+                        osc.frequency.exponentialRampToValueAtTime(70, now + 0.024);
+                        gain.gain.setValueAtTime(0.18, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.024);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.026);
+                    } else {
+                        // Ultra-crisp mechanical micro-tick on notch pass
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(1600, now);
+                        osc.frequency.exponentialRampToValueAtTime(250, now + 0.008);
+                        gain.gain.setValueAtTime(0.08, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.008);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.01);
+                    }
+                } catch(err) {}
+            }
+
             // 1. Build exact Semicircular Arc Path (-72° to +72°)
             const arcStartRad = -72 * (Math.PI / 180);
             const arcEndRad = 72 * (Math.PI / 180);
@@ -3940,11 +3991,38 @@ function onPlayerStateChange(event) {
             // 3. Rotary Wheel Physics & State
             let currentAngle = 0;
             let targetAngle = 0;
+            let lastTickAngle = 0;
+            let currentClosestIdx = 0;
             let isAnimating = false;
             let isDragging = false;
+            let isPointerDown = false;
+            let hasDragged = false;
             let startY = 0;
             let startAngle = 0;
             const ANGLE_STEP = 360 / items.length; // 72 deg for 5 items
+
+            function navigateToAction(action) {
+                if (action === 'home') {
+                    if (typeof showHome === 'function') showHome();
+                    else if (typeof showScreenExcept === 'function') showScreenExcept('home-screen');
+                } else if (action === 'library') {
+                    if (typeof showLibrary === 'function') showLibrary();
+                    else if (typeof showScreenExcept === 'function') showScreenExcept('library-screen');
+                } else if (action === 'history') {
+                    if (typeof showHistory === 'function') showHistory();
+                    else if (typeof showScreenExcept === 'function') showScreenExcept('history-screen');
+                } else if (action === 'queue') {
+                    if (typeof window.toggleQueue === 'function') {
+                        window.toggleQueue();
+                    } else {
+                        const qBtn = document.getElementById('floating-queue-btn') || document.getElementById('queue-btn');
+                        if (qBtn) qBtn.click();
+                    }
+                } else if (action === 'settings') {
+                    if (typeof showSettings === 'function') showSettings();
+                    else if (typeof showScreenExcept === 'function') showScreenExcept('settings-screen');
+                }
+            }
 
             function updateItemsPosition() {
                 let closestIdx = 0;
@@ -3965,7 +4043,7 @@ function onPlayerStateChange(event) {
 
                         item.style.display = 'flex';
                         // Icon center sits precisely at (x, y) along the arc
-                        item.style.transform = `translate3d(${(x - 18).toFixed(1)}px, ${(y - 18).toFixed(1)}px, 0) scale(${scale})`;
+                        item.style.transform = `translate3d(${(x - 14).toFixed(1)}px, ${(y - 14).toFixed(1)}px, 0) scale(${scale})`;
                         item.style.opacity = Math.max(0.2, opacity);
 
                         if (Math.abs(norm) < minDiff) {
@@ -3978,6 +4056,11 @@ function onPlayerStateChange(event) {
                     }
                 });
 
+                if (closestIdx !== currentClosestIdx) {
+                    currentClosestIdx = closestIdx;
+                    playRotaryTickSound(true); // Snap haptic click when entering center
+                }
+
                 items.forEach((item, idx) => {
                     item.classList.toggle('center-focus', idx === closestIdx);
                 });
@@ -3986,7 +4069,14 @@ function onPlayerStateChange(event) {
             function animatePhysics() {
                 const diff = targetAngle - currentAngle;
                 if (Math.abs(diff) > 0.04) {
-                    currentAngle += diff * 0.16;
+                    currentAngle += diff * 0.18;
+
+                    // Micro-tick sound on every ~5° rotation
+                    if (Math.abs(currentAngle - lastTickAngle) >= 4.8) {
+                        playRotaryTickSound(false);
+                        lastTickAngle = currentAngle;
+                    }
+
                     updateItemsPosition();
                     requestAnimationFrame(animatePhysics);
                 } else {
@@ -4015,42 +4105,52 @@ function onPlayerStateChange(event) {
             }
             window.rotateRadialToItem = rotateToItem;
 
-            // 4. 2-Finger Swipe & Mouse Wheel Scrolling (Smooth Infinite Rotation)
+            // 4. 2-Finger Swipe & Mouse Wheel Scrolling (Smooth Infinite Rotation with Tactile Sound)
             container.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 rotateBy(-e.deltaY * 0.18);
             }, { passive: false });
 
-            // 5. Pointer / Touch Dragging
+            // 5. Pointer / Touch Dragging (Only capture if actually dragged so click works)
             stage.addEventListener('pointerdown', (e) => {
-                isDragging = true;
+                isPointerDown = true;
+                hasDragged = false;
                 startY = e.clientY;
                 startAngle = targetAngle;
-                stage.setPointerCapture(e.pointerId);
             });
 
             stage.addEventListener('pointermove', (e) => {
-                if (!isDragging) return;
+                if (!isPointerDown) return;
                 const dy = e.clientY - startY;
-                targetAngle = startAngle + (-dy * 0.35);
-                if (!isAnimating) {
-                    isAnimating = true;
-                    requestAnimationFrame(animatePhysics);
+                if (!hasDragged && Math.abs(dy) > 5) {
+                    hasDragged = true;
+                    isDragging = true;
+                    try { stage.setPointerCapture(e.pointerId); } catch(err) {}
+                }
+                if (hasDragged) {
+                    targetAngle = startAngle + (-dy * 0.35);
+                    if (!isAnimating) {
+                        isAnimating = true;
+                        requestAnimationFrame(animatePhysics);
+                    }
                 }
             });
 
             const endDrag = (e) => {
-                if (!isDragging) return;
+                if (hasDragged) {
+                    try { stage.releasePointerCapture(e.pointerId); } catch(err) {}
+                }
+                isPointerDown = false;
                 isDragging = false;
-                try { stage.releasePointerCapture(e.pointerId); } catch(err) {}
             };
             stage.addEventListener('pointerup', endDrag);
             stage.addEventListener('pointercancel', endDrag);
 
-            // 6. Button Click Handlers
+            // 6. Button Click Handlers (Guaranteed responsive execution)
             items.forEach((item, idx) => {
                 item.addEventListener('click', (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     const action = item.dataset.action;
 
@@ -4059,27 +4159,21 @@ function onPlayerStateChange(event) {
                     items.forEach(b => b.classList.remove('active'));
                     item.classList.add('active');
 
-                    if (action === 'home') {
-                        if (typeof showHome === 'function') showHome();
-                        else if (typeof showScreenExcept === 'function') showScreenExcept('home-screen');
-                    } else if (action === 'library') {
-                        if (typeof showLibrary === 'function') showLibrary();
-                        else if (typeof showScreenExcept === 'function') showScreenExcept('library-screen');
-                    } else if (action === 'history') {
-                        if (typeof showHistory === 'function') showHistory();
-                        else if (typeof showScreenExcept === 'function') showScreenExcept('history-screen');
-                    } else if (action === 'queue') {
-                        if (typeof window.toggleQueue === 'function') {
-                            window.toggleQueue();
-                        } else {
-                            const qBtn = document.getElementById('floating-queue-btn');
-                            if (qBtn) qBtn.click();
-                        }
-                    } else if (action === 'settings') {
-                        if (typeof showSettings === 'function') showSettings();
-                        else if (typeof showScreenExcept === 'function') showScreenExcept('settings-screen');
-                    }
+                    navigateToAction(action);
+                    playRotaryTickSound(true);
                 });
+            });
+
+            // 7. Auto-navigate on cursor leave (User requirement: scroll to item -> move cursor away -> auto opens that screen)
+            container.addEventListener('mouseleave', () => {
+                const focusedItem = items[currentClosestIdx];
+                if (focusedItem) {
+                    const action = focusedItem.dataset.action;
+                    items.forEach(b => b.classList.remove('active'));
+                    focusedItem.classList.add('active');
+                    navigateToAction(action);
+                    playRotaryTickSound(true);
+                }
             });
 
             // Initial positioning

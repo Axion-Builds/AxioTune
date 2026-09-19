@@ -7439,37 +7439,39 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 }
 
 .radial-item-icon-wrap {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(18, 16, 24, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    width: 28px;
+    height: 28px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.75);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.2s ease, transform 0.2s ease, filter 0.2s ease;
     flex-shrink: 0;
 }
 
 .radial-item-icon-wrap svg {
-    width: 17px;
-    height: 17px;
+    width: 22px;
+    height: 22px;
     fill: currentColor;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.85));
+    transition: transform 0.2s ease, filter 0.2s ease, color 0.2s ease;
 }
 
 /* Compact Tooltip Label — floats cleanly to the right */
 .radial-item-label {
-    font-size: 0.76rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.02em;
     color: #ffffff;
-    background: rgba(12, 10, 18, 0.88);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    padding: 2px 8px;
+    background: rgba(14, 12, 20, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 3px 9px;
     border-radius: 8px;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -7488,19 +7490,29 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     transform: translateX(0);
 }
 
-/* Active & Center focus styles */
+/* Active & Center focus styles — Naked Glowing SVG Icon */
 .radial-nav-item.center-focus .radial-item-icon-wrap {
-    background: linear-gradient(135deg, rgba(255, 45, 85, 0.4), rgba(168, 85, 247, 0.5));
-    border-color: rgba(255, 255, 255, 0.6);
-    color: #ffffff;
-    box-shadow: 0 0 16px rgba(255, 45, 85, 0.55), 0 8px 24px rgba(0, 0, 0, 0.7);
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #ff2d55 !important;
+}
+
+.radial-nav-item.center-focus .radial-item-icon-wrap svg {
+    filter: drop-shadow(0 0 10px rgba(255, 45, 85, 0.95)) drop-shadow(0 0 20px rgba(255, 45, 85, 0.5));
+    transform: scale(1.25);
 }
 
 .radial-nav-item:hover .radial-item-icon-wrap {
-    transform: scale(1.12);
-    border-color: #ffffff;
-    color: #ffffff;
-    box-shadow: 0 0 16px rgba(168, 85, 247, 0.7);
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+}
+
+.radial-nav-item:hover .radial-item-icon-wrap svg {
+    filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.95));
+    transform: scale(1.3);
 }
 
 /* Mobile Responsiveness */
