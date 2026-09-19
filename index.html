@@ -31,6 +31,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -696,10 +697,6 @@
                 </div>
                 
                 <div class="playback-buttons-row">
-
-                    <button id="shuffle-btn" class="ctrl-btn" title="Shuffle">
-                        <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
-                    </button>
                     <button id="prev-btn" class="btn-icon" disabled>
                         <svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" fill="currentColor"/></svg>
                     </button>
@@ -711,9 +708,6 @@
                         <svg viewBox="0 0 24 24"><path d="M13 6v12l8.5-6L13 6zm-.5 6L4 6v12l8.5-6z" fill="currentColor"/></svg>
                     </button>
                     <button id="like-btn" class="ctrl-btn" title="Like"><svg viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></svg></button>
-                    <button id="player-queue-btn" class="ctrl-btn" title="Queue / Up Next">
-                        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
-                    </button>
                 </div>
                 
                 <div class="bottom-extra-controls" style="display:none !important; align-items:center; justify-content:center; margin-top: 5px; width: 100%;">
@@ -783,9 +777,6 @@
 
         <!-- Top-right controls: ALWAYS visible, outside right-panel -->
         <div id="top-right-controls">
-            <button id="top-right-queue-btn" class="top-circle-btn" title="Queue / Up Next">
-                <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
-            </button>
             <button id="floating-pip-btn" class="top-circle-btn" title="MiniPlayer (PiP)">
                 <svg viewBox="0 0 24 24"><path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z"/></svg>
             </button>
@@ -1400,9 +1391,6 @@
             </button>
             <button id="mini-next-btn" class="mini-btn" title="Next">
                 <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-            </button>
-            <button id="mini-queue-btn" class="mini-btn" title="Queue / Up Next">
-                <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
             </button>
         </div>
     </div>

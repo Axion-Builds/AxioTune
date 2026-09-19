@@ -576,11 +576,13 @@ function onPlayerStateChange(event) {
             window.location.href = `/api/download?id=${currentSongMeta.id}&title=${encodeURIComponent(currentSongMeta.title)}`;
         });
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ SHUFFLE ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
-        const shuffleBtn = document.getElementById('shuffle-btn');
-        shuffleBtn?.addEventListener('click', () => {
+        // ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ SHUFFLE ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬        // ── SHUFFLE ──
+        function toggleShuffle() {
             isShuffled = !isShuffled;
-            shuffleBtn.classList.toggle('active', isShuffled);
+            const shuffleBtn = document.getElementById('shuffle-btn');
+            shuffleBtn?.classList.toggle('active', isShuffled);
+            const qShuffleBtn = document.getElementById('queue-shuffle-btn');
+            qShuffleBtn?.classList.toggle('active', isShuffled);
             if (isShuffled) {
                 originalQueue = [...queueList];
                 // Fisher-Yates shuffle, keep current song at front
@@ -600,9 +602,13 @@ function onPlayerStateChange(event) {
                 showToast('Shuffle OFF');
             }
             if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
-        });
+        }
+        window.toggleShuffle = toggleShuffle;
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ REPEAT ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        shuffleBtn?.addEventListener('click', toggleShuffle);
+
+        // ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ REPEAT ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬
         const repeatBtn = document.getElementById('repeat-btn');
         const repeatSVG_off = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
         const repeatSVG_all = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
@@ -1256,7 +1262,14 @@ function onPlayerStateChange(event) {
         // ============================================================
         function resolveYtThumb(ytThumb, size = 'card') {
             if (!ytThumb || typeof ytThumb !== 'string') return '';
-            if (ytThumb.includes('/api/cover')) return ''; // Avoid double proxying
+            if (ytThumb.includes('/api/cover')) {
+                try {
+                    const parsed = new URL(ytThumb, window.location.origin);
+                    const orig = parsed.searchParams.get('yt_thumb');
+                    if (orig && orig.startsWith('http')) return resolveYtThumb(orig, size);
+                } catch(e) {}
+                return '';
+            }
             
             // Optimize Google/YouTube Music thumbnail sizes: 540x540 for cards (loads 4x faster, retina crisp)
             if (ytThumb.includes('googleusercontent.com') || ytThumb.includes('ggpht.com') || ytThumb.includes('scdn.co')) {
@@ -1982,6 +1995,10 @@ function onPlayerStateChange(event) {
                         item.artist = artist;
                         modified = true;
                     }
+                    if (!item.cover && vid) {
+                        item.cover = `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+                        modified = true;
+                    }
                     return item;
                 }).filter(Boolean);
                 if (modified) {
@@ -2027,8 +2044,11 @@ function onPlayerStateChange(event) {
         function saveToHistory(songData, rawYtThumb) {
             if (appSettings.incognito) return; // Incognito mode — skip saving
             let history = getHistoryList();
-            const thumb = resolveYtThumb(rawYtThumb) || resolveYtThumb(songData.thumbnail) || resolveYtThumb(songData.cover) || '';
             const vid = songData.videoId || songData.id || currentVideoId || '';
+            let thumb = resolveYtThumb(rawYtThumb) || resolveYtThumb(songData.thumbnail) || resolveYtThumb(songData.cover) || '';
+            if (!thumb && vid) {
+                thumb = `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+            }
             const artistName = songData.artist || songData.uploader || '';
             const newEntry = {
                 title: songData.title || '',
@@ -2156,12 +2176,6 @@ function onPlayerStateChange(event) {
         }
 
         queueNavBtn?.addEventListener('click', toggleQueue);
-        const topRightQueueBtn = document.getElementById('top-right-queue-btn');
-        if (topRightQueueBtn) topRightQueueBtn.addEventListener('click', toggleQueue);
-        const playerQueueBtn = document.getElementById('player-queue-btn');
-        if (playerQueueBtn) playerQueueBtn.addEventListener('click', toggleQueue);
-        const miniQueueBtn = document.getElementById('mini-queue-btn');
-        if (miniQueueBtn) miniQueueBtn.addEventListener('click', toggleQueue);
         
         closeQueueBtn?.addEventListener('click', (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
@@ -2175,7 +2189,7 @@ function onPlayerStateChange(event) {
         });
         
         document.addEventListener('click', (e) => {
-            if (e.target.closest('#player-queue-btn, #top-right-queue-btn, #floating-queue-btn, #mini-queue-btn')) return;
+            if (e.target.closest('#floating-queue-btn, #queue-nav-btn')) return;
             if (queueOpen && !queuePanel?.contains(e.target) && !queueBackdrop?.contains(e.target)) {
                 closeQueue();
             }
@@ -3953,15 +3967,17 @@ function onPlayerStateChange(event) {
                 if (!rawThumb && videoId) rawThumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
                 const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
                 const fallbackThumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'default_cover.jpg';
+                const effectiveThumb = thumb || fallbackThumb;
                 const safeTitle = title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 const safeArtist = subtitle.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const loadingAttr = idx < 8 ? 'eager' : 'lazy';
 
                 const card = document.createElement('div');
                 card.className = 'cinematic-card';
                 card.style.animationDelay = `${idx * 0.04}s`;
                 card.innerHTML = `
                     <div class="cinematic-poster-wrap">
-                        <img src="${thumb}" class="cinematic-card-img" alt="${safeTitle}" loading="lazy" decoding="async"
+                        <img src="${effectiveThumb}" class="cinematic-card-img" alt="${safeTitle}" loading="${loadingAttr}" decoding="async"
                              onerror="if(this.src!=='${fallbackThumb}'){this.src='${fallbackThumb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
                         <div class="cinematic-card-play">
                             <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -3971,7 +3987,7 @@ function onPlayerStateChange(event) {
                         <div class="cinematic-card-artist">${safeArtist}</div>
                         <div class="cinematic-card-title-row">
                             <div class="cinematic-card-title">${safeTitle}</div>
-                            <button class="cinematic-card-more" title="Options" onclick="event.stopPropagation(); if(typeof openSongOptions==='function') openSongOptions('${videoId}', '${safeTitle.replace(/'/g, "\\'")}', '${safeArtist.replace(/'/g, "\\'")}', '${thumb}');">
+                            <button class="cinematic-card-more" title="Options" onclick="event.stopPropagation(); if(typeof openSongOptions==='function') openSongOptions('${videoId}', '${safeTitle.replace(/'/g, "\\'")}', '${safeArtist.replace(/'/g, "\\'")}', '${effectiveThumb}');">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>
                         </div>
@@ -3979,7 +3995,7 @@ function onPlayerStateChange(event) {
                 `;
                 card.onclick = () => {
                     if (videoId) {
-                        const songJson = JSON.stringify({title, artist: subtitle, cover: thumb, videoId}).replace(/"/g, '&quot;');
+                        const songJson = JSON.stringify({title, artist: subtitle, cover: effectiveThumb, videoId}).replace(/"/g, '&quot;');
                         window.playSong(videoId, songJson, card);
                     } else {
                         songSearchInput.value = `${title} ${subtitle}`; searchBtn.click();
@@ -4104,14 +4120,15 @@ function onPlayerStateChange(event) {
                     const trendRes = await fetch('/api/trending');
                     const trendData = await trendRes.json();
                     if (myToken !== tasteMixToken) return;
-                    if (trendData.status === 'success' && trendData.results && trendData.results.length > 0) {
+                    const items = trendData.results || trendData.trending || trendData.top_songs || [];
+                    if (items.length > 0) {
                         section.style.display = 'block';
-                        populateCinematicCards('home-taste-mix-container', trendData.results.slice(0, 24).map(s => ({
+                        populateCinematicCards('home-taste-mix-container', items.slice(0, 24).map(s => ({
                             videoId: s.videoId || s.id,
                             id: s.videoId || s.id,
                             title: s.title,
                             artist: s.artist || s.uploader || '',
-                            cover: s.thumbnail || s.cover || '',
+                            cover: s.cover || s.thumbnail || (s.videoId ? `https://i.ytimg.com/vi/${s.videoId}/hqdefault.jpg` : ''),
                             type: 'song'
                         })));
                     }
@@ -4155,7 +4172,7 @@ function onPlayerStateChange(event) {
                                     id: trackId,
                                     title: s.title,
                                     artist: s.artist || s.uploader || '',
-                                    cover: s.cover || s.thumbnail || '',
+                                    cover: s.cover || s.thumbnail || (trackId ? `https://i.ytimg.com/vi/${trackId}/hqdefault.jpg` : ''),
                                     type: 'song'
                                 });
                             }
@@ -4169,6 +4186,25 @@ function onPlayerStateChange(event) {
             if (myToken !== tasteMixToken) return;
 
             if (allRecs.length === 0) {
+                // Fallback to trending tracks if seed recommendations are empty
+                try {
+                    const trendRes = await fetch('/api/trending');
+                    const trendData = await trendRes.json();
+                    if (myToken !== tasteMixToken) return;
+                    const items = trendData.results || trendData.trending || trendData.top_songs || [];
+                    if (items.length > 0) {
+                        section.style.display = 'block';
+                        populateCinematicCards('home-taste-mix-container', items.slice(0, 24).map(s => ({
+                            videoId: s.videoId || s.id,
+                            id: s.videoId || s.id,
+                            title: s.title,
+                            artist: s.artist || s.uploader || '',
+                            cover: s.cover || s.thumbnail || (s.videoId ? `https://i.ytimg.com/vi/${s.videoId}/hqdefault.jpg` : ''),
+                            type: 'song'
+                        })));
+                        return;
+                    }
+                } catch(e) {}
                 section.style.display = 'none';
                 return;
             }
@@ -6177,7 +6213,7 @@ if(window.toggleDownloadMenu) window.toggleDownloadMenu();
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => {
+        navigator.serviceWorker.register('/service-worker.js').catch(err => {
             console.log('ServiceWorker registration failed: ', err);
         });
     });

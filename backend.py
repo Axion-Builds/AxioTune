@@ -5,6 +5,7 @@ import yt_dlp
 import uvicorn
 import asyncio
 import httpx
+import json
 import os
 import time
 import hashlib
@@ -141,6 +142,13 @@ def get_js(filename: str):
     import os
     if os.path.exists(f"{filename}.js"):
         return FileResponse(f"{filename}.js")
+    raise HTTPException(status_code=404, detail="File not found")
+
+@app.get("/{filename}.json")
+def get_json(filename: str):
+    import os
+    if os.path.exists(f"{filename}.json"):
+        return FileResponse(f"{filename}.json", media_type="application/json")
     raise HTTPException(status_code=404, detail="File not found")
 
 def clean_cover_search_term(q: str) -> str:
@@ -577,7 +585,8 @@ async def stream(id: str, refresh: bool = False):
         'quiet': True,
         'no_warnings': True,
         'socket_timeout': 8,
-        'extractor_retries': 1,
+        'extractor_retries': 2,
+        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
     }
     
     # Inject cookies to bypass aggressive datacenter IP blocks on Render
@@ -588,7 +597,6 @@ async def stream(id: str, refresh: bool = False):
                 cookie_str = auth_data.get("Cookie", "")
                 if cookie_str:
                     ydl_opts['http_headers'] = {'Cookie': cookie_str}
-                    ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web', 'tv']}}
     except Exception:
         pass
 
@@ -675,6 +683,8 @@ async def stream(id: str, refresh: bool = False):
             "cached_at": time.time()
         }
         return res
+    except HTTPException as he:
+        return JSONResponse(content={"status": "error", "message": he.detail}, status_code=he.status_code)
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
@@ -737,15 +747,17 @@ async def get_trending():
         for item in top_res:
             artist_name = item['artists'][0]['name'] if item.get('artists') else "Unknown"
             thumbnail = item['thumbnails'][-1]['url'] if item.get('thumbnails') else ""
-            top_songs.append({"title": item['title'], "artist": artist_name, "cover": thumbnail})
+            vid = item.get('videoId') or ""
+            top_songs.append({"title": item['title'], "artist": artist_name, "cover": thumbnail, "videoId": vid, "id": vid})
                 
         trending = []
         for item in trend_res:
             artist_name = item['artists'][0]['name'] if item.get('artists') else "Unknown"
             thumbnail = item['thumbnails'][-1]['url'] if item.get('thumbnails') else ""
-            trending.append({"title": item['title'], "artist": artist_name, "cover": thumbnail})
+            vid = item.get('videoId') or ""
+            trending.append({"title": item['title'], "artist": artist_name, "cover": thumbnail, "videoId": vid, "id": vid})
 
-        return {"status": "success", "top_songs": top_songs, "trending": trending}
+        return {"status": "success", "top_songs": top_songs, "trending": trending, "results": top_songs + trending}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
