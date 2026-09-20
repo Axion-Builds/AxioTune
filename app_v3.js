@@ -2181,8 +2181,17 @@ function onPlayerStateChange(event) {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
             if (queueOpen) closeQueue(); else openQueue();
         }
+        window.toggleQueue = toggleQueue;
+        window.openQueue = openQueue;
+        window.closeQueue = closeQueue;
 
         queueNavBtn?.addEventListener('click', toggleQueue);
+        
+        const playerQueueBtn = document.getElementById('player-queue-btn');
+        playerQueueBtn?.addEventListener('click', (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            toggleQueue(e);
+        });
         
         closeQueueBtn?.addEventListener('click', (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
@@ -2196,7 +2205,7 @@ function onPlayerStateChange(event) {
         });
         
         document.addEventListener('click', (e) => {
-            if (e.target.closest('#floating-queue-btn, #queue-nav-btn')) return;
+            if (e.target.closest('#floating-queue-btn, #queue-nav-btn, #player-queue-btn, .player-queue-pill-btn')) return;
             if (queueOpen && !queuePanel?.contains(e.target) && !queueBackdrop?.contains(e.target)) {
                 closeQueue();
             }
