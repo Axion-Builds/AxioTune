@@ -1691,7 +1691,7 @@ function onPlayerStateChange(event) {
             }
         });
 
-        globalBackBtn?.addEventListener('click', () => {
+        function goBack() {
             if (history.state && history.state.screen) {
                 history.back();
                 return;
@@ -1702,10 +1702,13 @@ function onPlayerStateChange(event) {
                 if (prev === 'player-screen' && typeof showPlayer === 'function') { showPlayer(); return; }
                 if (prev === 'history-screen' && typeof showHistory === 'function') { showHistory(); return; }
                 if (prev === 'settings-screen' && typeof showSettings === 'function') { showSettings(); return; }
+                if (prev === 'library-screen' && typeof showLibrary === 'function') { showLibrary(); return; }
                 if (typeof showScreenExcept === 'function') { showScreenExcept(prev, true); return; }
             }
             if (typeof showHome === 'function') showHome();
-        });
+        }
+        window.goBack = goBack;
+        globalBackBtn?.addEventListener('click', goBack);
 
         // Close suggestions on outside click
         document.addEventListener('click', (e) => {
@@ -2155,8 +2158,9 @@ function onPlayerStateChange(event) {
             queueOpen = true;
             renderQueue();
             if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
-            queuePanel.classList.add('open');
-            queueBackdrop.classList.add('open');
+            if (queuePanel) queuePanel.style.transform = '';
+            queuePanel?.classList.add('open');
+            queueBackdrop?.classList.add('open');
             queueNavBtn?.classList.add('active');
             document.body.classList.add('queue-active');
         }
@@ -4164,18 +4168,6 @@ function onPlayerStateChange(event) {
                 });
             });
 
-            // 7. Auto-navigate on cursor leave (User requirement: scroll to item -> move cursor away -> auto opens that screen)
-            container.addEventListener('mouseleave', () => {
-                const focusedItem = items[currentClosestIdx];
-                if (focusedItem) {
-                    const action = focusedItem.dataset.action;
-                    items.forEach(b => b.classList.remove('active'));
-                    focusedItem.classList.add('active');
-                    navigateToAction(action);
-                    playRotaryTickSound(true);
-                }
-            });
-
             // Initial positioning
             updateItemsPosition();
         }
@@ -5285,6 +5277,9 @@ function onPlayerStateChange(event) {
                     
                     let html = `
                         <div class="hero-banner">
+                            <button class="screen-back-btn hero-back-btn" title="Back" onclick="window.goBack()">
+                                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                            </button>
                             <div class="hero-bg" style="background-image: url('${thumb}')"></div>
                             <div class="hero-content">
                                 <img src="${thumb}" alt="${artist.name}" class="hero-avatar anim-pop">
@@ -5384,6 +5379,9 @@ function onPlayerStateChange(event) {
                     
                     let html = `
                         <div class="hero-banner">
+                            <button class="screen-back-btn hero-back-btn" title="Back" onclick="window.goBack()">
+                                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                            </button>
                             <div class="hero-bg" style="background-image: url('${thumb}')"></div>
                             <div class="hero-content">
                                 <img src="${thumb}" alt="${album.title}" class="hero-album-cover anim-pop">
