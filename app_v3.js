@@ -3,6 +3,9 @@ window.onunhandledrejection = function(event) { console.error('Promise Rejection
 window._localNetworkIp = null;
 fetch('/api/ip').then(r => r.json()).then(data => { window._localNetworkIp = data.ip; }).catch(() => {});
 
+// 📟 Retro Terminal Loader HTML (ugly-bullfrog-62 by jeremyssocial)
+const TERMINAL_LOADER_HTML = `<div class="terminal-loader"><div class="terminal-header"><div class="terminal-title">Status</div><div class="terminal-controls"><div class="control close"></div><div class="control minimize"></div><div class="control maximize"></div></div></div><div class="text">Loading...</div></div>`;
+
 /* ══════════════════════════════════════════════════════════════════
    AXIOTUNE WEBGL SHADER ENGINE — Powered by Official Kawarp (@kawarp/core)
    Fluid Animated Background + Multi-Pass Kawase Blur + Simplex Domain Warping
@@ -2948,10 +2951,7 @@ function onPlayerStateChange(event) {
                 window._lyricsTimeOffset = 0.0;
                 lyricsContainer.innerHTML = `
                     <div class="empty-state loading-state-wrapper" style="margin-top:0;">
-                        <div class="premium-glass-loader"></div>
-                        <div style="font-size:0.95rem; font-weight:600; color:rgba(255,255,255,0.85); margin-top:12px; letter-spacing:0.02em;">
-                            Finding word-by-word lyrics...
-                        </div>
+                        ${TERMINAL_LOADER_HTML}
                     </div>
                 `;
 
@@ -3193,7 +3193,7 @@ function onPlayerStateChange(event) {
             lyricsData = [];
             wordElements = [];
             lineElements = [];
-            lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;"><div class="premium-glass-loader"></div><div>Syncing lyrics...</div></div>';
+            lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;">' + TERMINAL_LOADER_HTML + '</div>';
 
             // 1. Handover prefetched gapless stream if available, otherwise set src directly
             if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
@@ -3260,7 +3260,7 @@ function onPlayerStateChange(event) {
             coverArt.classList.add('cover-changing');
             trackTitleEl.classList.add('title-changing');
 
-            lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;"><div class="premium-glass-loader"></div><div>Finding song...</div></div>';
+            lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;">' + TERMINAL_LOADER_HTML + '</div>';
             
             let songData = null;
             let isFromQueue = false;
@@ -3379,7 +3379,7 @@ function onPlayerStateChange(event) {
                 setLikeUI(isSongLiked(songData.title, songData.uploader));
 
                 // STEP 2: Fetch stream URL + lyrics IN PARALLEL for speed!
-                lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;"><div class="premium-glass-loader"></div><div>Loading stream & lyrics...</div></div>';
+                lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;">' + TERMINAL_LOADER_HTML + '</div>';
 
                 const cleanTitle = songData.title.split('(')[0].split('[')[0].split('|')[0].trim();
                 const cleanArtist = songData.uploader.replace(/VEVO|Official|Topic|Music/gi, '').trim();
@@ -4289,7 +4289,7 @@ function onPlayerStateChange(event) {
                 // Load Dynamic Sections Asynchronously
                 const dynamicContainer = document.getElementById('dynamic-sections');
                 if (!dynamicContainer) return;
-                dynamicContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="padding:40px;"><div class="premium-glass-loader"></div><div>Fetching personalized feeds from YouTube Music...</div></div>';
+                dynamicContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="padding:40px;">' + TERMINAL_LOADER_HTML + '</div>';
                 
                 const res = await fetch('/api/home');
                 const data = await res.json();
@@ -4689,7 +4689,7 @@ function onPlayerStateChange(event) {
             if (seeds.length === 0) seeds.push(valid[0]);
 
             section.style.display = 'block';
-            container.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="premium-glass-loader" style="margin:0 auto 10px;"></div>Building your mix...</div>';
+            container.innerHTML = '<div class="empty-state" style="padding:20px;">' + TERMINAL_LOADER_HTML + '</div>';
 
             // Fetch recs for each seed in parallel
             const allRecs = [];
@@ -5272,7 +5272,7 @@ function onPlayerStateChange(event) {
         async function showArtistPage(browseId) {
             showScreenExcept('artist-screen');
             const content = document.getElementById('artist-content');
-            content.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:100px;"><div class="premium-glass-loader"></div><div>Loading artist details...</div></div>';
+            content.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:100px;">' + TERMINAL_LOADER_HTML + '</div>';
             
             try {
                 const res = await fetch(`/api/artist?id=${encodeURIComponent(browseId)}`);
@@ -5371,7 +5371,7 @@ function onPlayerStateChange(event) {
         async function showAlbumPage(browseId) {
             showScreenExcept('album-screen');
             const content = document.getElementById('album-content');
-            content.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:100px;"><div class="premium-glass-loader"></div><div>Loading album details...</div></div>';
+            content.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:100px;">' + TERMINAL_LOADER_HTML + '</div>';
             
             try {
                 const res = await fetch(`/api/album?id=${encodeURIComponent(browseId)}`);
