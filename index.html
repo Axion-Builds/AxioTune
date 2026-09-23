@@ -429,9 +429,8 @@
             <svg class="radial-dial-svg" id="radial-dial-svg" viewBox="0 0 150 320" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="radialDialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#ff2d55" stop-opacity="0.6"/>
-                        <stop offset="50%" stop-color="#a855f7" stop-opacity="0.9"/>
-                        <stop offset="100%" stop-color="#007aff" stop-opacity="0.6"/>
+                        <stop id="radial-grad-stop-1" offset="0%" stop-color="var(--radial-color, var(--accent, #ff2d55))" stop-opacity="0.8"/>
+                        <stop id="radial-grad-stop-2" offset="100%" stop-color="var(--radial-color, var(--accent, #ff2d55))" stop-opacity="0.2"/>
                     </linearGradient>
                 </defs>
                 <!-- Outer Arc Line (dynamically calculated and updated in JS) -->
@@ -757,7 +756,6 @@
                     <button id="next-btn" class="btn-icon" disabled>
                         <svg viewBox="0 0 24 24"><path d="M13 6v12l8.5-6L13 6zm-.5 6L4 6v12l8.5-6z" fill="currentColor"/></svg>
                     </button>
-                    <button id="like-btn" class="ctrl-btn" title="Like"><svg viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></svg></button>
                 </div>
                 
                 <div class="bottom-extra-controls" style="display:none !important; align-items:center; justify-content:center; margin-top: 5px; width: 100%;">

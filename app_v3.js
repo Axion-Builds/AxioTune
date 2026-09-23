@@ -4054,8 +4054,8 @@ function onPlayerStateChange(event) {
                         const scale = (1.15 - (dist * 0.35)).toFixed(3);
                         const opacity = (1 - Math.pow(dist, 1.8)).toFixed(3);
 
-                        item.style.display = 'flex';
-                        // Icon center sits precisely at (x, y) along the arc
+                        item.style.visibility = 'visible';
+                        item.style.pointerEvents = 'auto';
                         item.style.transform = `translate3d(${(x - 14).toFixed(1)}px, ${(y - 14).toFixed(1)}px, 0) scale(${scale})`;
                         item.style.opacity = Math.max(0.2, opacity);
 
@@ -4064,7 +4064,8 @@ function onPlayerStateChange(event) {
                             closestIdx = idx;
                         }
                     } else {
-                        item.style.display = 'none';
+                        item.style.visibility = 'hidden';
+                        item.style.pointerEvents = 'none';
                         item.style.opacity = '0';
                     }
                 });
@@ -4081,8 +4082,8 @@ function onPlayerStateChange(event) {
 
             function animatePhysics() {
                 const diff = targetAngle - currentAngle;
-                if (Math.abs(diff) > 0.04) {
-                    currentAngle += diff * 0.18;
+                if (Math.abs(diff) > 0.1) {
+                    currentAngle += diff * 0.28;
 
                     // Micro-tick sound on every ~5° rotation
                     if (Math.abs(currentAngle - lastTickAngle) >= 4.8) {
@@ -4125,24 +4126,32 @@ function onPlayerStateChange(event) {
                 rotateBy(-e.deltaY * 0.18);
             }, { passive: false });
 
-            // 5. Pointer / Touch Dragging (Only capture if actually dragged so click works)
+            // 5. Pointer / Touch Dragging (Only capture if actually dragged so click works reliably)
+            let pointerDownOnItem = false;
+            let pointerDownItem = null;
+
             stage.addEventListener('pointerdown', (e) => {
                 isPointerDown = true;
                 hasDragged = false;
+                isDragging = false;
                 startY = e.clientY;
                 startAngle = targetAngle;
+                pointerDownItem = e.target.closest('.radial-nav-item');
+                pointerDownOnItem = Boolean(pointerDownItem);
             });
 
             stage.addEventListener('pointermove', (e) => {
                 if (!isPointerDown) return;
                 const dy = e.clientY - startY;
-                if (!hasDragged && Math.abs(dy) > 5) {
+                const threshold = pointerDownOnItem ? 16 : 6;
+                if (!hasDragged && Math.abs(dy) > threshold) {
                     hasDragged = true;
                     isDragging = true;
                     try { stage.setPointerCapture(e.pointerId); } catch(err) {}
                 }
                 if (hasDragged) {
-                    targetAngle = startAngle + (-dy * 0.35);
+                    // Pulling downward pulls wheel downward (+dy)
+                    targetAngle = startAngle + (dy * 0.35);
                     if (!isAnimating) {
                         isAnimating = true;
                         requestAnimationFrame(animatePhysics);
@@ -4150,12 +4159,35 @@ function onPlayerStateChange(event) {
                 }
             });
 
+            let lastTriggerTime = 0;
+            function triggerItem(item, idx) {
+                const now = Date.now();
+                if (now - lastTriggerTime < 250) return; // Prevent double trigger
+                lastTriggerTime = now;
+
+                const action = item.dataset.action;
+                items.forEach(b => b.classList.remove('active'));
+                item.classList.add('active');
+
+                rotateToItem(idx);
+                navigateToAction(action);
+                playRotaryTickSound(true);
+            }
+
             const endDrag = (e) => {
                 if (hasDragged) {
                     try { stage.releasePointerCapture(e.pointerId); } catch(err) {}
+                } else if (isPointerDown && pointerDownItem) {
+                    const idx = items.indexOf(pointerDownItem);
+                    if (idx !== -1) {
+                        triggerItem(pointerDownItem, idx);
+                    }
                 }
                 isPointerDown = false;
                 isDragging = false;
+                hasDragged = false;
+                pointerDownOnItem = false;
+                pointerDownItem = null;
             };
             stage.addEventListener('pointerup', endDrag);
             stage.addEventListener('pointercancel', endDrag);
@@ -4165,15 +4197,8 @@ function onPlayerStateChange(event) {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const action = item.dataset.action;
-
-                    rotateToItem(idx);
-
-                    items.forEach(b => b.classList.remove('active'));
-                    item.classList.add('active');
-
-                    navigateToAction(action);
-                    playRotaryTickSound(true);
+                    if (hasDragged) return;
+                    triggerItem(item, idx);
                 });
             });
 
@@ -4271,7 +4296,22 @@ function onPlayerStateChange(event) {
                             rSum += data[i]; gSum += data[i+1]; bSum += data[i+2];
                         }
                         const count = data.length / 4;
-                        sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${Math.round(rSum/count)},${Math.round(gSum/count)},${Math.round(bSum/count)},0.12)`);
+                        const avgR = Math.round(rSum / count);
+                        const avgG = Math.round(gSum / count);
+                        const avgB = Math.round(bSum / count);
+                        sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${avgR},${avgG},${avgB},0.12)`);
+
+                        // Bind radial navigation wheel colors to poster colors
+                        const radialContainer = document.getElementById('radial-nav-container');
+                        if (radialContainer) {
+                            radialContainer.style.setProperty('--radial-color', `rgb(${avgR},${avgG},${avgB})`);
+                            radialContainer.style.setProperty('--radial-glow', `rgba(${avgR},${avgG},${avgB},0.85)`);
+                            radialContainer.style.setProperty('--radial-color-rgb', `${avgR},${avgG},${avgB}`);
+                        }
+                        const stop1 = document.getElementById('radial-grad-stop-1');
+                        const stop2 = document.getElementById('radial-grad-stop-2');
+                        if (stop1) stop1.setAttribute('stop-color', `rgb(${avgR},${avgG},${avgB})`);
+                        if (stop2) stop2.setAttribute('stop-color', `rgb(${avgR},${avgG},${avgB})`);
                     } catch(e) {}
                 };
                 img.src = proxyUrl;
