@@ -21,12 +21,33 @@ except ImportError:
 from pydantic import BaseModel
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
+from collections import OrderedDict
+import gc
 
-# --- Caching & Concurrency ---
-API_CACHE = {}
+# --- Memory-Safe LRU Caching & Concurrency (Tuned for Render 512MB RAM) ---
+class LRUCacheDict(OrderedDict):
+    """Memory-safe LRU dictionary with strict item cap and self-pruning."""
+    def __init__(self, maxsize=150, *args, **kwargs):
+        self.maxsize = maxsize
+        super().__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.move_to_end(key)
+        super().__setitem__(key, value)
+        if len(self) > self.maxsize:
+            self.popitem(last=False)
+
+API_CACHE = LRUCacheDict(maxsize=150)
 API_CACHE_TTL = 600  # 10 minutes cache for API responses
 
-executor = ThreadPoolExecutor(max_workers=20)
+# Cap worker threads to 4 to prevent RAM spikes on low-memory containers
+executor = ThreadPoolExecutor(max_workers=4)
 async def run_sync(func, *args, **kwargs):
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(executor, lambda: func(*args, **kwargs))
@@ -53,7 +74,7 @@ def get_db():
     return conn
 
 # Caches configuration
-STREAM_CACHE = {}
+STREAM_CACHE = LRUCacheDict(maxsize=100)
 STREAM_CACHE_TTL = 600  # 10 minutes — YouTube stream URLs expire; frontend retries on error
 COVER_CACHE_DIR = ".cover_cache"
 
@@ -177,24 +198,16 @@ def extract_yt_video_id(url: str) -> str:
     return ""
 
 
-# Persistent pooled client for lightning-fast cover lookups with keepalive
+# Persistent pooled client for lightning-fast cover lookups with keepalive (tuned for low RAM)
 _COVER_CLIENT = httpx.AsyncClient(
     timeout=httpx.Timeout(3.0, connect=2.0),
     headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
-    limits=httpx.Limits(max_keepalive_connections=60, max_connections=120)
+    limits=httpx.Limits(max_keepalive_connections=15, max_connections=30)
 )
-_COVER_MEM_CACHE: dict[str, bytes] = {}
-_COVER_MEM_CACHE_MAX = 600
 
-def _cache_cover_bytes(key: str, data: bytes, cache_path: str):
-    if not key or not data or len(data) < 800:
+def _cache_cover_bytes(cache_path: str, data: bytes):
+    if not cache_path or not data or len(data) < 800:
         return
-    _COVER_MEM_CACHE[key] = data
-    if len(_COVER_MEM_CACHE) > _COVER_MEM_CACHE_MAX:
-        try:
-            del _COVER_MEM_CACHE[next(iter(_COVER_MEM_CACHE))]
-        except Exception:
-            pass
     try:
         with open(cache_path, "wb") as f:
             f.write(data)
@@ -204,13 +217,12 @@ def _cache_cover_bytes(key: str, data: bytes, cache_path: str):
 @app.get("/api/cover")
 async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = False):
     """
-    High-performance album artwork proxy with RAM LRU caching and disk cache.
-    1. Checks RAM memory cache (<0.1ms).
-    2. Checks disk cache.
-    3. If vid provided without hd/q requirement: instant hqdefault CDN fetch (<20ms).
-    4. If q provided: unified single iTunes music query for ultra-HD 1400x1400 Apple Music art.
-    5. Fallback to direct YouTube hqdefault thumbnail.
-    6. Ultimate fallback to default_cover.jpg.
+    High-performance album artwork proxy with zero-RAM disk streaming.
+    1. Checks disk cache (served via kernel FileResponse without loading into Python heap).
+    2. If vid provided without hd/q requirement: instant hqdefault CDN fetch (<20ms).
+    3. If q provided: unified single iTunes music query for ultra-HD 1400x1400 Apple Music art.
+    4. Fallback to direct YouTube hqdefault thumbnail.
+    5. Ultimate fallback to default_cover.jpg.
     """
     cache_key = ""
     if q:
@@ -222,42 +234,31 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
 
     default_cover_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "default_cover.jpg")
 
-    # 1. RAM Memory Cache Hit (0ms latency)
-    if cache_key and cache_key in _COVER_MEM_CACHE:
-        return Response(content=_COVER_MEM_CACHE[cache_key], media_type="image/jpeg",
-                        headers={"Cache-Control": "public, max-age=31536000"})
-
-    # 2. Disk Cache Hit
+    # 1. Disk Cache Hit (Zero RAM: OS-level kernel file streaming)
     cache_path = os.path.join(COVER_CACHE_DIR, f"{cache_key}.jpg") if cache_key else ""
     if cache_path and os.path.exists(cache_path) and os.path.getsize(cache_path) > 800:
-        try:
-            with open(cache_path, "rb") as f:
-                data = f.read()
-            _COVER_MEM_CACHE[cache_key] = data
-            return Response(content=data, media_type="image/jpeg",
+        return FileResponse(cache_path, media_type="image/jpeg",
                             headers={"Cache-Control": "public, max-age=31536000"})
-        except Exception:
-            pass
 
-    # 3. Clean inputs
+    # 2. Clean inputs
     if yt_thumb and not is_valid_yt_thumb(yt_thumb):
         yt_thumb = ""
 
-    # 4. Fast Path for card thumbnails (vid provided, no heavy iTunes search needed)
+    # 3. Fast Path for card thumbnails (vid provided, no heavy iTunes search needed)
     target_vid = vid or extract_yt_video_id(yt_thumb)
     if target_vid and not hd and not q:
         hq_url = f"https://i.ytimg.com/vi/{target_vid}/hqdefault.jpg"
         try:
             img_r = await _COVER_CLIENT.get(hq_url)
             if img_r.status_code == 200 and len(img_r.content) > 1000:
-                if cache_key and cache_path:
-                    _cache_cover_bytes(cache_key, img_r.content, cache_path)
+                if cache_path:
+                    _cache_cover_bytes(cache_path, img_r.content)
                 return Response(content=img_r.content, media_type="image/jpeg",
                                 headers={"Cache-Control": "public, max-age=86400"})
         except Exception:
             pass
 
-    # 5. iTunes Apple Music 1400x1400 lookup when query is present
+    # 4. iTunes Apple Music 1400x1400 lookup when query is present
     if q:
         term = clean_cover_search_term(q)
         if term:
@@ -273,26 +274,26 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
                         art_url = data["results"][0]["artworkUrl100"].replace("100x100bb", "1400x1400bb")
                         img_r = await _COVER_CLIENT.get(art_url, timeout=3.0)
                         if img_r.status_code == 200 and len(img_r.content) > 2000:
-                            if cache_key and cache_path:
-                                _cache_cover_bytes(cache_key, img_r.content, cache_path)
+                            if cache_path:
+                                _cache_cover_bytes(cache_path, img_r.content)
                             return Response(content=img_r.content, media_type="image/jpeg",
                                             headers={"Cache-Control": "public, max-age=31536000"})
             except Exception:
                 pass
 
-    # 6. Active CDN YouTube/Google thumbnail proxy
+    # 5. Active CDN YouTube/Google thumbnail proxy
     if yt_thumb and is_valid_yt_thumb(yt_thumb):
         try:
             img_r = await _COVER_CLIENT.get(yt_thumb, timeout=2.5)
             if img_r.status_code == 200 and len(img_r.content) > 1000:
-                if cache_key and cache_path:
-                    _cache_cover_bytes(cache_key, img_r.content, cache_path)
+                if cache_path:
+                    _cache_cover_bytes(cache_path, img_r.content)
                 return Response(content=img_r.content, media_type="image/jpeg",
                                 headers={"Cache-Control": "public, max-age=86400"})
         except Exception:
             pass
 
-    # 7. Fallback to YouTube thumbnail by videoId (hqdefault guaranteed)
+    # 6. Fallback to YouTube thumbnail by videoId (hqdefault guaranteed)
     if target_vid:
         candidate_urls = []
         if hd:
@@ -305,14 +306,14 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
                 if img_r.status_code == 200:
                     if len(img_r.content) < 2000 and "maxresdefault" in url:
                         continue
-                    if cache_key and cache_path:
-                        _cache_cover_bytes(cache_key, img_r.content, cache_path)
+                    if cache_path:
+                        _cache_cover_bytes(cache_path, img_r.content)
                     return Response(content=img_r.content, media_type="image/jpeg",
                                     headers={"Cache-Control": "public, max-age=86400"})
             except Exception:
                 continue
 
-    # 8. Guaranteed fallback: local default_cover.jpg
+    # 7. Guaranteed fallback: local default_cover.jpg
     if os.path.exists(default_cover_path):
         return FileResponse(default_cover_path, media_type="image/jpeg",
                             headers={"Cache-Control": "public, max-age=86400"})
@@ -987,9 +988,9 @@ async def get_playlist(id: str):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-LYRICS_CACHE = {}
+LYRICS_CACHE = LRUCacheDict(maxsize=100)
 LYRICS_CACHE_TTL = 86400  # 24 hours
-TRANSLATION_CACHE = {}
+TRANSLATION_CACHE = LRUCacheDict(maxsize=100)
 
 def parse_time_str(t_str: str) -> float:
     """Parses timestamps like '00:01:23.456', '01:23.45', '12.34s' into float seconds."""
@@ -2100,6 +2101,41 @@ def get_ip():
     finally:
         s.close()
     return {"ip": IP}
+
+@app.on_event("startup")
+async def start_memory_manager():
+    async def periodic_cleanup():
+        while True:
+            await asyncio.sleep(180)  # Every 3 minutes
+            try:
+                now = time.time()
+                # Prune expired API cache entries
+                for k in list(API_CACHE.keys()):
+                    if now - API_CACHE[k].get('time', 0) > API_CACHE_TTL:
+                        API_CACHE.pop(k, None)
+                # Prune expired Stream cache entries
+                for k in list(STREAM_CACHE.keys()):
+                    if now - STREAM_CACHE[k].get('cached_at', 0) > STREAM_CACHE_TTL:
+                        STREAM_CACHE.pop(k, None)
+                # Prune expired Lyrics cache entries
+                for k in list(LYRICS_CACHE.keys()):
+                    if now - LYRICS_CACHE[k].get('time', 0) > LYRICS_CACHE_TTL:
+                        LYRICS_CACHE.pop(k, None)
+                # Cleanup disk cover cache if exceeding 600 files
+                if os.path.exists(COVER_CACHE_DIR):
+                    files = [os.path.join(COVER_CACHE_DIR, f) for f in os.listdir(COVER_CACHE_DIR) if f.endswith('.jpg')]
+                    if len(files) > 600:
+                        files.sort(key=lambda p: os.path.getmtime(p))
+                        for old_file in files[:100]:
+                            try:
+                                os.remove(old_file)
+                            except Exception:
+                                pass
+                # Trigger explicit Python Garbage Collection
+                gc.collect()
+            except Exception:
+                pass
+    asyncio.create_task(periodic_cleanup())
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
