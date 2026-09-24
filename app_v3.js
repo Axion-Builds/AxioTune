@@ -6702,7 +6702,7 @@ function updateMediaSession(title, artist, artworkUrl) {
     if ('mediaSession' in navigator) {
         // Fallback to absolute URL if it's a relative default image
         let finalArt = artworkUrl;
-        if (artworkUrl === 'default_cover.jpg') {
+        if (artworkUrl && artworkUrl.includes('default_cover.jpg')) {
             finalArt = window.location.origin + '/default_cover.jpg';
         }
         navigator.mediaSession.metadata = new MediaMetadata({
