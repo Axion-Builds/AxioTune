@@ -1038,13 +1038,7 @@ def parse_ttml_lyrics(ttml_text: str):
                         "time": parse_time_str(s_begin)
                     })
         else:
-            w_list = clean_text.split()
-            step = 0.45
-            for w_idx, w in enumerate(w_list):
-                words.append({
-                    "word": w,
-                    "time": round(line_start + (w_idx * step), 2)
-                })
+            words = []
 
         lines.append({
             "time": line_start,
@@ -1127,11 +1121,7 @@ def parse_synced_lrc(lrc_text: str):
         if inline_words:
             words = inline_words
         else:
-            step = vocal_dur / max(num_words, 1)
             words = []
-            for w_idx, w in enumerate(words_list):
-                w_time = round(timestamp + (w_idx * step), 2)
-                words.append({"word": w, "time": w_time})
 
         lines.append({
             "time": timestamp,
@@ -1236,23 +1226,28 @@ async def fetch_paxsenix_lyrics(title: str, artist: str, api_key: str, client: h
         pass
     return None
 
-async def fetch_betterlyrics_lyrics(title: str, artist: str, client: httpx.AsyncClient):
+async def fetch_betterlyrics_lyrics(title: str, artist: str, client: httpx.AsyncClient, api_key: str = ""):
     """BetterLyrics: Apple Music timings, word by word (TTML)."""
+    headers = {"User-Agent": "BetterLyrics/1.0"}
+    if api_key:
+        headers["X-API-Key"] = api_key
+        headers["Authorization"] = f"Bearer {api_key}"
     try:
         url = "https://lyrics-api.boidu.dev/getLyrics"
-        r = await client.get(url, params={"a": artist, "s": title}, headers={"User-Agent": "BetterLyrics/1.0"}, timeout=6.0)
+        r = await client.get(url, params={"a": artist, "s": title}, headers=headers, timeout=6.0)
         if r.status_code == 200:
             data = r.json()
             ttml = data.get("ttml")
             if ttml:
                 parsed = parse_ttml_lyrics(ttml)
                 if parsed:
+                    has_words = any(len(l.get("words", [])) > 1 for l in parsed)
                     return {
                         "id": "betterlyrics",
                         "provider": "BetterLyrics",
                         "provider_badge": "BetterLyrics",
                         "name": f"BetterLyrics • {artist}",
-                        "type": "word_synced",
+                        "type": "word_synced" if has_words else "line_synced",
                         "lines": parsed,
                         "raw_lrc": ttml
                     }
@@ -1337,45 +1332,52 @@ async def fetch_kugou_lyrics(title: str, artist: str, client: httpx.AsyncClient)
     return None
 
 async def fetch_lrclib_lyrics(title: str, artist: str, client: httpx.AsyncClient):
-    """LRCLIB: Whole lines only, and always up."""
+    """LRCLIB: Synced and Plain lyrics provider."""
     queries = [f"{title} {artist}".strip(), title]
+    found_sources = []
     for q in queries:
-        if not q:
+        if not q or found_sources:
             continue
         try:
             r = await client.get("https://lrclib.net/api/search", params={"q": q}, timeout=4.0)
             if r.status_code == 200:
                 data = r.json()
                 if isinstance(data, list) and data:
+                    has_synced = False
+                    has_plain = False
                     for item in data:
                         synced = item.get("syncedLyrics")
                         plain = item.get("plainLyrics")
-                        track_name = item.get("trackName") or title
                         artist_name = item.get("artistName") or artist
-                        if synced:
+                        if synced and not has_synced:
                             parsed = parse_synced_lrc(synced)
                             if parsed:
-                                return {
+                                has_words = any(len(l.get("words", [])) > 1 for l in parsed)
+                                found_sources.append({
                                     "id": "lrclib",
                                     "provider": "LRCLIB",
                                     "provider_badge": "LRCLIB",
-                                    "name": f"LRCLIB • {artist_name}",
-                                    "type": "line_synced",
+                                    "name": f"LRCLIB (Synced) • {artist_name}",
+                                    "type": "word_synced" if has_words else "line_synced",
                                     "lines": parsed,
                                     "raw_lrc": synced
-                                }
-                        elif plain:
-                            return {
+                                })
+                                has_synced = True
+                        if plain and not has_plain:
+                            found_sources.append({
                                 "id": "lrclib_plain",
                                 "provider": "LRCLIB",
                                 "provider_badge": "LRCLIB",
                                 "name": f"LRCLIB (Plain) • {artist_name}",
                                 "type": "plain_text",
                                 "lyrics": plain
-                            }
+                            })
+                            has_plain = True
+                        if has_synced and has_plain:
+                            break
         except Exception:
             continue
-    return None
+    return found_sources if found_sources else None
 
 @app.get("/api/lyrics")
 async def get_lyrics(
@@ -1384,9 +1386,10 @@ async def get_lyrics(
     artist: str = "",
     order: str = "lyricsplus,paxsenix,betterlyrics,simpmusic,kugou,lrclib",
     prioritize_syllable: bool = True,
-    paxsenix_key: str = ""
+    paxsenix_key: str = "",
+    betterlyrics_key: str = ""
 ):
-    cache_key = f"lyrics_{videoId}_{title}_{artist}_{order}_{prioritize_syllable}_{bool(paxsenix_key)}"
+    cache_key = f"lyrics_{videoId}_{title}_{artist}_{order}_{prioritize_syllable}_{bool(paxsenix_key)}_{bool(betterlyrics_key)}"
     now = time.time()
     if cache_key in LYRICS_CACHE and (now - LYRICS_CACHE[cache_key]['time']) < LYRICS_CACHE_TTL:
         return LYRICS_CACHE[cache_key]['data']
@@ -1410,7 +1413,7 @@ async def get_lyrics(
             elif p_key == "paxsenix":
                 tasks.append(("paxsenix", fetch_paxsenix_lyrics(c_title, c_artist, paxsenix_key, client)))
             elif p_key == "betterlyrics":
-                tasks.append(("betterlyrics", fetch_betterlyrics_lyrics(c_title, c_artist, client)))
+                tasks.append(("betterlyrics", fetch_betterlyrics_lyrics(c_title, c_artist, client, betterlyrics_key)))
             elif p_key == "simpmusic":
                 tasks.append(("simpmusic", fetch_simpmusic_lyrics(videoId, client)))
             elif p_key == "kugou":
@@ -1422,11 +1425,27 @@ async def get_lyrics(
         yt_task = None
         if videoId:
             def fetch_yt_lyrics():
+                if not ytmusic:
+                    return None
                 try:
                     watch = ytmusic.get_watch_playlist(videoId=videoId)
                     lyrics_id = watch.get("lyrics")
                     if lyrics_id:
                         return ytmusic.get_lyrics(lyrics_id)
+                except Exception:
+                    pass
+                try:
+                    res = ytmusic._send_request('next', {'videoId': videoId, 'isAudioOnly': True})
+                    tabs = res.get('contents', {}).get('singleColumnMusicWatchNextResultsRenderer', {}).get('tabbedRenderer', {}).get('watchNextTabbedResultsRenderer', {}).get('tabs', [])
+                    for t in tabs:
+                        tr = t.get('tabRenderer', {})
+                        title = tr.get('title', '')
+                        if 'Lyrics' in str(title):
+                            browse_id = tr.get('endpoint', {}).get('browseEndpoint', {}).get('browseId')
+                            if browse_id:
+                                lyr = ytmusic.get_lyrics(browse_id)
+                                if lyr and lyr.get('lyrics'):
+                                    return lyr
                 except Exception:
                     pass
                 return None
@@ -1441,7 +1460,11 @@ async def get_lyrics(
         # Map provider results in user's priority order
         provider_results = results[:len(tasks)]
         for i, res in enumerate(provider_results):
-            if isinstance(res, dict) and res:
+            if isinstance(res, list):
+                for item in res:
+                    if isinstance(item, dict) and item:
+                        sources.append(item)
+            elif isinstance(res, dict) and res:
                 sources.append(res)
 
         # Append YouTube Music official lyrics to sources if found
@@ -1457,19 +1480,29 @@ async def get_lyrics(
                     "lyrics": yt_res.get("lyrics", "")
                 })
 
-    # Pick active source based on user priority and prioritize_syllable
+    # Pick active source strictly following user rules:
+    # 1. Strictly look for true word-by-word (type == "word_synced")
+    # 2. If no word-by-word, strictly fallback to line-synced (type == "line_synced")
+    # 3. If no line-synced, fallback to plain text (type == "plain_text")
     if sources:
         if prioritize_syllable:
-            # First provider in user priority with syllable/word-by-word lyrics wins
             for s in sources:
                 if s.get("type") == "word_synced":
                     active_source = s
                     break
-            # If no syllable lyrics, pick first line-synced or plain source in user priority
+            if not active_source:
+                for s in sources:
+                    if s.get("type") == "line_synced":
+                        active_source = s
+                        break
+            if not active_source:
+                for s in sources:
+                    if s.get("type") == "plain_text":
+                        active_source = s
+                        break
             if not active_source:
                 active_source = sources[0]
         else:
-            # First source in user priority wins
             active_source = sources[0]
 
     if active_source:

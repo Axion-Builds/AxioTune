@@ -1040,8 +1040,87 @@
             padding-right: 40px;
         }
 
+        #right-panel.plain-lyrics-mode {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+        }
+
         #lyrics-container {
             position: absolute; top: 0; width: 100%; padding: 50vh 0; will-change: transform;
+        }
+
+        #lyrics-container.plain-lyrics-mode,
+        #right-panel.plain-lyrics-mode #lyrics-container {
+            position: relative !important;
+            top: 0 !important;
+            padding: 40px 30px 140px 10px !important;
+            transform: none !important;
+            will-change: auto !important;
+            height: auto !important;
+        }
+
+        .plain-lyrics-wrapper {
+            max-width: 640px;
+            margin: 0;
+            user-select: text;
+            text-align: left;
+        }
+
+        .plain-lyric-row {
+            font-size: clamp(1.2rem, 2.2vw, 1.75rem);
+            font-weight: 600;
+            line-height: 1.85;
+            color: rgba(255, 255, 255, 0.88);
+            margin-bottom: 0.45rem;
+            font-family: var(--lyrics-font-family, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif);
+            transition: color 0.25s ease;
+        }
+
+        .plain-lyric-row:hover {
+            color: #ffffff;
+        }
+
+        .plain-lyric-gap {
+            height: 1.8rem;
+        }
+
+        .plain-lyric-header {
+            display: inline-block;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent, #ff2d55);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin: 1.8rem 0 0.8rem 0;
+        }
+
+        /* ── STRICT LINE-SYNCED STYLING (Whole line illumination) ── */
+        .lyric-line.is-line-synced .lyric-line-full-text {
+            display: inline-block;
+            color: inherit;
+            transition: color 0.35s ease, text-shadow 0.35s ease;
+        }
+
+        .lyric-line.is-line-synced.active-line {
+            opacity: 1 !important;
+            filter: blur(0px) drop-shadow(0 0 var(--lyrics-glow-intensity, 12px) var(--accent, #ff2d55)) !important;
+            color: #ffffff !important;
+            transform: scale(1.02) !important;
+            border-left-color: var(--accent, #ff2d55) !important;
+            padding-left: 14px !important;
+        }
+
+        .lyric-line.is-line-synced.active-line .lyric-line-full-text {
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            text-shadow: 0 0 16px rgba(255, 255, 255, 0.55);
         }
 
         .lyric-line {
@@ -1382,15 +1461,32 @@
         }
         .source-item-tag {
             font-size: 0.68rem;
-            padding: 2px 6px;
+            padding: 2px 7px;
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.7);
             white-space: nowrap;
+            font-weight: 600;
+        }
+        .source-item-tag.word_synced {
+            background: rgba(196, 75, 255, 0.22);
+            color: #e2a8ff;
+            border: 1px solid rgba(196, 75, 255, 0.4);
+        }
+        .source-item-tag.line_synced {
+            background: rgba(75, 159, 255, 0.22);
+            color: #9eccff;
+            border: 1px solid rgba(75, 159, 255, 0.4);
+        }
+        .source-item-tag.plain_text {
+            background: rgba(255, 214, 10, 0.18);
+            color: #ffe066;
+            border: 1px solid rgba(255, 214, 10, 0.35);
         }
         .source-item.active .source-item-tag {
-            background: var(--accent, #ff476d);
-            color: #ffffff;
+            background: var(--accent, #ff476d) !important;
+            color: #ffffff !important;
+            border-color: transparent !important;
         }
 
         /* Separator */
