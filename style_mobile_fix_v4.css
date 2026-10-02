@@ -1,7 +1,6 @@
 :root {
-            --font-family: 'Satoshi', 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-            --font-display: 'Clash Display', 'Satoshi', sans-serif;
-            --font-body: 'Satoshi', sans-serif;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-display: 'Outfit', 'Inter', sans-serif;
             --accent: #ff476d;
             --accent-rgb: 255, 71, 109;
             --accent2: #c44bff;
@@ -11,7 +10,7 @@
             --glass-blur: 30px;
             --glass-bg: rgba(255,255,255,0.08);
             --lyrics-font-size: clamp(1.2rem, 2.5vw, 2.2rem);
-            --lyrics-font-family: 'Satoshi', sans-serif;
+            --lyrics-font-family: 'Outfit', sans-serif;
             --bg-brightness: 0.5;
         }
 
@@ -932,37 +931,14 @@
             width: clamp(200px, 54%, 415px); display: flex; flex-direction: column; gap: 15px;
         }
 
-        #track-info { text-align: left; margin-bottom: 2px; width: 100%; }
+        #track-info { text-align: left; margin-bottom: 5px; }
         #track-title {
-            font-family: 'Clash Display', 'Outfit', -apple-system, sans-serif !important;
-            font-size: clamp(2.2rem, 4.4vw, 3.6rem) !important;
-            font-weight: 700 !important;
-            margin-bottom: 3px !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            letter-spacing: -0.025em !important;
-            line-height: 1.05 !important;
-            color: #ffffff !important;
-            text-shadow: 0 4px 28px rgba(0,0,0,0.55) !important;
-            transition: opacity 0.3s ease !important;
+            font-family: var(--font-display);
+            font-size: 1.75rem; font-weight: 700;
+            margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: -0.02em;
         }
-        #track-artist {
-            font-family: 'Satoshi', -apple-system, sans-serif !important;
-            font-size: clamp(0.95rem, 1.35vw, 1.18rem) !important;
-            color: rgba(255,255,255,0.46) !important;
-            font-weight: 500 !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            letter-spacing: 0.035em !important;
-            text-transform: none !important;
-            margin-top: 5px !important;
-            transition: color 0.25s ease, opacity 0.3s ease !important;
-        }
-        #track-artist:hover {
-            color: rgba(255,255,255,0.9) !important;
-        }
+        #track-artist { font-size: 1.05rem; color: rgba(255,255,255,0.65); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
 
         #progress-container {
             width: 100%; height: 5px; background: rgba(255,255,255,0.15);
@@ -1774,22 +1750,8 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); opacity: 1; transition: opacity 0.3s;
         }
         #mini-info { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
-        #mini-title {
-            font-family: 'Clash Display', sans-serif !important;
-            font-size: 0.98rem !important;
-            font-weight: 600 !important;
-            letter-spacing: -0.02em !important;
-            color: #ffffff !important;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
-        }
-        #mini-artist {
-            font-family: 'Satoshi', sans-serif !important;
-            font-size: 0.8rem !important;
-            color: rgba(255,255,255,0.48) !important;
-            font-weight: 500 !important;
-            letter-spacing: 0.025em !important;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        #mini-title { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+        #mini-artist { font-size: 0.85rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
         #mini-controls { display: flex; align-items: center; }
         .mini-btn {
@@ -2485,46 +2447,13 @@
         }
 
         .home-greeting {
-            font-family: 'Clash Display', sans-serif !important;
-            font-size: clamp(2.8rem, 5.8vw, 4.6rem) !important;
-            font-weight: 700 !important;
-            letter-spacing: -0.035em !important;
-            margin-bottom: 35px !important;
-            line-height: 0.94 !important;
-            /* Stark top-to-faded gradient — premium editorial look */
-            background: linear-gradient(165deg, #ffffff 15%, rgba(255,255,255,0.85) 55%, rgba(255,255,255,0.35) 100%) !important;
-            -webkit-background-clip: text !important;
-            background-clip: text !important;
-            -webkit-text-fill-color: transparent !important;
+            font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 40px;
+            background: linear-gradient(135deg, #fff, rgba(255,255,255,0.3));
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
 
         .home-section { margin-bottom: 60px; }
-
-        /* Section title — bold label + subtle visual weight contrast */
-        .section-title {
-            font-family: 'Clash Display', sans-serif !important;
-            font-size: 1.35rem !important;
-            font-weight: 600 !important;
-            margin-bottom: 20px !important;
-            color: rgba(255,255,255,0.95) !important;
-            letter-spacing: -0.02em !important;
-            text-transform: none !important;
-            /* Left accent pip */
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-        .section-title::before {
-            content: '' !important;
-            display: inline-block !important;
-            width: 3.5px !important;
-            height: 1.15em !important;
-            border-radius: 4px !important;
-            background: var(--accent, #ff476d) !important;
-            box-shadow: 0 0 12px rgba(var(--accent-rgb, 255, 71, 109), 0.6) !important;
-            flex-shrink: 0 !important;
-            opacity: 1 !important;
-        }
+        .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; color: rgba(255,255,255,0.9); }
 
         .vinyl-scroll-container {
             display: flex; gap: 80px; overflow-x: auto; padding: 20px 10px 40px 10px;
@@ -2602,20 +2531,11 @@
         .vinyl-card:nth-child(5n+5) .vinyl-disc::after { background: #ff0055; }
 
         .vinyl-info {
-            font-family: 'Clash Display', sans-serif !important;
             margin-top: 15px; font-size: 1.05rem; font-weight: 600; text-align: left;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            letter-spacing: -0.015em;
-            color: #ffffff;
             transition: opacity 0.3s;
         }
-        .vinyl-info span {
-            font-family: 'Satoshi', sans-serif !important;
-            font-size: 0.85rem; font-weight: 500; color: rgba(255,255,255,0.48);
-            letter-spacing: 0.025em;
-            display: block;
-            margin-top: 2px;
-        }
+        .vinyl-info span { font-size: 0.85rem; font-weight: 400; color: rgba(255,255,255,0.5); }
 
         /* High-Performance 2D Hover Magic - no perspective drift */
         .vinyl-card:hover .vinyl-cover-wrapper {
@@ -2938,16 +2858,12 @@
         }
 
         .dense-card-title {
-            font-family: 'Clash Display', sans-serif !important;
-            font-size: 0.98rem !important; font-weight: 600 !important; letter-spacing: -0.015em !important;
-            white-space: nowrap; overflow: hidden;
+            font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden;
             text-overflow: ellipsis; color: white; margin-bottom: 2px; width: 100%;
         }
 
         .dense-card-artist {
-            font-family: 'Satoshi', sans-serif !important;
-            font-size: 0.82rem !important; font-weight: 500 !important; letter-spacing: 0.02em !important;
-            color: rgba(255, 255, 255, 0.48) !important; white-space: nowrap;
+            font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); white-space: nowrap;
             overflow: hidden; text-overflow: ellipsis; width: 100%;
         }
 
@@ -2984,9 +2900,9 @@
                 gap: 5px; align-items: center;
             }
             
-            #track-info { grid-column: 1; grid-row: 1; margin-bottom: 0; min-width: 0; }
-            #track-title { font-size: 1.15rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 1px; line-height: 1.1; }
-            #track-artist { font-size: 0.78rem; margin-top: 3px; }
+            #track-info { grid-column: 1; grid-row: 1; margin-bottom: 0; min-width: 0; } /* min-width: 0 allows text ellipsis */
+            #track-title { font-size: 1.2rem; margin-bottom: 2px; }
+            #track-artist { font-size: 0.9rem; }
             
             .playback-buttons { grid-column: 2; grid-row: 1; margin-top: 0; gap: 0; justify-content: flex-end; }
             #play-pause-btn { width: 45px; height: 45px; }
@@ -4978,7 +4894,14 @@ h1, h2, h3, h4, h5, h6,
     letter-spacing: -0.03em;
 }
 
-#album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
+.section-title, #album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
+
+/* Track title: always Outfit 800 for premium feel */
+#track-title {
+    font-family: var(--font-display) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+}
 
 .track-title {
     font-weight: 500;
@@ -6777,7 +6700,10 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 .q-hero-artist { font-size: 0.95rem; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
 
 
-#album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
+.section-title, #album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
+#track-title {
+    font-family: var(--title-font, 'Outfit') !important;
+}
 
 
 
