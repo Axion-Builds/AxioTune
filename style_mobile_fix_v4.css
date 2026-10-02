@@ -357,6 +357,12 @@
             .pch-action-btn:active {
                 transform: scale(0.93);
             }
+            #pch-settings-btn svg {
+                transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            #pch-settings-btn:hover svg {
+                transform: rotate(45deg);
+            }
 
             /* ── GitHub Button (Rotating Hover Effect) ── */
             .Btn {
@@ -4688,6 +4694,34 @@ body:not(.player-screen-active) #global-back-btn {
 #download-app-btn svg { width: 20px; height: 20px; fill: currentColor; }
 #download-app-btn:hover { background: rgba(255,255,255,0.15); color: white; transform: scale(1.05); }
 
+#home-settings-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+    cursor: pointer;
+}
+#home-settings-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#home-settings-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    transform: scale(1.05);
+}
+#home-settings-btn:hover svg {
+    transform: rotate(45deg);
+}
+
 #download-dropdown-menu {
     position: absolute; top: 50px; right: 0;
     background: rgba(20, 20, 20, 0.9);
@@ -7638,7 +7672,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     top: 50%;
     transform: translateY(-50%);
     width: 220px;
-    height: 360px;
+    height: 240px;
     pointer-events: none;
 }
 
@@ -7688,7 +7722,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     left: 0;
     top: 0;
     width: 110px;
-    height: 360px;
+    height: 240px;
     overflow: visible;
     pointer-events: none;
     filter: drop-shadow(8px 0 26px rgba(0, 0, 0, 0.85))
@@ -7830,7 +7864,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     color: #ffffff;
     text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 0 24px rgba(0, 0, 0, 0.8);
     opacity: 0;
-    transform: translateX(-8px);
+    transform: translateY(-50%) translateX(-8px);
     transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
     user-select: none;
@@ -7839,7 +7873,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 
 .bezel-floating-label.is-visible {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(-50%) translateX(0);
 }
 
 /* Mobile & Fullscreen Responsiveness */

@@ -381,8 +381,12 @@
             <button class="pch-action-btn" title="Download App" onclick="toggleDownloadMenu(event)">
                 <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
             </button>
+            <!-- Settings -->
+            <button class="pch-action-btn" id="pch-settings-btn" title="Settings" onclick="if(typeof showSettings === 'function') showSettings(); else if(window.showSettings) window.showSettings();">
+                <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </button>
             <!-- Profile & Settings -->
-            <button class="pch-action-btn pch-profile-btn" title="Profile & Settings" onclick="if(typeof showSettings === 'function') showSettings()">
+            <button class="pch-action-btn pch-profile-btn" title="Profile" onclick="if(typeof openProfileModal === 'function') openProfileModal();">
                 <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </button>
         </div>
@@ -425,7 +429,7 @@
             </div>
 
             <!-- Mathematical G2 S-Curve SVG Liquid Squircle Path -->
-            <svg class="bezel-svg-canvas" id="bezel-svg-canvas" viewBox="0 0 110 360" xmlns="http://www.w3.org/2000/svg">
+            <svg class="bezel-svg-canvas" id="bezel-svg-canvas" viewBox="0 0 110 240" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="bezelBgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stop-color="#020204"/>
@@ -439,13 +443,13 @@
                     </linearGradient>
                 </defs>
                 <path class="bezel-path-bg" id="bezel-path-bg"
-                      d="M 0,0 C 0,28.6 0,23.4 0,52 L 0,308 C 0,336.6 0,331.4 0,360 L 0,0 Z"
+                      d="M 0,0 C 0,22 0,18 0,40 L 0,200 C 0,222 0,218 0,240 L 0,0 Z"
                       fill="url(#bezelBgGrad)"
                       stroke="url(#bezelEdgeStroke)"
                       stroke-width="1.2"/>
             </svg>
 
-            <!-- 5 Vertical Navigation Icons inside the Bezel Plateau -->
+            <!-- 3 Vertical Navigation Icons inside the Bezel Plateau -->
             <div class="bezel-nav-column" id="bezel-nav-column">
                 <!-- 0: Home -->
                 <button class="bezel-nav-item radial-nav-item active" data-action="home" data-title="HOME" title="Home">
@@ -465,20 +469,6 @@
                 <button class="bezel-nav-item radial-nav-item" data-action="history" data-title="HISTORY" title="History">
                     <div class="bezel-item-icon-wrap">
                         <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-                    </div>
-                </button>
-
-                <!-- 3: Queue -->
-                <button class="bezel-nav-item radial-nav-item" data-action="queue" data-title="QUEUE" title="Queue">
-                    <div class="bezel-item-icon-wrap">
-                        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
-                    </div>
-                </button>
-
-                <!-- 4: Settings -->
-                <button class="bezel-nav-item radial-nav-item" data-action="settings" data-title="SETTINGS" title="Settings">
-                    <div class="bezel-item-icon-wrap">
-                        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
                     </div>
                 </button>
             </div>
@@ -526,6 +516,9 @@
                     <button onclick="showMobileInstallAlert()">📱 Get Mobile App</button>
                 </div>
             </div>
+            <button id="home-settings-btn" title="Settings" onclick="if(typeof showSettings === 'function') showSettings(); else if(window.showSettings) window.showSettings();" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='white'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
+                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </button>
             <button id="profile-btn" title="Profile" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='white'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
                 <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </button>

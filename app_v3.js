@@ -1982,6 +1982,10 @@ function onPlayerStateChange(event) {
             showScreenExcept('settings-screen');
             syncSettingsUI(appSettings);
         }
+        window.showHome = showHome;
+        window.showLibrary = showLibrary;
+        window.showHistory = showHistory;
+        window.showSettings = showSettings;
 
         // --- HISTORY & HOME PERSONALIZATION LOGIC ---
         function getHistoryList() {
@@ -4081,14 +4085,15 @@ function onPlayerStateChange(event) {
             // ── Mathematical G2 Continuous Curvature S-Fillet SVG Generator ──
             function getBezelPath(w) {
                 if (w <= 0.4) {
-                    return "M 0,0 L 0,360 Z";
+                    return "M 0,0 L 0,240 Z";
                 }
-                const hf = 52;
+                const H = 240;
+                const hf = 40;
                 const yTop = hf;
-                const yBot = 360 - hf;
+                const yBot = H - hf;
                 const cp1y = hf * 0.55;
                 const cp2y = hf * 0.45;
-                return `M 0,0 C 0,${cp1y.toFixed(2)} ${w.toFixed(2)},${cp2y.toFixed(2)} ${w.toFixed(2)},${yTop} L ${w.toFixed(2)},${yBot} C ${w.toFixed(2)},${(360 - cp2y).toFixed(2)} 0,${(360 - cp1y).toFixed(2)} 0,360 L 0,0 Z`;
+                return `M 0,0 C 0,${cp1y.toFixed(2)} ${w.toFixed(2)},${cp2y.toFixed(2)} ${w.toFixed(2)},${yTop} L ${w.toFixed(2)},${yBot} C ${w.toFixed(2)},${(H - cp2y).toFixed(2)} 0,${(H - cp1y).toFixed(2)} 0,${H} L 0,0 Z`;
             }
 
             // ── Apple Spring Physics Solver for Bezel Bulge ──
@@ -4209,10 +4214,12 @@ function onPlayerStateChange(event) {
             buttons.forEach((btn, idx) => {
                 btn.addEventListener('mouseenter', () => {
                     const title = btn.getAttribute('data-title') || 'NAV';
-                    if (labelEl) {
+                    if (labelEl && stage) {
                         labelEl.textContent = title;
                         // Vertically align label exactly with hovered button center
-                        const targetTop = btn.offsetTop + (btn.offsetHeight / 2) - 8;
+                        const btnRect = btn.getBoundingClientRect();
+                        const stageRect = stage.getBoundingClientRect();
+                        const targetTop = (btnRect.top - stageRect.top) + (btnRect.height / 2);
                         labelEl.style.top = `${targetTop}px`;
                         labelEl.classList.add('is-visible');
                     }
