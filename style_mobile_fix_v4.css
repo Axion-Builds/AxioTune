@@ -7603,223 +7603,248 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 }
 
 /* ========================================================
-   🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL (Compact & Minimal)
+   📱 LIQUID BEZEL EXPANSION DOCK (Apple Action-Button Bezel Expansion)
    ======================================================== */
-.radial-nav-container {
+.bezel-nav-container {
     position: fixed;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%) translateX(-120px);
-    width: 150px;
-    height: 320px;
+    top: 0;
+    bottom: 0;
+    width: 220px;
     z-index: 99990;
     pointer-events: none;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
     user-select: none;
     -webkit-user-select: none;
+    display: flex;
+    align-items: center;
 }
 
-/* When hovered or touched, wheel expands smoothly outward within left gutter */
-.radial-nav-container:hover,
-.radial-nav-container.expanded {
-    transform: translateY(-50%) translateX(0) !important;
-    pointer-events: auto !important;
-}
-
-/* Subtle edge peek indicator docked at left border when idle */
-.radial-nav-peek {
+/* Invisible proximity trigger column running down the entire left display bezel */
+.bezel-trigger-edge {
     position: absolute;
-    left: 120px;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 32px;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* The expanding bulge stage vertically centered along the left border */
+.bezel-bulge-stage {
+    position: absolute;
+    left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
+    width: 220px;
+    height: 360px;
+    pointer-events: none;
+}
+
+/* Idle glowing notch resting flush on the left bezel */
+.bezel-idle-notch {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
     height: 60px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    pointer-events: auto;
     cursor: pointer;
-    pointer-events: auto;
-    transition: opacity 0.2s ease;
+    z-index: 6;
+    transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.radial-peek-line {
-    width: 3px;
-    height: 36px;
-    border-radius: 3px;
+.bezel-notch-core {
+    width: 3.5px;
+    height: 48px;
+    border-radius: 0 4px 4px 0;
     background: var(--radial-color, var(--accent, #ff2d55));
-    box-shadow: 0 0 10px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.6));
+    box-shadow: 0 0 10px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.75)),
+                0 0 20px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.4));
+    transition: transform 0.2s ease, background-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-.radial-peek-pip {
-    position: absolute;
-    right: 2px;
+.bezel-idle-notch:hover .bezel-notch-core {
     width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--radial-color, var(--accent, #ff2d55));
-    box-shadow: 0 0 8px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.8));
+    height: 54px;
+    box-shadow: 0 0 16px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.95)),
+                0 0 30px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.6));
 }
 
-.radial-nav-container:hover .radial-nav-peek,
-.radial-nav-container.expanded .radial-nav-peek {
+.bezel-nav-container.is-expanded .bezel-idle-notch {
     opacity: 0;
     pointer-events: none;
+    transform: translateY(-50%) scaleY(0.3);
 }
 
-/* Semicircular Wheel Stage */
-.radial-wheel-stage {
+/* SVG Bezel Liquid Canvas */
+.bezel-svg-canvas {
     position: absolute;
     left: 0;
     top: 0;
-    width: 150px;
-    height: 320px;
-    pointer-events: auto;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-}
-
-.radial-nav-container:hover .radial-wheel-stage,
-.radial-nav-container.expanded .radial-wheel-stage {
-    opacity: 1;
-}
-
-/* Center indicator notch/pip on edge */
-.radial-center-pointer {
-    position: absolute;
-    left: 0;
-    top: 160px;
-    width: 6px;
-    height: 3px;
-    border-radius: 0 2px 2px 0;
-    background: var(--radial-color, var(--accent, #ff2d55));
-    box-shadow: 0 0 8px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.8)), 0 0 16px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.5));
-    pointer-events: none;
-    transform: translateY(-50%);
-    z-index: 10;
-}
-
-/* SVG Clock-dial arc */
-.radial-dial-svg {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 150px;
-    height: 320px;
-    pointer-events: none;
+    width: 110px;
+    height: 360px;
     overflow: visible;
-}
-
-.radial-dial-ticks line {
-    stroke-linecap: round;
-}
-
-/* Orbit items */
-.radial-items-orbit {
-    position: absolute;
-    inset: 0;
     pointer-events: none;
+    filter: drop-shadow(8px 0 26px rgba(0, 0, 0, 0.85))
+            drop-shadow(2px 0 16px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.35)));
+    transition: filter 0.4s ease;
+    will-change: filter;
 }
 
-.radial-nav-item {
+.bezel-path-bg {
+    pointer-events: auto;
+    cursor: default;
+    will-change: d;
+}
+
+/* Column of navigation buttons inside the bulge */
+.bezel-nav-column {
     position: absolute;
-    top: 0;
     left: 0;
+    top: 50%;
+    transform: translateY(-50%) translateX(-24px);
+    width: 68px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 14px;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bezel-nav-container.is-expanded .bezel-nav-column {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Individual navigation item */
+.bezel-nav-item {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
     background: transparent;
     border: none;
-    padding: 0;
-    margin: 0;
+    outline: none;
     cursor: pointer;
-    pointer-events: auto;
-    user-select: none;
-    transform-origin: 14px 14px;
-    transition: opacity 0.15s ease;
-    will-change: transform, opacity;
-}
-
-.radial-item-icon-wrap {
-    width: 28px;
-    height: 28px;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.6);
-    transition: color 0.2s ease, transform 0.2s ease, filter 0.2s ease;
-    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.55);
+    transition: background-color 0.2s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.radial-item-icon-wrap svg {
+.bezel-nav-item:hover {
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+.bezel-nav-item.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.bezel-item-icon-wrap {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bezel-item-icon-wrap svg {
     width: 22px;
     height: 22px;
     fill: currentColor;
-    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.85));
-    transition: transform 0.2s ease, filter 0.2s ease, color 0.2s ease;
+    transition: fill 0.22s ease, filter 0.25s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Compact Tooltip Label — floats cleanly to the right */
-.radial-item-label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: #ffffff;
-    background: rgba(14, 12, 20, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 3px 9px;
-    border-radius: 8px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-    white-space: nowrap;
-    opacity: 0;
-    transform: translateX(-4px);
+/* Apple vibrant icon color signatures on hover / active */
+.bezel-nav-item[data-action="home"]:hover svg,
+.bezel-nav-item[data-action="home"].active svg {
+    fill: #30d158;
+    filter: drop-shadow(0 0 10px rgba(48, 209, 88, 0.8));
+}
+
+.bezel-nav-item[data-action="library"]:hover svg,
+.bezel-nav-item[data-action="library"].active svg {
+    fill: #bf5af2;
+    filter: drop-shadow(0 0 10px rgba(191, 90, 242, 0.8));
+}
+
+.bezel-nav-item[data-action="history"]:hover svg,
+.bezel-nav-item[data-action="history"].active svg {
+    fill: #ff9f0a;
+    filter: drop-shadow(0 0 10px rgba(255, 159, 10, 0.8));
+}
+
+.bezel-nav-item[data-action="queue"]:hover svg,
+.bezel-nav-item[data-action="queue"].active svg {
+    fill: #ff375f;
+    filter: drop-shadow(0 0 10px rgba(255, 55, 95, 0.8));
+}
+
+.bezel-nav-item[data-action="settings"]:hover svg,
+.bezel-nav-item[data-action="settings"].active svg {
+    fill: #64d2ff;
+    filter: drop-shadow(0 0 10px rgba(100, 210, 255, 0.8));
+}
+
+/* Active pip indicator next to selected button */
+.bezel-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+}
+
+/* ── Floating Apple-Spec Bold Typography Label ── */
+.bezel-floating-label {
+    position: absolute;
+    left: 82px;
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+    font-size: 13.5px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 0 24px rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    user-select: none;
+    z-index: 12;
 }
 
-/* Show label only on center focus or hover */
-.radial-nav-item.center-focus .radial-item-label,
-.radial-nav-item:hover .radial-item-label {
+.bezel-floating-label.is-visible {
     opacity: 1;
     transform: translateX(0);
 }
 
-/* Active & Center focus styles — Naked Glowing SVG Icon */
-.radial-nav-item.center-focus .radial-item-icon-wrap,
-.radial-nav-item.active .radial-item-icon-wrap {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: var(--radial-color, var(--accent, #ff2d55)) !important;
-}
-
-.radial-nav-item.center-focus .radial-item-icon-wrap svg,
-.radial-nav-item.active .radial-item-icon-wrap svg {
-    filter: drop-shadow(0 0 10px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.95))) drop-shadow(0 0 20px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.5)));
-    transform: scale(1.25);
-}
-
-.radial-nav-item:hover .radial-item-icon-wrap {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: #ffffff !important;
-}
-
-.radial-nav-item:hover .radial-item-icon-wrap svg {
-    filter: drop-shadow(0 0 12px var(--radial-glow, rgba(var(--accent-rgb, 255, 45, 85), 0.95)));
-    transform: scale(1.3);
-}
-
-/* Mobile Responsiveness */
+/* Mobile & Fullscreen Responsiveness */
 @media (max-width: 768px) {
+    .bezel-nav-container,
     .radial-nav-container {
         display: none !important;
     }

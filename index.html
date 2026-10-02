@@ -412,75 +412,79 @@
 
 
     <!-- Navigation Pill -->
-    <!-- 🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL -->
-    <div id="radial-nav-container" class="radial-nav-container collapsed">
-        <!-- Subtle peek handle on the left edge when idle/collapsed -->
-        <div class="radial-nav-peek" id="radial-nav-peek" title="Navigation Wheel">
-            <div class="radial-peek-line"></div>
-            <div class="radial-peek-pip"></div>
-        </div>
+    <!-- 📱 LIQUID BEZEL EXPANSION DOCK (Apple iOS Action-Button Inspired Edge Navigation) -->
+    <div id="radial-nav-container" class="bezel-nav-container radial-nav-container collapsed">
+        <!-- Invisible edge proximity trigger zone (left screen margin) -->
+        <div class="bezel-trigger-edge" id="bezel-trigger-edge"></div>
 
-        <!-- Semicircular Wheel Stage -->
-        <div class="radial-wheel-stage" id="radial-wheel-stage">
-            <!-- Center indicator needle/pip -->
-            <div class="radial-center-pointer"></div>
+        <!-- The Bezel Expansion Stage (Anchored vertically on left display bezel) -->
+        <div class="bezel-bulge-stage" id="bezel-bulge-stage">
+            <!-- Idle breathing accent notch on bezel -->
+            <div class="bezel-idle-notch" id="bezel-idle-notch" title="Navigation">
+                <div class="bezel-notch-core"></div>
+            </div>
 
-            <!-- SVG Arc with Clock-Dial Minute Ticks (|||||||||||||) -->
-            <svg class="radial-dial-svg" id="radial-dial-svg" viewBox="0 0 150 320" xmlns="http://www.w3.org/2000/svg">
+            <!-- Mathematical G2 S-Curve SVG Liquid Squircle Path -->
+            <svg class="bezel-svg-canvas" id="bezel-svg-canvas" viewBox="0 0 110 360" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <linearGradient id="radialDialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop id="radial-grad-stop-1" offset="0%" stop-color="var(--radial-color, var(--accent, #ff2d55))" stop-opacity="0.8"/>
-                        <stop id="radial-grad-stop-2" offset="100%" stop-color="var(--radial-color, var(--accent, #ff2d55))" stop-opacity="0.2"/>
+                    <linearGradient id="bezelBgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#020204"/>
+                        <stop offset="45%" stop-color="#07080b"/>
+                        <stop offset="100%" stop-color="#0c0d12"/>
+                    </linearGradient>
+                    <linearGradient id="bezelEdgeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="rgba(255,255,255,0.06)"/>
+                        <stop offset="70%" stop-color="rgba(255,255,255,0.18)"/>
+                        <stop offset="100%" stop-color="rgba(255,255,255,0.26)"/>
                     </linearGradient>
                 </defs>
-                <!-- Outer Arc Line (dynamically calculated and updated in JS) -->
-                <path id="radial-main-arc" d="M 0 35 A 85 85 0 0 1 0 285" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.2"/>
-                <!-- Clock-dial ticks group (populated dynamically via JS with minute/second notches) -->
-                <g id="radial-dial-ticks" class="radial-dial-ticks"></g>
+                <path class="bezel-path-bg" id="bezel-path-bg"
+                      d="M 0,0 C 0,28.6 0,23.4 0,52 L 0,308 C 0,336.6 0,331.4 0,360 L 0,0 Z"
+                      fill="url(#bezelBgGrad)"
+                      stroke="url(#bezelEdgeStroke)"
+                      stroke-width="1.2"/>
             </svg>
 
-            <!-- 5 Orbit Navigation Items (Home, Library, History, Queue, Settings) -->
-            <div class="radial-items-orbit" id="radial-items-orbit">
+            <!-- 5 Vertical Navigation Icons inside the Bezel Plateau -->
+            <div class="bezel-nav-column" id="bezel-nav-column">
                 <!-- 0: Home -->
-                <button class="radial-nav-item active" data-action="home" data-title="Home" title="Home">
-                    <div class="radial-item-icon-wrap">
+                <button class="bezel-nav-item radial-nav-item active" data-action="home" data-title="HOME" title="Home">
+                    <div class="bezel-item-icon-wrap">
                         <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                     </div>
-                    <span class="radial-item-label">Home</span>
                 </button>
 
                 <!-- 1: Library -->
-                <button class="radial-nav-item" data-action="library" data-title="Library" title="Library">
-                    <div class="radial-item-icon-wrap">
+                <button class="bezel-nav-item radial-nav-item" data-action="library" data-title="LIBRARY" title="Library">
+                    <div class="bezel-item-icon-wrap">
                         <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
                     </div>
-                    <span class="radial-item-label">Library</span>
                 </button>
 
                 <!-- 2: History -->
-                <button class="radial-nav-item" data-action="history" data-title="History" title="History">
-                    <div class="radial-item-icon-wrap">
+                <button class="bezel-nav-item radial-nav-item" data-action="history" data-title="HISTORY" title="History">
+                    <div class="bezel-item-icon-wrap">
                         <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
                     </div>
-                    <span class="radial-item-label">History</span>
                 </button>
 
                 <!-- 3: Queue -->
-                <button class="radial-nav-item" data-action="queue" data-title="Queue" title="Queue">
-                    <div class="radial-item-icon-wrap">
+                <button class="bezel-nav-item radial-nav-item" data-action="queue" data-title="QUEUE" title="Queue">
+                    <div class="bezel-item-icon-wrap">
                         <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
                     </div>
-                    <span class="radial-item-label">Queue</span>
                 </button>
 
                 <!-- 4: Settings -->
-                <button class="radial-nav-item" data-action="settings" data-title="Settings" title="Settings">
-                    <div class="radial-item-icon-wrap">
+                <button class="bezel-nav-item radial-nav-item" data-action="settings" data-title="SETTINGS" title="Settings">
+                    <div class="bezel-item-icon-wrap">
                         <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
                     </div>
-                    <span class="radial-item-label">Settings</span>
                 </button>
             </div>
+
+            <!-- Apple-spec Floating Bold Typography Label (Like SILENT and WORK in reference image) -->
+            <div class="bezel-floating-label" id="bezel-floating-label">HOME</div>
         </div>
     </div>
 

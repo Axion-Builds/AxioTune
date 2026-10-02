@@ -4014,22 +4014,18 @@ function onPlayerStateChange(event) {
         requestAnimationFrame(animationLoop);
 
         // ══════════════════════════════════════════════════════════════
-        // 🎡 SEMICIRCULAR INFINITE ROTARY NAVIGATION WHEEL (Compact & Minimal)
+        // 📱 LIQUID BEZEL EXPANSION DOCK (Apple Action-Button Bezel Expansion)
         // ══════════════════════════════════════════════════════════════
-        function initRadialNavigation() {
+        function initBezelNavigation() {
             const container = document.getElementById('radial-nav-container');
-            const stage = document.getElementById('radial-wheel-stage');
-            const ticksGroup = document.getElementById('radial-dial-ticks');
-            const mainArc = document.getElementById('radial-main-arc');
-            const items = Array.from(document.querySelectorAll('.radial-nav-item'));
+            const stage = document.getElementById('bezel-bulge-stage');
+            const trigger = document.getElementById('bezel-trigger-edge');
+            const idleNotch = document.getElementById('bezel-idle-notch');
+            const pathEl = document.getElementById('bezel-path-bg');
+            const labelEl = document.getElementById('bezel-floating-label');
+            const buttons = Array.from(document.querySelectorAll('.bezel-nav-item'));
 
-            if (!container || !stage || items.length === 0) return;
-
-            // Geometry constants (Compact & Minimal — stays within 150px, zero overlap on posters)
-            const CX = -10;      // Center X (slightly behind viewport left border)
-            const CY = 160;      // Center Y (middle of 320px stage)
-            const R_DIAL = 85;   // Radius for clock tick marks
-            const R_ITEMS = 85;  // Radius for buttons
+            if (!container || !stage || buttons.length === 0) return;
 
             // ── Satisfying Tactile Haptic Audio Synthesis (Web Audio API) ──
             let audioCtx = null;
@@ -4057,7 +4053,7 @@ function onPlayerStateChange(event) {
                     const gain = ctx.createGain();
 
                     if (isSnap) {
-                        // Resonant satisfying mechanical snap when centered
+                        // Resonant satisfying mechanical snap when an item is selected
                         osc.type = 'triangle';
                         osc.frequency.setValueAtTime(360, now);
                         osc.frequency.exponentialRampToValueAtTime(70, now + 0.024);
@@ -4068,11 +4064,11 @@ function onPlayerStateChange(event) {
                         osc.start(now);
                         osc.stop(now + 0.026);
                     } else {
-                        // Ultra-crisp mechanical micro-tick on notch pass
+                        // Ultra-crisp mechanical micro-tick on bezel expansion / hover
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(1600, now);
-                        osc.frequency.exponentialRampToValueAtTime(250, now + 0.008);
-                        gain.gain.setValueAtTime(0.08, now);
+                        osc.frequency.setValueAtTime(1400, now);
+                        osc.frequency.exponentialRampToValueAtTime(320, now + 0.008);
+                        gain.gain.setValueAtTime(0.07, now);
                         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.008);
                         osc.connect(gain);
                         gain.connect(ctx.destination);
@@ -4082,58 +4078,110 @@ function onPlayerStateChange(event) {
                 } catch(err) {}
             }
 
-            // 1. Build exact Semicircular Arc Path (-72° to +72°)
-            const arcStartRad = -72 * (Math.PI / 180);
-            const arcEndRad = 72 * (Math.PI / 180);
-            const arcX1 = CX + R_DIAL * Math.cos(arcStartRad);
-            const arcY1 = CY + R_DIAL * Math.sin(arcStartRad);
-            const arcX2 = CX + R_DIAL * Math.cos(arcEndRad);
-            const arcY2 = CY + R_DIAL * Math.sin(arcEndRad);
-
-            if (mainArc) {
-                mainArc.setAttribute('d', `M ${arcX1.toFixed(1)} ${arcY1.toFixed(1)} A ${R_DIAL} ${R_DIAL} 0 0 1 ${arcX2.toFixed(1)} ${arcY2.toFixed(1)}`);
+            // ── Mathematical G2 Continuous Curvature S-Fillet SVG Generator ──
+            function getBezelPath(w) {
+                if (w <= 0.4) {
+                    return "M 0,0 L 0,360 Z";
+                }
+                const hf = 52;
+                const yTop = hf;
+                const yBot = 360 - hf;
+                const cp1y = hf * 0.55;
+                const cp2y = hf * 0.45;
+                return `M 0,0 C 0,${cp1y.toFixed(2)} ${w.toFixed(2)},${cp2y.toFixed(2)} ${w.toFixed(2)},${yTop} L ${w.toFixed(2)},${yBot} C ${w.toFixed(2)},${(360 - cp2y).toFixed(2)} 0,${(360 - cp1y).toFixed(2)} 0,360 L 0,0 Z`;
             }
 
-            // 2. Generate Clock-Dial Minute Ticks along the semicircle arc (||||||||||||)
-            if (ticksGroup) {
-                ticksGroup.innerHTML = '';
-                for (let deg = -72; deg <= 72; deg += 3) {
-                    const rad = deg * (Math.PI / 180);
-                    const isMajor = Math.abs(deg) % 15 < 1.5;
-                    const tickHalfLen = isMajor ? 6 : 3.5;
-                    const strokeWidth = isMajor ? 1.5 : 0.8;
-                    const strokeColor = isMajor ? 'rgba(255, 255, 255, 0.75)' : 'rgba(255, 255, 255, 0.22)';
+            // ── Apple Spring Physics Solver for Bezel Bulge ──
+            let currentW = 0;
+            let velocityW = 0;
+            let targetW = 0;
+            let isSpringActive = false;
+            let lastFrameTime = performance.now();
+            let isExpanded = false;
+            let collapseTimer = null;
 
-                    const x1 = CX + (R_DIAL - tickHalfLen) * Math.cos(rad);
-                    const y1 = CY + (R_DIAL - tickHalfLen) * Math.sin(rad);
-                    const x2 = CX + (R_DIAL + tickHalfLen) * Math.cos(rad);
-                    const y2 = CY + (R_DIAL + tickHalfLen) * Math.sin(rad);
+            function updateSpring(now) {
+                const dt = Math.min(0.04, (now - lastFrameTime) / 1000);
+                lastFrameTime = now;
 
-                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    line.setAttribute('x1', x1.toFixed(1));
-                    line.setAttribute('y1', y1.toFixed(1));
-                    line.setAttribute('x2', x2.toFixed(1));
-                    line.setAttribute('y2', y2.toFixed(1));
-                    line.setAttribute('stroke', strokeColor);
-                    line.setAttribute('stroke-width', strokeWidth);
-                    line.setAttribute('stroke-linecap', 'round');
-                    ticksGroup.appendChild(line);
+                // Apple Damped Spring: stiffness 320, damping 26
+                const stiffness = 320;
+                const damping = 26;
+                const force = -stiffness * (currentW - targetW);
+                const dampForce = -damping * velocityW;
+                const accel = force + dampForce;
+
+                velocityW += accel * dt;
+                currentW += velocityW * dt;
+
+                if (pathEl) {
+                    pathEl.setAttribute('d', getBezelPath(Math.max(0, currentW)));
+                }
+
+                if (Math.abs(currentW - targetW) > 0.08 || Math.abs(velocityW) > 0.5) {
+                    requestAnimationFrame(updateSpring);
+                } else {
+                    currentW = targetW;
+                    velocityW = 0;
+                    isSpringActive = false;
+                    if (pathEl) pathEl.setAttribute('d', getBezelPath(currentW));
                 }
             }
 
-            // 3. Rotary Wheel Physics & State
-            let currentAngle = 0;
-            let targetAngle = 0;
-            let lastTickAngle = 0;
-            let currentClosestIdx = 0;
-            let isAnimating = false;
-            let isDragging = false;
-            let isPointerDown = false;
-            let hasDragged = false;
-            let startY = 0;
-            let startAngle = 0;
-            const ANGLE_STEP = 360 / items.length; // 72 deg for 5 items
+            function triggerSpring(target) {
+                targetW = target;
+                lastFrameTime = performance.now();
+                if (!isSpringActive) {
+                    isSpringActive = true;
+                    requestAnimationFrame(updateSpring);
+                }
+            }
 
+            function expandBezel() {
+                if (collapseTimer) clearTimeout(collapseTimer);
+                if (!isExpanded) {
+                    isExpanded = true;
+                    container.classList.add('is-expanded');
+                    container.classList.remove('collapsed');
+                    triggerSpring(68);
+                    playRotaryTickSound(false);
+                }
+            }
+
+            function collapseBezel() {
+                if (collapseTimer) clearTimeout(collapseTimer);
+                collapseTimer = setTimeout(() => {
+                    isExpanded = false;
+                    container.classList.remove('is-expanded');
+                    container.classList.add('collapsed');
+                    if (labelEl) labelEl.classList.remove('is-visible');
+                    triggerSpring(0);
+                }, 140);
+            }
+
+            // Proximity & Stage Listeners
+            if (stage) {
+                stage.addEventListener('mouseenter', expandBezel);
+                stage.addEventListener('mouseleave', collapseBezel);
+            }
+            if (trigger) {
+                trigger.addEventListener('mouseenter', expandBezel);
+            }
+            if (idleNotch) {
+                idleNotch.addEventListener('mouseenter', expandBezel);
+                idleNotch.addEventListener('click', expandBezel);
+            }
+
+            // Dynamic Proximity Detection near Left Edge
+            document.addEventListener('mousemove', (e) => {
+                if (e.clientX <= 28) {
+                    expandBezel();
+                } else if (e.clientX > 180 && isExpanded) {
+                    collapseBezel();
+                }
+            }, { passive: true });
+
+            // ── Navigation Action Handler ──
             function navigateToAction(action) {
                 if (action === 'home') {
                     if (typeof showHome === 'function') showHome();
@@ -4157,177 +4205,49 @@ function onPlayerStateChange(event) {
                 }
             }
 
-            function updateItemsPosition() {
-                let closestIdx = 0;
-                let minDiff = Infinity;
-
-                items.forEach((item, idx) => {
-                    const itemAngle = currentAngle + (idx * ANGLE_STEP);
-                    const norm = ((itemAngle + 180) % 360 + 360) % 360 - 180;
-
-                    if (Math.abs(norm) <= 78) {
-                        const rad = norm * (Math.PI / 180);
-                        const x = CX + R_ITEMS * Math.cos(rad);
-                        const y = CY + R_ITEMS * Math.sin(rad);
-
-                        const dist = Math.abs(norm) / 78;
-                        const scale = (1.15 - (dist * 0.35)).toFixed(3);
-                        const opacity = (1 - Math.pow(dist, 1.8)).toFixed(3);
-
-                        item.style.visibility = 'visible';
-                        item.style.pointerEvents = 'auto';
-                        item.style.transform = `translate3d(${(x - 14).toFixed(1)}px, ${(y - 14).toFixed(1)}px, 0) scale(${scale})`;
-                        item.style.opacity = Math.max(0.2, opacity);
-
-                        if (Math.abs(norm) < minDiff) {
-                            minDiff = Math.abs(norm);
-                            closestIdx = idx;
-                        }
-                    } else {
-                        item.style.visibility = 'hidden';
-                        item.style.pointerEvents = 'none';
-                        item.style.opacity = '0';
+            // ── Button Interactions & Dynamic Floating Label ──
+            buttons.forEach((btn, idx) => {
+                btn.addEventListener('mouseenter', () => {
+                    const title = btn.getAttribute('data-title') || 'NAV';
+                    if (labelEl) {
+                        labelEl.textContent = title;
+                        // Vertically align label exactly with hovered button center
+                        const targetTop = btn.offsetTop + (btn.offsetHeight / 2) - 8;
+                        labelEl.style.top = `${targetTop}px`;
+                        labelEl.classList.add('is-visible');
                     }
+                    playRotaryTickSound(false);
                 });
 
-                if (closestIdx !== currentClosestIdx) {
-                    currentClosestIdx = closestIdx;
-                    playRotaryTickSound(true); // Snap haptic click when entering center
-                }
-
-                items.forEach((item, idx) => {
-                    item.classList.toggle('center-focus', idx === closestIdx);
+                btn.addEventListener('mouseleave', () => {
+                    if (labelEl) labelEl.classList.remove('is-visible');
                 });
-            }
 
-            function animatePhysics() {
-                const diff = targetAngle - currentAngle;
-                if (Math.abs(diff) > 0.1) {
-                    currentAngle += diff * 0.28;
-
-                    // Micro-tick sound on every ~5° rotation
-                    if (Math.abs(currentAngle - lastTickAngle) >= 4.8) {
-                        playRotaryTickSound(false);
-                        lastTickAngle = currentAngle;
-                    }
-
-                    updateItemsPosition();
-                    requestAnimationFrame(animatePhysics);
-                } else {
-                    currentAngle = targetAngle;
-                    updateItemsPosition();
-                    isAnimating = false;
-                }
-            }
-
-            function rotateBy(deltaDeg) {
-                targetAngle += deltaDeg;
-                if (!isAnimating) {
-                    isAnimating = true;
-                    requestAnimationFrame(animatePhysics);
-                }
-            }
-
-            function rotateToItem(idx) {
-                const itemAngle = targetAngle + (idx * ANGLE_STEP);
-                const norm = ((itemAngle + 180) % 360 + 360) % 360 - 180;
-                targetAngle -= norm;
-                if (!isAnimating) {
-                    isAnimating = true;
-                    requestAnimationFrame(animatePhysics);
-                }
-            }
-            window.rotateRadialToItem = rotateToItem;
-
-            // 4. 2-Finger Swipe & Mouse Wheel Scrolling (Smooth Infinite Rotation with Tactile Sound)
-            container.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                rotateBy(-e.deltaY * 0.18);
-            }, { passive: false });
-
-            // 5. Pointer / Touch Dragging (Only capture if actually dragged so click works reliably)
-            let pointerDownOnItem = false;
-            let pointerDownItem = null;
-
-            stage.addEventListener('pointerdown', (e) => {
-                isPointerDown = true;
-                hasDragged = false;
-                isDragging = false;
-                startY = e.clientY;
-                startAngle = targetAngle;
-                pointerDownItem = e.target.closest('.radial-nav-item');
-                pointerDownOnItem = Boolean(pointerDownItem);
-            });
-
-            stage.addEventListener('pointermove', (e) => {
-                if (!isPointerDown) return;
-                const dy = e.clientY - startY;
-                const threshold = pointerDownOnItem ? 16 : 6;
-                if (!hasDragged && Math.abs(dy) > threshold) {
-                    hasDragged = true;
-                    isDragging = true;
-                    try { stage.setPointerCapture(e.pointerId); } catch(err) {}
-                }
-                if (hasDragged) {
-                    // Pulling downward pulls wheel downward (+dy)
-                    targetAngle = startAngle + (dy * 0.35);
-                    if (!isAnimating) {
-                        isAnimating = true;
-                        requestAnimationFrame(animatePhysics);
-                    }
-                }
-            });
-
-            let lastTriggerTime = 0;
-            function triggerItem(item, idx) {
-                const now = Date.now();
-                if (now - lastTriggerTime < 250) return; // Prevent double trigger
-                lastTriggerTime = now;
-
-                const action = item.dataset.action;
-                items.forEach(b => b.classList.remove('active'));
-                item.classList.add('active');
-
-                rotateToItem(idx);
-                navigateToAction(action);
-                playRotaryTickSound(true);
-            }
-
-            const endDrag = (e) => {
-                if (hasDragged) {
-                    try { stage.releasePointerCapture(e.pointerId); } catch(err) {}
-                } else if (isPointerDown && pointerDownItem) {
-                    const idx = items.indexOf(pointerDownItem);
-                    if (idx !== -1) {
-                        triggerItem(pointerDownItem, idx);
-                    }
-                }
-                isPointerDown = false;
-                isDragging = false;
-                hasDragged = false;
-                pointerDownOnItem = false;
-                pointerDownItem = null;
-            };
-            stage.addEventListener('pointerup', endDrag);
-            stage.addEventListener('pointercancel', endDrag);
-
-            // 6. Button Click Handlers (Guaranteed responsive execution)
-            items.forEach((item, idx) => {
-                item.addEventListener('click', (e) => {
+                btn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (hasDragged) return;
-                    triggerItem(item, idx);
+                    const action = btn.dataset.action;
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    playRotaryTickSound(true);
+                    navigateToAction(action);
                 });
             });
 
-            // Initial positioning
-            updateItemsPosition();
+            // Backward-compatibility alias
+            window.rotateRadialToItem = function(idx) {
+                if (buttons[idx]) {
+                    buttons.forEach(b => b.classList.remove('active'));
+                    buttons[idx].classList.add('active');
+                }
+            };
+
+            // Set initial collapsed state
+            if (pathEl) pathEl.setAttribute('d', getBezelPath(0));
         }
 
-        // Initialize Radial Navigation
-        initRadialNavigation();
+        // Initialize Liquid Bezel Navigation Dock
+        initBezelNavigation();
 
         // True Vibrant Color Palette Extractor (Better-Lyrics / Apple Music Accuracy)
         function extractVibrantPalette(ctx, width, height) {
