@@ -931,14 +931,37 @@
             width: clamp(200px, 54%, 415px); display: flex; flex-direction: column; gap: 15px;
         }
 
-        #track-info { text-align: left; margin-bottom: 5px; }
+        #track-info { text-align: left; margin-bottom: 2px; width: 100%; }
         #track-title {
-            font-family: var(--font-display);
-            font-size: 1.75rem; font-weight: 700;
-            margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            letter-spacing: -0.02em;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', var(--font-display), sans-serif !important;
+            font-size: clamp(2.1rem, 4.2vw, 3.4rem) !important;
+            font-weight: 900 !important;
+            margin-bottom: 2px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            letter-spacing: -0.04em !important;
+            line-height: 1.02 !important;
+            color: #ffffff !important;
+            text-shadow: 0 2px 24px rgba(0,0,0,0.6) !important;
+            transition: opacity 0.3s ease !important;
         }
-        #track-artist { font-size: 1.05rem; color: rgba(255,255,255,0.65); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
+        #track-artist {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif !important;
+            font-size: clamp(1rem, 1.4vw, 1.22rem) !important;
+            color: rgba(255,255,255,0.48) !important;
+            font-weight: 500 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            letter-spacing: 0.015em !important;
+            text-transform: none !important;
+            margin-top: 6px !important;
+            transition: color 0.25s ease, opacity 0.3s ease !important;
+        }
+        #track-artist:hover {
+            color: rgba(255,255,255,0.85) !important;
+        }
 
         #progress-container {
             width: 100%; height: 5px; background: rgba(255,255,255,0.15);
@@ -2285,29 +2308,151 @@
             transform: translateY(0) scale(0.96);
         }
 
-        /* Home Screen & Screen Views */
+        /* ═══════════════════════════════════════════════════════════
+           APPLE MUSIC FLUID SHEET PRESENTATION (SPATIAL PLAYER)
+           ═══════════════════════════════════════════════════════════ */
+
+        /* The screen sitting directly underneath the open player card */
+        .screen-view.sheet-underneath {
+            display: block !important;
+            opacity: 0.62 !important;
+            transform: scale(0.935) translateY(-14px) !important;
+            filter: blur(3px) brightness(0.75) !important;
+            border-radius: 28px !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+            transition: transform 0.58s cubic-bezier(0.22, 1, 0.36, 1),
+                        opacity 0.45s ease,
+                        filter 0.45s ease,
+                        border-radius 0.58s ease !important;
+        }
+
+        /* Base screen view transition for non-player screens */
         .screen-view {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            transition: opacity 0.38s cubic-bezier(0.32, 0.72, 0, 1), transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+            transition: opacity 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+                        transform 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+                        filter 0.45s ease,
+                        border-radius 0.45s ease;
             z-index: 10;
             will-change: transform, opacity;
         }
+
+        .screen-view.hidden-screen:not(#player-screen) {
+            opacity: 0 !important;
+            transform: translate3d(0, 16px, 0) scale(0.985) !important;
+            pointer-events: none !important;
+        }
+        .screen-view.active-screen:not(#player-screen) {
+            opacity: 1 !important;
+            transform: translate3d(0, 0, 0) scale(1) !important;
+            filter: none !important;
+            pointer-events: auto !important;
+        }
+
+        /* ── Player Screen: Apple-spec Slide-Up Native Sheet ── */
         #player-screen {
-            display: flex;
-            position: relative;
-            overflow: hidden;
-            transition: opacity 0.38s cubic-bezier(0.32, 0.72, 0, 1), transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 9500 !important;
+            display: flex !important;
+            overflow: hidden !important;
+            background: radial-gradient(circle at 50% 15%, rgba(22, 10, 38, 0.97) 0%, rgba(7, 3, 14, 0.99) 75%, #020106 100%) !important;
+            backdrop-filter: blur(50px) saturate(190%) brightness(1.05) !important;
+            -webkit-backdrop-filter: blur(50px) saturate(190%) brightness(1.05) !important;
+            box-shadow: 0 -25px 80px rgba(0, 0, 0, 0.92), inset 0 1px 1.5px rgba(255, 255, 255, 0.22) !important;
+            border-radius: 36px 36px 0 0 !important;
+            transform: translate3d(0, 102%, 0) !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: transform 0.58s cubic-bezier(0.22, 1, 0.36, 1),
+                        opacity 0.32s ease,
+                        border-radius 0.58s cubic-bezier(0.22, 1, 0.36, 1) !important;
             will-change: transform, opacity;
         }
-        .hidden-screen {
-            opacity: 0;
-            transform: translate3d(0, 20px, 0) scale(0.98);
-            pointer-events: none;
+
+        /* Active: fully slides up to cover screen */
+        #player-screen.active-screen {
+            transform: translate3d(0, 0, 0) !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            border-radius: 0 0 0 0 !important;
         }
-        .active-screen {
-            opacity: 1;
-            transform: translate3d(0, 0, 0) scale(1);
-            pointer-events: all;
+
+        /* Hidden: parked offscreen below the display */
+        #player-screen.hidden-screen {
+            transform: translate3d(0, 102%, 0) !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            border-radius: 36px 36px 0 0 !important;
+        }
+
+        /* Fluid Apple Cover Art pop as sheet slides up */
+        #player-screen.active-screen #cover-wrapper {
+            animation: appleCoverSlideUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes appleCoverSlideUp {
+            0% {
+                transform: translateY(40px) scale(0.88);
+                opacity: 0.4;
+                filter: blur(8px);
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+                filter: blur(0);
+            }
+        }
+
+        #player-screen.active-screen #player-controls {
+            animation: appleControlsSlideUp 0.62s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
+        }
+        @keyframes appleControlsSlideUp {
+            0% {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Top-Left Apple-Spec Collapse Button */
+        .player-minimize-btn {
+            position: absolute;
+            top: 24px;
+            left: 28px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: rgba(255, 255, 255, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        }
+        .player-minimize-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            transform: translateY(2px) scale(1.06);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+        .player-minimize-btn:active {
+            transform: translateY(3px) scale(0.94);
         }
 
         #home-screen, #history-screen, #settings-screen, #artist-screen, #album-screen, #library-screen, .vinyl-scroll-container, .dense-grid-container, #lyrics-container {
@@ -2325,13 +2470,42 @@
         }
 
         .home-greeting {
-            font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 40px;
-            background: linear-gradient(135deg, #fff, rgba(255,255,255,0.3));
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: clamp(2.8rem, 5.5vw, 4.5rem);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            margin-bottom: 40px;
+            line-height: 0.95;
+            /* Stark top-to-faded gradient — premium editorial look */
+            background: linear-gradient(160deg, #ffffff 0%, rgba(255,255,255,0.55) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .home-section { margin-bottom: 60px; }
-        .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; color: rgba(255,255,255,0.9); }
+
+        /* Section title — bold label + subtle visual weight contrast */
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: rgba(255,255,255,0.95);
+            letter-spacing: -0.02em;
+            /* Left accent pip */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 1.1em;
+            border-radius: 3px;
+            background: var(--accent, #ff476d);
+            flex-shrink: 0;
+            opacity: 0.85;
+        }
 
         .vinyl-scroll-container {
             display: flex; gap: 80px; overflow-x: auto; padding: 20px 10px 40px 10px;
@@ -2778,9 +2952,9 @@
                 gap: 5px; align-items: center;
             }
             
-            #track-info { grid-column: 1; grid-row: 1; margin-bottom: 0; min-width: 0; } /* min-width: 0 allows text ellipsis */
-            #track-title { font-size: 1.2rem; margin-bottom: 2px; }
-            #track-artist { font-size: 0.9rem; }
+            #track-info { grid-column: 1; grid-row: 1; margin-bottom: 0; min-width: 0; }
+            #track-title { font-size: 1.15rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 1px; line-height: 1.1; }
+            #track-artist { font-size: 0.78rem; margin-top: 3px; }
             
             .playback-buttons { grid-column: 2; grid-row: 1; margin-top: 0; gap: 0; justify-content: flex-end; }
             #play-pause-btn { width: 45px; height: 45px; }
@@ -4772,14 +4946,7 @@ h1, h2, h3, h4, h5, h6,
     letter-spacing: -0.03em;
 }
 
-.section-title, #album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
-
-/* Track title: always Outfit 800 for premium feel */
-#track-title {
-    font-family: var(--font-display) !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.03em !important;
-}
+#album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
 
 .track-title {
     font-weight: 500;
@@ -6578,10 +6745,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 .q-hero-artist { font-size: 0.95rem; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
 
 
-.section-title, #album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
-#track-title {
-    font-family: var(--title-font, 'Outfit') !important;
-}
+#album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
 
 
 

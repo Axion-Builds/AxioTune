@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=256">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=260">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -700,6 +700,13 @@
 
     <div id="player-screen" class="screen-view hidden-screen">
         <div id="cinematic-bg"></div>
+
+        <!-- Apple-spec Top-Left Collapse / Down Chevron Pill Button -->
+        <button id="player-minimize-btn" class="player-minimize-btn" title="Collapse Player" onclick="if(window.goBack) window.goBack(); else if(window.showHome) window.showHome();">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+        </button>
 
         <!-- Player Screen Queue Button (Bottom Left) -->
         <button id="player-queue-btn" class="player-queue-pill-btn" title="Toggle Queue">
@@ -1669,7 +1676,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=255"></script>
+    <script src="app_v3.js?v=260"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
