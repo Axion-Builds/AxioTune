@@ -2285,151 +2285,29 @@
             transform: translateY(0) scale(0.96);
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           APPLE MUSIC FLUID SHEET PRESENTATION (SPATIAL PLAYER)
-           ═══════════════════════════════════════════════════════════ */
-
-        /* The screen sitting directly underneath the open player card */
-        .screen-view.sheet-underneath {
-            display: block !important;
-            opacity: 0.62 !important;
-            transform: scale(0.935) translateY(-14px) !important;
-            filter: blur(3px) brightness(0.75) !important;
-            border-radius: 28px !important;
-            overflow: hidden !important;
-            pointer-events: none !important;
-            transition: transform 0.58s cubic-bezier(0.22, 1, 0.36, 1),
-                        opacity 0.45s ease,
-                        filter 0.45s ease,
-                        border-radius 0.58s ease !important;
-        }
-
-        /* Base screen view transition for non-player screens */
+        /* Home Screen & Screen Views */
         .screen-view {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            transition: opacity 0.45s cubic-bezier(0.25, 1, 0.5, 1),
-                        transform 0.45s cubic-bezier(0.25, 1, 0.5, 1),
-                        filter 0.45s ease,
-                        border-radius 0.45s ease;
+            transition: opacity 0.38s cubic-bezier(0.32, 0.72, 0, 1), transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
             z-index: 10;
             will-change: transform, opacity;
         }
-
-        .screen-view.hidden-screen:not(#player-screen) {
-            opacity: 0 !important;
-            transform: translate3d(0, 16px, 0) scale(0.985) !important;
-            pointer-events: none !important;
-        }
-        .screen-view.active-screen:not(#player-screen) {
-            opacity: 1 !important;
-            transform: translate3d(0, 0, 0) scale(1) !important;
-            filter: none !important;
-            pointer-events: auto !important;
-        }
-
-        /* ── Player Screen: Apple-spec Slide-Up Native Sheet ── */
         #player-screen {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            z-index: 9500 !important;
-            display: flex !important;
-            overflow: hidden !important;
-            background: radial-gradient(circle at 50% 15%, rgba(22, 10, 38, 0.97) 0%, rgba(7, 3, 14, 0.99) 75%, #020106 100%) !important;
-            backdrop-filter: blur(50px) saturate(190%) brightness(1.05) !important;
-            -webkit-backdrop-filter: blur(50px) saturate(190%) brightness(1.05) !important;
-            box-shadow: 0 -25px 80px rgba(0, 0, 0, 0.92), inset 0 1px 1.5px rgba(255, 255, 255, 0.22) !important;
-            border-radius: 36px 36px 0 0 !important;
-            transform: translate3d(0, 102%, 0) !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transition: transform 0.58s cubic-bezier(0.22, 1, 0.36, 1),
-                        opacity 0.32s ease,
-                        border-radius 0.58s cubic-bezier(0.22, 1, 0.36, 1) !important;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            transition: opacity 0.38s cubic-bezier(0.32, 0.72, 0, 1), transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
             will-change: transform, opacity;
         }
-
-        /* Active: fully slides up to cover screen */
-        #player-screen.active-screen {
-            transform: translate3d(0, 0, 0) !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-            border-radius: 0 0 0 0 !important;
+        .hidden-screen {
+            opacity: 0;
+            transform: translate3d(0, 20px, 0) scale(0.98);
+            pointer-events: none;
         }
-
-        /* Hidden: parked offscreen below the display */
-        #player-screen.hidden-screen {
-            transform: translate3d(0, 102%, 0) !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            border-radius: 36px 36px 0 0 !important;
-        }
-
-        /* Fluid Apple Cover Art pop as sheet slides up */
-        #player-screen.active-screen #cover-wrapper {
-            animation: appleCoverSlideUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        @keyframes appleCoverSlideUp {
-            0% {
-                transform: translateY(40px) scale(0.88);
-                opacity: 0.4;
-                filter: blur(8px);
-            }
-            100% {
-                transform: translateY(0) scale(1);
-                opacity: 1;
-                filter: blur(0);
-            }
-        }
-
-        #player-screen.active-screen #player-controls {
-            animation: appleControlsSlideUp 0.62s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
-        }
-        @keyframes appleControlsSlideUp {
-            0% {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        /* Top-Left Apple-Spec Collapse Button */
-        .player-minimize-btn {
-            position: absolute;
-            top: 24px;
-            left: 28px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            color: rgba(255, 255, 255, 0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 100;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-        }
-        .player-minimize-btn:hover {
-            background: rgba(255, 255, 255, 0.18);
-            color: #ffffff;
-            transform: translateY(2px) scale(1.06);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-        }
-        .player-minimize-btn:active {
-            transform: translateY(3px) scale(0.94);
+        .active-screen {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+            pointer-events: all;
         }
 
         #home-screen, #history-screen, #settings-screen, #artist-screen, #album-screen, #library-screen, .vinyl-scroll-container, .dense-grid-container, #lyrics-container {

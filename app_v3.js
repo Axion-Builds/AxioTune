@@ -1964,27 +1964,7 @@ function onPlayerStateChange(event) {
         }
 
         function showPlayer() {
-            const playerEl = document.getElementById('player-screen');
-            const miniEl = document.getElementById('mini-player');
-
-            // Flash-scale the mini player down (it "launches" into the player)
-            if (miniEl && !miniEl.classList.contains('hidden-mini')) {
-                miniEl.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.22s ease';
-                miniEl.style.transform = 'translate3d(-50%, 20px, 0) scale(0.88)';
-                miniEl.style.opacity = '0';
-                setTimeout(() => {
-                    miniEl.style.transition = '';
-                    miniEl.style.transform = '';
-                    miniEl.style.opacity = '';
-                    miniEl.classList.add('hidden-mini');
-                }, 220);
-            } else {
-                miniPlayer.classList.add('hidden-mini');
-            }
-
-            // Remove any leftover exiting class so the enter animation is clean
-            if (playerEl) playerEl.classList.remove('exiting');
-
+            miniPlayer.classList.add('hidden-mini');
             showScreenExcept('player-screen');
         }
         window.showPlayer = showPlayer;
@@ -5004,14 +4984,11 @@ function onPlayerStateChange(event) {
                 }
             }
 
-            // Determine the underlying screen when opening the player
-            const previousScreenId = (currentScreen && currentScreen !== 'player-screen') ? currentScreen : 'home-screen';
-
             ['home-screen', 'player-screen', 'history-screen', 'settings-screen', 'artist-screen', 'album-screen', 'library-screen', 'search-screen', 'playlist-full-screen'].forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 if (id === showId) {
-                    el.classList.remove('hidden-screen', 'sheet-underneath');
+                    el.classList.remove('hidden-screen');
                     el.classList.add('active-screen');
                     document.body.classList.add(id + '-active');
                     
@@ -5021,13 +4998,8 @@ function onPlayerStateChange(event) {
                         topBar.style.transform = 'translateY(0)';
                     }
 
-                } else if (showId === 'player-screen' && id === previousScreenId) {
-                    // Underneath screen stays visible and scales down like an iOS sheet!
-                    el.classList.remove('active-screen', 'hidden-screen');
-                    el.classList.add('sheet-underneath');
-                    document.body.classList.remove(id + '-active');
                 } else {
-                    el.classList.remove('active-screen', 'sheet-underneath');
+                    el.classList.remove('active-screen');
                     el.classList.add('hidden-screen');
                     document.body.classList.remove(id + '-active');
                 }
@@ -5041,27 +5013,13 @@ function onPlayerStateChange(event) {
                 if (pcHeaderEl) pcHeaderEl.style.display = 'none';
                 document.body.classList.add('player-screen-active');
             } else {
-                // Animate the player screen shrinking back down before showing mini player
-                const playerEl = document.getElementById('player-screen');
-                const wasPlayerActive = document.body.classList.contains('player-screen-active');
                 document.body.classList.remove('player-screen-active');
-
                 if (pcHeaderEl) {
                     pcHeaderEl.style.display = 'flex';
                     pcHeaderEl.style.opacity = '1';
                     pcHeaderEl.style.visibility = 'visible';
                 }
-
-                if (wasPlayerActive && miniPlayerEl && typeof isSongLoaded !== 'undefined' && isSongLoaded) {
-                    // Delay mini player appearance slightly so it "catches" the shrinking player
-                    setTimeout(() => {
-                        miniPlayerEl.classList.remove('hidden-mini');
-                        // Briefly spring the mini player in from slightly below
-                        miniPlayerEl.style.transition = 'transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.28s ease';
-                        miniPlayerEl.style.transform = 'translate3d(-50%, 0, 0) scale(1)';
-                        setTimeout(() => { miniPlayerEl.style.transition = ''; miniPlayerEl.style.transform = ''; }, 460);
-                    }, 120);
-                } else if (miniPlayerEl && typeof isSongLoaded !== 'undefined' && isSongLoaded) {
+                if (miniPlayerEl && typeof isSongLoaded !== 'undefined' && isSongLoaded) {
                     miniPlayerEl.classList.remove('hidden-mini');
                 }
             }
