@@ -1435,26 +1435,42 @@
             margin: 1.8rem 0 0.8rem 0;
         }
 
-        /* ── STRICT LINE-SYNCED STYLING (Whole line illumination) ── */
-        .lyric-line.is-line-synced .lyric-line-full-text {
-            display: inline-block;
-            color: inherit;
-            transition: color 0.35s ease, text-shadow 0.35s ease;
-        }
-
+        /* ── UNIFIED PURE APPLE-SPEC TYPOGRAPHY FOR ALL LYRICS (LINE & WORD SYNCED) ── */
         .lyric-line.is-line-synced.active-line {
             opacity: 1 !important;
-            filter: blur(0px) drop-shadow(0 0 var(--lyrics-glow-intensity, 12px) var(--accent, #ff2d55)) !important;
-            color: #ffffff !important;
-            transform: scale(1.02) !important;
-            border-left-color: var(--accent, #ff2d55) !important;
-            padding-left: 14px !important;
+            filter: blur(0px) !important;
+            transform: scale(1) !important;
+            padding-left: 0 !important;
+            border-left: none !important;
+        }
+
+        .lyric-line.is-line-synced .lyric-line-full-text {
+            display: inline-block;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0.35) 0%,
+                rgba(255, 255, 255, 0.35) 100%
+            ) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            color: transparent !important;
+            transition: background 0.35s ease, -webkit-text-fill-color 0.35s ease !important;
         }
 
         .lyric-line.is-line-synced.active-line .lyric-line-full-text {
-            color: #ffffff !important;
-            font-weight: 800 !important;
-            text-shadow: 0 0 16px rgba(255, 255, 255, 0.55);
+            background: linear-gradient(
+                to right,
+                #ffffff 0%,
+                #ffffff 100%
+            ) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            color: transparent !important;
+            font-weight: 700 !important;
+            text-shadow: none !important;
+            filter: none !important;
         }
 
         .lyric-line {

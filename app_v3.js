@@ -4005,35 +4005,27 @@ function onPlayerStateChange(event) {
                         lineDiv.appendChild(romSpan);
                     }
 
-                    const isWordType = window._currentLyricsType === 'word_synced';
-                    const hasWords = isWordType && Array.isArray(line.words) && line.words.length > 0;
+                    // Unified Apple Music typography structure for all lines
+                    const wordsWrapper = document.createElement('span');
+                    wordsWrapper.className = 'lyric-words-row';
 
-                    if (!hasWords) {
-                        // Strict Line-by-Line Synced Mode (No fake word spans!)
-                        lineDiv.classList.add('is-line-synced');
-                        const lineTextSpan = document.createElement('span');
-                        lineTextSpan.className = 'lyric-line-full-text';
-                        lineTextSpan.textContent = line.text;
-                        lineDiv.appendChild(lineTextSpan);
-                    } else {
-                        // Strict Word-by-Word Syllable-Synced Mode
-                        const wordsWrapper = document.createElement('span');
-                        wordsWrapper.className = 'lyric-words-row';
+                    const rawWords = (Array.isArray(line.words) && line.words.length > 0)
+                        ? line.words
+                        : (line.text || '').split(/\s+/).filter(Boolean).map(w => ({ text: w, start: line.start, end: line.end }));
 
-                        line.words.forEach((word) => {
-                            const wordSpan = document.createElement('span');
-                            wordSpan.className = 'lyric-word';
-                            wordSpan.textContent = word.text;
-                            wordSpan.dataset.start = word.start;
-                            wordSpan.dataset.end = word.end;
-                            wordsWrapper.appendChild(wordSpan);
-                            wordsWrapper.appendChild(document.createTextNode(' '));
-                            const wData = { el: wordSpan, start: word.start, end: word.end, state: 'future' };
-                            wordElements.push(wData);
-                            lineWords.push(wData);
-                        });
-                        lineDiv.appendChild(wordsWrapper);
-                    }
+                    rawWords.forEach((word) => {
+                        const wordSpan = document.createElement('span');
+                        wordSpan.className = 'lyric-word';
+                        wordSpan.textContent = word.text;
+                        wordSpan.dataset.start = word.start;
+                        wordSpan.dataset.end = word.end;
+                        wordsWrapper.appendChild(wordSpan);
+                        wordsWrapper.appendChild(document.createTextNode(' '));
+                        const wData = { el: wordSpan, start: word.start, end: word.end, state: 'future' };
+                        wordElements.push(wData);
+                        lineWords.push(wData);
+                    });
+                    lineDiv.appendChild(wordsWrapper);
 
                     // Optional Real-Time Translation subtitle on bottom
                     if (window._lyricsTranslationEnabled && line.translation) {
@@ -4107,6 +4099,15 @@ function onPlayerStateChange(event) {
                         const line = lineElements[i];
                         if (!line.words || line.words.length === 0) continue;
                         if (i < currentLineIndex) {
+                            line.words.forEach(w => {
+                                if (w.state !== 'passed') {
+                                    w.el.className = 'lyric-word passed';
+                                    w.el.style.setProperty('--progress', '100%');
+                                    w.state = 'passed';
+                                }
+                            });
+                        } else if (i === currentLineIndex && window._currentLyricsType !== 'word_synced') {
+                            // Line-synced: All words in the active line light up in Apple Music pure white!
                             line.words.forEach(w => {
                                 if (w.state !== 'passed') {
                                     w.el.className = 'lyric-word passed';
