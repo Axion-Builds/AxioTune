@@ -1331,19 +1331,14 @@ async def fetch_lyricsplus_lyrics(title: str, artist: str, client: httpx.AsyncCl
                     start = round(item.get("time", 0) / 1000.0, 2)
                     dur = item.get("duration", 0) / 1000.0
                     words = []
-                    for syl in item.get("syllabus", []):
-                        w_text = syl.get("text", "").strip()
-                        if w_text:
-                            words.append({
-                                "word": w_text,
-                                "time": round(syl.get("time", 0) / 1000.0, 2)
-                            })
-                    if not words:
-                        for w_idx, w in enumerate(item.get("text", "").split()):
-                            words.append({
-                                "word": w,
-                                "time": round(start + (w_idx * 0.45), 2)
-                            })
+                    if l_type == "word":
+                        for syl in item.get("syllabus", []):
+                            w_text = syl.get("text", "").strip()
+                            if w_text:
+                                words.append({
+                                    "word": w_text,
+                                    "time": round(syl.get("time", 0) / 1000.0, 2)
+                                })
                     lines.append({
                         "time": start,
                         "text": item.get("text", "").strip(),
@@ -1351,12 +1346,13 @@ async def fetch_lyricsplus_lyrics(title: str, artist: str, client: httpx.AsyncCl
                         "words": words
                     })
                 if lines:
+                    has_real_words = any(len(l.get("words", [])) > 1 for l in lines)
                     return {
                         "id": "lyricsplus",
                         "provider": "LyricsPlus",
                         "provider_badge": "LyricsPlus",
                         "name": f"LyricsPlus • {artist}",
-                        "type": "word_synced" if l_type == "word" else "line_synced",
+                        "type": "word_synced" if (l_type == "word" and has_real_words) else "line_synced",
                         "lines": lines
                     }
         except Exception:
@@ -1649,6 +1645,13 @@ async def get_lyrics(
                     "type": "plain_text",
                     "lyrics": yt_res.get("lyrics", "")
                 })
+
+        # Strict Guarantee: Any non-word_synced source must never contain word timestamps
+        for s in sources:
+            if s.get("type") != "word_synced" and "lines" in s and isinstance(s["lines"], list):
+                for l in s["lines"]:
+                    if isinstance(l, dict):
+                        l["words"] = []
 
     # Pick active source strictly following user rules:
     # 1. Strictly look for true word-by-word (type == "word_synced")

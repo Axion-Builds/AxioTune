@@ -2935,9 +2935,10 @@ function onPlayerStateChange(event) {
 
             if ((src.type === 'word_synced' || src.type === 'line_synced') && src.lines && src.lines.length > 0) {
                 window._currentPlainTextLyrics = '';
+                const isWordType = src.type === 'word_synced';
                 lyricsData = src.lines.map((l, lineIdx, lineArr) => {
                     const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
-                    const hasWords = Array.isArray(l.words) && l.words.length > 0;
+                    const hasWords = isWordType && Array.isArray(l.words) && l.words.length > 0;
                     return {
                         start: l.time,
                         end: nextLineTime,
@@ -3142,9 +3143,10 @@ function onPlayerStateChange(event) {
                             if ((ytData.type === 'word_synced' || ytData.type === 'line_synced') && ytData.lines && ytData.lines.length > 0) {
                                 lyricsType = ytData.type;
                                 window._currentPlainTextLyrics = '';
+                                const isWordType = ytData.type === 'word_synced';
                                 fetchedLines = ytData.lines.map((l, lineIdx, lineArr) => {
                                     const nextLineTime = (lineIdx + 1 < lineArr.length) ? lineArr[lineIdx + 1].time : (l.time + 3.5);
-                                    const hasWords = Array.isArray(l.words) && l.words.length > 0;
+                                    const hasWords = isWordType && Array.isArray(l.words) && l.words.length > 0;
                                     return {
                                         start: l.time,
                                         end: nextLineTime,
@@ -4003,7 +4005,8 @@ function onPlayerStateChange(event) {
                         lineDiv.appendChild(romSpan);
                     }
 
-                    const hasWords = Array.isArray(line.words) && line.words.length > 0;
+                    const isWordType = window._currentLyricsType === 'word_synced';
+                    const hasWords = isWordType && Array.isArray(line.words) && line.words.length > 0;
 
                     if (!hasWords) {
                         // Strict Line-by-Line Synced Mode (No fake word spans!)
@@ -4132,8 +4135,8 @@ function onPlayerStateChange(event) {
                 } else targetY = panelHeight / 2;
             }
 
-            // ONLY animate active line's words on every frame
-            if (currentLineIndex !== -1 && lineElements[currentLineIndex]) {
+            // ONLY animate active line's words on every frame if in word_synced mode
+            if (window._currentLyricsType === 'word_synced' && currentLineIndex !== -1 && lineElements[currentLineIndex]) {
                 const activeLine = lineElements[currentLineIndex];
                 if (activeLine.words && activeLine.words.length > 0) {
                     activeLine.words.forEach(w => {
