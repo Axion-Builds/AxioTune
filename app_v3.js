@@ -1982,6 +1982,13 @@ function onPlayerStateChange(event) {
 
         playerLyricsBtn?.addEventListener('click', (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            const rPanel = document.getElementById('right-panel');
+            if (rPanel && rPanel.dataset.view === 'queue') {
+                if (typeof window.switchPlayerRightPanelView === 'function') {
+                    window.switchPlayerRightPanelView('lyrics');
+                }
+                return;
+            }
             const isHidden = !rightPanel.classList.contains('lyrics-hidden');
             setLyricsVisibility(isHidden);
         });
@@ -2215,117 +2222,124 @@ function onPlayerStateChange(event) {
             // Feature reverted.
         }
 
-        // ── QUEUE SYSTEM ──
+        // ── QUEUE SYSTEM & DUAL RIGHT PANEL (LYRICS ↔ QUEUE) ──
         let queueList = [];
         let currentQueueIndex = -1;
-        let queueRenderLimit = 10;
+        let queueRenderLimit = 20;
         const queueNavBtn = document.getElementById('floating-queue-btn');
-        const queuePanel = document.getElementById('queue-panel');
-        const queueBackdrop = document.getElementById('queue-backdrop');
-        const closeQueueBtn = document.getElementById('close-queue-btn');
         const nextBtn = document.getElementById('next-btn');
         const prevBtn = document.getElementById('prev-btn');
 
-        let queueOpen = false;
+        function switchPlayerRightPanelView(targetView) {
+            const rPanel = document.getElementById('right-panel');
+            const pLyricsBtn = document.getElementById('player-lyrics-btn');
+            const pQueueBtn = document.getElementById('player-queue-btn');
+            const playerScr = document.getElementById('player-screen');
+
+            if (!rPanel) return;
+
+            if (targetView === 'queue') {
+                rPanel.dataset.view = 'queue';
+                rPanel.classList.remove('lyrics-hidden');
+                playerScr?.classList.remove('cinematic-mode');
+                pQueueBtn?.classList.add('active');
+                pLyricsBtn?.classList.remove('active');
+                queueNavBtn?.classList.add('active');
+                renderQueue();
+            } else {
+                rPanel.dataset.view = 'lyrics';
+                pQueueBtn?.classList.remove('active');
+                pLyricsBtn?.classList.add('active');
+                queueNavBtn?.classList.remove('active');
+                rPanel.classList.remove('lyrics-hidden');
+            }
+            if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
+            if (typeof appSettings !== 'undefined' && appSettings?.haptic && navigator.vibrate) navigator.vibrate(15);
+        }
+        window.switchPlayerRightPanelView = switchPlayerRightPanelView;
 
         function openQueue() {
-            queueOpen = true;
-            renderQueue();
-            if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
-            if (queuePanel) queuePanel.style.transform = '';
-            queuePanel?.classList.add('open');
-            queueBackdrop?.classList.add('open');
-            queueNavBtn?.classList.add('active');
-            playerQueueBtn?.classList.add('active');
-            document.body.classList.add('queue-active');
+            const playerScr = document.getElementById('player-screen');
+            const isPlayerActive = playerScr?.classList.contains('active-screen') || playerScr?.classList.contains('active');
+            if (!isPlayerActive) {
+                if (typeof showPlayer === 'function') showPlayer();
+                else if (window.showPlayer) window.showPlayer();
+            }
+            switchPlayerRightPanelView('queue');
         }
 
         function closeQueue() {
-            queueOpen = false;
-            queuePanel.classList.remove('open');
-            queueBackdrop.classList.remove('open');
-            queueNavBtn?.classList.remove('active');
-            playerQueueBtn?.classList.remove('active');
-            document.body.classList.remove('queue-active');
-            queuePanel.style.transform = '';
-            if (queueBackdrop) queueBackdrop.style.background = '';
+            switchPlayerRightPanelView('lyrics');
         }
 
-        let queueCloseTimer = null;
-        
         function toggleQueue(e) {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-            if (queueOpen) closeQueue(); else openQueue();
+            const playerScr = document.getElementById('player-screen');
+            const isPlayerActive = playerScr?.classList.contains('active-screen') || playerScr?.classList.contains('active');
+            const rPanel = document.getElementById('right-panel');
+            const isQueue = rPanel?.dataset.view === 'queue';
+
+            if (!isPlayerActive) {
+                if (typeof showPlayer === 'function') showPlayer();
+                else if (window.showPlayer) window.showPlayer();
+                switchPlayerRightPanelView('queue');
+            } else {
+                if (isQueue) {
+                    switchPlayerRightPanelView('lyrics');
+                } else {
+                    switchPlayerRightPanelView('queue');
+                }
+            }
         }
         window.toggleQueue = toggleQueue;
         window.openQueue = openQueue;
         window.closeQueue = closeQueue;
 
         queueNavBtn?.addEventListener('click', toggleQueue);
-        
+
         const playerQueueBtn = document.getElementById('player-queue-btn');
         playerQueueBtn?.addEventListener('click', (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-            toggleQueue(e);
-        });
-        
-        closeQueueBtn?.addEventListener('click', (e) => {
-            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-            closeQueue();
-        });
-        
-        // Close when clicking backdrop
-        queueBackdrop?.addEventListener('click', (e) => {
-            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-            closeQueue();
-        });
-        
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('#floating-queue-btn, #queue-nav-btn, #player-queue-btn, .player-queue-pill-btn')) return;
-            if (queueOpen && !queuePanel?.contains(e.target) && !queueBackdrop?.contains(e.target)) {
-                closeQueue();
+            const rPanel = document.getElementById('right-panel');
+            if (rPanel?.dataset.view === 'queue') {
+                switchPlayerRightPanelView('lyrics');
+            } else {
+                switchPlayerRightPanelView('queue');
             }
         });
 
-        const playSVG = ''; // Legacy — black hole uses bh-icon approach
-        const pauseSVG = ''; // Legacy — black hole uses bh-icon approach
+        // Top drag pill handle in Queue view switches view back to lyrics
+        document.querySelector('.pq-drag-pill')?.addEventListener('click', () => {
+            switchPlayerRightPanelView('lyrics');
+        });
 
-        // ── Drag-to-close gesture ──
-        const dragHandle = document.getElementById('queue-drag-handle');
-        if (dragHandle) {
-            let dragStartY = 0;
-            let isDragging = false;
-
-            dragHandle.addEventListener('pointerdown', (e) => {
-                isDragging = true;
-                dragStartY = e.clientY;
-                queuePanel.style.transition = 'none';
-                dragHandle.setPointerCapture(e.pointerId);
-            });
-
-            dragHandle.addEventListener('pointermove', (e) => {
-                if (!isDragging) return;
-                const delta = Math.max(0, e.clientY - dragStartY);
-                queuePanel.style.transform = `translateY(${delta}px)`;
-                const opacity = Math.max(0, 0.55 - (delta / window.innerHeight));
-                if (queueBackdrop) queueBackdrop.style.background = `rgba(0,0,0,${opacity})`;
-            });
-
-            dragHandle.addEventListener('pointerup', (e) => {
-                if (!isDragging) return;
-                isDragging = false;
-                queuePanel.style.transition = '';
-                const delta = e.clientY - dragStartY;
-                if (delta > 120) {
-                    queuePanel.style.transform = '';
-                    if (queueBackdrop) queueBackdrop.style.background = '';
-                    closeQueue();
-                } else {
-                    queuePanel.style.transform = '';
-                    if (queueBackdrop) queueBackdrop.style.background = '';
+        // Touch swipe-down on queue view returns to lyrics
+        const pqView = document.getElementById('player-queue-view');
+        if (pqView) {
+            let touchStartY = 0;
+            pqView.addEventListener('touchstart', (e) => {
+                if (e.touches && e.touches[0]) touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            pqView.addEventListener('touchend', (e) => {
+                if (!e.changedTouches || !e.changedTouches[0]) return;
+                const touchEndY = e.changedTouches[0].clientY;
+                const scrollArea = pqView.querySelector('.pq-scroll-area');
+                if (touchEndY - touchStartY > 75 && (!scrollArea || scrollArea.scrollTop <= 5)) {
+                    switchPlayerRightPanelView('lyrics');
                 }
-            });
+            }, { passive: true });
         }
+
+        // Sync live equalizer bar bouncing with playback state
+        audioPlayer?.addEventListener('play', () => {
+            document.querySelectorAll('.pq-live-eq').forEach(eq => eq.classList.remove('paused'));
+        });
+        audioPlayer?.addEventListener('pause', () => {
+            document.querySelectorAll('.pq-live-eq').forEach(eq => eq.classList.add('paused'));
+        });
+        audioPlayer?.addEventListener('ended', () => {
+            document.querySelectorAll('.pq-live-eq').forEach(eq => eq.classList.add('paused'));
+        });
 
         // Black hole icon toggle helper
         function setBhIcon(playing) {
@@ -5933,242 +5947,208 @@ function onPlayerStateChange(event) {
         }
 
         // ── PREMIUM QUEUE RENDERER ──
+        // ── ULTRA-PREMIUM APPLE-SPEC QUEUE RENDERER ──
         function renderQueue() {
             if (typeof updateCinematicCards === 'function') updateCinematicCards();
-            const qList = document.getElementById('queue-list');
-            qList.innerHTML = '';
+            
+            const nowCardEl = document.getElementById('pq-now-playing-card');
+            const upcomingListEl = document.getElementById('pq-upcoming-list');
+            if (!nowCardEl && !upcomingListEl) return;
 
-            const totalUpNext = queueList.length > 0 ? queueList.length - currentQueueIndex - 1 : 0;
-            const qHeaderTitle = document.getElementById('queue-header-title');
-            if (qHeaderTitle) {
-                qHeaderTitle.textContent = queueList.length > 0 ? `Up Next · ${totalUpNext} song${totalUpNext !== 1 ? 's' : ''}` : 'Up Next';
-            }
+            if (nowCardEl) nowCardEl.innerHTML = '';
+            if (upcomingListEl) upcomingListEl.innerHTML = '';
+
+            const isAudioPlaying = audioPlayer && !audioPlayer.paused && !audioPlayer.ended;
 
             if (queueList.length === 0) {
-                qList.innerHTML = `
-                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;position:relative;z-index:2;">
-                        <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
-                            <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:rgba(255,255,255,0.3);"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
-                        </div>
-                        <div style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.45);">Queue is empty</div>
-                        <div style="font-size:0.75rem;color:rgba(255,255,255,0.3);">Play a song to fill the queue</div>
-                    </div>`;
+                if (nowCardEl) {
+                    nowCardEl.innerHTML = `
+                        <div class="pq-empty-state">
+                            <div class="pq-empty-title">Nothing playing right now</div>
+                            <div class="pq-empty-desc">Search and select a song to start listening</div>
+                        </div>`;
+                }
+                if (upcomingListEl) {
+                    upcomingListEl.innerHTML = `
+                        <div class="pq-empty-state">
+                            <div class="pq-empty-title">Queue is empty</div>
+                            <div class="pq-empty-desc">Upcoming songs will appear here automatically</div>
+                        </div>`;
+                }
                 return;
             }
 
-            const nowSong = queueList[currentQueueIndex];
+            const nowIdx = (currentQueueIndex >= 0 && currentQueueIndex < queueList.length) ? currentQueueIndex : 0;
+            const nowSong = queueList[nowIdx];
 
-            // HORIZONTAL SCROLL ROW
-            const hScroll = document.createElement('div');
-            hScroll.className = 'q-horizontal-scroll';
+            // 1. NOW PLAYING ROW (Matches user reference image)
+            if (nowCardEl && nowSong) {
+                const nowVid = nowSong.id || nowSong.videoId || '';
+                const nowFb = nowVid ? `https://i.ytimg.com/vi/${nowVid}/hqdefault.jpg` : 'default_cover.jpg';
+                const playerScreenCover = document.getElementById('cover-art')?.src;
+                const nowThumb = (playerScreenCover && playerScreenCover.startsWith('http') && !playerScreenCover.includes('default_cover.jpg'))
+                    ? playerScreenCover
+                    : (typeof getCoverUrl === 'function' ? getCoverUrl(`${nowSong.title} ${nowSong.artist}`, nowSong.cover || '', nowVid) : (nowSong.cover || nowFb));
+                const isExplicit = Boolean(nowSong.isExplicit || nowSong.explicit || /\b(explicit|dirty|uncensored)\b/i.test(nowSong.title));
 
-            // NOW PLAYING CARD
-            const nowVid = nowSong.id || nowSong.videoId || '';
-            const nowFb = nowVid ? `https://i.ytimg.com/vi/${nowVid}/hqdefault.jpg` : 'default_cover.jpg';
-            const playerScreenCover = document.getElementById('cover-art')?.src;
-            const nowThumb = (playerScreenCover && playerScreenCover.startsWith('http') && !playerScreenCover.includes('default_cover.jpg'))
-                ? playerScreenCover
-                : getCoverUrl(`${nowSong.title} ${nowSong.artist}`, nowSong.cover || '', nowVid);
-            const nowCard = document.createElement('div');
-            nowCard.className = 'q-card-now';
-            nowCard.style.setProperty('--card-index', 0);
-            nowCard.innerHTML = `
-                <div class="q-card-now-ring">
-                    <img src="${nowThumb}" class="q-card-now-art" onerror="if(this.src!=='${nowFb}'){this.src='${nowFb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
-                    <div class="q-card-sheen"></div>
-                    <div class="q-card-now-badge">
-                        <div class="q-eq"><span></span><span></span><span></span><span></span></div>
-                        <span class="q-card-now-badge-text">Now Playing</span>
-                    </div>
-                    <div class="q-soundwave-overlay" title="Playing">
-                        <span></span><span></span><span></span><span></span><span></span>
-                    </div>
-                </div>
-                <div class="q-card-now-info">
-                    <div class="q-card-now-title">${nowSong.title}</div>
-                    <div class="q-card-now-artist">${nowSong.artist}</div>
-                </div>
-            `;
-            nowCard.addEventListener('click', () => playPauseBtn.click());
-            hScroll.appendChild(nowCard);
-
-            // DIVIDER OR LOADING PILL
-            if (totalUpNext > 0) {
-                const divider = document.createElement('div');
-                divider.className = 'q-section-divider';
-                divider.style.setProperty('--card-index', 1);
-                divider.innerHTML = `<div class="q-section-divider-line"></div><div class="q-section-divider-dot"></div><div class="q-section-divider-line"></div>`;
-                hScroll.appendChild(divider);
-            } else if (isSongLoaded) {
-                const loadingPill = document.createElement('div');
-                loadingPill.className = 'q-loading-indicator';
-                loadingPill.style.cssText = 'display:flex;align-items:center;gap:10px;padding:14px 22px;border-radius:24px;background:rgba(255,255,255,0.06);margin-left:14px;align-self:center;white-space:nowrap;color:rgba(255,255,255,0.7);font-size:0.85rem;font-weight:600;border:1px solid rgba(255,255,255,0.08);';
-                loadingPill.innerHTML = '<div class="premium-glass-loader" style="width:16px;height:16px;border-width:2px;margin:0;"></div> Generating Up Next Radio...';
-                hScroll.appendChild(loadingPill);
-            }
-
-            // Global variable for active drag
-            window._qDragIndex = null;
-
-            // UPCOMING CARDS WITH DRAG & DROP REORDER & DOUBLE CLICK REORDER
-            for (let idx = currentQueueIndex + 1; idx < Math.min(queueList.length, currentQueueIndex + 1 + queueRenderLimit); idx++) {
-                const song = queueList[idx];
-                const pos = idx - currentQueueIndex;
-                const isNext = pos === 1;
-                const songVid = song.id || song.videoId || '';
-                const songFb = songVid ? `https://i.ytimg.com/vi/${songVid}/hqdefault.jpg` : 'default_cover.jpg';
-                const thumb = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', songVid);
-                const numLabel = pos < 10 ? '0' + pos : pos;
-                const card = document.createElement('div');
-                card.className = `q-card-up${isNext ? ' q-card-next' : ''}`;
-                card.style.setProperty('--card-index', pos + 1);
-                card.setAttribute('draggable', 'true');
-                card.setAttribute('data-idx', idx);
-
-                card.innerHTML = `
-                    <div class="q-card-art-wrap">
-                        <img src="${thumb}" class="q-card-art" onerror="if(this.src!=='${songFb}'){this.src='${songFb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
-                        <div class="q-card-play-overlay">
-                            <div class="q-card-play-icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+                const item = document.createElement('div');
+                item.className = 'pq-item pq-now-playing-item';
+                item.innerHTML = `
+                    <img src="${nowThumb}" class="pq-item-cover" alt="Cover" onerror="if(this.src!=='${nowFb}'){this.src='${nowFb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
+                    <div class="pq-item-info">
+                        <div class="pq-item-title-row">
+                            ${isExplicit ? '<span class="pq-explicit-badge">E</span>' : ''}
+                            <span class="pq-item-title" title="${escapeHtml(nowSong.title)}">${escapeHtml(nowSong.title)}</span>
                         </div>
-                        <span class="q-card-num" title="Drag to reorder or Double-click to move to #1">${numLabel}</span>
-                        <div class="q-card-actions">
-                            ${pos > 1 ? `<button class="q-action-btn q-move-left" data-idx="${idx}" title="Move left">◄</button>` : ''}
-                            ${idx < queueList.length - 1 ? `<button class="q-action-btn q-move-right" data-idx="${idx}" title="Move right">►</button>` : ''}
-                            <button class="q-action-btn q-remove-btn" data-idx="${idx}" title="Remove">✕</button>
-                        </div>
+                        <div class="pq-item-artist" title="${escapeHtml(nowSong.artist)}">${escapeHtml(nowSong.artist)}</div>
                     </div>
-                    <div class="q-card-title">${song.title}</div>
-                    <div class="q-card-artist">${song.artist}</div>
+                    <div class="pq-item-actions">
+                        <div class="pq-live-eq ${isAudioPlaying ? '' : 'paused'}" title="${isAudioPlaying ? 'Playing' : 'Paused'}">
+                            <span class="pq-live-eq-bar"></span>
+                            <span class="pq-live-eq-bar"></span>
+                            <span class="pq-live-eq-bar"></span>
+                            <span class="pq-live-eq-bar"></span>
+                        </div>
+                        <button class="pq-item-btn pq-now-clear-btn" title="Clear upcoming queue">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            </svg>
+                        </button>
+                    </div>
                 `;
 
-                // ── DRAG & DROP REORDER EVENTS ──
-                card.addEventListener('dragstart', (e) => {
-                    window._qDragIndex = idx;
-                    card.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', idx.toString());
-                });
-
-                card.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    if (window._qDragIndex !== null && window._qDragIndex !== idx) {
-                        card.classList.add('drag-over');
-                    }
-                });
-
-                card.addEventListener('dragleave', () => {
-                    card.classList.remove('drag-over');
-                });
-
-                card.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    card.classList.remove('drag-over');
-                    card.classList.remove('dragging');
-
-                    const fromIdx = window._qDragIndex !== null ? window._qDragIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
-                    const toIdx = idx;
-
-                    if (!isNaN(fromIdx) && fromIdx !== toIdx && fromIdx > currentQueueIndex && toIdx > currentQueueIndex) {
-                        const [moved] = queueList.splice(fromIdx, 1);
-                        queueList.splice(toIdx, 0, moved);
-                        renderQueue();
-                        if (typeof showToast === 'function') showToast(`Queue reordered! 🎵`);
-                    }
-                    window._qDragIndex = null;
-                });
-
-                card.addEventListener('dragend', () => {
-                    card.classList.remove('dragging');
-                    card.classList.remove('drag-over');
-                    document.querySelectorAll('.q-card-up').forEach(c => c.classList.remove('drag-over', 'dragging'));
-                    window._qDragIndex = null;
-                });
-
-                // Reorder action button handlers
-                card.addEventListener('click', (e) => {
-                    const removeBtn = e.target.closest('.q-remove-btn');
-                    const moveLeftBtn = e.target.closest('.q-move-left');
-                    const moveRightBtn = e.target.closest('.q-move-right');
-
-                    if (removeBtn) {
+                // Clicking row toggles playback, clicking clear button clears upcoming
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.pq-now-clear-btn')) {
                         e.stopPropagation();
-                        queueList.splice(idx, 1);
-                        renderQueue();
-                        return;
-                    }
-                    if (moveLeftBtn) {
-                        e.stopPropagation();
-                        if (idx > currentQueueIndex + 1) {
-                            const [moved] = queueList.splice(idx, 1);
-                            queueList.splice(idx - 1, 0, moved);
+                        if (queueList.length > nowIdx + 1) {
+                            queueList.splice(nowIdx + 1);
                             renderQueue();
-                            showToast(`Moved "${song.title}" left! 🎵`);
+                            if (typeof showToast === 'function') showToast('Upcoming queue cleared 🧹');
                         }
                         return;
                     }
-                    if (moveRightBtn) {
-                        e.stopPropagation();
-                        if (idx < queueList.length - 1) {
-                            const [moved] = queueList.splice(idx, 1);
-                            queueList.splice(idx + 1, 0, moved);
-                            renderQueue();
-                            showToast(`Moved "${song.title}" right! 🎵`);
-                        }
-                        return;
-                    }
-
-                    playQueueIndex(idx);
-                });
-
-                // DOUBLE CLICK / DOUBLE TAP TO MOVE SONG TO UP NEXT #01
-                let cardLastTap = 0;
-                const handleDoubleTapMove = (e) => {
-                    if (e.target.closest('.q-card-actions')) return;
-                    const now = Date.now();
-                    if (now - cardLastTap < 400) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (idx > currentQueueIndex + 1) {
-                            const [moved] = queueList.splice(idx, 1);
-                            queueList.splice(currentQueueIndex + 1, 0, moved);
-                            renderQueue();
-                            showToast(`Moved "${song.title}" to Up Next #01! 🎵`);
-                        }
-                    }
-                    cardLastTap = now;
-                };
-
-                card.addEventListener('dblclick', (e) => {
-                    if (e.target.closest('.q-card-actions')) return;
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (idx > currentQueueIndex + 1) {
-                        const [moved] = queueList.splice(idx, 1);
-                        queueList.splice(currentQueueIndex + 1, 0, moved);
-                        renderQueue();
-                        showToast(`Moved "${song.title}" to Up Next #01! 🎵`);
+                    if (typeof playPauseBtn !== 'undefined' && playPauseBtn) {
+                        playPauseBtn.click();
                     }
                 });
 
-                card.addEventListener('touchend', handleDoubleTapMove);
-
-                hScroll.appendChild(card);
+                nowCardEl.appendChild(item);
             }
 
-            // LOAD MORE
-            if (currentQueueIndex + 1 + queueRenderLimit < queueList.length) {
-                const remaining = queueList.length - (currentQueueIndex + 1 + queueRenderLimit);
-                const more = document.createElement('div');
-                more.className = 'q-card-more';
-                more.style.setProperty('--card-index', queueRenderLimit + 2);
-                more.innerHTML = `<div class="q-card-more-circle">+${remaining > 99 ? '99' : remaining}</div><span class="q-card-more-label">Load More</span>`;
-                more.addEventListener('click', () => { queueRenderLimit += 12; renderQueue(); });
-                hScroll.appendChild(more);
-            }
+            // 2. UPCOMING TRACKS LIST
+            if (upcomingListEl) {
+                window._pqDragIndex = null;
+                const startIndex = nowIdx + 1;
+                const totalUpcoming = queueList.length - startIndex;
 
-            qList.appendChild(hScroll);
+                if (totalUpcoming <= 0) {
+                    const emptyUpcoming = document.createElement('div');
+                    emptyUpcoming.className = 'pq-empty-state';
+                    emptyUpcoming.innerHTML = `
+                        <div class="pq-empty-title">No upcoming songs</div>
+                        <div class="pq-empty-desc">${isSongLoaded ? 'AutoPlay will recommend similar music soon...' : 'Add songs to queue or enable AutoPlay'}</div>
+                    `;
+                    upcomingListEl.appendChild(emptyUpcoming);
+                } else {
+                    for (let idx = startIndex; idx < queueList.length; idx++) {
+                        const song = queueList[idx];
+                        const songVid = song.id || song.videoId || '';
+                        const songFb = songVid ? `https://i.ytimg.com/vi/${songVid}/hqdefault.jpg` : 'default_cover.jpg';
+                        const thumb = (typeof getCoverUrl === 'function') ? getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', songVid) : (song.cover || songFb);
+                        const isExplicit = Boolean(song.isExplicit || song.explicit || /\b(explicit|dirty|uncensored)\b/i.test(song.title));
+
+                        const row = document.createElement('div');
+                        row.className = 'pq-item';
+                        row.setAttribute('draggable', 'true');
+                        row.setAttribute('data-idx', idx);
+
+                        row.innerHTML = `
+                            <span class="pq-drag-handle" title="Drag to reorder">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                    <path d="M4 9h16v2H4zm0 4h16v2H4z"/>
+                                </svg>
+                            </span>
+                            <img src="${thumb}" class="pq-item-cover" alt="Cover" onerror="if(this.src!=='${songFb}'){this.src='${songFb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
+                            <div class="pq-item-info">
+                                <div class="pq-item-title-row">
+                                    ${isExplicit ? '<span class="pq-explicit-badge">E</span>' : ''}
+                                    <span class="pq-item-title" title="${escapeHtml(song.title)}">${escapeHtml(song.title)}</span>
+                                </div>
+                                <div class="pq-item-artist" title="${escapeHtml(song.artist)}">${escapeHtml(song.artist)}</div>
+                            </div>
+                            <div class="pq-item-actions">
+                                <button class="pq-item-btn pq-remove-btn" data-idx="${idx}" title="Remove from queue">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+
+                        // Drag & drop reorder events
+                        row.addEventListener('dragstart', (e) => {
+                            window._pqDragIndex = idx;
+                            row.classList.add('dragging');
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', idx.toString());
+                        });
+
+                        row.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                            if (window._pqDragIndex !== null && window._pqDragIndex !== idx) {
+                                row.classList.add('drag-over');
+                            }
+                        });
+
+                        row.addEventListener('dragleave', () => {
+                            row.classList.remove('drag-over');
+                        });
+
+                        row.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            row.classList.remove('drag-over');
+                            row.classList.remove('dragging');
+                            const fromIdx = window._pqDragIndex !== null ? window._pqDragIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
+                            const toIdx = idx;
+
+                            if (!isNaN(fromIdx) && fromIdx !== toIdx && fromIdx > nowIdx && toIdx > nowIdx) {
+                                const [moved] = queueList.splice(fromIdx, 1);
+                                queueList.splice(toIdx, 0, moved);
+                                renderQueue();
+                                if (typeof showToast === 'function') showToast('Queue reordered 🎵');
+                            }
+                            window._pqDragIndex = null;
+                        });
+
+                        row.addEventListener('dragend', () => {
+                            row.classList.remove('dragging');
+                            row.classList.remove('drag-over');
+                            document.querySelectorAll('.pq-item').forEach(c => c.classList.remove('drag-over', 'dragging'));
+                            window._pqDragIndex = null;
+                        });
+
+                        // Click to remove or click to play
+                        row.addEventListener('click', (e) => {
+                            const removeBtn = e.target.closest('.pq-remove-btn');
+                            if (removeBtn) {
+                                e.stopPropagation();
+                                queueList.splice(idx, 1);
+                                renderQueue();
+                                if (typeof showToast === 'function') showToast('Removed from queue');
+                                return;
+                            }
+                            if (e.target.closest('.pq-drag-handle')) {
+                                return;
+                            }
+                            playQueueIndex(idx);
+                        });
+
+                        upcomingListEl.appendChild(row);
+                    }
+                }
+            }
         }
         
         // Clear Queue Header Button

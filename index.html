@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=276">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=278">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -827,6 +827,26 @@
                     <button id="lyrics-offset-plus-btn" class="lyrics-offset-btn" title="Shift Lyrics Later (+0.1s)" onclick="if(typeof adjustLyricsOffset==='function') adjustLyricsOffset(0.1, event)">+</button>
                 </div>
             </div>
+
+            <!-- 🎶 PREMIUM APPLE-SPEC PLAYER QUEUE VIEW -->
+            <div id="player-queue-view" class="player-queue-view">
+                <div class="pq-drag-pill"></div>
+                <div class="pq-header-title">Queue</div>
+                <div class="pq-scroll-area">
+                    <div class="pq-section-label">Now playing</div>
+                    <div id="pq-now-playing-card" class="pq-now-playing-card"></div>
+
+                    <div class="pq-autoplay-box">
+                        <div class="pq-autoplay-title-row">
+                            <span class="pq-infinity-icon">∞</span>
+                            <span>AutoPlay</span>
+                        </div>
+                        <div class="pq-autoplay-desc">Similar music, selected to play next</div>
+                    </div>
+
+                    <div id="pq-upcoming-list" class="pq-upcoming-list"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Top-right controls: Modern Liquid Glass Action Capsule (PiP & Fullscreen) -->
@@ -1604,36 +1624,7 @@
         </div>
     </div>
 
-    <!-- Queue Bottom Sheet — body level so it works on all screens -->
-    <div id="queue-panel">
-        <div id="queue-drag-handle">
-            <div id="queue-handle-pill"></div>
-        </div>
-        <div id="queue-header">
-            <div id="queue-header-left">
-                <svg viewBox="0 0 24 24" id="queue-header-icon"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
-                <span id="queue-header-title">Up Next</span>
-            </div>
-            <div id="queue-header-right">
-                <button id="queue-shuffle-btn" class="queue-control-btn" title="Shuffle">
-                    <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
-                </button>
-                <button id="queue-repeat-btn" class="queue-control-btn" title="Repeat">
-                    <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
-                </button>
-                <button id="queue-autoplay-btn" class="queue-control-btn" title="Autoplay">
-                    <svg viewBox="0 0 24 24"><path d="M18.6 6.62c-1.44 0-2.8.76-3.77 2.02-.96-1.26-2.33-2.02-3.77-2.02-2.6 0-4.72 2.11-4.72 4.71s2.12 4.71 4.72 4.71c1.44 0 2.8-.76 3.77-2.02.96 1.26 2.33 2.02 3.77 2.02 2.6 0 4.72-2.11 4.72-4.71s-2.12-4.71-4.72-4.71zm-7.54 7.54c-1.56 0-2.83-1.27-2.83-2.83 0-1.56 1.27-2.83 2.83-2.83 1.56 0 2.83 1.27 2.83 2.83 0 1.56-1.27 2.83-2.83 2.83zm7.54 0c-1.56 0-2.83-1.27-2.83-2.83 0-1.56 1.27-2.83 2.83-2.83 1.56 0 2.83 1.27 2.83 2.83 0 1.56-1.27 2.83-2.83 2.83z"/></svg>
-                </button>
-                <div class="queue-divider"></div>
-                <button id="queue-header-clear-btn">Clear</button>
-                <button id="close-queue-btn">
-                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                </button>
-            </div>
-        </div>
-        <div id="queue-list"></div>
-    </div>
-    <div id="queue-backdrop"></div>
+
 
     <!-- 🎵 EXACT LYRICS SOURCES FALLBACK MODAL (Matches user screenshot) -->
     <div id="lyrics-sources-modal" class="lyrics-sources-modal-overlay hidden" onclick="if(event.target === this) closeLyricsSourcesModal()">
@@ -1692,7 +1683,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=277"></script>
+    <script src="app_v3.js?v=278"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
