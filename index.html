@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=274">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=275">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -1650,6 +1650,15 @@
                 <!-- Dynamically populated from JavaScript -->
             </div>
 
+            <!-- Musixmatch API key section -->
+            <div class="lyrics-sources-setting-row" id="musixmatch-key-row" onclick="promptMusixmatchKey()">
+                <div class="setting-row-info">
+                    <div class="setting-row-title" id="musixmatch-key-label">Musixmatch token/key — optional, not configured</div>
+                    <div class="setting-row-desc">RichSync word-by-word & line-synced lyrics</div>
+                </div>
+                <span class="setting-row-chevron">›</span>
+            </div>
+
             <!-- PaxSenix API key section -->
             <div class="lyrics-sources-setting-row" id="paxsenix-key-row" onclick="promptPaxsenixKey()">
                 <div class="setting-row-info">
@@ -1683,7 +1692,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=274"></script>
+    <script src="app_v3.js?v=275"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

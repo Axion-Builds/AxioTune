@@ -2632,6 +2632,20 @@ function onPlayerStateChange(event) {
         };
 
         window.LYRICS_PROVIDERS_META = {
+            lrcred: {
+                id: 'lrcred',
+                name: 'lrc.red',
+                desc: 'Apple Music syllable timings & word-by-word TTML',
+                tag: 'Word-by-Word',
+                tagClass: 'syllable'
+            },
+            musixmatch: {
+                id: 'musixmatch',
+                name: 'Musixmatch',
+                desc: 'Official catalog, RichSync & line-synced timings',
+                tag: 'Word / Synced',
+                tagClass: 'syllable'
+            },
             lyricsplus: {
                 id: 'lyricsplus',
                 name: 'LyricsPlus',
@@ -2677,22 +2691,35 @@ function onPlayerStateChange(event) {
         };
 
         window.getLyricsSourcesOrder = function() {
+            const defaultOrder = ['lrcred', 'musixmatch', 'lyricsplus', 'betterlyrics', 'paxsenix', 'simpmusic', 'kugou', 'lrclib'];
             try {
                 const saved = localStorage.getItem('axio_lyrics_sources_order');
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        const missing = defaultOrder.filter(k => !parsed.includes(k));
+                        if (missing.length > 0) {
+                            const newOrder = [...missing.filter(k => ['lrcred', 'musixmatch'].includes(k)), ...parsed, ...missing.filter(k => !['lrcred', 'musixmatch'].includes(k))];
+                            localStorage.setItem('axio_lyrics_sources_order', JSON.stringify(newOrder));
+                            return newOrder;
+                        }
+                        return parsed;
+                    }
                 }
             } catch(e) {}
-            return ['lyricsplus', 'paxsenix', 'betterlyrics', 'simpmusic', 'kugou', 'lrclib'];
+            return defaultOrder;
         };
 
         window.getLyricsSourcesEnabled = function() {
+            const defaults = { lrcred: true, musixmatch: true, lyricsplus: true, paxsenix: true, betterlyrics: true, simpmusic: true, kugou: true, lrclib: true };
             try {
                 const saved = localStorage.getItem('axio_lyrics_sources_enabled');
-                if (saved) return JSON.parse(saved);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    return { ...defaults, ...parsed };
+                }
             } catch(e) {}
-            return { lyricsplus: true, paxsenix: true, betterlyrics: true, simpmusic: true, kugou: true, lrclib: true };
+            return defaults;
         };
 
         window.getLyricsPrioritizeSyllable = function() {
@@ -2786,6 +2813,11 @@ function onPlayerStateChange(event) {
             });
 
             // Update settings rows
+            const mxmKey = window.getMusixmatchApiKey ? window.getMusixmatchApiKey() : '';
+            const mxmLabel = document.getElementById('musixmatch-key-label');
+            if (mxmLabel) {
+                mxmLabel.textContent = mxmKey ? `Musixmatch token/key — Configured (${mxmKey.slice(0, 4)}••••)` : 'Musixmatch token/key — optional, not configured';
+            }
             const paxKey = window.getPaxsenixApiKey();
             const paxLabel = document.getElementById('paxsenix-key-label');
             if (paxLabel) {
@@ -2860,6 +2892,23 @@ function onPlayerStateChange(event) {
                 localStorage.setItem('axio_lyrics_betterlyrics_key', val.trim());
                 window.renderLyricsSourcesModal();
                 showToast(val.trim() ? "BetterLyrics API key saved" : "BetterLyrics API key cleared");
+                if (currentVideoId && currentTrackTitle) {
+                    fetchLyricsForQueueSong(currentTrackTitle, currentTrackArtist, currentVideoId);
+                }
+            }
+        };
+
+        window.getMusixmatchApiKey = function() {
+            return localStorage.getItem('axio_lyrics_musixmatch_key') || '';
+        };
+
+        window.promptMusixmatchKey = function() {
+            const current = window.getMusixmatchApiKey();
+            const val = prompt("Enter Musixmatch API Key or User Token (optional, leave empty for default):", current);
+            if (val !== null) {
+                localStorage.setItem('axio_lyrics_musixmatch_key', val.trim());
+                window.renderLyricsSourcesModal();
+                showToast(val.trim() ? "Musixmatch credential saved" : "Musixmatch credential cleared");
                 if (currentVideoId && currentTrackTitle) {
                     fetchLyricsForQueueSong(currentTrackTitle, currentTrackArtist, currentVideoId);
                 }
@@ -3068,16 +3117,17 @@ function onPlayerStateChange(event) {
                 window._availableLyricsSources = [];
                 window._currentLyricsSourceIndex = 0;
 
-                // STEP 1: Try /api/lyrics (backend multi-provider API with exact 6-source fallback chain)
+                // STEP 1: Try /api/lyrics (backend multi-provider API with exact 8-source fallback chain)
                 try {
-                    const order = (window.getLyricsSourcesOrder ? window.getLyricsSourcesOrder() : ['lyricsplus', 'paxsenix', 'betterlyrics', 'simpmusic', 'kugou', 'lrclib'])
+                    const order = (window.getLyricsSourcesOrder ? window.getLyricsSourcesOrder() : ['lrcred', 'musixmatch', 'lyricsplus', 'betterlyrics', 'paxsenix', 'simpmusic', 'kugou', 'lrclib'])
                         .filter(k => (window.getLyricsSourcesEnabled ? window.getLyricsSourcesEnabled()[k] !== false : true))
                         .join(',');
                     const prioritize = window.getLyricsPrioritizeSyllable ? window.getLyricsPrioritizeSyllable() : true;
                     const paxKey = window.getPaxsenixApiKey ? window.getPaxsenixApiKey() : '';
                     const betterKey = window.getBetterlyricsApiKey ? window.getBetterlyricsApiKey() : '';
+                    const mxmKey = window.getMusixmatchApiKey ? window.getMusixmatchApiKey() : '';
 
-                    const ytRes = await fetch(`/api/lyrics?videoId=${encodeURIComponent(videoId || '')}&title=${encodeURIComponent(cleanTitle)}&artist=${encodeURIComponent(cleanArtist)}&order=${encodeURIComponent(order)}&prioritize_syllable=${prioritize}&paxsenix_key=${encodeURIComponent(paxKey)}&betterlyrics_key=${encodeURIComponent(betterKey)}`);
+                    const ytRes = await fetch(`/api/lyrics?videoId=${encodeURIComponent(videoId || '')}&title=${encodeURIComponent(cleanTitle)}&artist=${encodeURIComponent(cleanArtist)}&order=${encodeURIComponent(order)}&prioritize_syllable=${prioritize}&paxsenix_key=${encodeURIComponent(paxKey)}&betterlyrics_key=${encodeURIComponent(betterKey)}&musixmatch_key=${encodeURIComponent(mxmKey)}`);
                     if (ytRes.ok) {
                         const ytData = await ytRes.json();
                         if (ytData.status === 'success') {

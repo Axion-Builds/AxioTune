@@ -1142,7 +1142,172 @@ def parse_synced_lrc(lrc_text: str):
 
     return lines
 
-# --- 6 LYRICS PROVIDERS (LyricsPlus, PaxSenix, BetterLyrics, SimpMusic, KuGou, LRCLIB) ---
+# --- 8 LYRICS PROVIDERS (lrc.red, Musixmatch, LyricsPlus, BetterLyrics, PaxSenix, SimpMusic, KuGou, LRCLIB) ---
+
+async def fetch_lrcred_lyrics(title: str, artist: str, client: httpx.AsyncClient):
+    """lrc.red: Over 29.8M tracks with TTML word-by-word and syllable-synced LRC."""
+    queries = [f"{title} {artist}".strip(), title]
+    for q in queries:
+        if not q:
+            continue
+        try:
+            url = "https://lrc.red/search.json"
+            r = await client.get(url, params={"q": q}, headers={"User-Agent": "Mozilla/5.0"}, timeout=5.0)
+            if r.status_code == 200:
+                data = r.json()
+                hits = data.get("hits", [])
+                if hits:
+                    hit = hits[0]
+                    isrc = hit.get("isrc")
+                    artist_name = hit.get("artist") or artist
+                    if isrc:
+                        # 1. Try TTML for Apple Music spec word-by-word timing
+                        try:
+                            ttml_res = await client.get(f"https://lrc.red/s/{isrc}.ttml", headers={"User-Agent": "Mozilla/5.0"}, timeout=4.0)
+                            if ttml_res.status_code == 200 and ttml_res.text:
+                                parsed_ttml = parse_ttml_lyrics(ttml_res.text)
+                                if parsed_ttml:
+                                    has_words = any(len(l.get("words", [])) > 1 for l in parsed_ttml)
+                                    return {
+                                        "id": "lrcred",
+                                        "provider": "lrc.red",
+                                        "provider_badge": "lrc.red",
+                                        "name": f"lrc.red • {artist_name}",
+                                        "type": "word_synced" if has_words else "line_synced",
+                                        "lines": parsed_ttml,
+                                        "raw_lrc": ttml_res.text
+                                    }
+                        except Exception:
+                            pass
+
+                        # 2. Fallback to LRC
+                        lrc_res = await client.get(f"https://lrc.red/s/{isrc}.lrc", headers={"User-Agent": "Mozilla/5.0"}, timeout=4.0)
+                        if lrc_res.status_code == 200 and lrc_res.text:
+                            parsed_lrc = parse_synced_lrc(lrc_res.text)
+                            if parsed_lrc:
+                                has_words = any(len(l.get("words", [])) > 1 for l in parsed_lrc)
+                                return {
+                                    "id": "lrcred",
+                                    "provider": "lrc.red",
+                                    "provider_badge": "lrc.red",
+                                    "name": f"lrc.red • {artist_name}",
+                                    "type": "word_synced" if has_words else "line_synced",
+                                    "lines": parsed_lrc,
+                                    "raw_lrc": lrc_res.text
+                                }
+        except Exception:
+            continue
+    return None
+
+async def fetch_musixmatch_lyrics(title: str, artist: str, client: httpx.AsyncClient, token_or_key: str = ""):
+    """Musixmatch: Official catalog, RichSync word-by-word and line-synced lyrics."""
+    params = {
+        "q_track": title,
+        "q_artist": artist,
+        "format": "json",
+        "app_id": "community-app-v1.0"
+    }
+    tok = (token_or_key or "").strip()
+    if tok:
+        if len(tok) == 32 and tok.isalnum():
+            params["apikey"] = tok
+        else:
+            params["usertoken"] = tok
+
+    headers = {"User-Agent": "Mozilla/5.0"}
+    bases = ["https://apic.musixmatch.com/ws/1.1/", "https://api.musixmatch.com/ws/1.1/"]
+
+    # 1. Try track.search + track.richsync.get for true word-by-word lyrics
+    for base in bases:
+        try:
+            r = await client.get(f"{base}track.search", params={**params, "page_size": 3, "page": 1}, headers=headers, timeout=4.0)
+            if r.status_code == 200:
+                t_list = r.json().get("message", {}).get("body", {}).get("track_list", [])
+                if t_list:
+                    t_item = t_list[0].get("track", {})
+                    track_id = t_item.get("track_id")
+                    artist_name = t_item.get("artist_name") or artist
+                    if track_id:
+                        rs_params = {"track_id": track_id, "app_id": params.get("app_id")}
+                        if "usertoken" in params: rs_params["usertoken"] = params["usertoken"]
+                        if "apikey" in params: rs_params["apikey"] = params["apikey"]
+                        r_rs = await client.get(f"{base}track.richsync.get", params=rs_params, headers=headers, timeout=4.0)
+                        if r_rs.status_code == 200:
+                            rs_body = r_rs.json().get("message", {}).get("body", {}).get("richsync", {}).get("richsync_body")
+                            if rs_body:
+                                raw_lines = json.loads(rs_body)
+                                lines = []
+                                for item in raw_lines:
+                                    ts = float(item.get("ts", 0))
+                                    words = []
+                                    words_text = []
+                                    for w in item.get("l", []):
+                                        c = w.get("c", "").strip()
+                                        o = float(w.get("o", 0))
+                                        if c:
+                                            words.append({"word": c, "time": round(ts + o, 2)})
+                                            words_text.append(c)
+                                    lines.append({
+                                        "time": ts,
+                                        "text": " ".join(words_text),
+                                        "isInstrumental": False,
+                                        "words": words
+                                    })
+                                if lines:
+                                    return {
+                                        "id": "musixmatch",
+                                        "provider": "Musixmatch",
+                                        "provider_badge": "Musixmatch",
+                                        "name": f"Musixmatch • {artist_name}",
+                                        "type": "word_synced",
+                                        "lines": lines
+                                    }
+        except Exception:
+            continue
+
+    # 2. Try matcher.subtitle.get for line-synced lyrics
+    for base in bases:
+        try:
+            r = await client.get(f"{base}matcher.subtitle.get", params=params, headers=headers, timeout=4.0)
+            if r.status_code == 200:
+                body = r.json().get("message", {}).get("body", {})
+                sub_body = body.get("subtitle", {}).get("subtitle_body", "")
+                if sub_body:
+                    parsed = parse_synced_lrc(sub_body)
+                    if parsed:
+                        has_words = any(len(l.get("words", [])) > 1 for l in parsed)
+                        return {
+                            "id": "musixmatch",
+                            "provider": "Musixmatch",
+                            "provider_badge": "Musixmatch",
+                            "name": f"Musixmatch • {artist}",
+                            "type": "word_synced" if has_words else "line_synced",
+                            "lines": parsed,
+                            "raw_lrc": sub_body
+                        }
+        except Exception:
+            continue
+
+    # 3. Try matcher.lyrics.get for plain text lyrics fallback
+    for base in bases:
+        try:
+            r = await client.get(f"{base}matcher.lyrics.get", params=params, headers=headers, timeout=3.5)
+            if r.status_code == 200:
+                lyrics_body = r.json().get("message", {}).get("body", {}).get("lyrics", {}).get("lyrics_body", "")
+                if lyrics_body:
+                    clean_lyr = lyrics_body.split("******* This Lyrics is NOT for Commercial use")[0].strip()
+                    if clean_lyr:
+                        return {
+                            "id": "musixmatch_plain",
+                            "provider": "Musixmatch",
+                            "provider_badge": "Musixmatch",
+                            "name": f"Musixmatch (Plain) • {artist}",
+                            "type": "plain_text",
+                            "lyrics": clean_lyr
+                        }
+        except Exception:
+            continue
+    return None
 
 async def fetch_lyricsplus_lyrics(title: str, artist: str, client: httpx.AsyncClient):
     """LyricsPlus: Syllable by syllable, community server (v2/lyrics/get)."""
@@ -1384,12 +1549,13 @@ async def get_lyrics(
     videoId: str = "",
     title: str = "",
     artist: str = "",
-    order: str = "lyricsplus,paxsenix,betterlyrics,simpmusic,kugou,lrclib",
+    order: str = "lrcred,musixmatch,lyricsplus,betterlyrics,paxsenix,simpmusic,kugou,lrclib",
     prioritize_syllable: bool = True,
     paxsenix_key: str = "",
-    betterlyrics_key: str = ""
+    betterlyrics_key: str = "",
+    musixmatch_key: str = ""
 ):
-    cache_key = f"lyrics_{videoId}_{title}_{artist}_{order}_{prioritize_syllable}_{bool(paxsenix_key)}_{bool(betterlyrics_key)}"
+    cache_key = f"lyrics_{videoId}_{title}_{artist}_{order}_{prioritize_syllable}_{bool(paxsenix_key)}_{bool(betterlyrics_key)}_{bool(musixmatch_key)}"
     now = time.time()
     if cache_key in LYRICS_CACHE and (now - LYRICS_CACHE[cache_key]['time']) < LYRICS_CACHE_TTL:
         return LYRICS_CACHE[cache_key]['data']
@@ -1399,21 +1565,25 @@ async def get_lyrics(
 
     provider_keys = [k.strip().lower() for k in (order or "").split(",") if k.strip()]
     if not provider_keys:
-        provider_keys = ["lyricsplus", "paxsenix", "betterlyrics", "simpmusic", "kugou", "lrclib"]
+        provider_keys = ["lrcred", "musixmatch", "lyricsplus", "betterlyrics", "paxsenix", "simpmusic", "kugou", "lrclib"]
 
     sources = []
     active_source = None
 
     async with httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0"}, timeout=7.0) as client:
-        # Build tasks for enabled providers
+        # Build tasks for enabled providers in user's priority order
         tasks = []
         for p_key in provider_keys:
-            if p_key == "lyricsplus":
+            if p_key in ("lrcred", "lrc_red", "lrc.red"):
+                tasks.append(("lrcred", fetch_lrcred_lyrics(c_title, c_artist, client)))
+            elif p_key in ("musixmatch", "musicxmatch"):
+                tasks.append(("musixmatch", fetch_musixmatch_lyrics(c_title, c_artist, client, musixmatch_key)))
+            elif p_key == "lyricsplus":
                 tasks.append(("lyricsplus", fetch_lyricsplus_lyrics(c_title, c_artist, client)))
-            elif p_key == "paxsenix":
-                tasks.append(("paxsenix", fetch_paxsenix_lyrics(c_title, c_artist, paxsenix_key, client)))
             elif p_key == "betterlyrics":
                 tasks.append(("betterlyrics", fetch_betterlyrics_lyrics(c_title, c_artist, client, betterlyrics_key)))
+            elif p_key == "paxsenix":
+                tasks.append(("paxsenix", fetch_paxsenix_lyrics(c_title, c_artist, paxsenix_key, client)))
             elif p_key == "simpmusic":
                 tasks.append(("simpmusic", fetch_simpmusic_lyrics(videoId, client)))
             elif p_key == "kugou":
