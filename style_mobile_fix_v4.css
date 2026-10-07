@@ -2089,43 +2089,82 @@
         }
         .cover-changing { animation: coverPop 1.2s cubic-bezier(0.2,0.8,0.2,1) forwards; }
         .title-changing { animation: titleSlideIn 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+        /* ── MODERN LIQUID GLASS TOP-RIGHT ACTION CAPSULE ── */
+        #top-right-controls,
+        .top-actions-dock {
+            position: fixed;
+            top: 22px;
+            right: 28px;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            z-index: 1100;
+            pointer-events: auto;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        body:not(.player-screen-active) #top-right-controls {
+            display: none !important;
+        }
+
+        .top-action-pill-btn {
+            width: 38px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.75);
+            cursor: pointer;
+            padding: 0;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+        }
+
+        .top-action-pill-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+        }
+
+        .top-action-pill-btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .top-action-pill-btn svg {
+            display: block;
+            stroke: currentColor;
+            transition: transform 0.2s ease;
+        }
+
+        .top-action-divider {
+            width: 1px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.15);
+            margin: 0 3px;
+        }
+
+        /* Backward compat */
         .top-circle-btn {
-            width: 36px; height: 36px; border-radius: 50%;
+            width: 36px; height: 36px; border-radius: 10px;
             background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
             color: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center;
             transition: 0.25s; cursor: pointer; backdrop-filter: blur(10px);
         }
         .top-circle-btn:hover { background: rgba(255,255,255,0.15); color: white; transform: scale(1.05); }
-        .top-circle-btn svg { width: 16px; height: 16px; fill: currentColor; }
-        
-        #lyrics-toggle-btn {
-            z-index: 30;
-            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-            color: rgba(255,255,255,0.7); border-radius: 20px;
-            padding: 7px 14px; font-size: 0.8rem; font-weight: 600;
-            display: flex; align-items: center; gap: 6px; cursor: pointer;
-            transition: 0.25s; backdrop-filter: blur(10px); font-family: inherit;
-        }
-        #lyrics-toggle-btn:hover { background: rgba(255,255,255,0.15); color: white; }
-        #lyrics-toggle-btn.lyrics-on { background: rgba(var(--accent-rgb),0.2); border-color: var(--accent); color: white; }
-        #lyrics-toggle-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
         #right-panel.lyrics-hidden #lyrics-container { opacity: 0; pointer-events: none; }
         #right-panel.lyrics-hidden { background: transparent; }
-
-        /* Top-right controls — always visible, anchored to player-screen top-right */
-        #top-right-controls {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 1100;
-            pointer-events: auto;
-        }
-        body:not(.player-screen-active) #top-right-controls {
-            display: none !important;
-        }
 
         /* Full Screen Hiding Logic */
         body.full-screen-mode #side-nav,
@@ -6148,11 +6187,11 @@ body.player-screen-active #top-bar:focus-within {
         font-size: 12px !important;
     }
     
-    /* 9. Top Right Controls (Lyrics, Spatial) */
+    /* 9. Top Right Controls (PiP, Fullscreen) */
     #top-right-controls {
-        top: 80px !important;
-        right: 15px !important;
-        gap: 8px !important;
+        top: 16px !important;
+        right: 16px !important;
+        gap: 2px !important;
     }
     
     /* 10. Home Grids */

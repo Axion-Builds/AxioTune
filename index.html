@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=270">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=271">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -707,12 +707,6 @@
                 <div id="cover-art-container">
                     <img src="default_cover.jpg?v=3" id="default-cover-icon" alt="Default Cover" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 1;">
                     <img id="cover-art" src="" alt="Album Cover" onerror="this.onerror=null; this.src='default_cover.jpg?v=3';">
-                    <!-- 3-dot overlay on cover in full-screen player -->
-                    <div id="cover-options-overlay">
-                        <button id="cover-options-btn" onclick="openSongContextMenuFromPlayer(event)" title="More options">
-                            <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                        </button>
-                    </div>
                 </div>
             </div> <!-- Closes cover-wrapper -->
             
@@ -790,7 +784,6 @@
                     </div>
                 </div>
             </div>
-        </div>
 
         <!-- Right Panel (Lyrics) -->
         <div id="right-panel">
@@ -847,20 +840,28 @@
             </div>
         </div>
 
-        <!-- Top-right controls: ALWAYS visible, outside right-panel -->
-        <div id="top-right-controls">
-            <button id="floating-pip-btn" class="top-circle-btn" title="MiniPlayer (PiP)">
-                <svg viewBox="0 0 24 24"><path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z"/></svg>
+        <!-- Top-right controls: Modern Liquid Glass Action Capsule (PiP & Fullscreen) -->
+        <div id="top-right-controls" class="top-actions-dock">
+            <button id="floating-pip-btn" class="top-action-pill-btn" title="MiniPlayer (PiP)" aria-label="MiniPlayer (PiP)">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2.5" y="4.5" width="19" height="15" rx="3.5"/>
+                    <rect x="12" y="11" width="7.5" height="6.5" rx="1.8" fill="currentColor" fill-opacity="0.35" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
             </button>
-            <button id="full-screen-btn" class="top-circle-btn" title="Full Screen">
-                <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-            </button>
-            <button id="listen-together-btn" class="top-circle-btn" title="Listen Together">
-                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            </button>
-            <button id="lyrics-toggle-btn" class="lyrics-on" title="Toggle Lyrics">
-                <svg viewBox="0 0 24 24"><path d="M3 18h12v-2H3v2zm0-5h12v-2H3v2zm0-7v2h12V6H3zm13 9.5L21.5 12 16 8.5v9z"/></svg>
-                <span id="lyrics-btn-label">Lyrics ON</span>
+            <div class="top-action-divider"></div>
+            <button id="full-screen-btn" class="top-action-pill-btn" title="Full Screen" aria-label="Full Screen">
+                <svg class="fs-enter-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h6v6"/>
+                    <path d="M9 21H3v-6"/>
+                    <path d="M21 3l-7 7"/>
+                    <path d="M3 21l7-7"/>
+                </svg>
+                <svg class="fs-exit-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                    <path d="M4 14h6v6"/>
+                    <path d="M20 10h-6V4"/>
+                    <path d="M14 10l7-7"/>
+                    <path d="M10 14l-7 7"/>
+                </svg>
             </button>
         </div>
 
@@ -1693,7 +1694,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=270"></script>
+    <script src="app_v3.js?v=271"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

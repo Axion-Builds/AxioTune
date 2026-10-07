@@ -1266,11 +1266,18 @@ function onPlayerStateChange(event) {
         }
 
         document.addEventListener('fullscreenchange', () => {
-            if (document.fullscreenElement) {
+            const isFs = !!document.fullscreenElement;
+            if (isFs) {
                 document.body.classList.add('full-screen-mode');
             } else {
                 document.body.classList.remove('full-screen-mode');
                 document.body.classList.remove('show-ui');
+            }
+            const enterIcon = fullScreenBtn?.querySelector('.fs-enter-icon');
+            const exitIcon = fullScreenBtn?.querySelector('.fs-exit-icon');
+            if (enterIcon && exitIcon) {
+                enterIcon.style.display = isFs ? 'none' : 'block';
+                exitIcon.style.display = isFs ? 'block' : 'none';
             }
         });
 
