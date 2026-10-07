@@ -7068,80 +7068,56 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 
 
 
-/* ========================================================
-   🎵 JUMP BACK IN - 2-ROW CONTINUOUS EDGE-TO-EDGE CAROUSEL (DESKTOP)
-   ======================================================== */
 .jump-back-wrapper {
-    display: grid !important;
-    grid-template-rows: repeat(2, 142px) !important;
-    grid-auto-flow: column !important;
-    grid-auto-columns: 142px !important;
-    gap: 12px !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    scroll-snap-type: x proximity !important;
-    -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior-x: contain !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-    padding-top: 6px !important;
-    padding-bottom: 20px !important;
-    /* Edge-to-edge laptop display breakout */
-    margin-left: -60px !important;
-    margin-right: -40px !important;
-    padding-left: 60px !important;
-    padding-right: 60px !important;
-    width: calc(100% + 100px) !important;
-    box-sizing: border-box !important;
-    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+    padding-bottom: 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
-.jump-back-wrapper::-webkit-scrollbar { display: none !important; }
-
-.jump-back-wrapper .art-grid-card {
-    width: 142px !important;
-    height: 142px !important;
-    aspect-ratio: 1 / 1 !important;
-    border-radius: 14px !important;
-    overflow: hidden !important;
-    cursor: pointer !important;
-    flex-shrink: 0 !important;
-    scroll-snap-align: start !important;
-    position: relative !important;
+.jump-back-wrapper::-webkit-scrollbar { display: none; }
+.jump-back-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+}
+@media (max-width: 768px) {
+    .jump-back-slide {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
 }
 
-/* Edge-to-edge laptop display reach for all home horizontal scroll carousels */
-#home-screen .cinematic-scroll-container,
-#home-screen .dense-grid-container,
-#home-screen .vinyl-scroll-container,
-#home-screen .md3-flower-scroll-container {
-    margin-left: -60px !important;
-    margin-right: -40px !important;
-    padding-left: 60px !important;
-    padding-right: 60px !important;
-    width: calc(100% + 100px) !important;
-    box-sizing: border-box !important;
-}
+
 
 .carousel-dots {
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin-top: -6px;
-    margin-bottom: 24px;
+    margin-top: -10px;
+    margin-bottom: 20px;
 }
 .carousel-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.2);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: all 0.3s ease;
 }
 .carousel-dot.active {
     background: var(--accent, #ff2d55);
-    width: 18px;
+    width: 16px;
     border-radius: 4px;
 }
+
+
 
 .jump-back-wrapper, .cinematic-scroll-container, .vinyl-scroll-container {
     -webkit-overflow-scrolling: touch !important;
