@@ -238,13 +238,25 @@
                 position: relative;
                 z-index: 1;
                 user-select: none;
+                display: flex;
+                align-items: center;
+                transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .pch-logo:hover {
+                transform: scale(1.08);
+            }
+            .pch-logo-img {
+                width: 42px;
+                height: 42px;
+                object-fit: contain;
+                filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.55));
+                transition: filter 0.25s ease, transform 0.25s ease;
+            }
+            .pch-logo:hover .pch-logo-img {
+                filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.9));
             }
             .pch-logo .axio-letter {
-                font-size: 22px; /* slightly smaller than home logo */
-            }
-            .pch-logo:hover .axio-letter {
-                transform: translateY(-2px);
-                filter: drop-shadow(0 0 16px rgba(232,121,249,0.9));
+                font-size: 22px;
             }
 
             /* ── Search pill (center, grows to fill space) ── */

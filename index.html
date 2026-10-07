@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=271">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=272">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -142,9 +142,8 @@
     .intro-logo-img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        border-radius: 50%;
-        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65), 0 0 45px rgba(255, 45, 85, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+        object-fit: contain;
+        filter: drop-shadow(0 12px 35px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 45px rgba(255, 255, 255, 0.5));
     }
     @keyframes intro-logo-appear {
         0% { opacity: 0; transform: scale(0.85) translate3d(0, 12px, 0); filter: blur(8px); }
@@ -337,18 +336,8 @@
         <div class="pch-border-line"></div>
 
         <!-- LEFT: AxioTune Logo -->
-        <div class="pch-logo" id="pch-logo-wrap" title="AxioTune" onclick="if(typeof showHome==='function') showHome();" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <img src="logo.png?v=5" alt="AxioTune" class="pch-logo-img" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; filter: drop-shadow(0 0 10px rgba(255,255,255,0.7)); flex-shrink: 0;">
-            <div class="axio-word-wrap">
-                <span class="axio-letter">A</span>
-                <span class="axio-letter">X</span>
-                <span class="axio-letter">I</span>
-                <span class="axio-letter axio-special"><span class="axio-special-inner">Ø</span></span>
-                <span class="axio-letter">T</span>
-                <span class="axio-letter">U</span>
-                <span class="axio-letter">N</span>
-                <span class="axio-letter">E</span>
-            </div>
+        <div class="pch-logo" id="pch-logo-wrap" title="AxioTune" onclick="if(typeof showHome==='function') showHome();" style="display: flex; align-items: center; cursor: pointer;">
+            <img src="logo.png?v=6" alt="AxioTune" class="pch-logo-img" style="width: 42px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 12px rgba(255,255,255,0.6)); flex-shrink: 0; transition: transform 0.25s ease, filter 0.25s ease;">
         </div>
 
         <!-- CENTER: Search bar -->
@@ -483,7 +472,7 @@
     <div id="home-screen" class="screen-view active-screen">
         <!-- AXIØTUNE Holographic Logo -->
         <div id="axiotune-logo" title="AXIØTUNE" style="display: flex; align-items: center; gap: 14px;">
-            <img src="logo.png?v=5" alt="AxioTune" class="home-logo-img" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; filter: drop-shadow(0 0 14px rgba(255,255,255,0.7)); flex-shrink: 0;">
+            <img src="logo.png?v=6" alt="AxioTune" class="home-logo-img" style="width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 0 14px rgba(255,255,255,0.7)); flex-shrink: 0;">
             <div class="axio-word-wrap">
                 <span class="axio-letter">A</span>
                 <span class="axio-letter">X</span>
@@ -1694,7 +1683,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=271"></script>
+    <script src="app_v3.js?v=272"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
