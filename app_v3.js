@@ -344,10 +344,10 @@ function onPlayerStateChange(event) {
         const topControls = document.getElementById('top-right-controls');
         if (topControls) document.body.appendChild(topControls);
 
-        // queue-panel is now placed directly at body level in HTML Ã¢â‚¬â€ no move needed
+// queue-panel is now placed directly at body level in HTML — no move needed
 
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ IndexedDB Offline Storage Setup ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── IndexedDB Offline Storage Setup ──
         let db;
         const dbPromise = new Promise((resolve, reject) => {
             const request = indexedDB.open('AxioTuneDB', 1);
@@ -418,7 +418,7 @@ function onPlayerStateChange(event) {
         }
         window.deleteDownloadedSong = deleteDownloadedSong;
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Offline Mode ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── Offline Mode ──
         function updateNetworkStatus() {
             if (!navigator.onLine) {
                 showToast('Device is offline. Using local cache.');
@@ -450,7 +450,7 @@ function onPlayerStateChange(event) {
             return thumbnails.map(t => `${t.url} ${t.width}w`).join(', ');
         }
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ NEW FEATURE STATE ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── NEW FEATURE STATE ──
         // Shuffle / Repeat
         let isShuffled = false;
         let repeatMode = 0; // 0=off, 1=all, 2=one
@@ -579,7 +579,7 @@ function onPlayerStateChange(event) {
             window.location.href = `/api/download?id=${currentSongMeta.id}&title=${encodeURIComponent(currentSongMeta.title)}`;
         });
 
-        // ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ SHUFFLE ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬        // ── SHUFFLE ──
+        // ── ── ── SHUFFLE ── ── ──        // ── SHUFFLE ──
         function toggleShuffle() {
             isShuffled = !isShuffled;
             const shuffleBtn = document.getElementById('shuffle-btn');
@@ -611,7 +611,7 @@ function onPlayerStateChange(event) {
         const shuffleBtn = document.getElementById('shuffle-btn');
         shuffleBtn?.addEventListener('click', toggleShuffle);
 
-        // ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ REPEAT ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â€šÂ¬
+        // ── ── ── REPEAT ── ── ──
         const repeatBtn = document.getElementById('repeat-btn');
         const repeatSVG_off = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
         const repeatSVG_all = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
@@ -625,7 +625,7 @@ function onPlayerStateChange(event) {
             if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
         });
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ TOAST NOTIFICATION ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── TOAST NOTIFICATION ──
         function showToast(msg) {
             let t = document.getElementById('toast-notif');
             if (!t) {
@@ -640,7 +640,7 @@ function onPlayerStateChange(event) {
             t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2000);
         }
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ LIBRARY SCREEN LOGIC ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── LIBRARY SCREEN LOGIC ──
         function showLibrary() {
             if(playerScreen.classList.contains('active-screen') && isSongLoaded) {
                 triggerFlipAnimation(coverArtContainer, miniCover, () => { coverArtContainer.style.opacity = '1'; });
@@ -759,7 +759,7 @@ function onPlayerStateChange(event) {
             if(!container) return;
             const liked = getLikedSongs();
             if (liked.length === 0) {
-                container.innerHTML = '<div class="empty-state lib-empty">No liked songs yet.<br><span>Tap Ã¢â„¢Â¥ while a song plays to save it here.</span></div>';
+                container.innerHTML = '<div class="empty-state lib-empty">No liked songs yet.<br><span>Tap ♥ while a song plays to save it here.</span></div>';
                 return;
             }
             container.innerHTML = '';
@@ -902,7 +902,7 @@ function onPlayerStateChange(event) {
             });
         }
 
-        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â PLAYLIST FULL PAGE ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+        // ── PLAYLIST FULL PAGE ──
         function openPlaylistPage(plIdx) {
             const pl = getPlaylists()[plIdx];
             if (!pl) return;
@@ -915,7 +915,7 @@ function onPlayerStateChange(event) {
             const tracksEl = document.getElementById('playlist-screen-tracks');
 
             nameEl.textContent = pl.name;
-            countEl.textContent = `${pl.songs.length} song${pl.songs.length !== 1 ? 's' : ''}  Ã¢â‚¬Â¢  Your Playlist`;
+            countEl.textContent = `${pl.songs.length} song${pl.songs.length !== 1 ? 's' : ''}  •  Your Playlist`;
 
             // Build mosaic art or use custom cover
             const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId));
@@ -1000,7 +1000,7 @@ function onPlayerStateChange(event) {
                         window._forceQueueSong = { videoId: song.videoId, title: song.title, artist: song.artist, cover: song.cover };
                         songSearchInput.value = `${song.title} ${song.artist}`;
                         searchBtn.click();
-                        showToast(`ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¶ Playing from ${pl.name}`);
+                        showToast(`▶ Playing from ${pl.name}`);
                     });
                     tracksEl.appendChild(row);
                 });
@@ -1018,7 +1018,7 @@ function onPlayerStateChange(event) {
                     window._forceQueueSong = { videoId: first.videoId, title: first.title, artist: first.artist, cover: first.cover };
                     songSearchInput.value = `${first.title} ${first.artist}`;
                     searchBtn.click();
-                    showToast(`ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¶ Playing ${pl.name}`);
+                    showToast(`▶ Playing ${pl.name}`);
                 };
             }
 
@@ -1121,7 +1121,7 @@ function onPlayerStateChange(event) {
         currentY = targetY = rightPanel.offsetHeight / 2;
         lyricsContainer.style.transform = `translateY(${currentY}px)`;
 
-        // Handle ENTER key in search ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â show results page first
+        // Handle ENTER key in search — show results page first
         songSearchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1130,12 +1130,12 @@ function onPlayerStateChange(event) {
             }
         });
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬ PC Sticky Header Search Bridge Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-        // Mirror #pch-search-input ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ #song-search so all existing
+        // ── PC Sticky Header Search Bridge ──
+        // Mirror #pch-search-input ── #song-search so all existing
         // live-suggestions, Enter-to-search, and clear logic still work.
         const pchInput = document.getElementById('pch-search-input');
         if (pchInput) {
-            // Typing in header search ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ sync to real input + fire its 'input' event
+            // Typing in header search ── sync to real input + fire its 'input' event
             pchInput.addEventListener('input', () => {
                 songSearchInput.value = pchInput.value;
                 songSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1143,19 +1143,46 @@ function onPlayerStateChange(event) {
                 const clr = document.getElementById('clear-search-btn');
                 if (clr) clr.style.display = pchInput.value ? '' : 'none';
             });
-            // Enter in header search ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ trigger search results page
-            pchInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const q = pchInput.value.trim();
-                    if (q) showSearchResultsPage(q);
+            // Focus on header search ── open suggestions if text present
+            pchInput.addEventListener('focus', () => {
+                const q = pchInput.value.trim();
+                if (q.length >= 2 && typeof fetchSuggestions === 'function') {
+                    if (typeof ensureSuggestionsPosition === 'function') ensureSuggestionsPosition();
+                    fetchSuggestions(q, activeFilter);
                 }
-                // Escape clears both
+            });
+            pchInput.addEventListener('blur', () => {
+                if (!isSelectingSuggestion && typeof hideSuggestions === 'function') {
+                    setTimeout(hideSuggestions, 180);
+                }
+            });
+            // Enter / Arrow navigation in header search
+            pchInput.addEventListener('keydown', (e) => {
+                const items = document.querySelectorAll('.suggest-item');
+                const isSugVisible = suggestionsBox && suggestionsBox.classList.contains('visible') && items.length > 0;
                 if (e.key === 'Escape') {
-                    pchInput.value = '';
-                    songSearchInput.value = '';
-                    songSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    if (typeof hideSuggestions === 'function') hideSuggestions();
                     pchInput.blur();
+                } else if (e.key === 'ArrowDown' && isSugVisible) {
+                    e.preventDefault();
+                    activeSuggestionIndex = (activeSuggestionIndex + 1) % items.length;
+                    if (typeof updateActiveSuggestion === 'function') updateActiveSuggestion(items);
+                } else if (e.key === 'ArrowUp' && isSugVisible) {
+                    e.preventDefault();
+                    activeSuggestionIndex = (activeSuggestionIndex - 1 + items.length) % items.length;
+                    if (typeof updateActiveSuggestion === 'function') updateActiveSuggestion(items);
+                } else if (e.key === 'Enter') {
+                    if (isSugVisible && activeSuggestionIndex >= 0 && items[activeSuggestionIndex]) {
+                        e.preventDefault();
+                        items[activeSuggestionIndex].click();
+                    } else {
+                        e.preventDefault();
+                        const q = pchInput.value.trim();
+                        if (q) {
+                            if (typeof hideSuggestions === 'function') hideSuggestions();
+                            showSearchResultsPage(q);
+                        }
+                    }
                 }
             });
             // Keep both inputs in sync if real search changes programmatically
@@ -1259,7 +1286,7 @@ function onPlayerStateChange(event) {
         });
 
         // ============================================================
-        // GLOBAL COVER URL HELPER ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â routes ALL images through backend
+        // GLOBAL COVER URL HELPER — routes ALL images through backend
         // This proxy: 1) fetches iTunes artwork, 2) falls back to YT thumb
         // No CORS, no expiry, works from any device on the network!
         // ============================================================
@@ -1371,7 +1398,7 @@ function onPlayerStateChange(event) {
         }
 
         // ============================================================
-        // SETTINGS ENGINE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â All settings, fully working, persisted
+        // SETTINGS ENGINE — All settings, fully working, persisted
         // ============================================================
         const SETTINGS_KEY = 'app_settings_v1';
         const DEFAULT_SETTINGS = {
@@ -1679,7 +1706,25 @@ function onPlayerStateChange(event) {
         let suggestDebounce = null;
         let isSelectingSuggestion = false;
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Global Back Button ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        function ensureSuggestionsPosition() {
+            if (!suggestionsBox) return;
+            const isDesktop = window.innerWidth > 768;
+            const desktopParent = document.querySelector('.pch-search-wrap');
+            const mobileParent = document.getElementById('top-bar') || document.getElementById('top-bar-wrapper');
+            if (isDesktop && desktopParent) {
+                if (suggestionsBox.parentElement !== desktopParent) {
+                    desktopParent.appendChild(suggestionsBox);
+                }
+            } else if (mobileParent) {
+                if (suggestionsBox.parentElement !== mobileParent) {
+                    mobileParent.appendChild(suggestionsBox);
+                }
+            }
+        }
+        window.addEventListener('resize', ensureSuggestionsPosition);
+        ensureSuggestionsPosition();
+
+        // ── Global Back Button ──
         const globalBackBtn = document.getElementById('global-back-btn');
         const screenHistory = [];
 
@@ -1712,12 +1757,15 @@ function onPlayerStateChange(event) {
 
         // Close suggestions on outside click
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#top-bar-wrapper')) hideSuggestions();
+            if (!e.target.closest('.pch-search-wrap') && !e.target.closest('#top-bar') && !e.target.closest('#top-bar-wrapper') && !e.target.closest('#search-suggestions')) {
+                hideSuggestions();
+            }
         });
 
         let activeSuggestionIndex = -1;
 
         async function fetchSuggestions(q, filter) {
+            ensureSuggestionsPosition();
             suggestionsBox.innerHTML = '<div class="suggest-spinner"><div class="suggest-spinner-glass"></div>Searching...</div>';
             suggestionsBox.classList.add('visible');
             activeSuggestionIndex = -1;
@@ -1744,7 +1792,7 @@ function onPlayerStateChange(event) {
                 const coverClass = r.type === 'artist' ? 'suggest-cover artist-cover' : 'suggest-cover';
                 const coverSrc = r.cover ? getCoverUrl(r.query, r.cover, r.id || r.videoId) : 'default_cover.jpg';
                 const badgeClass = `suggest-badge badge-${r.type}`;
-                const badgeLabel = r.type === 'video' ? 'ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¬ Video' : r.type === 'artist' ? 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â¤ Artist' : r.type === 'album' ? 'ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¿ Album' : 'ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ Song';
+                const badgeLabel = r.type === 'video' ? '🎬 Video' : r.type === 'artist' ? '👤 Artist' : r.type === 'album' ? '💿 Album' : '🎵 Song';
                 const artistLine = r.artist ? `<div class="suggest-artist">${r.artist}</div>` : '';
 
                 item.innerHTML = `
@@ -1764,6 +1812,7 @@ function onPlayerStateChange(event) {
                 item.addEventListener('click', () => {
                     hideSuggestions();
                     songSearchInput.value = r.query;
+                    if (pchInput) pchInput.value = r.query;
                     if (r.type === 'song' || r.type === 'video') {
                         searchBtn.click();
                     } else if (r.type === 'artist') {
@@ -1837,10 +1886,10 @@ function onPlayerStateChange(event) {
         function updateActiveSuggestion(items) {
             items.forEach((item, index) => {
                 if (index === activeSuggestionIndex) {
-                    item.style.background = 'rgba(var(--accent-rgb),0.2)';
+                    item.classList.add('selected');
                     item.scrollIntoView({ block: 'nearest' });
                 } else {
-                    item.style.background = ''; // reset to default CSS hover
+                    item.classList.remove('selected');
                 }
             });
         }
@@ -2145,7 +2194,7 @@ function onPlayerStateChange(event) {
             // Feature reverted.
         }
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ QUEUE SYSTEM ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── QUEUE SYSTEM ──
         let queueList = [];
         let currentQueueIndex = -1;
         let queueRenderLimit = 10;
@@ -2215,10 +2264,10 @@ function onPlayerStateChange(event) {
             }
         });
 
-        const playSVG = ''; // Legacy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â black hole uses bh-icon approach
-        const pauseSVG = ''; // Legacy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â black hole uses bh-icon approach
+        const playSVG = ''; // Legacy — black hole uses bh-icon approach
+        const pauseSVG = ''; // Legacy — black hole uses bh-icon approach
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬ Drag-to-close gesture Ã¢â€â‚¬Ã¢â€â‚¬
+        // ── Drag-to-close gesture ──
         const dragHandle = document.getElementById('queue-drag-handle');
         if (dragHandle) {
             let dragStartY = 0;
@@ -3140,7 +3189,7 @@ function onPlayerStateChange(event) {
             }).catch(e => console.warn("Failed to decode HD cover for queue", e));
         }
 
-        // Ã¢â‚¬â€Ã¢â‚¬â€ Reliable queue navigation Ã¢â‚¬â€Ã¢â‚¬â€
+        // ── Reliable queue navigation ──
         function playQueueIndex(idx) {
             if (idx < 0 || idx >= queueList.length) return;
             const isNext = (idx === currentQueueIndex + 1);
@@ -3516,7 +3565,7 @@ function onPlayerStateChange(event) {
                 if (streamData.quality) {
                     const badge = document.createElement('div');
                     badge.style.cssText = 'position:fixed;top:20px;right:80px;background:rgba(var(--accent-rgb),0.85);color:white;padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;z-index:9999;backdrop-filter:blur(10px);transition:opacity 1s;';
-                    badge.textContent = `ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ ${streamData.quality}`;
+                    badge.textContent = `🎵 ${streamData.quality}`;
                     document.body.appendChild(badge);
                     setTimeout(() => { badge.style.opacity = '0'; setTimeout(() => badge.remove(), 1000); }, 3000);
                 }
@@ -3546,7 +3595,7 @@ function onPlayerStateChange(event) {
                         populateQueue(fallbackVid, true, fallbackTitle, fallbackArtist);
                     }
                     
-                    showToast("Ã°Å¸Å½Âµ Playing via YouTube Official Player");
+                    showToast("🎵 Playing via YouTube Official Player");
                     isSongLoaded = true;
                     playPauseBtn.disabled = false;
                     nextBtn.disabled = false;
@@ -4423,7 +4472,7 @@ function onPlayerStateChange(event) {
                                     const sectionId = 'trend-' + Math.random().toString(36).slice(2);
                                     dynamicContainer.insertAdjacentHTML('beforeend', `
                                         <div class="home-section">
-                                            <h2 class="section-title">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¥ ${q}</h2>
+                                            <h2 class="section-title">🔥 ${q}</h2>
                                             <div class="dense-grid-container" id="${sectionId}"></div>
                                         </div>`);
                                     populateDenseGrid(sectionId, [{ title: tData.title, artist: tData.uploader, cover: tData.thumbnail, query: q }]);
@@ -4432,7 +4481,7 @@ function onPlayerStateChange(event) {
                         } catch(e2) { /* ignore */ }
                     }
                     if (!dynamicContainer.innerHTML.trim()) {
-                        dynamicContainer.innerHTML = '<div class="empty-state" style="opacity:0.5; font-size:0.9rem;">Sync your YouTube Music account in ÃƒÂ¢Ã…Â¡Ã¢â€žÂ¢ÃƒÂ¯Ã‚Â¸Ã‚Â Settings to see personalized recommendations.</div>';
+                        dynamicContainer.innerHTML = '<div class="empty-state" style="opacity:0.5; font-size:0.9rem;">Sync your YouTube Music account in ⚙️ Settings to see personalized recommendations.</div>';
                     }
                 }
             } catch(e) {
@@ -4733,7 +4782,7 @@ function onPlayerStateChange(event) {
 
         populateHomeTopArtists();
 
-        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SMART RECOMMENDATION ENGINE ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+        // ── SMART RECOMMENDATION ENGINE ──
         // 1) Taste Mix: picks 5 diverse songs from history, fetches recs for each, shuffles all together
         // 2) Because Rows: 3 separate "Because you listened to X" rows from different songs
 
@@ -4937,7 +4986,7 @@ function onPlayerStateChange(event) {
                 const artist = entry.artist || 'Unknown Artist';
                 const query = `${title} ${artist}`;
                 
-                // Use backend proxy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â iTunes first, then YouTube thumb, never black!
+                // Use backend proxy — iTunes first, then YouTube thumb, never black!
                 const coverUrl = getEntryCoverUrl(entry);
 
                 const card = document.createElement("d" + "iv");
@@ -5032,9 +5081,9 @@ function onPlayerStateChange(event) {
         window.showScreen = showScreenExcept;
         const showScreen = showScreenExcept;
 
-        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+        // ──
         // SEARCH RESULTS PAGE
-        // ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+        // ──
         let srAllResults = { songs: [], videos: [], albums: [], artists: [] };
         let srActiveCategory = 'all';
 
@@ -5082,18 +5131,18 @@ function onPlayerStateChange(event) {
 
             const total = songs.length + videos.length + albums.length + artists.length;
             if (total === 0) {
-                contentEl.innerHTML = `<div class="sr-empty"><span>ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â</span>No results found.<br>Try a different search term.</div>`;
+                contentEl.innerHTML = `<div class="sr-empty"><span>🔍 </span>No results found.<br>Try a different search term.</div>`;
                 return;
             }
 
             let delay = 0;
 
-            // ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ SONGS & TOP RESULT ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ
+            // ── SONGS & TOP RESULT ──
             if (songs.length > 0) {
                 if (cat === 'all') {
                     // Top Result + Stacked layout
                     const headerHtml = `<div class="section-header">
-                        <div class="sr-section-title" style="margin:0;">ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ Top Results & Songs</div>
+                        <div class="sr-section-title" style="margin:0;">🎵 Top Results & Songs</div>
                         <button class="see-all-btn" onclick="document.querySelector('.sr-tab[data-cat=\\'song\\']').click()">See All</button>
                     </div>`;
                     contentEl.insertAdjacentHTML('beforeend', headerHtml);
@@ -5170,12 +5219,12 @@ function onPlayerStateChange(event) {
                 }
             }
 
-            // ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ VIDEOS & TOP RESULT ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ
+            // ── VIDEOS & TOP RESULT ──
             if (videos.length > 0) {
                 if (cat === 'all') {
                     // Top Result + Stacked layout
                     const headerHtml = `<div class="section-header">
-                        <div class="sr-section-title" style="margin:0;">ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¬ Top Video & More</div>
+                        <div class="sr-section-title" style="margin:0;">🎬 Top Video & More</div>
                         <button class="see-all-btn" onclick="document.querySelector('.sr-tab[data-cat=\\'video\\']').click()">See All</button>
                     </div>`;
                     contentEl.insertAdjacentHTML('beforeend', headerHtml);
@@ -5256,7 +5305,7 @@ function onPlayerStateChange(event) {
                 }
             }
 
-            // ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ ALBUMS ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ
+            // ── ALBUMS ──
             if (albums.length > 0) {
                 if (cat === 'all') {
                     const headerHtml = `<div class="section-header">
@@ -5284,11 +5333,11 @@ function onPlayerStateChange(event) {
                 contentEl.appendChild(grid);
             }
 
-            // ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ ARTISTS ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ
+            // ── ARTISTS ──
             if (artists.length > 0) {
                 if (cat === 'all') {
                     const headerHtml = `<div class="section-header">
-                        <div class="sr-section-title" style="margin:0;">ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¤ Artists</div>
+                        <div class="sr-section-title" style="margin:0;">👤 Artists</div>
                         <button class="see-all-btn" onclick="document.querySelector('.sr-tab[data-cat=\\'artist\\']').click()">See All</button>
                     </div>`;
                     contentEl.insertAdjacentHTML('beforeend', headerHtml);
@@ -5603,7 +5652,7 @@ function onPlayerStateChange(event) {
                                 window._forceQueueSong = { videoId: track.videoId, title: track.title, artist: trackArtist, cover: trackThumb };
                                 songSearchInput.value = `${track.title} ${trackArtist}`;
                                 searchBtn.click();
-                                showToast(`ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¶ Playing from ${pl.title}`);
+                                showToast(`▶ Playing from ${pl.title}`);
                             });
                             tracksEl.appendChild(row);
                         });
@@ -5625,7 +5674,7 @@ function onPlayerStateChange(event) {
                                 window._forceQueueSong = { videoId: first.videoId, title: first.title, artist: firstArtist, cover: firstThumb };
                                 songSearchInput.value = `${first.title} ${firstArtist}`;
                                 searchBtn.click();
-                                showToast(`ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¶ Playing ${pl.title}`);
+                                showToast(`▶ Playing ${pl.title}`);
                             };
                         }
                     }
@@ -5650,7 +5699,7 @@ function onPlayerStateChange(event) {
             } catch(e) { console.error(e); }
         };
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ COVER ART FLOAT ANIMATION ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── COVER ART FLOAT ANIMATION ──
         const coverWrapper = document.getElementById('cover-wrapper');
         audioPlayer.addEventListener('play', () => {
             if (coverWrapper) coverWrapper.classList.add('now-playing-active');
@@ -5662,7 +5711,7 @@ function onPlayerStateChange(event) {
             if (coverWrapper) coverWrapper.classList.remove('now-playing-active');
         });
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ MOOD RADIO SYSTEM ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── MOOD RADIO SYSTEM ──
         let activeMoodChip = null;
 
         document.querySelectorAll('.mood-chip').forEach(chip => {
@@ -5689,7 +5738,7 @@ function onPlayerStateChange(event) {
                     chip.classList.remove('loading');
                     if (data.status === 'success' && data.tracks && data.tracks.length > 0) {
                         populateVinylContainer('mood-radio-container', data.tracks);
-                        showToast(`Ã°Å¸â€œÂ» ${mood} Radio loaded!`);
+                        showToast(`📻 ${mood} Radio loaded!`);
                     } else {
                         container.innerHTML = '<div class="empty-state">Nothing found. Try another mood!</div>';
                     }
@@ -5700,7 +5749,7 @@ function onPlayerStateChange(event) {
             });
         });
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬ PLAYLIST DETAIL MODAL Ã¢â€â‚¬Ã¢â€â‚¬
+        // ── PLAYLIST DETAIL MODAL ──
         let currentPlaylistIndex = -1;
         function openPlaylistModal(plIdx) {
             const playlists = getPlaylists();
@@ -5765,7 +5814,7 @@ function onPlayerStateChange(event) {
             showScreen('playlist-full-screen');
         }
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬ PREMIUM QUEUE RENDERER Ã¢â€â‚¬Ã¢â€â‚¬
+        // ── PREMIUM QUEUE RENDERER ──
         function renderQueue() {
             if (typeof updateCinematicCards === 'function') updateCinematicCards();
             const qList = document.getElementById('queue-list');
@@ -6016,7 +6065,7 @@ function onPlayerStateChange(event) {
             renderQueue();
         });
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬ QUEUE CONTROL BUTTONS SYNC Ã¢â€â‚¬Ã¢â€â‚¬
+        // ── QUEUE CONTROL BUTTONS SYNC ──
         function updateQueueControlsState() {
             const qShuffleBtn = document.getElementById('queue-shuffle-btn');
             const qRepeatBtn = document.getElementById('queue-repeat-btn');
@@ -6061,7 +6110,7 @@ function onPlayerStateChange(event) {
             }
         });
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ YOUTUBE MUSIC ACCOUNT SYNC LOGIC ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── YOUTUBE MUSIC ACCOUNT SYNC LOGIC ──
         const syncDot = document.getElementById('sync-status-dot');
         const syncText = document.getElementById('sync-status-text');
         const syncForm = document.getElementById('sync-form-container');
@@ -6123,13 +6172,13 @@ function onPlayerStateChange(event) {
         syncBtn?.addEventListener('click', async () => {
             const headersVal = syncHeadersInput?.value?.strip ? syncHeadersInput.value.strip() : syncHeadersInput?.value?.trim();
             if (!headersVal) {
-                showToast("ÃƒÂ¢Ã‚ÂÃ…â€™ Please paste your raw browser headers first!");
+                showToast("⚠️ Please paste your raw browser headers first!");
                 return;
             }
 
             syncBtn.disabled = true;
             const originalText = syncBtn.textContent;
-            syncBtn.textContent = 'ÃƒÂ¢Ã…Â¡Ã‚Â¡ Syncing account...';
+            syncBtn.textContent = '⚡ Syncing account...';
 
             try {
                 const res = await fetch('/api/sync', {
@@ -6147,10 +6196,10 @@ function onPlayerStateChange(event) {
                     loadTrendingFeeds(); // Reload personalized home sections
                     showToast("Library Synced Successfully!");
                 } else {
-                    showToast("ÃƒÂ¢Ã‚ÂÃ…â€™ Sync failed: " + (data.message || "Invalid headers."));
+                    showToast("⚠️ Sync failed: " + (data.message || "Invalid headers."));
                 }
             } catch(e) {
-                showToast("ÃƒÂ¢Ã‚ÂÃ…â€™ Network error while syncing.");
+                showToast("⚠️ Network error while syncing.");
             } finally {
                 syncBtn.disabled = false;
                 syncBtn.textContent = originalText;
@@ -6163,15 +6212,15 @@ function onPlayerStateChange(event) {
             try {
                 const res = await fetch('/api/unsync', { method: 'POST' });
                 const data = await res.json();
-                showToast("ÃƒÂ¢Ã‹Å“Ã‚ÂÃƒÂ¯Ã‚Â¸Ã‚Â Account Disconnected!");
+                showToast("☁️ Account Disconnected!");
                 await checkSyncStatus();
                 loadTrendingFeeds(); // Reload standard trending feed
             } catch(e) {
-                showToast("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to disconnect account.");
+                showToast("⚠️ Failed to disconnect account.");
             }
         });
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ 1-CLICK BOOKMARKLET REDIRECT HANDLER ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── 1-CLICK BOOKMARKLET REDIRECT HANDLER ──
         if (window.location.hash.startsWith('#sync_cookie=')) {
             const cookieVal = decodeURIComponent(window.location.hash.replace('#sync_cookie=', ''));
             window.history.replaceState("", document.title, window.location.pathname + window.location.search);
@@ -6196,7 +6245,7 @@ function onPlayerStateChange(event) {
             overlay.style.padding = '20px';
             
             overlay.innerHTML = `
-                <div style="font-size: 3.5rem; margin-bottom: 24px;">ÃƒÂ¢Ã…Â¡Ã‚Â¡</div>
+                <div style="font-size: 3.5rem; margin-bottom: 24px;">⚡</div>
                 <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 12px; letter-spacing:-0.5px;">Syncing with YouTube Music...</div>
                 <div style="font-size: 0.95rem; color: rgba(255,255,255,0.6);" id="sync-overlay-status">Verifying secure credentials...</div>
             `;
@@ -6214,14 +6263,14 @@ function onPlayerStateChange(event) {
                     localStorage.setItem('ytm_sync_trigger', Date.now());
                     
                     overlay.innerHTML = `
-                        <div style="font-size: 3.5rem; margin-bottom: 24px;">ÃƒÂ°Ã…Â¸Ã…Â½Ã¢â‚¬Â°</div>
+                        <div style="font-size: 3.5rem; margin-bottom: 24px;">🎉</div>
                         <div style="font-size: 1.6rem; font-weight: 700; color: #28cd41; margin-bottom: 12px; letter-spacing:-0.5px;">Sync Successful!</div>
                         <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">Your personalized YouTube Music feed, playlists, and liked songs have been successfully loaded.</div>
                         <button onclick="window.close();" style="padding: 12px 28px; background: #28cd41; color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer; box-shadow: 0 4px 15px rgba(40,205,65,0.3);">Close This Tab</button>
                     `;
                 } else {
                     overlay.innerHTML = `
-                        <div style="font-size: 3.5rem; margin-bottom: 24px;">ÃƒÂ¢Ã‚ÂÃ…â€™</div>
+                        <div style="font-size: 3.5rem; margin-bottom: 24px;">❌</div>
                         <div style="font-size: 1.6rem; font-weight: 700; color: #ff476d; margin-bottom: 12px; letter-spacing:-0.5px;">Sync Failed</div>
                         <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">${data.message}</div>
                         <button onclick="document.body.removeChild(this.parentNode);" style="padding: 12px 28px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer;">Go to Streamer</button>
@@ -6230,7 +6279,7 @@ function onPlayerStateChange(event) {
             })
             .catch(err => {
                 overlay.innerHTML = `
-                    <div style="font-size: 3.5rem; margin-bottom: 24px;">ÃƒÂ¢Ã‚ÂÃ…â€™</div>
+                    <div style="font-size: 3.5rem; margin-bottom: 24px;">❌</div>
                     <div style="font-size: 1.6rem; font-weight: 700; color: #ff476d; margin-bottom: 12px; letter-spacing:-0.5px;">Connection Error</div>
                     <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">Could not communicate with the local server. Make sure Apple Music Streamer is running.</div>
                     <button onclick="document.body.removeChild(this.parentNode);" style="padding: 12px 28px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer;">Close</button>
@@ -6276,11 +6325,11 @@ function onPlayerStateChange(event) {
                 checkSyncStatus();
                 loadTrendingFeeds();
                 renderPlaylists();
-                showToast("ÃƒÂ¢Ã‹Å“Ã‚ÂÃƒÂ¯Ã‚Â¸Ã‚Â YouTube Music account synced successfully!");
+                showToast("☁️ YouTube Music account synced successfully!");
             }
         });
 
-        // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Song Context Menu Logic ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+        // ── Song Context Menu Logic ──
         const contextMenu = document.getElementById('song-context-menu');
         let currentContextQuery = null;
 
@@ -7075,7 +7124,7 @@ const PartyEngine = {
             // Update mobile settings start-party-btn UI
             const settingsBtn = document.getElementById('start-party-btn');
             if (settingsBtn) {
-                settingsBtn.innerHTML = 'ÃƒÂ¢Ã…Â¡Ã‚Â¡ View Party Details';
+                settingsBtn.innerHTML = '⚡ View Party Details';
                 settingsBtn.style.background = 'rgba(0, 255, 150, 0.15)';
                 settingsBtn.style.color = '#00ff96';
             }
@@ -7485,7 +7534,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ 3D Cover Art Tilt + Glare ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// ── 3D Cover Art Tilt + Glare ──
 (function () {
     const container = document.getElementById('cover-art-container');
     const coverWrapper = document.getElementById('cover-wrapper');
@@ -7529,14 +7578,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 })();
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Page Visibility Optimization (stop wasted rAF when tab is hidden) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// ── Page Visibility Optimization (stop wasted rAF when tab is hidden) ──
 (function() {
     let rafId = null;
     // Patch requestAnimationFrame to track the animation loop ID
     // We just listen to visibility and pause/resume the audio-derived loops via a flag
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-            // Tab hidden ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â audio still plays but we don't need to render lyrics frames
+            // Tab hidden — audio still plays but we don't need to render lyrics frames
             window._appTabHidden = true;
         } else {
             window._appTabHidden = false;
@@ -7544,7 +7593,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 })();
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Voice Search (Mic Button) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// ── Voice Search (Mic Button) ──
 (function () {
     const micBtn = document.getElementById('mic-btn');
     const searchInput = document.getElementById('song-search');
@@ -7573,7 +7622,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     recognition.onerror = () => { isListening = false; micBtn.classList.remove('listening'); searchInput.placeholder = 'Search songs, artists, albums...'; };
 })();
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Lyrics Glow Intensity Slider Ã¢â€â‚¬Ã¢â€â‚¬
+// ── Lyrics Glow Intensity Slider ──
 (function() {
     const slider = document.getElementById('lyrics-glow-slider');
     const valText = document.getElementById('glow-intensity-val');
