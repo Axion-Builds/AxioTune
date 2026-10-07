@@ -4607,93 +4607,120 @@ function onPlayerStateChange(event) {
             setupLazyCovers(container);
         }
 
-        // 🎨 ART GRID — Pure album art squares for "Jump Back In"
+        // 🎨 ART GRID — Pure album art squares for "Jump Back In" (Continuous 2-Row Edge-to-Edge Desktop Carousel)
         function populateArtGrid(containerId, entries) {
             const container = document.getElementById(containerId);
             if (!container) return;
             container.innerHTML = '';
             container.className = 'jump-back-wrapper';
 
-            const chunkSize = 16;
-            const numPages = Math.ceil(entries.length / chunkSize);
-            
-            for (let i = 0; i < entries.length; i += chunkSize) {
-                const chunk = entries.slice(i, i + chunkSize);
-                const slide = document.createElement('div');
-                slide.className = 'jump-back-slide art-grid-container';
+            if (!entries || entries.length === 0) return;
 
-                chunk.forEach((item, idx) => {
-                    const title = item.title || item.name || 'Unknown';
-                    const subtitle = item.artist || item.uploader || '';
-                    const videoId = item.videoId || item.id;
-                    let rawThumb = item.cover || item.thumbnail || item.thumb || '';
-                    if (!rawThumb && videoId) rawThumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-                    const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
-                    const fallbackThumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'default_cover.jpg';
-                    const safeTitle = title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                    const safeArtist = subtitle.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    
-                    const card = document.createElement('div');
-                    card.className = 'art-grid-card';
-                    card.style.animationDelay = `${idx * 0.035}s`;
-                    card.innerHTML = `
-                        <img src="${thumb}" alt="${safeTitle}" loading="lazy" decoding="async"
-                             onerror="if(this.src!=='${fallbackThumb}'){this.src='${fallbackThumb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
-                        <div class="art-grid-overlay">
-                            <div class="art-grid-play-btn">
-                                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            </div>
-                            <div class="art-grid-title">${safeTitle}</div>
-                            <div class="art-grid-artist">${safeArtist}</div>
+            // Ensure even number of items so every column has 2 rows (no partial column)
+            const cleanEntries = entries.length >= 2 && entries.length % 2 !== 0 
+                ? entries.slice(0, entries.length - 1) 
+                : entries;
+
+            cleanEntries.forEach((item, idx) => {
+                const title = item.title || item.name || 'Unknown';
+                const subtitle = item.artist || item.uploader || '';
+                const videoId = item.videoId || item.id;
+                let rawThumb = item.cover || item.thumbnail || item.thumb || '';
+                if (!rawThumb && videoId) rawThumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+                const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
+                const fallbackThumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'default_cover.jpg';
+                const safeTitle = title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const safeArtist = subtitle.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+                const card = document.createElement('div');
+                card.className = 'art-grid-card';
+                card.style.animationDelay = `${idx * 0.025}s`;
+                card.innerHTML = `
+                    <img src="${thumb}" alt="${safeTitle}" loading="lazy" decoding="async"
+                         onerror="if(this.src!=='${fallbackThumb}'){this.src='${fallbackThumb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
+                    <div class="art-grid-overlay">
+                        <div class="art-grid-play-btn">
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </div>
-                    `;
-                    card.onclick = () => {
-                        if (videoId) {
-                            const songJson = JSON.stringify({title, artist: subtitle, cover: thumb, videoId}).replace(/"/g, '&quot;');
-                            window.playSong(videoId, songJson, card);
-                        } else {
-                            songSearchInput.value = `${title} ${subtitle}`; searchBtn.click();
-                        }
-                    };
-                    slide.appendChild(card);
-                });
-                container.appendChild(slide);
+                        <div class="art-grid-title">${safeTitle}</div>
+                        <div class="art-grid-artist">${safeArtist}</div>
+                    </div>
+                `;
+                card.onclick = () => {
+                    if (videoId) {
+                        const songJson = JSON.stringify({title, artist: subtitle, cover: thumb, videoId}).replace(/"/g, '&quot;');
+                        window.playSong(videoId, songJson, card);
+                    } else {
+                        songSearchInput.value = `${title} ${subtitle}`; searchBtn.click();
+                    }
+                };
+                container.appendChild(card);
+            });
+
+            // Dots indicator management
+            let dotsContainer = document.getElementById(containerId + '-dots');
+            if (!dotsContainer) {
+                dotsContainer = document.createElement('div');
+                dotsContainer.id = containerId + '-dots';
+                dotsContainer.className = 'carousel-dots';
+                container.parentNode.insertBefore(dotsContainer, container.nextSibling);
             }
-            
-            // Add dots indicator
-            if (numPages > 1) {
-                let dotsContainer = document.getElementById(containerId + '-dots');
-                if (!dotsContainer) {
-                    dotsContainer = document.createElement('div');
-                    dotsContainer.id = containerId + '-dots';
-                    dotsContainer.className = 'carousel-dots';
-                    container.parentNode.insertBefore(dotsContainer, container.nextSibling);
+
+            const cardWidthWithGap = 142 + 12; // 154px per column
+            function updateDots() {
+                if (!dotsContainer) return;
+                const containerWidth = container.clientWidth || window.innerWidth;
+                const visibleWidth = Math.max(containerWidth - 120, cardWidthWithGap * 2);
+                const colsPerPage = Math.max(1, Math.floor(visibleWidth / cardWidthWithGap));
+                const totalCols = Math.ceil(cleanEntries.length / 2);
+                const numPages = Math.min(8, Math.max(1, Math.ceil(totalCols / colsPerPage)));
+
+                if (numPages <= 1) {
+                    dotsContainer.style.display = 'none';
+                    return;
                 }
+                dotsContainer.style.display = 'flex';
                 dotsContainer.innerHTML = '';
+
                 for (let i = 0; i < numPages; i++) {
                     const dot = document.createElement('div');
                     dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
                     dot.onclick = () => {
-                        const slides = container.querySelectorAll('.jump-back-slide');
-                        if (slides[i]) slides[i].scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start'});
+                        const targetLeft = i * (colsPerPage * cardWidthWithGap);
+                        container.scrollTo({ left: targetLeft, behavior: 'smooth' });
                     };
                     dotsContainer.appendChild(dot);
                 }
-                
-                // Update dots on scroll
-                const dotsList = Array.from(dotsContainer.children);
-                let scrollTimeout;
-                container.addEventListener('scroll', () => {
-                    if(scrollTimeout) return;
-                    scrollTimeout = requestAnimationFrame(() => {
-                        scrollTimeout = null;
-                    const scrollLeft = container.scrollLeft;
-                    const slideWidth = container.clientWidth;
-                    const activeIndex = Math.round(scrollLeft / slideWidth);
-                    const dots = Array.from(dotsContainer.children);
-                    dotsList.forEach((d, i) => d.classList.toggle('active', i === activeIndex));
+            }
+
+            updateDots();
+
+            // Smooth scroll tracking for active dot
+            let scrollTimeout;
+            container.onscroll = () => {
+                if (scrollTimeout) return;
+                scrollTimeout = requestAnimationFrame(() => {
+                    scrollTimeout = null;
+                    if (!dotsContainer || dotsContainer.children.length === 0) return;
+                    const containerWidth = container.clientWidth || window.innerWidth;
+                    const visibleWidth = Math.max(containerWidth - 120, cardWidthWithGap * 2);
+                    const colsPerPage = Math.max(1, Math.floor(visibleWidth / cardWidthWithGap));
+                    const activeIndex = Math.min(
+                        dotsContainer.children.length - 1,
+                        Math.max(0, Math.round(container.scrollLeft / (colsPerPage * cardWidthWithGap)))
+                    );
+                    Array.from(dotsContainer.children).forEach((d, idx) => {
+                        d.classList.toggle('active', idx === activeIndex);
                     });
-                }, {passive: true});
+                });
+            };
+
+            // Resize listener so dots recalculate dynamically if window resizes
+            if (!container._resizeBound) {
+                window.addEventListener('resize', () => {
+                    updateDots();
+                }, { passive: true });
+                container._resizeBound = true;
             }
         }
 
