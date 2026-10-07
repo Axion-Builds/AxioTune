@@ -1956,13 +1956,27 @@ function onPlayerStateChange(event) {
         // Lyrics Toggle Button
         const lyricsToggleBtn = document.getElementById('lyrics-toggle-btn');
         const lyricsBtnLabel = document.getElementById('lyrics-btn-label');
-        lyricsToggleBtn?.addEventListener('click', () => {
-            const isHidden = rightPanel.classList.toggle('lyrics-hidden');
-            document.getElementById('player-screen').classList.toggle('cinematic-mode', isHidden);
-            lyricsToggleBtn.classList.toggle('lyrics-on', !isHidden);
-            lyricsBtnLabel.textContent = isHidden ? 'Lyrics OFF' : 'Lyrics ON';
-            if (isHidden && typeof updateCinematicCards === 'function') updateCinematicCards();
+        const playerLyricsBtn = document.getElementById('player-lyrics-btn');
+
+        function setLyricsVisibility(hidden) {
+            rightPanel.classList.toggle('lyrics-hidden', hidden);
+            document.getElementById('player-screen').classList.toggle('cinematic-mode', hidden);
+            if (lyricsToggleBtn) lyricsToggleBtn.classList.toggle('lyrics-on', !hidden);
+            if (lyricsBtnLabel) lyricsBtnLabel.textContent = hidden ? 'Lyrics OFF' : 'Lyrics ON';
+            if (playerLyricsBtn) playerLyricsBtn.classList.toggle('active', !hidden);
+            if (hidden && typeof updateCinematicCards === 'function') updateCinematicCards();
             if (appSettings.haptic && navigator.vibrate) navigator.vibrate(15);
+        }
+
+        lyricsToggleBtn?.addEventListener('click', () => {
+            const isHidden = !rightPanel.classList.contains('lyrics-hidden');
+            setLyricsVisibility(isHidden);
+        });
+
+        playerLyricsBtn?.addEventListener('click', (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            const isHidden = !rightPanel.classList.contains('lyrics-hidden');
+            setLyricsVisibility(isHidden);
         });
 
         // Haptic on key buttons
@@ -2215,6 +2229,7 @@ function onPlayerStateChange(event) {
             queuePanel?.classList.add('open');
             queueBackdrop?.classList.add('open');
             queueNavBtn?.classList.add('active');
+            playerQueueBtn?.classList.add('active');
             document.body.classList.add('queue-active');
         }
 
@@ -2223,6 +2238,7 @@ function onPlayerStateChange(event) {
             queuePanel.classList.remove('open');
             queueBackdrop.classList.remove('open');
             queueNavBtn?.classList.remove('active');
+            playerQueueBtn?.classList.remove('active');
             document.body.classList.remove('queue-active');
             queuePanel.style.transform = '';
             if (queueBackdrop) queueBackdrop.style.background = '';
@@ -3705,33 +3721,74 @@ function onPlayerStateChange(event) {
         });
 
         function formatTime(seconds) {
-            if (isNaN(seconds)) return "0:00";
+            if (isNaN(seconds) || seconds < 0) return "0:00";
             const m = Math.floor(seconds / 60);
             const s = Math.floor(seconds % 60);
             return `${m}:${s.toString().padStart(2, '0')}`;
         }
 
+        let showRemainingDuration = true;
+        durationEl?.addEventListener('click', () => {
+            showRemainingDuration = !showRemainingDuration;
+            updateProgressUI();
+        });
+
         progressContainer.addEventListener('mousedown', (e) => { isDraggingProgress = true; seekAudio(e); });
         window.addEventListener('mousemove', (e) => { if (isDraggingProgress) seekAudio(e); });
         window.addEventListener('mouseup', () => { isDraggingProgress = false; });
 
+        progressContainer.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches.length > 0) {
+                isDraggingProgress = true;
+                seekAudio(e.touches[0]);
+            }
+        }, { passive: true });
+        window.addEventListener('touchmove', (e) => {
+            if (isDraggingProgress && e.touches && e.touches.length > 0) {
+                seekAudio(e.touches[0]);
+            }
+        }, { passive: true });
+        window.addEventListener('touchend', () => { isDraggingProgress = false; });
+
         function seekAudio(e) {
             const rect = progressContainer.getBoundingClientRect();
-            let offsetX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+            let clientX = e.clientX;
+            if (clientX === undefined && e.pageX !== undefined) clientX = e.pageX;
+            let offsetX = Math.max(0, Math.min(clientX - rect.left, rect.width));
             const percentage = offsetX / rect.width;
             progressBar.style.width = `${percentage * 100}%`;
             if (audioPlayer.duration) {
                 audioPlayer.currentTime = percentage * audioPlayer.duration;
-                currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+                if (currentTimeEl) currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+                if (durationEl) {
+                    if (showRemainingDuration) {
+                        const remaining = Math.max(0, audioPlayer.duration - audioPlayer.currentTime);
+                        durationEl.textContent = '-' + formatTime(remaining);
+                    } else {
+                        durationEl.textContent = formatTime(audioPlayer.duration);
+                    }
+                }
                 processLyricsFrame();
             }
         }
 
         function updateProgressUI() {
-            currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
-            if (!audioPlayer.duration) return;
-            progressBar.style.width = `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`;
-            durationEl.textContent = formatTime(audioPlayer.duration);
+            const cur = audioPlayer.currentTime || 0;
+            const dur = audioPlayer.duration || 0;
+            if (currentTimeEl) currentTimeEl.textContent = formatTime(cur);
+            if (!dur || isNaN(dur)) {
+                if (durationEl) durationEl.textContent = '-0:00';
+                return;
+            }
+            if (progressBar) progressBar.style.width = `${(cur / dur) * 100}%`;
+            if (durationEl) {
+                if (showRemainingDuration) {
+                    const remaining = Math.max(0, dur - cur);
+                    durationEl.textContent = '-' + formatTime(remaining);
+                } else {
+                    durationEl.textContent = formatTime(dur);
+                }
+            }
             if (window.AxioShaderEngine && !audioPlayer.paused) {
                 window.AxioShaderEngine.triggerBeat(0.4);
             }
