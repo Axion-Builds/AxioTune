@@ -2427,7 +2427,7 @@
         
         #mini-cover {
             width: 55px; height: 55px; border-radius: 14px; object-fit: cover;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); opacity: 1; transition: opacity 0.3s;
+            box-shadow: none !important; opacity: 1;
         }
 
         /* GPU-Accelerated Shared Poster Morph Transition */
@@ -7466,6 +7466,8 @@ body.player-screen-active #top-bar:focus-within {
         height: 48px !important;
         border-radius: 8px !important;
         margin-right: 12px !important;
+        box-shadow: none !important;
+        opacity: 1 !important;
     }
     #mini-info {
         flex: 1 !important;

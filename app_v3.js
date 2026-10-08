@@ -2104,8 +2104,8 @@ function onPlayerStateChange(event) {
             const cac = document.getElementById('cover-art-container');
             const mc = document.getElementById('mini-cover');
             const mp = document.getElementById('mini-player');
-            if (cac) { cac.style.opacity = ''; cac.style.transition = ''; }
-            if (mc) { mc.style.opacity = ''; mc.style.transition = ''; }
+            if (cac) { cac.style.opacity = '1'; cac.style.transition = ''; }
+            if (mc) { mc.style.opacity = '1'; mc.style.transition = ''; }
             if (mp) mp.classList.remove('morph-docking');
             window._posterMorphInProgress = false;
         }
@@ -2176,7 +2176,7 @@ function onPlayerStateChange(event) {
                 fromRadius = '20px';
                 toRadius = '14px';
                 fromShadow = '0 16px 40px rgba(0,0,0,0.45)';
-                toShadow = '0 5px 15px rgba(0,0,0,0.5)';
+                toShadow = 'none';
 
                 // Lock mini-player in resting position and fade in smoothly
                 const mp = document.getElementById('mini-player');
@@ -2189,7 +2189,7 @@ function onPlayerStateChange(event) {
                 toRect = getPlayerCoverRestingRect();
                 fromRadius = '14px';
                 toRadius = '20px';
-                fromShadow = '0 5px 15px rgba(0,0,0,0.5)';
+                fromShadow = 'none';
                 toShadow = '0 16px 40px rgba(0,0,0,0.45)';
             }
 
@@ -2218,10 +2218,20 @@ function onPlayerStateChange(event) {
             _posterMorphActiveClone = clone;
             window._posterMorphInProgress = true;
 
-            cac.style.transition = 'none';
-            cac.style.opacity = '0';
-            mc.style.transition = 'none';
-            mc.style.opacity = '0';
+            if (direction === 'collapse') {
+                cac.style.transition = 'none';
+                cac.style.opacity = '0';
+                // Zero-gap handover: mc remains at opacity 1 inside mini-player underneath the clone.
+                // When clone arrives and is removed, mc is already 100% visible, eliminating the 0.5s disappearance.
+                mc.style.transition = 'none';
+                mc.style.opacity = '1';
+                mc.style.boxShadow = 'none';
+            } else {
+                mc.style.transition = 'none';
+                mc.style.opacity = '0';
+                cac.style.transition = 'none';
+                cac.style.opacity = '0';
+            }
 
             if (typeof onScreenSwitch === 'function') {
                 onScreenSwitch();
@@ -2252,12 +2262,57 @@ function onPlayerStateChange(event) {
 
             _posterMorphActiveAnim = anim;
 
+            let finished = false;
+            let fallbackTimer = null;
             const finishHandler = () => {
-                cleanupPosterMorph();
+                if (finished) return;
+                finished = true;
+                if (fallbackTimer) clearTimeout(fallbackTimer);
+
+                if (direction === 'collapse') {
+                    if (mc) {
+                        mc.style.transition = 'none';
+                        mc.style.opacity = '1';
+                        mc.style.boxShadow = 'none';
+                    }
+                    if (cac) {
+                        cac.style.transition = 'none';
+                        cac.style.opacity = '1';
+                    }
+                } else {
+                    if (cac) {
+                        cac.style.transition = 'none';
+                        cac.style.opacity = '1';
+                    }
+                    if (mc) {
+                        mc.style.transition = 'none';
+                        mc.style.opacity = '1';
+                        mc.style.boxShadow = 'none';
+                    }
+                }
+
+                if (_posterMorphActiveClone) {
+                    try { _posterMorphActiveClone.remove(); } catch (e) {}
+                    _posterMorphActiveClone = null;
+                }
+
+                const mp = document.getElementById('mini-player');
+                if (mp) mp.classList.remove('morph-docking');
+                _posterMorphActiveAnim = null;
+                window._posterMorphInProgress = false;
+
+                requestAnimationFrame(() => {
+                    if (cac) cac.style.transition = '';
+                    if (mc) {
+                        mc.style.transition = '';
+                        mc.style.boxShadow = 'none';
+                    }
+                });
             };
 
             anim.onfinish = finishHandler;
             anim.oncancel = finishHandler;
+            fallbackTimer = setTimeout(finishHandler, 540);
         }
         window.triggerPosterMorph = triggerPosterMorph;
 
