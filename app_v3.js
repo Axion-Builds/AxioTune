@@ -2313,23 +2313,6 @@ function onPlayerStateChange(event) {
             switchPlayerRightPanelView('lyrics');
         });
 
-        // Touch swipe-down on queue view returns to lyrics
-        const pqView = document.getElementById('player-queue-view');
-        if (pqView) {
-            let touchStartY = 0;
-            pqView.addEventListener('touchstart', (e) => {
-                if (e.touches && e.touches[0]) touchStartY = e.touches[0].clientY;
-            }, { passive: true });
-            pqView.addEventListener('touchend', (e) => {
-                if (!e.changedTouches || !e.changedTouches[0]) return;
-                const touchEndY = e.changedTouches[0].clientY;
-                const scrollArea = pqView.querySelector('.pq-scroll-area');
-                if (touchEndY - touchStartY > 75 && (!scrollArea || scrollArea.scrollTop <= 5)) {
-                    switchPlayerRightPanelView('lyrics');
-                }
-            }, { passive: true });
-        }
-
         // Sync live equalizer bar bouncing with playback state
         audioPlayer?.addEventListener('play', () => {
             document.querySelectorAll('.pq-live-eq').forEach(eq => eq.classList.remove('paused'));

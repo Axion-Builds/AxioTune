@@ -7120,14 +7120,6 @@ body.player-screen-active #top-bar:focus-within {
         -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent 100%) !important;
         z-index: 5 !important;
     }
-    #right-panel[data-view="queue"] {
-        mask-image: none !important;
-        -webkit-mask-image: none !important;
-        z-index: 15 !important;
-    }
-    #right-panel[data-view="queue"] .player-queue-view {
-        padding: 4px 4px 12px 4px !important;
-    }
     #lyrics-container {
         position: absolute !important;
         top: 0 !important;
