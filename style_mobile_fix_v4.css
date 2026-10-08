@@ -5530,7 +5530,60 @@ h1, h2, h3, h4, h5, h6,
     letter-spacing: -0.03em;
 }
 
-.section-title, #album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
+/* --- Web Typography: Editorial Section Headings & Displays --- */
+.section-title,
+.page-section h2 {
+    font-family: 'Satoshi', 'Outfit', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+    font-size: clamp(1.4rem, 1.25rem + 0.6vw, 1.85rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.028em !important;
+    line-height: 1.22 !important;
+    text-transform: none !important;
+    text-wrap: balance !important;
+    color: #ffffff !important;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+    margin-bottom: 18px;
+}
+
+#album-title,
+.hero-title {
+    font-family: 'Satoshi', 'Outfit', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+    font-size: clamp(2rem, 1.6rem + 1.8vw, 3.2rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.035em !important;
+    text-transform: none !important;
+    line-height: 1.15 !important;
+}
+
+.queue-header {
+    font-family: 'Satoshi', 'Outfit', -apple-system, sans-serif !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    text-transform: none !important;
+}
+
+.ai-mix-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    vertical-align: middle;
+}
+.ai-mix-badge .ai-sparkle {
+    color: var(--accent, #ffffff);
+    font-size: 0.8rem;
+}
 
 /* Track title: always Outfit 800 for premium feel */
 #track-title {
@@ -7451,7 +7504,6 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 .q-hero-artist { font-size: 0.95rem; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
 
 
-.section-title, #album-title, .hero-title, .queue-header { text-transform: uppercase !important; font-size: 1.1rem !important;  font-family: 'Outfit', sans-serif !important; }
 #track-title {
     font-family: var(--title-font, 'Outfit') !important;
 }
