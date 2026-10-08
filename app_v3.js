@@ -2103,8 +2103,10 @@ function onPlayerStateChange(event) {
             }
             const cac = document.getElementById('cover-art-container');
             const mc = document.getElementById('mini-cover');
+            const mp = document.getElementById('mini-player');
             if (cac) { cac.style.opacity = ''; cac.style.transition = ''; }
             if (mc) { mc.style.opacity = ''; mc.style.transition = ''; }
+            if (mp) mp.classList.remove('morph-docking');
             window._posterMorphInProgress = false;
         }
 
@@ -2113,13 +2115,17 @@ function onPlayerStateChange(event) {
             const mc = document.getElementById('mini-cover');
             if (!mp || !mc) return null;
 
-            const prevTransform = mp.style.transform;
-            const prevTransition = mp.style.transition;
-            mp.style.transition = 'none';
-            mp.style.transform = 'translate3d(-50%, 0, 0) scale(1)';
+            const wasHidden = mp.classList.contains('hidden-mini');
+            if (wasHidden) {
+                mp.style.transition = 'none';
+                mp.classList.remove('hidden-mini');
+            }
             const rect = mc.getBoundingClientRect();
-            mp.style.transform = prevTransform;
-            mp.style.transition = prevTransition;
+            if (wasHidden) {
+                mp.classList.add('hidden-mini');
+                void mp.offsetWidth;
+                mp.style.transition = '';
+            }
             return rect;
         }
 
@@ -2128,23 +2134,20 @@ function onPlayerStateChange(event) {
             const cac = document.getElementById('cover-art-container');
             if (!ps || !cac) return null;
 
-            const prevTransform = ps.style.transform;
-            const prevTransition = ps.style.transition;
             const wasHidden = ps.classList.contains('hidden-screen');
-
-            ps.style.transition = 'none';
-            ps.style.transform = 'translate3d(0, 0, 0) scale(1)';
-            if (wasHidden) {
+            const wasActive = ps.classList.contains('active-screen');
+            if (wasHidden || !wasActive) {
+                ps.style.transition = 'none';
                 ps.classList.remove('hidden-screen');
                 ps.classList.add('active-screen');
             }
             const rect = cac.getBoundingClientRect();
-            if (wasHidden) {
+            if (wasHidden || !wasActive) {
                 ps.classList.remove('active-screen');
-                ps.classList.add('hidden-screen');
+                if (wasHidden) ps.classList.add('hidden-screen');
+                void ps.offsetWidth;
+                ps.style.transition = '';
             }
-            ps.style.transform = prevTransform;
-            ps.style.transition = prevTransition;
             return rect;
         }
 
@@ -2174,6 +2177,13 @@ function onPlayerStateChange(event) {
                 toRadius = '14px';
                 fromShadow = '0 16px 40px rgba(0,0,0,0.45)';
                 toShadow = '0 5px 15px rgba(0,0,0,0.5)';
+
+                // Lock mini-player in resting position and fade in smoothly
+                const mp = document.getElementById('mini-player');
+                if (mp) {
+                    mp.classList.remove('hidden-mini');
+                    mp.classList.add('morph-docking');
+                }
             } else {
                 fromRect = getMiniCoverRestingRect();
                 toRect = getPlayerCoverRestingRect();
@@ -2235,8 +2245,8 @@ function onPlayerStateChange(event) {
                     boxShadow: toShadow
                 }
             ], {
-                duration: 380,
-                easing: 'cubic-bezier(0.32, 0.72, 0, 1)',
+                duration: 520,
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
                 fill: 'forwards'
             });
 

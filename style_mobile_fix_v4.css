@@ -2442,6 +2442,14 @@
             -webkit-backface-visibility: hidden;
             image-rendering: -webkit-optimize-contrast;
         }
+
+        /* Mini Player Docking State during Poster Morph */
+        #mini-player.morph-docking {
+            transform: translate3d(-50%, 0, 0) scale(1) !important;
+            opacity: 1 !important;
+            transition: opacity 0.52s ease-out !important;
+            pointer-events: none !important;
+        }
         #mini-info { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
         #mini-title { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
         #mini-artist { font-size: 0.85rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -7445,6 +7453,12 @@ body.player-screen-active #top-bar:focus-within {
     #mini-player.hidden-mini {
         transform: translate3d(0, 35px, 0) scale(0.94) !important;
         opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    #mini-player.morph-docking {
+        transform: translate3d(0, 0, 0) scale(1) !important;
+        opacity: 1 !important;
+        transition: opacity 0.52s ease-out !important;
         pointer-events: none !important;
     }
     #mini-cover {
