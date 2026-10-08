@@ -1082,6 +1082,13 @@
         #cover-wrapper {
             position: relative; margin-bottom: 24px; display: flex; justify-content: center;
             align-items: center; width: clamp(230px, 60%, 450px); aspect-ratio: 1;
+            box-shadow: none !important;
+        }
+
+        /* Prevent coordinate shift during shared poster morph (ultra-smooth target alignment) */
+        body.poster-morph-active #player-screen {
+            transform: none !important;
+            transition: opacity 0.35s ease-out !important;
         }
 
         /* Cover art 3D perspective container */
@@ -5608,15 +5615,13 @@ h1, h2, h3, h4, h5, h6,
     font-size: 0.7rem;
 }
 
-/* Track title: always Outfit 800 for premium feel */
-#track-title {
-    font-family: var(--font-display) !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.03em !important;
-}
-
+/* Track title: Apple Music typography (SF Pro Display / System Stack) */
+#track-title,
+#mini-title,
 .track-title {
-    font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Inter", sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.022em !important;
 }
 
 .logo {
@@ -7121,7 +7126,7 @@ body.player-screen-active #top-bar:focus-within {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45) !important;
+        box-shadow: none !important;
         transition: opacity 0.3s ease, transform 0.3s ease !important;
     }
     #cover-art-container {
@@ -7566,7 +7571,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 
 
 #track-title {
-    font-family: var(--title-font, 'Outfit') !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -apple-system, "Helvetica Neue", "Inter", sans-serif !important;
 }
 
 

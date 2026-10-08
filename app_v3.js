@@ -1419,7 +1419,7 @@ function onPlayerStateChange(event) {
             audioQuality: 'hq', playbackSpeed: 100, crossfade: 3,
             autoplay: true, sleepTimerMins: 0,
             normalizeVolume: false, lyricsFontSize: 'medium',
-            lyricsFont: 'default', titleFont: 'Outfit', headingFont: 'Newsreader', lyricsStyle: 'bold',
+            lyricsFont: 'default', titleFont: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Inter", sans-serif', headingFont: 'Newsreader', lyricsStyle: 'bold',
             miniPlayerStyle: 'pill', doubleTapSeek: true,
             haptic: true, incognito: false
         };
@@ -1458,8 +1458,8 @@ function onPlayerStateChange(event) {
             root.style.setProperty('--bg-brightness', s.bgBrightness / 100);
             // Glass blur
             root.style.setProperty('--glass-blur', s.glassBlur);
-            // Title font
-            root.style.setProperty('--title-font', s.titleFont);
+            // Title font: Apple Music System Font Stack
+            root.style.setProperty('--title-font', '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Inter", sans-serif');
 
             // Section heading font (Web Typography skill)
             const headingFontFamilyMap = {
@@ -1581,11 +1581,6 @@ function onPlayerStateChange(event) {
                 appSettings.headingFont = e.target.value;
                 saveSettings(appSettings); applySettings(appSettings);
             });
-            // Title font
-            document.getElementById('title-font-select')?.addEventListener('change', (e) => {
-                appSettings.titleFont = e.target.value;
-                saveSettings(appSettings); applySettings(appSettings);
-            });
             // Lyrics size
             document.getElementById('lyrics-size-select')?.addEventListener('change', (e) => {
                 appSettings.lyricsFontSize = e.target.value;
@@ -1693,11 +1688,6 @@ function onPlayerStateChange(event) {
             // Heading font (Web Typography skill)
             document.getElementById('heading-font-select')?.addEventListener('change', (e) => {
                 appSettings.headingFont = e.target.value;
-                saveSettings(appSettings); applySettings(appSettings);
-            });
-            // Title font
-            document.getElementById('title-font-select')?.addEventListener('change', (e) => {
-                appSettings.titleFont = e.target.value;
                 saveSettings(appSettings); applySettings(appSettings);
             });
             // Lyrics size
@@ -2101,11 +2091,12 @@ function onPlayerStateChange(event) {
                 try { _posterMorphActiveClone.remove(); } catch (e) {}
                 _posterMorphActiveClone = null;
             }
+            document.body.classList.remove('poster-morph-active');
             const cac = document.getElementById('cover-art-container');
             const mc = document.getElementById('mini-cover');
             const mp = document.getElementById('mini-player');
-            if (cac) { cac.style.opacity = '1'; cac.style.transition = ''; }
-            if (mc) { mc.style.opacity = '1'; mc.style.transition = ''; }
+            if (cac) { cac.style.opacity = '1'; cac.style.boxShadow = 'none'; cac.style.transition = ''; }
+            if (mc) { mc.style.opacity = '1'; mc.style.boxShadow = 'none'; mc.style.transition = ''; }
             if (mp) mp.classList.remove('morph-docking');
             window._posterMorphInProgress = false;
         }
@@ -2169,14 +2160,12 @@ function onPlayerStateChange(event) {
 
             const imgSrc = mc.src || (mainImg ? mainImg.src : '') || 'default_cover.jpg?v=3';
 
-            let fromRect, toRect, fromRadius, toRadius, fromShadow, toShadow;
+            let fromRect, toRect, fromRadius, toRadius;
             if (direction === 'collapse') {
                 fromRect = cac.getBoundingClientRect();
                 toRect = getMiniCoverRestingRect();
                 fromRadius = '20px';
                 toRadius = '14px';
-                fromShadow = '0 16px 40px rgba(0,0,0,0.45)';
-                toShadow = 'none';
 
                 // Lock mini-player in resting position and fade in smoothly
                 const mp = document.getElementById('mini-player');
@@ -2189,8 +2178,6 @@ function onPlayerStateChange(event) {
                 toRect = getPlayerCoverRestingRect();
                 fromRadius = '14px';
                 toRadius = '20px';
-                fromShadow = 'none';
-                toShadow = '0 16px 40px rgba(0,0,0,0.45)';
             }
 
             if (!fromRect || !toRect || fromRect.width === 0 || toRect.width === 0) {
@@ -2207,16 +2194,17 @@ function onPlayerStateChange(event) {
             clone.style.width = fromRect.width + 'px';
             clone.style.height = fromRect.height + 'px';
             clone.style.borderRadius = fromRadius;
-            clone.style.boxShadow = fromShadow;
+            clone.style.boxShadow = 'none';
             clone.style.objectFit = 'cover';
             clone.style.zIndex = '100000';
             clone.style.pointerEvents = 'none';
-            clone.style.willChange = 'transform, border-radius, box-shadow';
+            clone.style.willChange = 'transform, border-radius';
             clone.style.transformOrigin = '0 0';
             clone.style.backfaceVisibility = 'hidden';
             document.body.appendChild(clone);
             _posterMorphActiveClone = clone;
             window._posterMorphInProgress = true;
+            document.body.classList.add('poster-morph-active');
 
             if (direction === 'collapse') {
                 cac.style.transition = 'none';
@@ -2246,17 +2234,15 @@ function onPlayerStateChange(event) {
             const anim = clone.animate([
                 {
                     transform: 'translate3d(0px, 0px, 0) scale(1, 1)',
-                    borderRadius: fromRadius,
-                    boxShadow: fromShadow
+                    borderRadius: fromRadius
                 },
                 {
                     transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleX}, ${scaleY})`,
-                    borderRadius: compensatedTargetRadius,
-                    boxShadow: toShadow
+                    borderRadius: compensatedTargetRadius
                 }
             ], {
-                duration: 520,
-                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                duration: 440,
+                easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)',
                 fill: 'forwards'
             });
 
@@ -2268,6 +2254,7 @@ function onPlayerStateChange(event) {
                 if (finished) return;
                 finished = true;
                 if (fallbackTimer) clearTimeout(fallbackTimer);
+                document.body.classList.remove('poster-morph-active');
 
                 if (direction === 'collapse') {
                     if (mc) {
@@ -2283,6 +2270,7 @@ function onPlayerStateChange(event) {
                     if (cac) {
                         cac.style.transition = 'none';
                         cac.style.opacity = '1';
+                        cac.style.boxShadow = 'none';
                     }
                     if (mc) {
                         mc.style.transition = 'none';
@@ -2312,7 +2300,7 @@ function onPlayerStateChange(event) {
 
             anim.onfinish = finishHandler;
             anim.oncancel = finishHandler;
-            fallbackTimer = setTimeout(finishHandler, 540);
+            fallbackTimer = setTimeout(finishHandler, 460);
         }
         window.triggerPosterMorph = triggerPosterMorph;
 
