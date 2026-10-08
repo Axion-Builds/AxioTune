@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=280">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=281">
     <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
 <body class="">
@@ -1162,14 +1162,17 @@
                             <div class="settings-row-desc">Player controls & highlights</div>
                         </div>
                         <div class="color-swatches" id="accent-swatches">
-                            <div class="color-swatch active" style="background:#ff476d" data-color="#ff476d" data-rgb="255,71,109" title="Rose"></div>
-                            <div class="color-swatch" style="background:#bf5af2" data-color="#bf5af2" data-rgb="191,90,242" title="Purple"></div>
-                            <div class="color-swatch" style="background:#0a84ff" data-color="#0a84ff" data-rgb="10,132,255" title="Blue"></div>
-                            <div class="color-swatch" style="background:#30d158" data-color="#30d158" data-rgb="48,209,88" title="Green"></div>
-                            <div class="color-swatch" style="background:#ffd60a" data-color="#ffd60a" data-rgb="255,214,10" title="Gold"></div>
-                            <div class="color-swatch" style="background:#ff9f0a" data-color="#ff9f0a" data-rgb="255,159,10" title="Orange"></div>
-                            <div class="color-swatch" style="background:#ff375f" data-color="#ff375f" data-rgb="255,55,95" title="Red"></div>
-                            <div class="color-swatch" style="background:#64d2ff" data-color="#64d2ff" data-rgb="100,210,255" title="Cyan"></div>
+                            <div class="color-swatch active" style="background:#ffffff" data-color="#ffffff" data-rgb="255,255,255" title="Pure White"></div>
+                            <div class="color-swatch" style="background:#e2e8f0" data-color="#e2e8f0" data-rgb="226,232,240" title="Platinum Silver"></div>
+                            <div class="color-swatch" style="background:#cbd5e1" data-color="#cbd5e1" data-rgb="203,213,225" title="Titanium Frost"></div>
+                            <div class="color-swatch" style="background:#f5f5f4" data-color="#f5f5f4" data-rgb="245,245,244" title="Alabaster"></div>
+                            <div class="color-swatch" style="background:#94a3b8" data-color="#94a3b8" data-rgb="148,163,184" title="Steel Slate"></div>
+                            <div class="color-swatch" style="background:#64748b" data-color="#64748b" data-rgb="100,116,139" title="Muted Graphite"></div>
+                            <div class="color-swatch" style="background:#475569" data-color="#475569" data-rgb="71,85,105" title="Smoked Chrome"></div>
+                            <div class="color-swatch custom-color-swatch" id="custom-accent-swatch" title="Custom Color Picker">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                                <input type="color" id="custom-accent-picker" value="#ffffff" title="Pick custom color">
+                            </div>
                         </div>
                     </div>
                     <div class="settings-row">
@@ -1683,7 +1686,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=280"></script>
+    <script src="app_v3.js?v=281"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

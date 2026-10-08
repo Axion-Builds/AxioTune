@@ -1414,7 +1414,7 @@ function onPlayerStateChange(event) {
         // ============================================================
         const SETTINGS_KEY = 'app_settings_v1';
         const DEFAULT_SETTINGS = {
-            accentColor: '#ff476d', accentRgb: '255,71,109',
+            accentColor: '#ffffff', accentRgb: '255,255,255',
             bgBrightness: 50, glassBlur: '30px', cardLayout: 'vinyl',
             audioQuality: 'hq', playbackSpeed: 100, crossfade: 3,
             autoplay: true, sleepTimerMins: 0,
@@ -1425,7 +1425,16 @@ function onPlayerStateChange(event) {
         };
 
         function loadSettings() {
-            try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+            try {
+                const s = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+                const oldRainbowColors = ['#ff476d', '#bf5af2', '#0a84ff', '#30d158', '#ffd60a', '#ff9f0a', '#ff375f', '#64d2ff'];
+                if (oldRainbowColors.includes((s.accentColor || '').toLowerCase())) {
+                    s.accentColor = '#ffffff';
+                    s.accentRgb = '255,255,255';
+                    saveSettings(s);
+                }
+                return s;
+            }
             catch(e) { return { ...DEFAULT_SETTINGS }; }
         }
         function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
@@ -1439,6 +1448,12 @@ function onPlayerStateChange(event) {
             // Accent color
             root.style.setProperty('--accent', s.accentColor);
             root.style.setProperty('--accent-rgb', s.accentRgb);
+
+            // Contrast foreground color for text/icons on accent backgrounds
+            const rgbArr = (s.accentRgb || '255,255,255').split(',').map(Number);
+            const luminance = (0.299 * (rgbArr[0] || 255) + 0.587 * (rgbArr[1] || 255) + 0.114 * (rgbArr[2] || 255)) / 255;
+            const accentFg = luminance > 0.65 ? '#0a0a0c' : '#ffffff';
+            root.style.setProperty('--accent-fg', accentFg);
             // Background brightness
             root.style.setProperty('--bg-brightness', s.bgBrightness / 100);
             // Glass blur
@@ -1492,9 +1507,25 @@ function onPlayerStateChange(event) {
 
         function syncSettingsUI(s) {
             // Accent swatches
-            document.querySelectorAll('.color-swatch').forEach(sw => {
-                sw.classList.toggle('active', sw.dataset.color === s.accentColor);
+            let matchedPreset = false;
+            document.querySelectorAll('.color-swatch:not(.custom-color-swatch)').forEach(sw => {
+                const isMatch = (sw.dataset.color || '').toLowerCase() === (s.accentColor || '').toLowerCase();
+                sw.classList.toggle('active', isMatch);
+                if (isMatch) matchedPreset = true;
             });
+            const customSwatch = document.getElementById('custom-accent-swatch');
+            if (customSwatch) {
+                customSwatch.classList.toggle('active', !matchedPreset);
+                if (!matchedPreset && s.accentColor) {
+                    customSwatch.style.background = s.accentColor;
+                } else {
+                    customSwatch.style.background = '';
+                }
+            }
+            const customPicker = document.getElementById('custom-accent-picker');
+            if (customPicker && s.accentColor && s.accentColor.startsWith('#')) {
+                customPicker.value = s.accentColor;
+            }
             const bbs = document.getElementById('bg-brightness-slider');
             if (bbs) bbs.value = s.bgBrightness;
             const gbs = document.getElementById('glass-blur-select');
@@ -1546,14 +1577,30 @@ function onPlayerStateChange(event) {
         }
 
         function initSettingsListeners() {
-            // Accent color swatches
-            document.querySelectorAll('.color-swatch').forEach(sw => {
+            // Accent color swatches (presets)
+            document.querySelectorAll('.color-swatch:not(.custom-color-swatch)').forEach(sw => {
                 sw.addEventListener('click', () => {
                     appSettings.accentColor = sw.dataset.color;
                     appSettings.accentRgb = sw.dataset.rgb;
                     saveSettings(appSettings); applySettings(appSettings); syncSettingsUI(appSettings);
                 });
             });
+
+            // Custom color picker input
+            const customPicker = document.getElementById('custom-accent-picker');
+            if (customPicker) {
+                customPicker.addEventListener('input', (e) => {
+                    const hex = e.target.value;
+                    const r = parseInt(hex.slice(1, 3), 16) || 255;
+                    const g = parseInt(hex.slice(3, 5), 16) || 255;
+                    const b = parseInt(hex.slice(5, 7), 16) || 255;
+                    appSettings.accentColor = hex;
+                    appSettings.accentRgb = `${r},${g},${b}`;
+                    saveSettings(appSettings);
+                    applySettings(appSettings);
+                    syncSettingsUI(appSettings);
+                });
+            }
             // Background brightness
             document.getElementById('bg-brightness-slider')?.addEventListener('input', (e) => {
                 appSettings.bgBrightness = parseInt(e.target.value);

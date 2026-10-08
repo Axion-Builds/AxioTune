@@ -3597,7 +3597,10 @@ body.offline-mode .offline-hide {
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
         }
         .toggle-switch input:checked + .toggle-track { background: var(--accent); border-color: var(--accent); }
-        .toggle-switch input:checked + .toggle-track::after { transform: translateX(22px); }
+        .toggle-switch input:checked + .toggle-track::after {
+            transform: translateX(22px);
+            background: var(--accent-fg, #ffffff);
+        }
 
         /* Slider */
         .settings-slider {
@@ -3610,16 +3613,53 @@ body.offline-mode .offline-hide {
             -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
             background: var(--accent); cursor: pointer;
             box-shadow: 0 2px 8px rgba(var(--accent-rgb),0.5);
+            border: 1.5px solid var(--accent-fg, #0a0a0c);
         }
 
-        /* Color Swatches */
-        .color-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+        /* Color Swatches - Minimalist Studio Spec */
+        .color-swatches { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .color-swatch {
             width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
-            border: 2px solid transparent; transition: 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            border: 1.5px solid rgba(255,255,255,0.22);
+            transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.3);
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            outline: 2px solid transparent;
+            outline-offset: 2.5px;
         }
-        .color-swatch:hover, .color-swatch.active { border-color: white; transform: scale(1.15); }
+        .color-swatch:hover {
+            transform: scale(1.15);
+            border-color: rgba(255,255,255,0.65);
+        }
+        .color-swatch.active {
+            transform: scale(1.15);
+            outline: 2px solid #ffffff;
+            outline-offset: 3px;
+            box-shadow: 0 0 14px rgba(var(--accent-rgb, 255,255,255), 0.5), 0 4px 12px rgba(0,0,0,0.8);
+        }
+        .color-swatch.custom-color-swatch {
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+            border: 1.5px dashed rgba(255,255,255,0.38);
+            overflow: hidden;
+        }
+        .color-swatch.custom-color-swatch:hover {
+            border-color: rgba(255,255,255,0.85);
+            background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
+        }
+        .color-swatch.custom-color-swatch svg {
+            width: 13px; height: 13px; stroke: rgba(255,255,255,0.9);
+            pointer-events: none;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .color-swatch.custom-color-swatch:hover svg {
+            transform: rotate(90deg);
+        }
+        .color-swatch.custom-color-swatch input[type="color"] {
+            position: absolute; inset: -6px;
+            width: 200%; height: 200%;
+            opacity: 0; cursor: pointer;
+        }
 
         /* Select Dropdown */
         .settings-select {
@@ -3701,7 +3741,8 @@ body.offline-mode .offline-hide {
             display: flex; align-items: center; gap: 8px; cursor: pointer; border: none;
             transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .apple-play-btn { background: var(--accent); color: #fff; box-shadow: 0 10px 30px rgba(var(--accent-rgb), 0.4); }
+        .apple-play-btn { background: var(--accent); color: var(--accent-fg, #fff); box-shadow: 0 10px 30px rgba(var(--accent-rgb), 0.4); }
+        .apple-play-btn svg { fill: var(--accent-fg, #fff); }
         .apple-play-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
         .apple-shuffle-btn { background: rgba(255,255,255,0.1); color: #fff; backdrop-filter: blur(10px); }
         .apple-shuffle-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
