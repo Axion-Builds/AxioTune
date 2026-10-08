@@ -1419,7 +1419,7 @@ function onPlayerStateChange(event) {
             audioQuality: 'hq', playbackSpeed: 100, crossfade: 3,
             autoplay: true, sleepTimerMins: 0,
             normalizeVolume: false, lyricsFontSize: 'medium',
-            lyricsFont: 'default', titleFont: 'Outfit', headingFont: 'Manrope', lyricsStyle: 'bold',
+            lyricsFont: 'default', titleFont: 'Outfit', headingFont: 'Newsreader', lyricsStyle: 'bold',
             miniPlayerStyle: 'pill', doubleTapSeek: true,
             haptic: true, incognito: false
         };
@@ -1463,15 +1463,17 @@ function onPlayerStateChange(event) {
 
             // Section heading font (Web Typography skill)
             const headingFontFamilyMap = {
+                'Newsreader': "'Newsreader', Georgia, serif",
+                'IBM Plex Serif': "'IBM Plex Serif', Georgia, serif",
+                'Lora': "'Lora', Georgia, serif",
+                'IBM Plex Sans': "'IBM Plex Sans', sans-serif",
+                'Plus Jakarta Sans': "'Plus Jakarta Sans', sans-serif",
                 'Manrope': "'Manrope', sans-serif",
                 'Clash Display': "'Clash Display', sans-serif",
-                'Plus Jakarta Sans': "'Plus Jakarta Sans', sans-serif",
-                'Outfit': "'Outfit', sans-serif",
-                'Space Grotesk': "'Space Grotesk', sans-serif",
-                'Playfair Display': "'Playfair Display', serif",
-                'Inter': "'Inter', sans-serif"
+                'Inter': "'Inter', sans-serif",
+                'Outfit': "'Outfit', sans-serif"
             };
-            root.style.setProperty('--font-heading', headingFontFamilyMap[s.headingFont] || "'Manrope', sans-serif");
+            root.style.setProperty('--font-heading', headingFontFamilyMap[s.headingFont] || "'Newsreader', Georgia, serif");
             // Lyrics font size & family & style
             const fontSizeMap = {
                 small: '1.65rem',
@@ -1569,7 +1571,7 @@ function onPlayerStateChange(event) {
             const igt = document.getElementById('incognito-toggle');
             if (igt) igt.checked = s.incognito;
             const hfs = document.getElementById('heading-font-select');
-            if (hfs) hfs.value = s.headingFont || 'Manrope';
+            if (hfs) hfs.value = s.headingFont || 'Newsreader';
         }
 
         function setupSettingsUI() {
