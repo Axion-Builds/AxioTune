@@ -175,8 +175,12 @@ def get_json(filename: str):
 def clean_cover_search_term(q: str) -> str:
     if not q:
         return ""
-    q = re.sub(r'\[.*?\]|\(.*?\)|\{.*?\}', ' ', q)
-    q = re.sub(r'(?i)\b(official|video|lyrical|full\s+song|audio|hd|4k|mv)\b', ' ', q)
+    # Strip brackets & parentheses content e.g. (Official Music Video), [Lyrical]
+    q = re.sub(r'\[.*?\]|\(.*?\)', ' ', q)
+    # Strip common record label channel names that YouTube songs are uploaded under
+    q = re.sub(r'(?i)\b(t-series|tseries|zee music( company)?|sony music( india)?|speed records|tips( official)?|saregama( music)?|yrf|coke studio( india)?|white hill music|geet mp3)\b', ' ', q)
+    # Strip common YouTube title noise
+    q = re.sub(r'(?i)\b(official|music\s+video|video|lyrical|full\s+song|audio|hd|4k|mv|remix|lofi|slowed|reverb|teaser|trailer)\b', ' ', q)
     q = re.sub(r'\s+', ' ', q).strip()
     return q[:120]
 
@@ -198,6 +202,23 @@ def extract_yt_video_id(url: str) -> str:
     return ""
 
 
+def _is_verified_cover_match(query: str, track_name: str, artist_name: str = "") -> bool:
+    if not query or not track_name:
+        return False
+    clean_q = re.sub(r'[^\w\s]', ' ', query).lower()
+    clean_track = re.sub(r'[^\w\s]', ' ', track_name).lower()
+    q_words = set(clean_q.split())
+    track_words = set(clean_track.split())
+    if not track_words or not q_words:
+        return False
+    # Exact or substring match
+    if clean_track in clean_q or clean_q in clean_track:
+        return True
+    # Word overlap match
+    overlap = q_words.intersection(track_words)
+    return len(overlap) >= max(1, len(track_words) // 2)
+
+
 # Persistent pooled client for lightning-fast cover lookups with keepalive (tuned for low RAM)
 _COVER_CLIENT = httpx.AsyncClient(
     timeout=httpx.Timeout(3.0, connect=2.0),
@@ -217,16 +238,16 @@ def _cache_cover_bytes(cache_path: str, data: bytes):
 @app.get("/api/cover")
 async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = False):
     """
-    High-performance album artwork proxy with zero-RAM disk streaming.
-    1. Checks disk cache (served via kernel FileResponse without loading into Python heap).
-    2. If vid provided without hd/q requirement: instant hqdefault CDN fetch (<20ms).
-    3. If q provided: unified single iTunes music query for ultra-HD 1400x1400 Apple Music art.
-    4. Fallback to direct YouTube hqdefault thumbnail.
+    High-performance, ultra-accurate album artwork proxy.
+    1. Checks disk cache.
+    2. If yt_thumb is an official Google/YTMusic square cover: upgrade to 1200x1200, cache and serve directly (100% accurate, no wrong iTunes match!).
+    3. If raw video/hqdefault or yt_thumb missing, and q is provided: query iTunes with limit=5 and ONLY accept VERIFIED title matches.
+    4. Fallback to YouTube maxresdefault / hqdefault of the actual video.
     5. Ultimate fallback to default_cover.jpg.
     """
     cache_key = ""
     if q:
-        cache_key = hashlib.md5(f"q_{q}_{hd}".encode('utf-8')).hexdigest()
+        cache_key = hashlib.md5(f"q_{q}_{hd}_{vid}".encode('utf-8')).hexdigest()
     elif vid:
         cache_key = hashlib.md5(f"vid_{vid}_{hd}".encode('utf-8')).hexdigest()
     elif yt_thumb:
@@ -234,7 +255,7 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
 
     default_cover_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "default_cover.jpg")
 
-    # 1. Disk Cache Hit (Zero RAM: OS-level kernel file streaming)
+    # 1. Disk Cache Hit
     cache_path = os.path.join(COVER_CACHE_DIR, f"{cache_key}.jpg") if cache_key else ""
     if cache_path and os.path.exists(cache_path) and os.path.getsize(cache_path) > 800:
         return FileResponse(cache_path, media_type="image/jpeg",
@@ -244,12 +265,31 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
     if yt_thumb and not is_valid_yt_thumb(yt_thumb):
         yt_thumb = ""
 
-    # 3. Fast Path for card thumbnails (vid provided, no heavy iTunes search needed)
+    # 3. PRIORITY 1: Authentic Google User Content / Spotify Square Album Artwork
+    # If yt_thumb comes from YouTube Music (googleusercontent.com, ggpht.com, scdn.co), it is ALREADY the official album artwork!
+    if yt_thumb and ("googleusercontent.com" in yt_thumb or "ggpht.com" in yt_thumb or "scdn.co" in yt_thumb):
+        hd_yt_thumb = yt_thumb
+        if "=" in yt_thumb and ("googleusercontent.com" in yt_thumb or "ggpht.com" in yt_thumb):
+            hd_yt_thumb = yt_thumb.split("=")[0] + "=w1200-h1200-l90-rj"
+        elif "ab67616d0000b273" in yt_thumb:
+            hd_yt_thumb = yt_thumb.replace("ab67616d0000b273", "ab67616d00001e02")
+
+        try:
+            img_r = await _COVER_CLIENT.get(hd_yt_thumb, timeout=3.0)
+            if img_r.status_code == 200 and len(img_r.content) > 1000:
+                if cache_path:
+                    _cache_cover_bytes(cache_path, img_r.content)
+                return Response(content=img_r.content, media_type="image/jpeg",
+                                headers={"Cache-Control": "public, max-age=31536000"})
+        except Exception:
+            pass
+
+    # 4. Fast path for video cards when query is not provided
     target_vid = vid or extract_yt_video_id(yt_thumb)
     if target_vid and not hd and not q:
         hq_url = f"https://i.ytimg.com/vi/{target_vid}/hqdefault.jpg"
         try:
-            img_r = await _COVER_CLIENT.get(hq_url)
+            img_r = await _COVER_CLIENT.get(hq_url, timeout=2.5)
             if img_r.status_code == 200 and len(img_r.content) > 1000:
                 if cache_path:
                     _cache_cover_bytes(cache_path, img_r.content)
@@ -258,20 +298,31 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
         except Exception:
             pass
 
-    # 4. iTunes Apple Music 1400x1400 lookup when query is present
+    # 5. PRIORITY 2: iTunes Apple Music 1400x1400 lookup ONLY WITH VERIFIED MATCH
+    # Only attempted if we don't have an official YouTube Music square cover, and query is present
     if q:
         term = clean_cover_search_term(q)
         if term:
             try:
                 r = await _COVER_CLIENT.get(
                     "https://itunes.apple.com/search",
-                    params={"term": term, "media": "music", "entity": "song", "limit": 1},
+                    params={"term": term, "media": "music", "entity": "song", "limit": 5},
                     timeout=2.5
                 )
                 if r.status_code == 200:
                     data = r.json()
-                    if data.get("results") and data["results"][0].get("artworkUrl100"):
-                        art_url = data["results"][0]["artworkUrl100"].replace("100x100bb", "1400x1400bb")
+                    results = data.get("results", [])
+                    # Look for the first result that actually matches the song title!
+                    matched_result = None
+                    for candidate in results:
+                        cand_title = candidate.get("trackName", "")
+                        cand_artist = candidate.get("artistName", "")
+                        if _is_verified_cover_match(term, cand_title, cand_artist):
+                            matched_result = candidate
+                            break
+
+                    if matched_result and matched_result.get("artworkUrl100"):
+                        art_url = matched_result["artworkUrl100"].replace("100x100bb", "1400x1400bb")
                         img_r = await _COVER_CLIENT.get(art_url, timeout=3.0)
                         if img_r.status_code == 200 and len(img_r.content) > 2000:
                             if cache_path:
@@ -281,7 +332,7 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
             except Exception:
                 pass
 
-    # 5. Active CDN YouTube/Google thumbnail proxy
+    # 6. Fallback to YouTube thumbnail by videoId or yt_thumb (Guaranteed to be the actual video!)
     if yt_thumb and is_valid_yt_thumb(yt_thumb):
         try:
             img_r = await _COVER_CLIENT.get(yt_thumb, timeout=2.5)
@@ -293,7 +344,6 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
         except Exception:
             pass
 
-    # 6. Fallback to YouTube thumbnail by videoId (hqdefault guaranteed)
     if target_vid:
         candidate_urls = []
         if hd:
@@ -313,7 +363,7 @@ async def get_cover(q: str = "", yt_thumb: str = "", vid: str = "", hd: bool = F
             except Exception:
                 continue
 
-    # 7. Guaranteed fallback: local default_cover.jpg
+    # 7. Ultimate fallback: default_cover.jpg
     if os.path.exists(default_cover_path):
         return FileResponse(default_cover_path, media_type="image/jpeg",
                             headers={"Cache-Control": "public, max-age=86400"})

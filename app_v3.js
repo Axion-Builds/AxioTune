@@ -1308,9 +1308,9 @@ function onPlayerStateChange(event) {
                 return '';
             }
             
-            // Optimize Google/YouTube Music thumbnail sizes: 540x540 for cards (loads 4x faster, retina crisp)
+            // Optimize Google/YouTube Music thumbnail sizes: 540x540 for cards, 1200x1200 for player
             if (ytThumb.includes('googleusercontent.com') || ytThumb.includes('ggpht.com') || ytThumb.includes('scdn.co')) {
-                const targetDim = size === 'large' ? 'w800-h800' : 'w540-h540';
+                const targetDim = size === 'large' ? 'w1200-h1200' : 'w540-h540';
                 if (ytThumb.includes('=')) {
                     return ytThumb.split('=')[0] + `=${targetDim}-l90-rj`;
                 }
@@ -1323,7 +1323,12 @@ function onPlayerStateChange(event) {
         function getCoverUrl(query, ytThumb, vid, isPlayerScreen = false) {
             let thumb = resolveYtThumb(ytThumb, isPlayerScreen ? 'large' : 'card');
             
-            // For player screen: route through /api/cover to fetch ultra-HD 1400x1400 Apple Music/iTunes artwork with caching
+            // If thumb is already an official square Google / YouTube Music / Spotify cover, use it directly!
+            if (thumb && (thumb.includes('googleusercontent.com') || thumb.includes('ggpht.com') || thumb.includes('scdn.co'))) {
+                return thumb;
+            }
+
+            // For player screen: route through /api/cover to fetch verified ultra-HD artwork
             if (isPlayerScreen) {
                 const params = new URLSearchParams();
                 if (query) params.set('q', query);
@@ -3234,6 +3239,19 @@ function onPlayerStateChange(event) {
         }
 
         async function fetchHdCoverForQueueSong(title, artist, videoId, rawYtThumb) {
+            // If already an authentic square Google/YTMusic album art, it is already 1200x1200px — skip iTunes query
+            if (rawYtThumb && (rawYtThumb.includes('googleusercontent.com') || rawYtThumb.includes('ggpht.com') || rawYtThumb.includes('scdn.co'))) {
+                const hdThumb = resolveYtThumb(rawYtThumb, 'large');
+                if (currentVideoId === videoId && coverArt.src !== hdThumb) {
+                    coverArt.src = hdThumb;
+                    miniCover.src = resolveYtThumb(rawYtThumb, 'small');
+                    const qNowArt = document.querySelector('.pq-item-cover, .q-card-now-art');
+                    if (qNowArt) qNowArt.src = hdThumb;
+                    updateMediaSession(title, artist, hdThumb);
+                }
+                return;
+            }
+
             const actualSongQuery = `${title} ${artist}`;
             const coverUrl = getCoverUrl(actualSongQuery, rawYtThumb, videoId, true);
             
@@ -3247,7 +3265,7 @@ function onPlayerStateChange(event) {
                     coverArt.setAttribute('crossorigin', 'anonymous');
                     coverArt.src = hdImg.src;
                     miniCover.src = hdImg.src;
-                    const qNowArt = document.querySelector('.q-card-now-art');
+                    const qNowArt = document.querySelector('.pq-item-cover, .q-card-now-art');
                     if (qNowArt) qNowArt.src = hdImg.src;
                     updateMediaSession(title, artist, hdImg.src);
                     
@@ -3327,13 +3345,15 @@ function onPlayerStateChange(event) {
 
             // Cover Art Update - Instantly fallback to YouTube thumbnail if cover is missing
             const rawYtThumb = song.cover || `https://img.youtube.com/vi/${song.videoId}/hqdefault.jpg`;
+            const hdThumb = resolveYtThumb(rawYtThumb, 'large') || rawYtThumb;
+            const smallThumb = resolveYtThumb(rawYtThumb, 'small') || rawYtThumb;
             
             delete coverArt.dataset.fallbackDone;
             delete miniCover.dataset.fallbackDone;
             coverArt.removeAttribute('crossorigin');
-            coverArt.src = rawYtThumb;
-            const smallThumb = resolveYtThumb(rawYtThumb, 'small') || rawYtThumb;
-            // Fetch HD 1400x1400 iTunes Cover in background
+            coverArt.src = hdThumb;
+            miniCover.src = smallThumb;
+            // Fetch verified HD Cover in background
             fetchHdCoverForQueueSong(song.title, song.artist, song.videoId, rawYtThumb);
             
             coverArt.style.display = 'block';
@@ -3350,7 +3370,7 @@ function onPlayerStateChange(event) {
             document.body.classList.add('song-playing');
             
             // Update Media Session
-            updateMediaSession(song.title, song.artist, rawYtThumb);
+            updateMediaSession(song.title, song.artist, hdThumb);
 
             // Sync Like/Favorite UI
             setLikeUI(isSongLiked(song.title, song.artist));
@@ -3393,13 +3413,10 @@ function onPlayerStateChange(event) {
             // 2. Play immediately
             audioPlayer.play().catch(e => console.warn("Queue play failed:", e));
 
-            // 3. Asynchronously fetch higher resolution iTunes cover art
-            fetchHdCoverForQueueSong(song.title, song.artist, song.videoId, rawYtThumb);
-
-            // 4. Asynchronously fetch recommendations for infinite radio / next track queueing
+            // 3. Asynchronously fetch recommendations for infinite radio / next track queueing
             populateQueue(song.videoId, true, song.title, song.artist);
 
-            // 5. Asynchronously fetch & render lyrics
+            // 4. Asynchronously fetch & render lyrics
             fetchLyricsForQueueSong(song.title, song.artist, song.videoId);
 
         }
@@ -3528,27 +3545,29 @@ function onPlayerStateChange(event) {
                 coverArt.style.display = 'block';
                 document.getElementById('default-cover-icon').style.display = 'none';
                 
-                // Upgrade to HD iTunes cover silently in background (Only for the actual cover art, NOT the blurred background)
-                const hdImg = new Image();
-                hdImg.crossOrigin = 'Anonymous';
-                hdImg.src = coverUrl;
-                hdImg.decode().then(() => {
-                    delete coverArt.dataset.fallbackDone;
-                    delete miniCover.dataset.fallbackDone;
-                    coverArt.setAttribute('crossorigin', 'anonymous');
-                    coverArt.src = hdImg.src;
-                    miniCover.src = hdImg.src;
-                    // (Background is now dynamically drawn via canvas)
-                    updateMediaSession(songData.title, songData.uploader, hdImg.src);
-                    
-                    coverArt.classList.remove('cover-changing');
-                    void coverArt.offsetWidth;
-                    coverArt.classList.add('cover-changing');
-                    
-                    const bgLayer = document.getElementById('background-layer');
-                    if (bgLayer) bgLayer.style.backgroundImage = `url(${songData.thumbnail ? resolveYtThumb(songData.thumbnail, 'small') : hdImg.src})`;
-                    const activeScreen = document.querySelector('.screen-view.active-screen');
-                }).catch(e => console.warn("Failed to decode HD cover", e));
+                // Upgrade to HD iTunes cover silently in background (Only for raw YouTube video thumbnails, skip if official album art)
+                const isOfficialCdn = rawYtThumb && (rawYtThumb.includes('googleusercontent.com') || rawYtThumb.includes('ggpht.com') || rawYtThumb.includes('scdn.co'));
+                if (!isOfficialCdn) {
+                    const hdImg = new Image();
+                    hdImg.crossOrigin = 'Anonymous';
+                    hdImg.src = coverUrl;
+                    hdImg.decode().then(() => {
+                        delete coverArt.dataset.fallbackDone;
+                        delete miniCover.dataset.fallbackDone;
+                        coverArt.setAttribute('crossorigin', 'anonymous');
+                        coverArt.src = hdImg.src;
+                        miniCover.src = hdImg.src;
+                        // (Background is now dynamically drawn via canvas)
+                        updateMediaSession(songData.title, songData.uploader, hdImg.src);
+                        
+                        coverArt.classList.remove('cover-changing');
+                        void coverArt.offsetWidth;
+                        coverArt.classList.add('cover-changing');
+                        
+                        const bgLayer = document.getElementById('background-layer');
+                        if (bgLayer) bgLayer.style.backgroundImage = `url(${songData.thumbnail ? resolveYtThumb(songData.thumbnail, 'small') : hdImg.src})`;
+                    }).catch(e => console.warn("Failed to decode HD cover", e));
+                }
 
                 saveToHistory(songData, rawYtThumb);
 
