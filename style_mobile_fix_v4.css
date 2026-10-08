@@ -2429,6 +2429,19 @@
             width: 55px; height: 55px; border-radius: 14px; object-fit: cover;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); opacity: 1; transition: opacity 0.3s;
         }
+
+        /* GPU-Accelerated Shared Poster Morph Transition */
+        #poster-morph-clone {
+            position: fixed;
+            object-fit: cover;
+            z-index: 100000;
+            pointer-events: none;
+            will-change: transform, border-radius, box-shadow;
+            transform-origin: 0 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            image-rendering: -webkit-optimize-contrast;
+        }
         #mini-info { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
         #mini-title { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
         #mini-artist { font-size: 0.85rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

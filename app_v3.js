@@ -2085,6 +2085,172 @@ function onPlayerStateChange(event) {
         if (typeof window.initBetterLyricsDock === 'function') window.initBetterLyricsDock();
         syncSettingsUI(appSettings);
 
+        // ========================================================
+        // GPU-ACCELERATED SHARED POSTER FLIP TRANSITION
+        // ========================================================
+        let _posterMorphActiveAnim = null;
+        let _posterMorphActiveClone = null;
+        window._posterMorphInProgress = false;
+
+        function cleanupPosterMorph() {
+            if (_posterMorphActiveAnim) {
+                try { _posterMorphActiveAnim.cancel(); } catch (e) {}
+                _posterMorphActiveAnim = null;
+            }
+            if (_posterMorphActiveClone) {
+                try { _posterMorphActiveClone.remove(); } catch (e) {}
+                _posterMorphActiveClone = null;
+            }
+            const cac = document.getElementById('cover-art-container');
+            const mc = document.getElementById('mini-cover');
+            if (cac) { cac.style.opacity = ''; cac.style.transition = ''; }
+            if (mc) { mc.style.opacity = ''; mc.style.transition = ''; }
+            window._posterMorphInProgress = false;
+        }
+
+        function getMiniCoverRestingRect() {
+            const mp = document.getElementById('mini-player');
+            const mc = document.getElementById('mini-cover');
+            if (!mp || !mc) return null;
+
+            const prevTransform = mp.style.transform;
+            const prevTransition = mp.style.transition;
+            mp.style.transition = 'none';
+            mp.style.transform = 'translate3d(-50%, 0, 0) scale(1)';
+            const rect = mc.getBoundingClientRect();
+            mp.style.transform = prevTransform;
+            mp.style.transition = prevTransition;
+            return rect;
+        }
+
+        function getPlayerCoverRestingRect() {
+            const ps = document.getElementById('player-screen');
+            const cac = document.getElementById('cover-art-container');
+            if (!ps || !cac) return null;
+
+            const prevTransform = ps.style.transform;
+            const prevTransition = ps.style.transition;
+            const wasHidden = ps.classList.contains('hidden-screen');
+
+            ps.style.transition = 'none';
+            ps.style.transform = 'translate3d(0, 0, 0) scale(1)';
+            if (wasHidden) {
+                ps.classList.remove('hidden-screen');
+                ps.classList.add('active-screen');
+            }
+            const rect = cac.getBoundingClientRect();
+            if (wasHidden) {
+                ps.classList.remove('active-screen');
+                ps.classList.add('hidden-screen');
+            }
+            ps.style.transform = prevTransform;
+            ps.style.transition = prevTransition;
+            return rect;
+        }
+
+        function triggerPosterMorph(direction, onScreenSwitch) {
+            if (typeof isSongLoaded === 'undefined' || !isSongLoaded) {
+                if (typeof onScreenSwitch === 'function') onScreenSwitch();
+                return;
+            }
+
+            cleanupPosterMorph();
+
+            const cac = document.getElementById('cover-art-container');
+            const mc = document.getElementById('mini-cover');
+            const mainImg = document.getElementById('cover-art') || document.getElementById('default-cover-icon');
+            if (!cac || !mc) {
+                if (typeof onScreenSwitch === 'function') onScreenSwitch();
+                return;
+            }
+
+            const imgSrc = mc.src || (mainImg ? mainImg.src : '') || 'default_cover.jpg?v=3';
+
+            let fromRect, toRect, fromRadius, toRadius, fromShadow, toShadow;
+            if (direction === 'collapse') {
+                fromRect = cac.getBoundingClientRect();
+                toRect = getMiniCoverRestingRect();
+                fromRadius = '20px';
+                toRadius = '14px';
+                fromShadow = '0 16px 40px rgba(0,0,0,0.45)';
+                toShadow = '0 5px 15px rgba(0,0,0,0.5)';
+            } else {
+                fromRect = getMiniCoverRestingRect();
+                toRect = getPlayerCoverRestingRect();
+                fromRadius = '14px';
+                toRadius = '20px';
+                fromShadow = '0 5px 15px rgba(0,0,0,0.5)';
+                toShadow = '0 16px 40px rgba(0,0,0,0.45)';
+            }
+
+            if (!fromRect || !toRect || fromRect.width === 0 || toRect.width === 0) {
+                if (typeof onScreenSwitch === 'function') onScreenSwitch();
+                return;
+            }
+
+            const clone = document.createElement('img');
+            clone.id = 'poster-morph-clone';
+            clone.src = imgSrc;
+            clone.style.position = 'fixed';
+            clone.style.left = fromRect.left + 'px';
+            clone.style.top = fromRect.top + 'px';
+            clone.style.width = fromRect.width + 'px';
+            clone.style.height = fromRect.height + 'px';
+            clone.style.borderRadius = fromRadius;
+            clone.style.boxShadow = fromShadow;
+            clone.style.objectFit = 'cover';
+            clone.style.zIndex = '100000';
+            clone.style.pointerEvents = 'none';
+            clone.style.willChange = 'transform, border-radius, box-shadow';
+            clone.style.transformOrigin = '0 0';
+            clone.style.backfaceVisibility = 'hidden';
+            document.body.appendChild(clone);
+            _posterMorphActiveClone = clone;
+            window._posterMorphInProgress = true;
+
+            cac.style.transition = 'none';
+            cac.style.opacity = '0';
+            mc.style.transition = 'none';
+            mc.style.opacity = '0';
+
+            if (typeof onScreenSwitch === 'function') {
+                onScreenSwitch();
+            }
+
+            const deltaX = toRect.left - fromRect.left;
+            const deltaY = toRect.top - fromRect.top;
+            const scaleX = toRect.width / fromRect.width;
+            const scaleY = toRect.height / fromRect.height;
+            const compensatedTargetRadius = Math.round(parseFloat(toRadius) / scaleX) + 'px';
+
+            const anim = clone.animate([
+                {
+                    transform: 'translate3d(0px, 0px, 0) scale(1, 1)',
+                    borderRadius: fromRadius,
+                    boxShadow: fromShadow
+                },
+                {
+                    transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleX}, ${scaleY})`,
+                    borderRadius: compensatedTargetRadius,
+                    boxShadow: toShadow
+                }
+            ], {
+                duration: 380,
+                easing: 'cubic-bezier(0.32, 0.72, 0, 1)',
+                fill: 'forwards'
+            });
+
+            _posterMorphActiveAnim = anim;
+
+            const finishHandler = () => {
+                cleanupPosterMorph();
+            };
+
+            anim.onfinish = finishHandler;
+            anim.oncancel = finishHandler;
+        }
+        window.triggerPosterMorph = triggerPosterMorph;
+
         // Screen Switch Logic & Mini Player Logic
         const miniPlayer = document.getElementById('mini-player');
         const ghostCover = document.getElementById('ghost-cover');
@@ -2120,8 +2286,22 @@ function onPlayerStateChange(event) {
         }
 
         function showPlayer() {
-            miniPlayer.classList.add('hidden-mini');
-            showScreenExcept('player-screen');
+            const playerScr = document.getElementById('player-screen');
+            if (playerScr && playerScr.classList.contains('active-screen')) return;
+
+            const miniPlayerEl = document.getElementById('mini-player');
+            const canMorph = typeof isSongLoaded !== 'undefined' && isSongLoaded && 
+                             miniPlayerEl && !miniPlayerEl.classList.contains('hidden-mini');
+
+            if (canMorph) {
+                triggerPosterMorph('expand', () => {
+                    miniPlayerEl.classList.add('hidden-mini');
+                    showScreenExcept('player-screen');
+                });
+            } else {
+                if (miniPlayerEl) miniPlayerEl.classList.add('hidden-mini');
+                showScreenExcept('player-screen');
+            }
         }
         window.showPlayer = showPlayer;
 
@@ -5238,6 +5418,24 @@ function onPlayerStateChange(event) {
                 screenHistory.push(currentScreen);
                 if (!skipPushState && window.history) {
                     history.pushState({ screen: showId }, '', '#' + showId);
+                }
+            }
+
+            // Shared Poster FLIP transition when leaving player-screen (Collapse to Mini)
+            if (currentScreen === 'player-screen' && showId !== 'player-screen' && 
+                typeof isSongLoaded !== 'undefined' && isSongLoaded && !window._posterMorphInProgress) {
+                if (typeof triggerPosterMorph === 'function') {
+                    triggerPosterMorph('collapse');
+                }
+            }
+            // Shared Poster FLIP transition when entering player-screen directly (Expand from Mini)
+            if (currentScreen !== 'player-screen' && showId === 'player-screen' && 
+                typeof isSongLoaded !== 'undefined' && isSongLoaded && !window._posterMorphInProgress) {
+                const miniPlayerEl = document.getElementById('mini-player');
+                if (miniPlayerEl && !miniPlayerEl.classList.contains('hidden-mini')) {
+                    if (typeof triggerPosterMorph === 'function') {
+                        triggerPosterMorph('expand');
+                    }
                 }
             }
 
