@@ -11,7 +11,7 @@
             --glass-blur: 30px;
             --glass-bg: rgba(255,255,255,0.08);
             --lyrics-font-size: clamp(1.2rem, 2.5vw, 2.2rem);
-            --lyrics-font-family: 'Outfit', sans-serif;
+            --lyrics-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
             --bg-brightness: 0.5;
         }
 
@@ -1809,34 +1809,35 @@
         }
 
         .lyric-line {
-            font-size: var(--lyrics-font-size, 1.85rem); font-weight: 700; line-height: 1.6;
-            font-family: var(--lyrics-font-family, -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans Devanagari', 'Poppins', 'Outfit', sans-serif);
-            letter-spacing: -0.01em; margin-bottom: 1.5rem; transform-origin: left center; position: relative;
-            padding-top: 0.35em;
-            padding-bottom: 0.35em;
+            font-size: var(--lyrics-font-size, 2rem); font-weight: 700; line-height: 1.36;
+            font-family: var(--lyrics-font-family, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif);
+            letter-spacing: -0.025em; margin-bottom: 1.25rem; transform-origin: left center; position: relative;
+            padding-top: 0.25em;
+            padding-bottom: 0.25em;
             overflow: visible;
             transition:
-                filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
-                opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
-                transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
-                color 0.6s ease,
-                padding-left 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
-                border-left-color 0.35s ease;
-            filter: blur(4px); opacity: 0.45; transform: scale(0.97); cursor: pointer;
-            color: rgba(255,255,255,0.7);
+                filter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+                opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+                transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+                color 0.4s ease;
+            filter: blur(2.5px); opacity: 0.45; transform: scale(0.97); cursor: pointer;
+            color: rgba(255,255,255,0.75);
             padding-left: 0;
-            border-left: 3px solid transparent;
+            border-left: none;
         }
 
-        .lyric-line:hover { opacity: 0.7; filter: blur(1px); transform: scale(0.99); }
+        .lyric-line:hover { opacity: 0.75; filter: blur(1px); transform: scale(0.99); }
 
-        /* Apple Music karaoke mode: active lyric line — bright + left accent bar */
+        /* Apple Music karaoke mode: active lyric line — bright */
         .lyric-line.active-line {
-            filter: blur(0px) drop-shadow(0 0 var(--lyrics-glow-intensity, 2px) rgba(255, 255, 255, 0.45));
-            opacity: 1; transform: scale(1);
-            color: white;
-            padding-left: 14px;
-            border-left-color: var(--accent);
+            filter: blur(0px) !important;
+            opacity: 1 !important; transform: scale(1) !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.025em !important;
+            line-height: 1.36 !important;
+            padding-left: 0 !important;
+            border-left: none !important;
         }
         /* Subtle pulse on the active line's left bar */
         .lyric-line.active-line::before {
@@ -5519,8 +5520,7 @@ h1, h2, h3, h4, h5, h6,
 #album-title, 
 .logo,
 .nav-tooltip,
-.queue-header,
-.lyric-line {
+.queue-header {
     font-family: 'Outfit', sans-serif;
     letter-spacing: -0.02em;
 }
@@ -7484,7 +7484,37 @@ body.player-screen-active #top-bar:focus-within {
 body.player-screen-active #top-bar-wrapper { justify-content: flex-start !important; padding-left: 20px !important; padding-right: 300px !important; }
 
 
-.lyric-line { transform-origin: left center !important; filter: blur(3px) !important; opacity: 0.45 !important; transform: scale(0.96) !important; padding-left: 0 !important; border-left: none !important; line-height: 1.6 !important; padding-top: 0.35em !important; padding-bottom: 0.35em !important; overflow: visible !important; } .lyric-line.active-line { filter: blur(0px) !important; opacity: 1 !important; transform: scale(1) !important; padding-left: 0 !important; border-left: none !important; overflow: visible !important; } .lyric-line.active-line::before { display: none !important; }
+.lyric-line {
+    font-family: var(--lyrics-font-family, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif) !important;
+    font-size: var(--lyrics-font-size, 2rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
+    line-height: 1.36 !important;
+    transform-origin: left center !important;
+    filter: blur(2.5px) !important;
+    opacity: 0.45 !important;
+    transform: scale(0.97) !important;
+    padding-left: 0 !important;
+    border-left: none !important;
+    padding-top: 0.25em !important;
+    padding-bottom: 0.25em !important;
+    margin-bottom: 1.25rem !important;
+    overflow: visible !important;
+}
+.lyric-line.active-line {
+    font-family: var(--lyrics-font-family, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.025em !important;
+    line-height: 1.36 !important;
+    filter: blur(0px) !important;
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    color: #ffffff !important;
+    padding-left: 0 !important;
+    border-left: none !important;
+    overflow: visible !important;
+}
+.lyric-line.active-line::before { display: none !important; }
 
 
 .q-hero-card { position: relative; width: 100%; height: 200px; border-radius: 12px; overflow: hidden; margin-bottom: 24px; display: flex; align-items: flex-end; box-shadow: 0 10px 30px rgba(0,0,0,0.3); flex-shrink: 0; cursor: pointer; }

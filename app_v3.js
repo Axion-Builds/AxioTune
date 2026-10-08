@@ -1484,15 +1484,16 @@ function onPlayerStateChange(event) {
             root.style.setProperty('--lyrics-font-size', fontSizeMap[s.lyricsFontSize] || '2.25rem');
 
             const fontMap = {
-                default: "'Inter', 'Outfit', sans-serif",
-                inter: "'Inter', sans-serif",
+                default: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif",
+                inter: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                sfpro: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', sans-serif",
                 outfit: "'Outfit', sans-serif",
                 playfair: "'Playfair Display', serif",
                 cinzel: "'Cinzel', serif",
                 lobster: "'Lobster', cursive",
                 bebas: "'Bebas Neue', cursive"
             };
-            root.style.setProperty('--lyrics-font-family', fontMap[s.lyricsFont] || "'Inter', 'Outfit', sans-serif");
+            root.style.setProperty('--lyrics-font-family', fontMap[s.lyricsFont] || fontMap.default);
 
             // Lyrics active style
             const styleTag = document.getElementById('dynamic-lyric-style') || (() => {
