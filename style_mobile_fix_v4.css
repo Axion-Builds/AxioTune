@@ -5530,59 +5530,57 @@ h1, h2, h3, h4, h5, h6,
     letter-spacing: -0.03em;
 }
 
-/* --- Web Typography: Editorial Section Headings & Displays --- */
+/* --- Web Typography: Professional Minimalist Section Headings --- */
 .section-title,
 .page-section h2 {
-    font-family: 'Satoshi', 'Outfit', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
-    font-size: clamp(1.4rem, 1.25rem + 0.6vw, 1.85rem) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif !important;
+    font-size: 1.25rem !important; /* Professional compact 20px scale: elegant, clean, not shouting */
     font-weight: 700 !important;
-    letter-spacing: -0.028em !important;
-    line-height: 1.22 !important;
+    letter-spacing: -0.015em !important;
+    line-height: 1.25 !important;
     text-transform: none !important;
-    text-wrap: balance !important;
     color: #ffffff !important;
-    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
-    margin-bottom: 18px;
+    margin-bottom: 16px !important;
+    text-shadow: none !important;
 }
 
 #album-title,
 .hero-title {
-    font-family: 'Satoshi', 'Outfit', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
-    font-size: clamp(2rem, 1.6rem + 1.8vw, 3.2rem) !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.035em !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif !important;
+    font-size: 1.85rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
     text-transform: none !important;
-    line-height: 1.15 !important;
+    line-height: 1.2 !important;
 }
 
 .queue-header {
-    font-family: 'Satoshi', 'Outfit', -apple-system, sans-serif !important;
-    font-size: 1.2rem !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif !important;
+    font-size: 1.15rem !important;
     font-weight: 700 !important;
-    letter-spacing: -0.02em !important;
+    letter-spacing: -0.015em !important;
     text-transform: none !important;
 }
 
 .ai-mix-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1;
     vertical-align: middle;
 }
 .ai-mix-badge .ai-sparkle {
-    color: var(--accent, #ffffff);
-    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.7rem;
 }
 
 /* Track title: always Outfit 800 for premium feel */
