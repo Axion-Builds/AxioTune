@@ -1419,7 +1419,7 @@ function onPlayerStateChange(event) {
             audioQuality: 'hq', playbackSpeed: 100, crossfade: 3,
             autoplay: true, sleepTimerMins: 0,
             normalizeVolume: false, lyricsFontSize: 'medium',
-            lyricsFont: 'default', titleFont: 'Outfit', lyricsStyle: 'bold',
+            lyricsFont: 'default', titleFont: 'Outfit', headingFont: 'Manrope', lyricsStyle: 'bold',
             miniPlayerStyle: 'pill', doubleTapSeek: true,
             haptic: true, incognito: false
         };
@@ -1460,6 +1460,18 @@ function onPlayerStateChange(event) {
             root.style.setProperty('--glass-blur', s.glassBlur);
             // Title font
             root.style.setProperty('--title-font', s.titleFont);
+
+            // Section heading font (Web Typography skill)
+            const headingFontFamilyMap = {
+                'Manrope': "'Manrope', sans-serif",
+                'Clash Display': "'Clash Display', sans-serif",
+                'Plus Jakarta Sans': "'Plus Jakarta Sans', sans-serif",
+                'Outfit': "'Outfit', sans-serif",
+                'Space Grotesk': "'Space Grotesk', sans-serif",
+                'Playfair Display': "'Playfair Display', serif",
+                'Inter': "'Inter', sans-serif"
+            };
+            root.style.setProperty('--font-heading', headingFontFamilyMap[s.headingFont] || "'Manrope', sans-serif");
             // Lyrics font size & family & style
             const fontSizeMap = {
                 small: '1.65rem',
@@ -1556,9 +1568,16 @@ function onPlayerStateChange(event) {
             if (hpt) hpt.checked = s.haptic;
             const igt = document.getElementById('incognito-toggle');
             if (igt) igt.checked = s.incognito;
+            const hfs = document.getElementById('heading-font-select');
+            if (hfs) hfs.value = s.headingFont || 'Manrope';
         }
 
         function setupSettingsUI() {
+            // Heading font (Web Typography skill)
+            document.getElementById('heading-font-select')?.addEventListener('change', (e) => {
+                appSettings.headingFont = e.target.value;
+                saveSettings(appSettings); applySettings(appSettings);
+            });
             // Title font
             document.getElementById('title-font-select')?.addEventListener('change', (e) => {
                 appSettings.titleFont = e.target.value;
@@ -1667,6 +1686,11 @@ function onPlayerStateChange(event) {
                     }
                 }, 1000);
                 display.textContent = 'Sleeping in :00';
+            });
+            // Heading font (Web Typography skill)
+            document.getElementById('heading-font-select')?.addEventListener('change', (e) => {
+                appSettings.headingFont = e.target.value;
+                saveSettings(appSettings); applySettings(appSettings);
             });
             // Title font
             document.getElementById('title-font-select')?.addEventListener('change', (e) => {

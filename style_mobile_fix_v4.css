@@ -1,6 +1,7 @@
 :root {
             --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --font-display: 'Outfit', 'Inter', sans-serif;
+            --font-heading: 'Manrope', 'Plus Jakarta Sans', sans-serif;
             --accent: #ff476d;
             --accent-rgb: 255, 71, 109;
             --accent2: #c44bff;
@@ -5530,15 +5531,16 @@ h1, h2, h3, h4, h5, h6,
     letter-spacing: -0.03em;
 }
 
-/* --- Web Typography: Professional Minimalist Section Headings --- */
+/* --- Web Typography: Professional Section Headings --- */
 .section-title,
 .page-section h2 {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif !important;
+    font-family: var(--font-heading, 'Manrope'), 'Plus Jakarta Sans', sans-serif !important;
     font-size: 1.25rem !important; /* Professional compact 20px scale: elegant, clean, not shouting */
     font-weight: 700 !important;
-    letter-spacing: -0.015em !important;
+    letter-spacing: -0.02em !important;
     line-height: 1.25 !important;
     text-transform: none !important;
+    text-wrap: balance !important;
     color: #ffffff !important;
     margin-bottom: 16px !important;
     text-shadow: none !important;
@@ -5546,7 +5548,7 @@ h1, h2, h3, h4, h5, h6,
 
 #album-title,
 .hero-title {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif !important;
+    font-family: var(--font-heading, 'Manrope'), 'Plus Jakarta Sans', sans-serif !important;
     font-size: 1.85rem !important;
     font-weight: 700 !important;
     letter-spacing: -0.025em !important;
@@ -5555,7 +5557,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .queue-header {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif !important;
+    font-family: var(--font-heading, 'Manrope'), 'Plus Jakarta Sans', sans-serif !important;
     font-size: 1.15rem !important;
     font-weight: 700 !important;
     letter-spacing: -0.015em !important;
@@ -5568,13 +5570,14 @@ h1, h2, h3, h4, h5, h6,
     gap: 5px;
     padding: 3px 9px;
     border-radius: 6px;
+    font-family: var(--font-heading, 'Manrope'), sans-serif !important;
     font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.75);
     line-height: 1;
     vertical-align: middle;
 }
