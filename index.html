@@ -38,281 +38,797 @@
     
     <link rel="stylesheet" href="style_mobile_fix_v4.css?v=291">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet"></head>
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+</head>
 <body class="">
     <!-- ══════════════════════════════════════════════════════════════
          MINIMALIST AUDIOPHILE INTRO — Ultra-Fluid Apple-Spec Experience
     ══════════════════════════════════════════════════════════════ -->
+                    <!-- ══════════════════════════════════════════════════════════════
+         AXIOTUNE // WARM CAMEL & DEEP ESPRESSO LO-FI VINYL PORTAL
+         Grounded in Anthropic Frontend-Design & Web-Typography Standards
+    ══════════════════════════════════════════════════════════════ -->
     <style>
-    #axio-intro-overlay {
+    #axio-login-screen {
         position: fixed;
         inset: 0;
         z-index: 9999999;
-        background: radial-gradient(circle at 50% 45%, #140924 0%, #08080c 60%, #030305 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
+        background: #110E0C;
+        display: block;
+        overflow-x: hidden;
+        overflow-y: auto;
         user-select: none;
         -webkit-user-select: none;
-        cursor: default;
-        transition: opacity 0.55s cubic-bezier(0.32, 0.72, 0, 1), filter 0.55s cubic-bezier(0.32, 0.72, 0, 1), transform 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+        font-family: "Satoshi", "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #FAF7F2;
+        transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), filter 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
         will-change: opacity, filter, transform;
+
+        /* Warm Camel & Deep Espresso Lo-Fi Vinyl Palette */
+        --paper: #F7F4EE;
+        --paper-mid: #EDE6DC;
+        --paper-dusk: #DFD5C6;
+        --ink: #110E0C;
+        --ink-surface: #151210;
+        --ink-card: #1D1815;
+        --camel: #C88A58;
+        --camel-light: #E09F6B;
+        --camel-glow: rgba(200, 138, 88, 0.28);
+        --sunset-terracotta: #D86B42;
+        --sunset-gradient: linear-gradient(135deg, #DD6A3F 0%, #C4552B 100%);
+        --sunset-glow: rgba(221, 106, 63, 0.35);
+        --white-pure: #FFFDF9;
+        --cream-pure: #FAF6EF;
+        --text-headline: #FFFDF9;
+        --text-body: #C4B9AD;
+        --text-muted: #958B7E;
+        --slant: 64px;
+        box-sizing: border-box;
     }
 
-    #axio-intro-overlay.intro-exit {
+    #axio-login-screen.login-dismissed {
         opacity: 0 !important;
-        filter: blur(12px) brightness(1.2) !important;
-        transform: scale(1.04) !important;
+        filter: blur(16px) brightness(1.1) !important;
+        transform: scale(1.03) !important;
         pointer-events: none !important;
+        visibility: hidden !important;
     }
 
-    /* Ambient atmospheric glow */
-    .intro-ambient-glow {
-        position: absolute;
-        width: min(520px, 92vw);
-        height: min(520px, 92vw);
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(255, 45, 85, 0.22) 0%, rgba(168, 85, 247, 0.12) 40%, transparent 70%);
-        filter: blur(55px);
-        pointer-events: none;
-        animation: intro-glow-pulse 3s ease-in-out infinite alternate;
-    }
-    @keyframes intro-glow-pulse {
-        0% { transform: scale(0.9); opacity: 0.65; }
-        100% { transform: scale(1.15); opacity: 1; }
+    #axio-login-screen *, #axio-login-screen *::before, #axio-login-screen *::after {
+        box-sizing: border-box;
     }
 
-    /* Acoustic harmonic rings */
-    .intro-rings-wrap {
-        position: absolute;
-        width: 140px;
-        height: 140px;
-        pointer-events: none;
-    }
-    .intro-ring {
-        position: absolute;
-        inset: -25px;
-        border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        opacity: 0;
-        transform: scale(0.6);
-        animation: intro-ring-expand 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .intro-ring.ring-2 {
-        inset: -55px;
-        border-color: rgba(255, 45, 85, 0.2);
-        animation-delay: 0.15s;
-    }
-    .intro-ring.ring-3 {
-        inset: -85px;
-        border-color: rgba(168, 85, 247, 0.15);
-        animation-delay: 0.3s;
-    }
-    @keyframes intro-ring-expand {
-        0% { transform: scale(0.6); opacity: 0; }
-        35% { opacity: 0.75; }
-        100% { transform: scale(1.15); opacity: 0; }
+    #axio-login-screen .shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(420px, 0.82fr);
+        min-height: 100svh;
+        height: 100%;
+        width: 100%;
     }
 
-    /* Central Content Stage */
-    .intro-stage {
+    /* ---------- Left: Character Poster Stage ---------- */
+    #axio-login-screen .stage {
         position: relative;
+        overflow: hidden;
+        min-height: 100svh;
+        background: linear-gradient(180deg, var(--paper) 0%, var(--paper-mid) 54%, var(--paper-dusk) 100%);
+        container-type: inline-size;
+        isolation: isolate;
+    }
+
+    #axio-login-screen .stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: radial-gradient(rgba(17, 14, 12, 0.12) 1.2px, transparent 1.7px) 0 0/10px 10px;
+        -webkit-mask-image: radial-gradient(120% 90% at 20% 105%, #000 12%, transparent 64%);
+        mask-image: radial-gradient(120% 90% at 20% 105%, #000 12%, transparent 64%);
+    }
+
+    #axio-login-screen .par {
+        position: absolute;
+        inset: 0;
+        transform: translate(calc(var(--px, 0) * var(--k, 0px)), calc(var(--py, 0) * var(--k, 0px)));
+        will-change: transform;
+    }
+
+    #axio-login-screen .type-par {
+        --k: 12px;
         z-index: 2;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        text-align: center;
     }
 
-    /* Emblem Logo */
-    .intro-logo-container {
-        position: relative;
-        width: clamp(76px, 14vw, 98px);
-        height: clamp(76px, 14vw, 98px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transform: scale(0.85) translate3d(0, 12px, 0);
-        filter: blur(8px);
-        animation: intro-logo-appear 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    #axio-login-screen .type {
+        position: absolute;
+        left: 4cqw;
+        top: 3.5%;
+        margin: 0;
+        font: 800 min(14.5cqw, 19svh)/0.88 'Syne', "Arial Black", -apple-system, sans-serif;
+        letter-spacing: -0.05em;
+        color: var(--ink);
+        pointer-events: none;
     }
-    .intro-logo-img {
+
+    #axio-login-screen .type span {
+        display: block;
+        animation: axio-wipe 0.8s cubic-bezier(0.7, 0, 0.2, 1) both;
+    }
+
+    #axio-login-screen .type span + span {
+        color: transparent;
+        -webkit-text-stroke: max(1.8px, 0.32cqw) var(--ink);
+        animation-delay: 0.18s;
+    }
+
+    #axio-login-screen .jp {
+        position: absolute;
+        left: 2.2cqw;
+        bottom: clamp(140px, 22%, 220px);
+        margin: 0;
+        writing-mode: vertical-rl;
+        font: 900 clamp(13px, 1.4cqw, 18px)/1 "Zen Kaku Gothic New", sans-serif;
+        letter-spacing: 0.35em;
+        color: var(--ink);
+        z-index: 3;
+        opacity: 0.95;
+    }
+
+    /* Equalizer Bars: Deep Espresso rising to Warm Golden Caramel Peaks */
+    #axio-login-screen .bars {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 20%;
+        display: flex;
+        align-items: flex-end;
+        gap: 0.6cqw;
+        padding: 0 1.6cqw;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    #axio-login-screen .bars i {
+        flex: 1;
+        height: 100%;
+        background: linear-gradient(0deg, #110E0C 0%, #241D18 65%, var(--camel) 100%);
+        transform-origin: bottom;
+        transform: scaleY(0.15);
+        animation: axio-eq var(--d, 1s) var(--l, 0s) ease-in-out infinite alternate;
+        border-radius: 1px 1px 0 0;
+    }
+
+    #axio-login-screen .wind {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+    }
+
+    #axio-login-screen .wind i {
+        position: absolute;
+        left: 100%;
+        top: var(--y);
+        width: var(--w);
+        height: 3px;
+        background: var(--ink);
+        border-radius: 2px;
+        opacity: 0;
+        animation: axio-gust var(--t) var(--l) linear infinite;
+    }
+
+    #axio-login-screen .wind i::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 6px;
+        width: 45%;
+        height: 2px;
+        background: var(--ink);
+        border-radius: 2px;
+    }
+
+    #axio-login-screen .fig-par {
+        position: absolute;
+        height: 93%;
+        aspect-ratio: 780/1716;
+        transform: translateX(-50%) translate(calc(var(--px, 0) * 8px), calc(var(--py, 0) * 5px));
+        z-index: 4;
+        inset: auto auto 0 61%;
+    }
+
+    #axio-login-screen .figure {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 100%;
+        animation: axio-rise 1s 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) both, axio-breathe 5s 1.6s ease-in-out infinite;
+    }
+
+    #axio-login-screen .figure img {
+        position: relative;
+        z-index: 1;
+        display: block;
         width: 100%;
         height: 100%;
         object-fit: contain;
-        filter: drop-shadow(0 12px 35px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 45px rgba(255, 255, 255, 0.5));
-    }
-    @keyframes intro-logo-appear {
-        0% { opacity: 0; transform: scale(0.85) translate3d(0, 12px, 0); filter: blur(8px); }
-        100% { opacity: 1; transform: scale(1) translate3d(0, 0, 0); filter: blur(0px); }
+        filter: drop-shadow(2.5px 0 0 var(--cream-pure)) 
+               drop-shadow(-2.5px 0 0 var(--cream-pure)) 
+               drop-shadow(0 2.5px 0 var(--cream-pure)) 
+               drop-shadow(0 -2.5px 0 var(--cream-pure)) 
+               drop-shadow(-14px 10px 0 var(--ink));
     }
 
-    /* Brand Typography */
-    .intro-brand-title {
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
-        font-size: clamp(1.4rem, 3.8vw, 2.1rem);
-        font-weight: 700;
-        letter-spacing: 0.32em;
-        text-indent: 0.32em;
-        text-transform: uppercase;
-        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 45%, #cbd5e1 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin: 0;
+    #axio-login-screen .ring {
+        position: absolute;
+        left: 48%;
+        top: 8.4%;
+        width: 34%;
+        aspect-ratio: 1;
+        margin: -17% 0 0 -17%;
+        border-radius: 50%;
+        border: 2.5px solid var(--ink);
         opacity: 0;
-        transform: translate3d(0, 10px, 0);
-        filter: blur(6px);
-        animation: intro-title-appear 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.28s forwards;
+        animation: axio-ring 3.6s var(--l) cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+        z-index: 0;
+    }
+
+    #axio-login-screen .note {
+        position: absolute;
+        z-index: 2;
+        left: var(--x);
+        top: var(--y);
+        width: var(--s);
+        fill: var(--ink);
+        opacity: 0;
+        animation: axio-note 6s var(--l) ease-out infinite;
+    }
+
+    /* ---------- Right: Warm Roasted Espresso Vinyl Lounge ---------- */
+    #axio-login-screen .side-wrap {
+        position: relative;
+        background: var(--camel);
+        clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
+        margin-left: calc(var(--slant) * -1);
+        z-index: 5;
+        box-shadow: -10px 0 36px rgba(0, 0, 0, 0.5);
+    }
+
+    #axio-login-screen .side {
+        position: relative;
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at 85% 15%, rgba(200, 138, 88, 0.09) 0%, transparent 60%),
+                    linear-gradient(180deg, #171310 0%, #0F0C0A 100%);
+        clip-path: polygon(calc(var(--slant) + 16px) 0, 100% 0, 100% 100%, 16px 100%);
+        padding: clamp(28px, 4.5vw, 64px) clamp(28px, 4.5vw, 64px) clamp(28px, 4.5vw, 64px) calc(var(--slant) + clamp(28px, 3.5vw, 54px));
+    }
+
+    #axio-login-screen .axio-portal-close {
+        position: absolute;
+        top: 24px;
+        right: 28px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--text-body);
+        font-size: 15px;
+        line-height: 1;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-    .intro-brand-title .intro-special-slash {
-        color: #ff2d55;
-        -webkit-text-fill-color: #ff2d55;
-        text-shadow: 0 0 16px rgba(255, 45, 85, 0.8);
-        display: inline-block;
-        padding: 0 1px;
-    }
-    @keyframes intro-title-appear {
-        0% { opacity: 0; transform: translate3d(0, 10px, 0); filter: blur(6px); }
-        100% { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0px); }
+        transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 10;
     }
 
-    /* Soundwave Equalizer Bars */
-    .intro-eq-bars {
+    #axio-login-screen .axio-portal-close:hover {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(200, 138, 88, 0.4);
+        color: var(--white-pure);
+        transform: scale(1.06);
+    }
+
+    #axio-login-screen .card {
+        width: min(100%, 410px);
+        animation: axio-fade 0.7s 0.9s both;
+    }
+
+    #axio-login-screen .brand {
         display: flex;
         align-items: center;
-        gap: 4px;
-        height: 18px;
-        opacity: 0;
-        transform: scale(0.9);
-        animation: intro-eq-appear 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.42s forwards;
-    }
-    .intro-eq-bar {
-        width: 2.5px;
-        background: linear-gradient(180deg, #ff2d55, #a855f7);
-        border-radius: 3px;
-        box-shadow: 0 0 8px rgba(255, 45, 85, 0.4);
-        animation: intro-bar-bounce 1s ease-in-out infinite alternate;
-    }
-    .intro-eq-bar:nth-child(1) { height: 7px; animation-delay: 0.1s; }
-    .intro-eq-bar:nth-child(2) { height: 16px; animation-delay: 0.35s; }
-    .intro-eq-bar:nth-child(3) { height: 22px; animation-delay: 0.2s; }
-    .intro-eq-bar:nth-child(4) { height: 14px; animation-delay: 0.45s; }
-    .intro-eq-bar:nth-child(5) { height: 8px; animation-delay: 0.15s; }
-    @keyframes intro-bar-bounce {
-        0% { transform: scaleY(0.4); opacity: 0.6; }
-        100% { transform: scaleY(1.1); opacity: 1; }
-    }
-    @keyframes intro-eq-appear {
-        0% { opacity: 0; transform: scale(0.9); }
-        100% { opacity: 1; transform: scale(1); }
+        gap: 14px;
+        margin: 0 0 36px;
+        font: 700 23px/1 'Clash Display', 'Syne', sans-serif;
+        letter-spacing: -0.01em;
+        text-transform: lowercase;
+        color: var(--white-pure);
     }
 
-    /* Tagline */
-    .intro-tagline {
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
-        font-size: clamp(0.58rem, 1.4vw, 0.72rem);
+    #axio-login-screen .brand .mark {
+        width: 44px;
+        height: 44px;
+        flex: none;
+        margin: -8px 0;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 14px var(--camel-glow));
+    }
+
+    /* Web Typography: Clash Display with Optical Weight & Warm Ivory Fill */
+    #axio-login-screen h2 {
+        margin: 0 0 16px;
+        font-family: 'Clash Display', 'Syne', -apple-system, sans-serif;
         font-weight: 600;
-        letter-spacing: 0.42em;
-        text-indent: 0.42em;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.42);
-        margin: 0;
-        opacity: 0;
-        transform: translate3d(0, 8px, 0);
-        animation: intro-tag-appear 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
-    }
-    @keyframes intro-tag-appear {
-        0% { opacity: 0; transform: translate3d(0, 8px, 0); }
-        100% { opacity: 0.55; transform: translate3d(0, 0, 0); }
+        font-size: clamp(38px, 4vw, 50px);
+        line-height: 1.1;
+        letter-spacing: -0.025em;
+        color: var(--text-headline);
+        text-wrap: balance;
     }
 
-    /* Skip Hint */
-    .intro-skip-hint {
-        position: absolute;
-        bottom: 24px;
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
-        font-size: 0.65rem;
-        letter-spacing: 0.15em;
-        color: rgba(255, 255, 255, 0.22);
-        opacity: 0;
-        animation: intro-tag-appear 0.5s ease 0.9s forwards;
-        pointer-events: none;
+    /* Web Typography: Line length capped at 36ch, Warm Oat Text */
+    #axio-login-screen .lede {
+        margin: 0 0 32px;
+        max-width: 36ch;
+        font-family: 'Satoshi', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-weight: 400;
+        font-size: 15.5px;
+        line-height: 1.6;
+        color: var(--text-body);
+    }
+
+    #axio-login-screen .btns {
+        display: grid;
+        gap: 14px;
+    }
+
+    /* Tactile Buttons with Warm Harmonized Surfaces */
+    #axio-login-screen .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        padding: 15px 20px;
+        border-radius: 8px;
+        font-family: 'Satoshi', 'DM Sans', sans-serif;
+        font-weight: 700;
+        font-size: 15px;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.16s;
+    }
+
+    #axio-login-screen .btn svg {
+        width: 20px;
+        height: 20px;
+        flex: none;
+    }
+
+    /* Google Button: Warm Cream Card with Camel Drop Shadow */
+    #axio-login-screen .google {
+        background: #FAF7F0;
+        color: #110E0C;
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 4px 4px 0 var(--camel);
+    }
+
+    #axio-login-screen .google:hover, #axio-login-screen .google:focus-visible {
+        transform: translate(-2px, -2px);
+        background: #FFFFFF;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35), 6px 6px 0 var(--camel);
+    }
+
+    #axio-login-screen .google:active {
+        transform: translate(2px, 2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 2px 2px 0 var(--camel);
+    }
+
+    /* YouTube Music Button: Warm Sunset Terracotta Gradient */
+    #axio-login-screen .ytm {
+        background: var(--sunset-gradient);
+        color: #FFFFFF;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 18px var(--sunset-glow), 4px 4px 0 rgba(255, 253, 248, 0.9);
+    }
+
+    #axio-login-screen .ytm:hover, #axio-login-screen .ytm:focus-visible {
+        transform: translate(-2px, -2px);
+        box-shadow: 0 8px 26px rgba(221, 106, 63, 0.5), 6px 6px 0 rgba(255, 253, 248, 0.9);
+        filter: brightness(1.05);
+    }
+
+    #axio-login-screen .ytm:active {
+        transform: translate(2px, 2px);
+        box-shadow: 0 2px 8px rgba(221, 106, 63, 0.3), 2px 2px 0 rgba(255, 253, 248, 0.9);
+    }
+
+    #axio-login-screen .btn:focus-visible {
+        outline: 3px solid var(--camel);
+        outline-offset: 3px;
+    }
+
+    #axio-login-screen .btn[disabled] {
+        opacity: 0.65;
+        cursor: progress;
+    }
+
+    #axio-login-screen .or {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin: 22px 0 18px;
+        color: var(--text-muted);
+        font-family: 'Satoshi', sans-serif;
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+    }
+
+    #axio-login-screen .or::before, #axio-login-screen .or::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Guest Button: Warm Frosted Dark Glass */
+    #axio-login-screen .guest {
+        background: rgba(255, 255, 255, 0.05);
+        color: #E2DBD2;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(10px);
+    }
+
+    #axio-login-screen .guest:hover, #axio-login-screen .guest:focus-visible {
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(200, 138, 88, 0.4);
+        color: #FFFFFF;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    }
+
+    #axio-login-screen .hint {
+        margin: 12px 0 0;
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--text-muted);
+        text-align: center;
+    }
+
+    #axio-login-screen .status {
+        min-height: 1.5em;
+        margin: 16px 0 0;
+        font-weight: 700;
+        color: var(--camel-light);
+        text-align: center;
+        font-size: 14px;
+        transition: color 0.2s ease;
+    }
+
+    /* WCAG AA Compliance: Legal text contrast >= 5:1 */
+    #axio-login-screen .legal {
+        margin: 14px 0 0;
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: var(--text-muted);
+        text-align: center;
+    }
+
+    #axio-login-screen .legal a {
+        color: #BDB3A6;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        transition: color 0.15s;
+    }
+
+    #axio-login-screen .legal a:hover {
+        color: var(--white-pure);
+    }
+
+    /* ---------- Motion Keyframes ---------- */
+    @keyframes axio-spin { to { transform: rotate(360deg); } }
+    @keyframes axio-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+    @keyframes axio-rise { from { opacity: 0; transform: translateY(7%); } }
+    @keyframes axio-breathe { 50% { transform: scale(1.006); } }
+    @keyframes axio-fade { from { opacity: 0; transform: translateY(12px); } }
+    @keyframes axio-eq { to { transform: scaleY(var(--m, 1)); } }
+    @keyframes axio-gust { 0% { transform: translateX(0); opacity: 0; } 12% { opacity: 0.7; } 88% { opacity: 0.7; } 100% { transform: translateX(-135cqw); opacity: 0; } }
+    @keyframes axio-ring { 0% { transform: scale(0.55); opacity: 0.8; } 100% { transform: scale(4.2); opacity: 0; } }
+    @keyframes axio-note { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 15% { opacity: 0.9; } 100% { transform: translate(-90%, -230%) rotate(-18deg); opacity: 0; } }
+
+    @media (max-width: 899px) {
+        #axio-login-screen {
+            --slant: 0px;
+        }
+        #axio-login-screen .shell {
+            grid-template-columns: 1fr;
+            min-height: auto;
+        }
+        #axio-login-screen .stage {
+            min-height: 0;
+            height: clamp(340px, 48svh, 440px);
+        }
+        #axio-login-screen .type {
+            font-size: min(15cqw, 8svh);
+            left: 5cqw;
+            top: 2%;
+        }
+        #axio-login-screen .jp {
+            display: none;
+        }
+        #axio-login-screen .fig-par {
+            height: 90%;
+            inset: auto auto 0 50%;
+        }
+        #axio-login-screen .side-wrap {
+            margin: -24px 0 0;
+            clip-path: polygon(0 24px, 100% 0, 100% 100%, 0 100%);
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+        }
+        #axio-login-screen .side {
+            clip-path: polygon(0 38px, 100% 16px, 100% 100%, 0 100%);
+            padding: 48px 24px 38px;
+        }
+        #axio-login-screen .brand {
+            margin: 0 0 24px;
+        }
+        #axio-login-screen h2 {
+            font-size: clamp(32px, 8vw, 42px);
+            margin: 0 0 12px;
+        }
+        #axio-login-screen .lede {
+            margin: 0 0 24px;
+            font-size: 14.5px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #axio-login-screen *, #axio-login-screen *::before, #axio-login-screen *::after {
+            animation: none !important;
+            transition: none !important;
+        }
+        #axio-login-screen .bars i {
+            transform: scaleY(0.4);
+        }
+        #axio-login-screen .ring, #axio-login-screen .note, #axio-login-screen .wind i {
+            display: none;
+        }
     }
     </style>
 
-    <div id="axio-intro-overlay">
-        <div class="intro-ambient-glow"></div>
-        
-        <div class="intro-stage">
-            <div class="intro-logo-container">
-                <div class="intro-rings-wrap">
-                    <div class="intro-ring ring-1"></div>
-                    <div class="intro-ring ring-2"></div>
-                    <div class="intro-ring ring-3"></div>
+    <div id="axio-login-screen">
+        <div class="shell">
+            <section class="stage" id="axio-stage" aria-label="Axiotune Stage">
+                <div class="par type-par"><h1 class="type" aria-label="Axiotune"><span aria-hidden="true">AXIO</span><span aria-hidden="true">TUNE</span></h1></div>
+                <p class="jp" aria-hidden="true">アクシオチューン</p>
+                <div class="bars" id="axio-bars" aria-hidden="true"></div>
+                <div class="wind" aria-hidden="true">
+                    <i style="--y:18%;--w:16cqw;--t:5.5s;--l:0s"></i><i style="--y:31%;--w:10cqw;--t:4.2s;--l:1.7s"></i>
+                    <i style="--y:44%;--w:20cqw;--t:6.4s;--l:.6s"></i><i style="--y:57%;--w:12cqw;--t:4.8s;--l:2.9s"></i>
+                    <i style="--y:68%;--w:18cqw;--t:5.9s;--l:3.6s"></i><i style="--y:79%;--w:9cqw;--t:4s;--l:1.1s"></i>
                 </div>
-                <img src="logo.png?v=5" alt="AxioTune Logo" class="intro-logo-img">
+                <div class="fig-par">
+                    <div class="figure">
+                        <span class="ring" style="--l:1.4s"></span><span class="ring" style="--l:2.6s"></span><span class="ring" style="--l:3.8s"></span>
+                        <svg class="note" style="--x:60%;--y:12%;--s:6%;--l:2s" viewBox="0 0 24 32" aria-hidden="true"><path d="M9 3v18.5a5 5 0 1 0 3 4.5V9l9 2V3z"/></svg>
+                        <svg class="note" style="--x:68%;--y:20%;--s:5%;--l:4.4s" viewBox="0 0 24 32" aria-hidden="true"><path d="M9 3v18.5a5 5 0 1 0 3 4.5V9l9 2V3z"/></svg>
+                        <svg class="note" style="--x:30%;--y:6%;--s:5%;--l:3.2s" viewBox="0 0 24 32" aria-hidden="true"><path d="M9 3v18.5a5 5 0 1 0 3 4.5V9l9 2V3z"/></svg>
+                        <img src="character_clean.webp" alt="AxioTune Anime Streetwear Character" width="780" height="1716" loading="eager" decoding="async">
+                    </div>
+                </div>
+            </section>
+
+            <div class="side-wrap">
+                <main class="side">
+                    <button class="axio-portal-close" type="button" aria-label="Dismiss portal" title="Dismiss" onclick="if(typeof window.dismissLoginPortal === 'function') window.dismissLoginPortal();">✕</button>
+                    <div class="card">
+                        <p class="brand">
+                            <img class="mark" src="brand_mark.png" alt="AxioTune Logo" width="44" height="44">
+                            Axiotune
+                        </p>
+                        <h2>Log in to<br>your music</h2>
+                        <p class="lede">Sync your playlists, liked tracks, and personalized YouTube Music feed on every device.</p>
+
+                        <div class="btns">
+                            <button class="btn google" type="button" id="btn-login-google" data-auth="google">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                                Continue with Google
+                            </button>
+                            <button class="btn ytm" type="button" id="btn-login-ytm" data-auth="ytmusic">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="none" stroke="#FFFFFF" stroke-width="1.8"/><circle cx="12" cy="12" r="7" fill="none" stroke="#FFFFFF" stroke-width="1.4"/><path d="M10 8.6v6.8l5.6-3.4z" fill="#FFFFFF"/></svg>
+                                Connect YouTube Music
+                            </button>
+                        </div>
+
+                        <div class="or">or</div>
+
+                        <button class="btn guest" type="button" id="btn-login-guest" data-auth="guest">Continue as guest</button>
+                        <p class="hint">Guests can listen, but can't save playlists or history.</p>
+                        <p class="status" id="axio-login-status" role="status" aria-live="polite"></p>
+                        <p class="legal">By continuing you agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</p>
+                    </div>
+                </main>
             </div>
-
-            <h1 class="intro-brand-title">
-                AXI<span class="intro-special-slash">Ø</span>TUNE
-            </h1>
-
-            <div class="intro-eq-bars">
-                <div class="intro-eq-bar"></div>
-                <div class="intro-eq-bar"></div>
-                <div class="intro-eq-bar"></div>
-                <div class="intro-eq-bar"></div>
-                <div class="intro-eq-bar"></div>
-            </div>
-
-            <p class="intro-tagline">Feel Every Frequency</p>
         </div>
-
-        <div class="intro-skip-hint">Tap anywhere to enter</div>
     </div>
 
     <script>
     (function() {
         'use strict';
-        const overlay = document.getElementById('axio-intro-overlay');
-        if (!overlay) return;
+        const loginScreen = document.getElementById('axio-login-screen');
+        const btnGoogle = document.getElementById('btn-login-google');
+        const btnYtm = document.getElementById('btn-login-ytm');
+        const btnGuest = document.getElementById('btn-login-guest');
+        const statusEl = document.getElementById('axio-login-status');
+        if (!loginScreen) return;
 
-        let dismissed = false;
-        function dismissIntro() {
-            if (dismissed) return;
-            dismissed = true;
-            overlay.classList.add('intro-exit');
+        window.openLoginPortal = function() {
+            loginScreen.classList.remove('login-dismissed');
+            if (statusEl) statusEl.textContent = '';
+        };
+
+        window.dismissLoginPortal = function() {
+            loginScreen.classList.add('login-dismissed');
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                fetch('/api/auth/cancel_login', { method: 'POST' }).catch(() => {});
+            }
+        };
+
+        // Guest handler
+        btnGuest?.addEventListener('click', function() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                fetch('/api/auth/cancel_login', { method: 'POST' }).catch(() => {});
+            }
+            if (statusEl) {
+                statusEl.style.color = '#C4B9AD';
+                statusEl.textContent = '🎧 Continuing as guest... Enjoy the soundscape!';
+            }
             setTimeout(function() {
-                if (overlay && overlay.parentNode) {
-                    overlay.remove();
+                window.dismissLoginPortal();
+            }, 300);
+        });
+
+        // Initial session check
+        fetch('/api/auth/status')
+            .then(res => res.json())
+            .then(data => {
+                if (data.synced) {
+                    if (statusEl) {
+                        statusEl.style.color = '#28cd41';
+                        statusEl.textContent = `Welcome back, ${data.user?.name || 'User'}! Loading soundscape...`;
+                    }
+                    setTimeout(function() {
+                        window.dismissLoginPortal();
+                    }, 800);
                 }
-            }, 580);
+            })
+            .catch(() => {});
+
+        // Google / YouTube Music sign-in flow
+        let pollInterval = null;
+        async function triggerSignIn(provider) {
+            const allBtns = [btnGoogle, btnYtm, btnGuest].filter(Boolean);
+            allBtns.forEach(b => b.disabled = true);
+
+            if (statusEl) {
+                statusEl.style.color = '#E09F6B';
+                statusEl.textContent = '⏳ Launching official sign-in window. Please log in...';
+            }
+
+            try {
+                const startRes = await fetch('/api/auth/start_login', { method: 'POST' });
+                const startData = await startRes.json();
+
+                if (startData.status === 'started' || startData.status === 'in_progress') {
+                    if (pollInterval) clearInterval(pollInterval);
+                    pollInterval = setInterval(async () => {
+                        try {
+                            const pRes = await fetch('/api/auth/login_poll');
+                            const pData = await pRes.json();
+
+                            if (pData.status === 'in_progress') {
+                                if (statusEl) statusEl.textContent = pData.message || '⏳ Complete sign-in in the Google window...';
+                            } else if (pData.status === 'success') {
+                                clearInterval(pollInterval);
+                                pollInterval = null;
+                                if (statusEl) {
+                                    statusEl.style.color = '#28cd41';
+                                    statusEl.textContent = `🎉 Welcome, ${pData.user?.name || 'User'}! Syncing your library...`;
+                                }
+                                try { await fetch('/api/sync_library', { method: 'POST' }); } catch(e){}
+                                if (typeof checkSyncStatus === 'function') checkSyncStatus();
+                                if (typeof fetchLibraryData === 'function') fetchLibraryData();
+                                if (typeof loadTrendingFeeds === 'function') loadTrendingFeeds();
+                                setTimeout(function() {
+                                    window.dismissLoginPortal();
+                                    allBtns.forEach(b => b.disabled = false);
+                                }, 1200);
+                            } else if (pData.status === 'cancelled') {
+                                clearInterval(pollInterval);
+                                pollInterval = null;
+                                if (statusEl) {
+                                    statusEl.style.color = '#D86B42';
+                                    statusEl.textContent = '⚠️ Sign-in window was closed.';
+                                }
+                                allBtns.forEach(b => b.disabled = false);
+                            } else if (pData.status === 'error') {
+                                clearInterval(pollInterval);
+                                pollInterval = null;
+                                if (statusEl) {
+                                    statusEl.style.color = '#D86B42';
+                                    statusEl.textContent = `❌ ${pData.error || 'Authentication failed'}`;
+                                }
+                                allBtns.forEach(b => b.disabled = false);
+                            }
+                        } catch(err) {
+                            console.error('Poll error', err);
+                        }
+                    }, 1500);
+                } else {
+                    if (statusEl) {
+                        statusEl.style.color = '#D86B42';
+                        statusEl.textContent = '⚠️ Could not launch sign-in window: ' + (startData.message || 'Error');
+                    }
+                    allBtns.forEach(b => b.disabled = false);
+                }
+            } catch(netErr) {
+                if (statusEl) {
+                    statusEl.style.color = '#D86B42';
+                    statusEl.textContent = '⚠️ Failed to reach backend server.';
+                }
+                allBtns.forEach(b => b.disabled = false);
+            }
         }
 
-        // Auto-dismiss smoothly after 1.85s
-        const autoTimer = setTimeout(dismissIntro, 1850);
+        btnGoogle?.addEventListener('click', () => triggerSignIn('google'));
+        btnYtm?.addEventListener('click', () => triggerSignIn('ytmusic'));
 
-        // Instant dismiss on click or tap anywhere
-        overlay.addEventListener('click', function() {
-            clearTimeout(autoTimer);
-            dismissIntro();
-        });
-        window.addEventListener('keydown', function onKey(e) {
-            if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
-                window.removeEventListener('keydown', onKey);
-                clearTimeout(autoTimer);
-                dismissIntro();
+        // Generate 44-bar equalizer
+        const barsEl = document.getElementById('axio-bars');
+        if (barsEl && barsEl.children.length === 0) {
+            for (let i = 0; i < 44; i++) {
+                const b = document.createElement('i');
+                const w = Math.sin((i / 44) * Math.PI);
+                b.style.setProperty('--m', (0.25 + 0.75 * Math.random() * (0.4 + 0.6 * w)).toFixed(2));
+                b.style.setProperty('--d', (0.5 + Math.random() * 0.9).toFixed(2) + 's');
+                b.style.setProperty('--l', (-Math.random() * 2).toFixed(2) + 's');
+                barsEl.appendChild(b);
             }
-        }, { once: true });
+        }
+
+        // Gentle mouse parallax
+        const stageEl = document.getElementById('axio-stage');
+        if (stageEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.matchMedia('(hover:hover)').matches) {
+            let tx = 0, ty = 0, cx = 0, cy = 0;
+            stageEl.addEventListener('pointermove', e => {
+                const r = stageEl.getBoundingClientRect();
+                tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+                ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+            });
+            stageEl.addEventListener('pointerleave', () => { tx = 0; ty = 0; });
+            (function parallaxLoop() {
+                cx += (tx - cx) * 0.06;
+                cy += (ty - cy) * 0.06;
+                stageEl.style.setProperty('--px', cx.toFixed(3));
+                stageEl.style.setProperty('--py', cy.toFixed(3));
+                requestAnimationFrame(parallaxLoop);
+            })();
+        }
     })();
     </script>
+
 
     <!-- Better-Lyrics WebGL Shader Canvas Engine (Liquid Mesh Gradient + Beat Reactivity) -->
     <canvas id="webgl-shader-canvas"></canvas>
@@ -377,7 +893,7 @@
                 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
             </button>
             <!-- Profile & Settings -->
-            <button class="pch-action-btn pch-profile-btn" title="Profile" onclick="if(typeof openProfileModal === 'function') openProfileModal();">
+            <button class="pch-action-btn pch-profile-btn" title="Profile / Sign In" onclick="if(typeof openLoginPortal === 'function') openLoginPortal(); else if(typeof openProfileModal === 'function') openProfileModal();">
                 <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </button>
         </div>
@@ -1112,24 +1628,23 @@
                         <!-- TABS FOR SYNC METHODS -->
                         <div id="sync-form-container" style="display:flex; flex-direction:column; gap: 12px;">
                             <div style="display:flex; gap:8px; background:rgba(0,0,0,0.2); padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
-                                <button class="sync-method-tab active" id="tab-btn-bookmark" style="flex:1; padding:8px 12px; background:rgba(255,255,255,0.08); border:none; border-radius:8px; color:white; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s;">⚡ 1-Click Sync (Easiest)</button>
+                                <button class="sync-method-tab active" id="tab-btn-popup" style="flex:1; padding:8px 12px; background:rgba(255,255,255,0.08); border:none; border-radius:8px; color:white; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s;">⚡ 1-Click Google Sign-in</button>
                                 <button class="sync-method-tab" id="tab-btn-manual" style="flex:1; padding:8px 12px; background:transparent; border:none; border-radius:8px; color:rgba(255,255,255,0.6); font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s;">🔧 cURL / Manual Paste</button>
                             </div>
                             
-                            <!-- Method 1: Bookmarklet -->
-                            <div id="sync-method-bookmark-panel" style="display:flex; flex-direction:column; gap: 10px;">
+                            <!-- Method 1: Interactive Google Login -->
+                            <div id="sync-method-popup-panel" style="display:flex; flex-direction:column; gap: 10px;">
                                 <div class="settings-row-desc" style="font-size: 0.85rem; line-height: 1.6; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.25); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 5px;">
-                                    <strong style="font-size: 0.95rem; color: #fff; display: block; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;">👉 1-Click Sync Setup (No Extensions, No DevTools):</strong>
-                                    <span style="display:block; margin-bottom:6px;"><strong>Step 1:</strong> Drag the green button below up to your browser's <strong>Bookmarks Bar</strong> (Press <code>Ctrl+Shift+B</code> if Bookmarks bar is hidden).</span>
-                                    <div style="text-align:center; margin: 12px 0;">
-                                        <a id="sync-bookmarklet-link" href="#"
-                                           style="display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, #28cd41, #1fb538); color: white; font-weight: 700; border-radius: 18px; text-decoration: none; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 15px rgba(40, 205, 65, 0.3); font-size:0.85rem;" 
-                                           onclick="alert('👉 Please drag this button to your Bookmarks Bar (Ctrl+Shift+B to show)! Do not just click it here.'); return false;">
-                                           🟢 Drag to Bookmarks Bar: Sync YTM
-                                        </a>
+                                    <strong style="font-size: 0.95rem; color: #fff; display: block; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;">🔒 Official Google Authentication:</strong>
+                                    <span style="display:block; margin-bottom:12px;">Opens an official Google sign-in window. Your credentials are never stored — only authenticated YouTube Music session tokens are captured locally.</span>
+                                    <div style="text-align:center; margin: 8px 0;">
+                                        <button id="start-google-login-btn"
+                                            style="display: inline-flex; align-items:center; justify-content:center; gap:10px; padding: 12px 24px; background: linear-gradient(135deg, #ff0033, #cc0000); color: white; font-weight: 700; border-radius: 14px; border:none; cursor:pointer; text-decoration: none; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 15px rgba(255, 0, 51, 0.3); font-size:0.9rem; transition: all 0.2s;">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+                                            Sign in with Google / YouTube Music
+                                        </button>
                                     </div>
-                                    <span style="display:block; margin-bottom:6px;"><strong>Step 2:</strong> Now open <a href="https://music.youtube.com" target="_blank" style="color:var(--accent); font-weight:600; text-decoration:underline;">music.youtube.com</a> and sign in.</span>
-                                    <span style="display:block;"><strong>Step 3:</strong> Click that **Sync YTM** bookmark from your bar. <strong>Done! 🎉</strong> It will sync automatically in 1-click!</span>
+                                    <div id="login-popup-status" style="display:none; text-align:center; font-size:0.85rem; color:rgba(255,255,255,0.8); margin-top:8px;"></div>
                                 </div>
                             </div>
                             

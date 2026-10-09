@@ -2674,7 +2674,15 @@ function onPlayerStateChange(event) {
                 if (data.status === 'success' && data.recommendations && data.recommendations.length > 0) {
                     const existingIds = new Set(queueList.map(s => s.videoId || s.id).filter(Boolean));
                     let addedAny = false;
-                    data.recommendations.forEach(s => {
+
+                    // Keep queue cohesive by preventing endless pile-up of old songs
+                    if (currentQueueIndex > 4) {
+                        const trimCount = currentQueueIndex - 1;
+                        queueList = queueList.slice(trimCount);
+                        currentQueueIndex = 1;
+                    }
+
+                    data.recommendations.slice(0, 18).forEach(s => {
                         const trackId = s.videoId || s.id;
                         if (trackId && !existingIds.has(trackId)) {
                             existingIds.add(trackId);
@@ -2717,8 +2725,13 @@ function onPlayerStateChange(event) {
         let prefetchedStreamUrl = null;
         let prefetchVideoId = null;
 
-        async function fetchStreamUrl(videoId, refresh = false) {
-            const res = await fetch(`/api/stream?id=${encodeURIComponent(videoId)}${refresh ? '&refresh=true' : ''}`);
+        async function fetchStreamUrl(videoId, refresh = false, title = '', artist = '') {
+            const params = new URLSearchParams();
+            if (videoId) params.set('id', videoId);
+            if (refresh) params.set('refresh', 'true');
+            if (title) params.set('title', title);
+            if (artist) params.set('artist', artist);
+            const res = await fetch(`/api/stream?${params.toString()}`);
             if (!res.ok) throw new Error('Stream request failed');
             return await res.json();
         }
@@ -2733,7 +2746,9 @@ function onPlayerStateChange(event) {
                 prefetchedStreamUrl = null;
                 prefetchVideoId = null;
                 window.prefetchedStreamData = null;
-                const streamData = await fetchStreamUrl(currentVideoId, true);
+                const songTitle = currentSongMeta?.title || trackTitleEl?.textContent || '';
+                const songArtist = currentSongMeta?.artist || currentSongMeta?.uploader || trackArtistEl?.textContent || '';
+                const streamData = await fetchStreamUrl(currentVideoId, true, songTitle, songArtist);
                 audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
                 audioPlayer.load();
                 if (savedTime > 0) {
@@ -2758,7 +2773,7 @@ function onPlayerStateChange(event) {
             const nextSong = queueList[currentQueueIndex + 1];
             if (nextSong.videoId && prefetchVideoId !== nextSong.videoId) {
                 try {
-                    const data = await fetchStreamUrl(nextSong.videoId);
+                    const data = await fetchStreamUrl(nextSong.videoId, false, nextSong.title || '', nextSong.artist || '');
                     prefetchedStreamUrl = data.url;
                     prefetchVideoId = nextSong.videoId;
                     window.prefetchedStreamData = data;
@@ -3932,7 +3947,9 @@ function onPlayerStateChange(event) {
                     // Start lyrics fetch in background
                     const lyricsPromise = fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal }).catch(e => null);
                     
-                    streamData = await fetchStreamUrl(songData.id).catch(e => {
+                    const songT = songData.title || '';
+                    const songA = songData.uploader || songData.artist || '';
+                    streamData = await fetchStreamUrl(songData.id, false, songT, songA).catch(e => {
                         throw new Error('Stream request failed');
                     });
                     
@@ -6158,10 +6175,19 @@ function onPlayerStateChange(event) {
             } catch(e) { console.error(e); }
         };
 
-        // ── COVER ART FLOAT ANIMATION ──
+        // ── COVER ART FLOAT ANIMATION & PLAYBACK REPORTING ──
         const coverWrapper = document.getElementById('cover-wrapper');
+        let lastReportedVideoId = null;
         audioPlayer.addEventListener('play', () => {
             if (coverWrapper) coverWrapper.classList.add('now-playing-active');
+            if (currentVideoId && currentVideoId !== lastReportedVideoId) {
+                lastReportedVideoId = currentVideoId;
+                fetch('/api/playback/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: currentVideoId })
+                }).catch(() => {});
+            }
         });
         audioPlayer.addEventListener('pause', () => {
             if (coverWrapper) coverWrapper.classList.remove('now-playing-active');
@@ -6545,42 +6571,128 @@ function onPlayerStateChange(event) {
         const unsyncBtn = document.getElementById('unsync-btn');
 
         // Tab switching logic
-        const tabBtnBookmark = document.getElementById('tab-btn-bookmark');
+        const tabBtnPopup = document.getElementById('tab-btn-popup') || document.getElementById('tab-btn-bookmark');
         const tabBtnManual = document.getElementById('tab-btn-manual');
-        const panelBookmark = document.getElementById('sync-method-bookmark-panel');
+        const panelPopup = document.getElementById('sync-method-popup-panel') || document.getElementById('sync-method-bookmark-panel');
         const panelManual = document.getElementById('sync-method-manual-panel');
+        const startGoogleLoginBtn = document.getElementById('start-google-login-btn');
+        const loginPopupStatus = document.getElementById('login-popup-status');
 
-        tabBtnBookmark?.addEventListener('click', () => {
-            tabBtnBookmark.classList.add('active');
-            tabBtnBookmark.style.background = 'rgba(255,255,255,0.08)';
-            tabBtnBookmark.style.color = 'white';
+        tabBtnPopup?.addEventListener('click', () => {
+            tabBtnPopup.classList.add('active');
+            tabBtnPopup.style.background = 'rgba(255,255,255,0.08)';
+            tabBtnPopup.style.color = 'white';
             tabBtnManual.classList.remove('active');
             tabBtnManual.style.background = 'transparent';
             tabBtnManual.style.color = 'rgba(255,255,255,0.6)';
             
-            panelBookmark.style.display = 'flex';
-            panelManual.style.display = 'none';
+            if (panelPopup) panelPopup.style.display = 'flex';
+            if (panelManual) panelManual.style.display = 'none';
         });
 
         tabBtnManual?.addEventListener('click', () => {
             tabBtnManual.classList.add('active');
             tabBtnManual.style.background = 'rgba(255,255,255,0.08)';
             tabBtnManual.style.color = 'white';
-            tabBtnBookmark.classList.remove('active');
-            tabBtnBookmark.style.background = 'transparent';
-            tabBtnBookmark.style.color = 'rgba(255,255,255,0.6)';
+            tabBtnPopup.classList.remove('active');
+            tabBtnPopup.style.background = 'transparent';
+            tabBtnPopup.style.color = 'rgba(255,255,255,0.6)';
             
-            panelBookmark.style.display = 'none';
-            panelManual.style.display = 'flex';
+            if (panelPopup) panelPopup.style.display = 'none';
+            if (panelManual) panelManual.style.display = 'flex';
+        });
+
+        // 1-Click Interactive Google Sign-in Handler
+        let loginPollTimer = null;
+        startGoogleLoginBtn?.addEventListener('click', async () => {
+            startGoogleLoginBtn.disabled = true;
+            const originalHtml = startGoogleLoginBtn.innerHTML;
+            startGoogleLoginBtn.innerHTML = `
+                <div class="loader-spinner" style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                Opening Login Window...
+            `;
+            if (loginPopupStatus) {
+                loginPopupStatus.style.display = 'block';
+                loginPopupStatus.style.color = '#ff9500';
+                loginPopupStatus.textContent = '⏳ Google sign-in window launched. Please sign in with your account...';
+            }
+
+            try {
+                const res = await fetch('/api/auth/start_login', { method: 'POST' });
+                const startData = await res.json();
+                
+                if (startData.status === 'started' || startData.status === 'in_progress') {
+                    // Poll status every 1500ms
+                    if (loginPollTimer) clearInterval(loginPollTimer);
+                    loginPollTimer = setInterval(async () => {
+                        try {
+                            const pollRes = await fetch('/api/auth/login_poll');
+                            const pollData = await pollRes.json();
+                            
+                            if (pollData.status === 'in_progress') {
+                                if (loginPopupStatus) {
+                                    loginPopupStatus.textContent = pollData.message || '⏳ Waiting for you to complete sign-in in the popup window...';
+                                }
+                            } else if (pollData.status === 'success') {
+                                clearInterval(loginPollTimer);
+                                loginPollTimer = null;
+                                if (loginPopupStatus) {
+                                    loginPopupStatus.style.color = '#28cd41';
+                                    loginPopupStatus.textContent = '🎉 Successfully authenticated with YouTube Music!';
+                                }
+                                showToast(`Welcome, ${pollData.user?.name || 'User'}! YouTube Music connected.`);
+                                await checkSyncStatus();
+                                try { await fetch('/api/sync_library', {method: 'POST'}); } catch(e){}
+                                if (typeof fetchLibraryData === 'function') await fetchLibraryData();
+                                loadTrendingFeeds();
+                                startGoogleLoginBtn.disabled = false;
+                                startGoogleLoginBtn.innerHTML = originalHtml;
+                            } else if (pollData.status === 'cancelled') {
+                                clearInterval(loginPollTimer);
+                                loginPollTimer = null;
+                                if (loginPopupStatus) {
+                                    loginPopupStatus.style.color = '#ff476d';
+                                    loginPopupStatus.textContent = '⚠️ Sign-in was cancelled or the window was closed.';
+                                }
+                                showToast('⚠️ Sign-in cancelled.');
+                                startGoogleLoginBtn.disabled = false;
+                                startGoogleLoginBtn.innerHTML = originalHtml;
+                            } else if (pollData.status === 'error') {
+                                clearInterval(loginPollTimer);
+                                loginPollTimer = null;
+                                if (loginPopupStatus) {
+                                    loginPopupStatus.style.color = '#ff476d';
+                                    loginPopupStatus.textContent = `❌ ${pollData.error || 'Authentication failed.'}`;
+                                }
+                                showToast(`❌ Error: ${pollData.error || 'Sign-in failed'}`);
+                                startGoogleLoginBtn.disabled = false;
+                                startGoogleLoginBtn.innerHTML = originalHtml;
+                            }
+                        } catch (pErr) {
+                            console.error('Polling error:', pErr);
+                        }
+                    }, 1500);
+                } else {
+                    showToast('⚠️ Could not open login window: ' + (startData.message || 'Unknown error'));
+                    startGoogleLoginBtn.disabled = false;
+                    startGoogleLoginBtn.innerHTML = originalHtml;
+                }
+            } catch (err) {
+                console.error('Login start error:', err);
+                showToast('⚠️ Network error connecting to backend.');
+                startGoogleLoginBtn.disabled = false;
+                startGoogleLoginBtn.innerHTML = originalHtml;
+            }
         });
 
         async function checkSyncStatus() {
             try {
-                const res = await fetch('/api/sync_status');
+                const res = await fetch('/api/auth/status');
                 const data = await res.json();
                 if (data.synced) {
                     if (syncDot) syncDot.style.background = '#28cd41'; // Green
-                    if (syncText) syncText.textContent = 'Synced with your YouTube Music Account!';
+                    const userGreeting = data.user && data.user.name ? `Synced as ${data.user.name} (${data.user.handle || 'YouTube Music'})` : 'Synced with your YouTube Music Account!';
+                    if (syncText) syncText.textContent = userGreeting;
                     if (syncForm) syncForm.style.display = 'none';
                     if (unsyncForm) unsyncForm.style.display = 'flex';
                 } else {

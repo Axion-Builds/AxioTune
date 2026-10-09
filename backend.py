@@ -10,6 +10,8 @@ import os
 import time
 import hashlib
 import re
+import threading
+import base64
 from ytmusicapi import YTMusic
 try:
     from ytmusicapi.navigation import nav, TAB_CONTENT
@@ -81,17 +83,31 @@ COVER_CACHE_DIR = ".cover_cache"
 if not os.path.exists(COVER_CACHE_DIR):
     os.makedirs(COVER_CACHE_DIR)
 
+USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
+
 def init_ytmusic():
-    global ytmusic
+    global ytmusic, USER_PROFILE_CACHE
+    USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
     if os.path.exists(AUTH_FILE):
         try:
-            ytmusic = YTMusic(AUTH_FILE)
+            candidate = YTMusic(AUTH_FILE)
+            # Verify session validity by attempting to get account info
+            info = candidate.get_account_info()
+            ytmusic = candidate
+            USER_PROFILE_CACHE["data"] = {
+                "name": info.get("accountName", "Google User"),
+                "handle": info.get("channelHandle", ""),
+                "avatar": info.get("accountPhotoUrl", "")
+            }
+            USER_PROFILE_CACHE["timestamp"] = time.time()
             print("=== Success: Authenticated YTMusic session loaded ===")
             return True
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            print(f"=== Error loading authenticated session: {e}. Falling back to guest. ===")
+            print(f"=== Stale/expired session detected: {e}. Removing stale auth file. Falling back to guest. ===")
+            try:
+                os.remove(AUTH_FILE)
+            except Exception:
+                pass
             ytmusic = YTMusic()
             return False
     else:
@@ -101,6 +117,26 @@ def init_ytmusic():
 
 # Initialize
 init_ytmusic()
+
+def get_user_account_info(force_refresh=False):
+    global USER_PROFILE_CACHE
+    if not ytmusic or not os.path.exists(AUTH_FILE):
+        return None
+    now = time.time()
+    if not force_refresh and USER_PROFILE_CACHE["data"] and (now - USER_PROFILE_CACHE["timestamp"] < 3600):
+        return USER_PROFILE_CACHE["data"]
+    try:
+        info = ytmusic.get_account_info()
+        USER_PROFILE_CACHE["data"] = {
+            "name": info.get("accountName", "Google User"),
+            "handle": info.get("channelHandle", ""),
+            "avatar": info.get("accountPhotoUrl", "")
+        }
+        USER_PROFILE_CACHE["timestamp"] = now
+        return USER_PROFILE_CACHE["data"]
+    except Exception as e:
+        print(f"Error fetching account info: {e}")
+        return None
 
 
 app.add_middleware(
@@ -170,6 +206,20 @@ def get_json(filename: str):
     import os
     if os.path.exists(f"{filename}.json"):
         return FileResponse(f"{filename}.json", media_type="application/json")
+    raise HTTPException(status_code=404, detail="File not found")
+
+@app.get("/{filename}.webp")
+def get_webp(filename: str):
+    import os
+    if os.path.exists(f"{filename}.webp"):
+        return FileResponse(f"{filename}.webp", media_type="image/webp")
+    raise HTTPException(status_code=404, detail="File not found")
+
+@app.get("/{filename}.html")
+def get_html(filename: str):
+    import os
+    if os.path.exists(f"{filename}.html"):
+        return FileResponse(f"{filename}.html", media_type="text/html")
     raise HTTPException(status_code=404, detail="File not found")
 
 def clean_cover_search_term(q: str) -> str:
@@ -615,32 +665,196 @@ async def search(q: str):
         
     raise HTTPException(status_code=404, detail="No results found")
 
+# --- PURE-PYTHON DES DECRYPTOR FOR JIOSAAVN 320KBPS MEDIA URLS ---
+_DES_IP = [58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4, 62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8, 57, 49, 41, 33, 25, 17, 9, 1, 59, 51, 43, 35, 27, 19, 11, 3, 61, 53, 45, 37, 29, 21, 13, 5, 63, 55, 47, 39, 31, 23, 15, 7]
+_DES_FP = [40, 8, 48, 16, 56, 24, 64, 32, 39, 7, 47, 15, 55, 23, 63, 31, 38, 6, 46, 14, 54, 22, 62, 30, 37, 5, 45, 13, 53, 21, 61, 29, 36, 4, 44, 12, 52, 20, 60, 28, 35, 3, 43, 11, 51, 19, 59, 27, 34, 2, 42, 10, 50, 18, 58, 26, 33, 1, 41, 9, 49, 17, 57, 25]
+_DES_PC1 = [57, 49, 41, 33, 25, 17, 9, 1, 58, 50, 42, 34, 26, 18, 10, 2, 59, 51, 43, 35, 27, 19, 11, 3, 60, 52, 44, 36, 63, 55, 47, 39, 31, 23, 15, 7, 62, 54, 46, 38, 30, 22, 14, 6, 61, 53, 45, 37, 29, 21, 13, 5, 28, 20, 12, 4]
+_DES_PC2 = [14, 17, 11, 24, 1, 5, 3, 28, 15, 6, 21, 10, 23, 19, 12, 4, 26, 8, 16, 7, 27, 20, 13, 2, 41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48, 44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32]
+_DES_SHIFTS = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
+_DES_E = [32, 1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12, 13, 12, 13, 14, 15, 16, 17, 16, 17, 18, 19, 20, 21, 20, 21, 22, 23, 24, 25, 24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32, 1]
+_DES_S = [
+    [[14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7], [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8], [4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0], [15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13]],
+    [[15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10], [3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5], [0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15], [13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9]],
+    [[10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8], [13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1], [13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7], [1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12]],
+    [[7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15], [13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9], [10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4], [3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14]],
+    [[2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9], [14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6], [4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14], [11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3]],
+    [[12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11], [10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8], [9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6], [4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13]],
+    [[4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1], [13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6], [1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2], [6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12]],
+    [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7], [1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2], [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8], [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]]
+]
+_DES_P = [16, 7, 20, 21, 29, 12, 28, 17, 1, 15, 23, 26, 5, 18, 31, 10, 2, 8, 24, 14, 32, 27, 3, 9, 19, 13, 30, 6, 22, 11, 4, 25]
+
+def _des_perm(b, t): return [b[x - 1] for x in t]
+def _des_b2bits(b):
+    r = []
+    for byte in b:
+        for i in range(7, -1, -1): r.append((byte >> i) & 1)
+    return r
+def _des_bits2b(bits):
+    r = bytearray()
+    for i in range(0, len(bits), 8):
+        v = 0
+        for b in bits[i:i+8]: v = (v << 1) | b
+        r.append(v)
+    return bytes(r)
+
+def _des_gen_subkeys(k):
+    kb = _des_perm(_des_b2bits(k), _DES_PC1)
+    C, D = kb[:28], kb[28:]
+    sk = []
+    for s in _DES_SHIFTS:
+        C, D = C[s:] + C[:s], D[s:] + D[:s]
+        sk.append(_des_perm(C + D, _DES_PC2))
+    return sk
+
+def des_decrypt(cipher_bytes: bytes, key_bytes: bytes) -> str:
+    subkeys = _des_gen_subkeys(key_bytes)
+    res = bytearray()
+    for i in range(0, len(cipher_bytes), 8):
+        blk = cipher_bytes[i:i+8]
+        if len(blk) < 8: break
+        bits = _des_perm(_des_b2bits(blk), _DES_IP)
+        L, R = bits[:32], bits[32:]
+        for sk in reversed(subkeys):
+            nL = R
+            exp = _des_perm(R, _DES_E)
+            xo = [a ^ b for a, b in zip(exp, sk)]
+            sout = []
+            for j in range(8):
+                c = xo[j*6:(j+1)*6]
+                row, col = (c[0] << 1) | c[5], (c[1] << 3) | (c[2] << 2) | (c[3] << 1) | c[4]
+                v = _DES_S[j][row][col]
+                for p in range(3, -1, -1): sout.append((v >> p) & 1)
+            f = _des_perm(sout, _DES_P)
+            R = [a ^ b for a, b in zip(L, f)]
+            L = nL
+        res.extend(_des_bits2b(_des_perm(R + L, _DES_FP)))
+    pad = res[-1]
+    if 1 <= pad <= 8 and res[-pad:] == bytes([pad]) * pad:
+        return res[:-pad].decode('utf-8', errors='ignore')
+    return res.decode('utf-8', errors='ignore')
+
+def clean_song_query(title: str, artist: str = "") -> str:
+    combined = f"{title} {artist}".strip()
+    combined = re.sub(r'[\(\[\{].*?[\)\]\}]', '', combined)
+    combined = re.sub(r'(?i)\b(official\s+video|official\s+audio|lyrics|music\s+video|full\s+song|remix|slowed\s+reverb|synthwave)\b', '', combined)
+    if "|" in combined:
+        combined = combined.split("|")[0]
+    return re.sub(r'\s+', ' ', combined).strip()
+
+async def resolve_jiosaavn_stream(title: str = "", artist: str = "", query: str = ""):
+    target_q = clean_song_query(title, artist) if (title or artist) else clean_song_query(query)
+    if not target_q:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            r = await client.get(
+                "https://www.jiosaavn.com/api.php",
+                params={
+                    "__call": "search.getResults",
+                    "q": target_q,
+                    "_format": "json",
+                    "p": "1",
+                    "n": "5"
+                }
+            )
+            if r.status_code != 200:
+                return None
+            data = r.json()
+            results = data.get("results", [])
+            if not results:
+                return None
+            
+            song = results[0]
+            enc_url = song.get("encrypted_media_url")
+            if not enc_url:
+                return None
+            
+            raw_enc = base64.b64decode(enc_url)
+            dec_url = des_decrypt(raw_enc, b"38346591")
+            if not dec_url or not dec_url.startswith("http"):
+                return None
+            
+            # Upgrade to 320kbps CD Quality
+            url_320 = dec_url.replace("_96.mp4", "_320.mp4").replace("_160.mp4", "_320.mp4")
+            try:
+                head_resp = await client.head(url_320, timeout=2.0)
+                final_url = url_320 if head_resp.status_code == 200 else dec_url
+                quality = "320kbps" if head_resp.status_code == 200 else "160kbps"
+            except Exception:
+                final_url = url_320
+                quality = "320kbps"
+            
+            dur = 0
+            try:
+                dur = int(song.get("duration", 0))
+            except Exception:
+                pass
+            
+            return {
+                "url": final_url,
+                "quality": quality,
+                "format_note": "m4a",
+                "duration": dur,
+                "cached": False,
+                "source": "jiosaavn",
+                "requires_proxy": False,
+                "title": song.get("song") or song.get("title"),
+                "artist": song.get("primary_artists") or song.get("singers") or ""
+            }
+    except Exception as e:
+        print(f"[JioSaavn Primary Resolver Error]: {e}")
+        return None
+
 @app.get("/api/stream")
-async def stream(id: str, refresh: bool = False):
-    # Check cache first (skip when client requests a fresh URL)
+async def stream(id: str, refresh: bool = False, title: str = "", artist: str = ""):
     now = time.time()
-    if not refresh and id in STREAM_CACHE:
-        cached = STREAM_CACHE[id]
+    cache_key = id
+    if not refresh and cache_key in STREAM_CACHE:
+        cached = STREAM_CACHE[cache_key]
         if now - cached["cached_at"] < STREAM_CACHE_TTL:
             return {
                 "url": cached["url"],
                 "quality": cached["quality"],
                 "format_note": cached["format_note"],
                 "duration": cached.get("duration", 0),
-                "cached": True
+                "cached": True,
+                "source": cached.get("source", "cached"),
+                "requires_proxy": cached.get("requires_proxy", False)
             }
 
+    # STEP 1: Try JioSaavn Primary High Quality (320kbps AAC Direct CDN)
+    meta_title = title
+    meta_artist = artist
+    if not meta_title and id:
+        try:
+            def fetch_meta():
+                return ytmusic.get_song(id)
+            meta = await run_sync(fetch_meta)
+            if meta and meta.get('videoDetails'):
+                meta_title = meta['videoDetails'].get('title', '')
+                meta_artist = meta['videoDetails'].get('author', '')
+        except Exception:
+            pass
+
+    if meta_title:
+        saavn_res = await resolve_jiosaavn_stream(meta_title, meta_artist)
+        if saavn_res:
+            STREAM_CACHE[cache_key] = {
+                **saavn_res,
+                "cached_at": time.time()
+            }
+            return saavn_res
+
+    # STEP 2: Fast YouTube Fallback (yt-dlp with SSL bypass & best format)
     ydl_opts = {
-        # Prefer high quality: Opus/WebM first (best for web), then m4a, then anything
-        'format': 'bestaudio[ext=webm][abr>=128]/bestaudio[ext=m4a][abr>=128]/bestaudio[abr>=128]/bestaudio/best',
+        'format': 'bestaudio/best',
         'quiet': True,
         'no_warnings': True,
-        'socket_timeout': 8,
-        'extractor_retries': 2,
+        'nocheckcertificate': True,
+        'socket_timeout': 10,
         'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
     }
-    
-    # Inject cookies to bypass aggressive datacenter IP blocks on Render
     try:
         if os.path.exists(AUTH_FILE):
             with open(AUTH_FILE, "r", encoding="utf-8") as f:
@@ -651,93 +865,33 @@ async def stream(id: str, refresh: bool = False):
     except Exception:
         pass
 
-    
-    # List of public Piped API instances for fallback
-    INVIDIOUS_INSTANCES = [
-        "https://inv.thepixora.com",
-        "https://inv.tux.pizza",
-        "https://invidious.nerdvpn.de",
-        "https://invidious.protokolla.fi",
-        "https://inv.bp.projectsegfau.lt",
-        "https://iv.melmac.space"
-    ]
-
-    async def fetch_stream():
-        def run_ytdlp():
-            try:
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(f"https://music.youtube.com/watch?v={id}", download=False)
-                    abr = info.get('abr') or info.get('tbr') or 128
-                    return {
-                        "url": info['url'],
-                        "quality": f"{int(abr)}kbps",
-                        "format_note": info.get('ext', 'unknown'),
-                        "duration": info.get('duration', 0),
-                        "cached": False,
-                        "source": "yt-dlp"
-                    }
-            except Exception as e:
-                print(f"[yt-dlp DEBUG] Exception: {type(e).__name__}: {str(e)[:200]}")
-                return None
-
-        result = await asyncio.to_thread(run_ytdlp)
-        if result: return result
-        
-        # --- FALLBACK: JIOSAAVN API ---
-        print(f"[Fallback] yt-dlp failed for {id}, trying JioSaavn API...")
+    def run_ytdlp():
         try:
-            def fetch_meta():
-                return ytmusic.get_song(id)
-            meta = await asyncio.to_thread(fetch_meta)
-            
-            if meta and meta.get('videoDetails'):
-                title = meta['videoDetails'].get('title', '')
-                author = meta['videoDetails'].get('author', '')
-                query = f"{title} {author}".strip().replace(' ', '+')
-                
-                async with httpx.AsyncClient(timeout=8.0) as client:
-                    r = await client.get(f"https://www.jiosaavn.com/api.php?__call=autocomplete.get&query={query}&_format=json&_marker=0&ctx=android")
-                    if r.status_code == 200:
-                        data = r.json()
-                        songs = data.get('songs', {}).get('data', [])
-                        if songs:
-                            song_id = songs[0]['id']
-                            r2 = await client.get(f"https://www.jiosaavn.com/api.php?__call=song.getDetails&pids={song_id}&_format=json&_marker=0&ctx=android")
-                            if r2.status_code == 200:
-                                details = r2.json()
-                                song_info = details.get(song_id, {})
-                                media_url = song_info.get('media_preview_url', '')
-                                if media_url:
-                                    full_url = media_url.replace("preview.saavncdn.com", "aac.saavncdn.com").replace("_96_p", "_320")
-                                    return {
-                                        "url": full_url,
-                                        "quality": "320kbps",
-                                        "format_note": "m4a",
-                                        "duration": int(meta['videoDetails'].get('lengthSeconds', 0)),
-                                        "cached": False,
-                                        "source": "jiosaavn"
-                                    }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"https://www.youtube.com/watch?v={id}", download=False)
+                abr = info.get('abr') or info.get('tbr') or 128
+                return {
+                    "url": info['url'],
+                    "quality": f"{int(abr)}kbps" if abr else "128kbps",
+                    "format_note": info.get('ext', 'm4a'),
+                    "duration": info.get('duration', 0),
+                    "cached": False,
+                    "source": "youtube",
+                    "requires_proxy": True
+                }
         except Exception as e:
-            print(f"[JioSaavn Fallback Error]: {str(e)}")
-                    
-        raise HTTPException(status_code=404, detail="Stream failed on all sources.")
+            print(f"[yt-dlp Fallback Error]: {type(e).__name__}: {str(e)[:200]}")
+            return None
 
-    try:
-        res = await fetch_stream()
-        
-        # Store in cache
-        STREAM_CACHE[id] = {
-            "url": res["url"],
-            "quality": res["quality"],
-            "format_note": res["format_note"],
-            "duration": res.get("duration", 0),
+    yt_res = await asyncio.to_thread(run_ytdlp)
+    if yt_res:
+        STREAM_CACHE[cache_key] = {
+            **yt_res,
             "cached_at": time.time()
         }
-        return res
-    except HTTPException as he:
-        return JSONResponse(content={"status": "error", "message": he.detail}, status_code=he.status_code)
-    except Exception as e:
-        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+        return yt_res
+
+    raise HTTPException(status_code=404, detail="Stream failed on all sources.")
 
 @app.get("/api/proxy_stream")
 async def proxy_stream(request: Request, url: str):
@@ -899,21 +1053,49 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         
         recs = []
         seen_vids = set()
+        seen_titles = set()
         if videoId:
             seen_vids.add(videoId)
+
+        # Blacklist terms that spoil queue quality
+        spam_keywords = ["10 hour", "10hour", "1 hour", "bass boosted", "slowed reverb", "slowed + reverb", "ringtone", "whatsapp status", "synthwave bootleg", "8d audio"]
 
         for item in tracks:
             vid = item.get('videoId')
             if not vid or vid in seen_vids:
                 continue
-            seen_vids.add(vid)
+
+            raw_title = item.get('title', 'Unknown')
+            lower_title = raw_title.lower()
+
+            # Skip spam / loop / remix garbage
+            if any(k in lower_title for k in spam_keywords):
+                continue
+
+            clean_title = clean_song_query(raw_title)
+            if not clean_title:
+                clean_title = raw_title
             
+            norm_title = clean_title.lower().strip()
+            if norm_title in seen_titles:
+                continue
+
             artist_name = "Unknown"
             if item.get('artists') and len(item['artists']) > 0:
                 artist_name = item['artists'][0].get('name', 'Unknown')
             elif item.get('author'):
                 artist_name = item['author']
-            
+
+            # Sanitize record label channel names
+            labels = ["zee music company", "t-series", "sony music india", "speed records", "yrf", "tips official", "saregama", "geet mp3"]
+            if any(lbl in artist_name.lower() for lbl in labels):
+                # Try finding artist name after hyphen or in title
+                match = re.search(r'[\-–]\s*([A-Za-z0-9\s]+?)(?:\||$)', raw_title)
+                if match:
+                    cand = match.group(1).strip()
+                    if cand and len(cand) < 30:
+                        artist_name = cand
+
             thumb_list = item.get('thumbnails') or item.get('thumbnail') or []
             if isinstance(thumb_list, list) and len(thumb_list) > 0:
                 thumbnail = thumb_list[-1].get('url', '')
@@ -924,13 +1106,18 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 
             if not thumbnail:
                 thumbnail = f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
+
+            seen_vids.add(vid)
+            seen_titles.add(norm_title)
             
             recs.append({
-                "title": item.get('title', 'Unknown'), 
+                "title": clean_title, 
                 "artist": artist_name, 
                 "cover": thumbnail,
                 "videoId": vid
             })
+            if len(recs) >= 20:
+                break
             
         res_data = {"status": "success", "recommendations": recs}
         API_CACHE[cache_key] = {'time': time.time(), 'data': res_data}
@@ -1833,12 +2020,213 @@ def format_headers(raw_input: str) -> str:
 class SyncRequest(BaseModel):
     headers: str
 
+ACTIVE_LOGIN_BROWSER = None
+
+LOGIN_SESSION = {
+    "status": "idle",       # "idle", "in_progress", "success", "cancelled", "error"
+    "message": "",
+    "user": None,
+    "error": None,
+    "started_at": 0
+}
+LOGIN_LOCK = threading.Lock()
+
+def run_playwright_login_task():
+    global LOGIN_SESSION, USER_PROFILE_CACHE, ACTIVE_LOGIN_BROWSER
+    with LOGIN_LOCK:
+        LOGIN_SESSION["status"] = "in_progress"
+        LOGIN_SESSION["message"] = "Opening secure login window..."
+        LOGIN_SESSION["error"] = None
+        LOGIN_SESSION["user"] = None
+        LOGIN_SESSION["started_at"] = time.time()
+
+    playwright_instance = None
+    browser = None
+    try:
+        from playwright.sync_api import sync_playwright
+        playwright_instance = sync_playwright().start()
+
+        # Try msedge first (native on Windows), then chrome, then bundled chromium
+        browser = None
+        for channel in ["msedge", "chrome", None]:
+            try:
+                launch_kwargs = {
+                    "headless": False,
+                    "args": [
+                        "--disable-blink-features=AutomationControlled",
+                        "--no-default-browser-check",
+                        "--window-size=500,720"
+                    ],
+                    "ignore_default_args": ["--enable-automation"]
+                }
+                if channel:
+                    launch_kwargs["channel"] = channel
+                browser = playwright_instance.chromium.launch(**launch_kwargs)
+                ACTIVE_LOGIN_BROWSER = browser
+                break
+            except Exception as b_err:
+                print(f"Failed to launch browser with channel {channel}: {b_err}")
+                continue
+
+        if not browser:
+            raise RuntimeError("Could not launch browser (Edge or Chrome). Please ensure Microsoft Edge or Google Chrome is installed.")
+
+        context = browser.new_context(
+            viewport={"width": 480, "height": 700},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+        page = context.new_page()
+
+        # Official Google Sign-in with continue to YouTube Music
+        login_url = "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fmusic.youtube.com"
+        page.goto(login_url)
+
+        with LOGIN_LOCK:
+            LOGIN_SESSION["message"] = "Official Google sign-in window is open. Sign in to your account — it will auto-close when done!"
+
+        # Wait loop (up to 300 seconds / 5 mins)
+        start_time = time.time()
+        authenticated = False
+        captured_cookies = []
+
+        while time.time() - start_time < 300:
+            time.sleep(1.0)
+
+            # Check if user closed the window or page was closed
+            if page.is_closed() or not browser.is_connected():
+                if not authenticated:
+                    with LOGIN_LOCK:
+                        LOGIN_SESSION["status"] = "cancelled"
+                        LOGIN_SESSION["message"] = "Login window was closed."
+                    return
+
+            try:
+                current_url = page.url
+            except Exception:
+                break
+
+            cookies = context.cookies()
+            has_sapisid = any(c.get("name") in ["SAPISID", "__Secure-3PAPISID"] for c in cookies)
+
+            if ("music.youtube.com" in current_url or "youtube.com" in current_url) and has_sapisid:
+                authenticated = True
+                captured_cookies = cookies
+                break
+
+        if not authenticated:
+            with LOGIN_LOCK:
+                LOGIN_SESSION["status"] = "error"
+                LOGIN_SESSION["error"] = "Login timed out or credentials not detected."
+            return
+
+        # Build cookie string
+        cookie_parts = []
+        for c in captured_cookies:
+            if c.get("name") and c.get("value"):
+                cookie_parts.append(f"{c['name']}={c['value']}")
+        cookie_str = "; ".join(cookie_parts)
+
+        # Save to headers_auth.json
+        headers_dict = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Content-Type": "application/json",
+            "Origin": "https://music.youtube.com",
+            "Cookie": cookie_str,
+            "Authorization": "SAPISIDHASH dummy_value",
+            "x-goog-authuser": "0"
+        }
+        with open(AUTH_FILE, "w", encoding="utf-8") as f:
+            json.dump(headers_dict, f, indent=4)
+
+        # Re-initialize YTMusic
+        success = init_ytmusic()
+        if success:
+            user_info = get_user_account_info(force_refresh=True)
+            with LOGIN_LOCK:
+                LOGIN_SESSION["status"] = "success"
+                LOGIN_SESSION["message"] = f"Welcome back, {user_info.get('name', 'User') if user_info else 'User'}!"
+                LOGIN_SESSION["user"] = user_info
+        else:
+            with LOGIN_LOCK:
+                LOGIN_SESSION["status"] = "error"
+                LOGIN_SESSION["error"] = "Failed to initialize YouTube Music session."
+
+    except Exception as e:
+        print(f"Exception during Playwright login: {e}")
+        with LOGIN_LOCK:
+            LOGIN_SESSION["status"] = "error"
+            LOGIN_SESSION["error"] = str(e)
+    finally:
+        try:
+            if browser:
+                browser.close()
+        except Exception:
+            pass
+        ACTIVE_LOGIN_BROWSER = None
+        try:
+            if playwright_instance:
+                playwright_instance.stop()
+        except Exception:
+            pass
+
+@app.get("/api/auth/status")
 @app.get("/api/sync_status")
 def sync_status():
     is_synced = os.path.exists(AUTH_FILE)
-    return {"synced": is_synced}
+    user_info = None
+    if is_synced:
+        user_info = get_user_account_info()
+    return {
+        "synced": is_synced,
+        "user": user_info
+    }
 
-import json
+@app.post("/api/auth/cancel_login")
+def cancel_interactive_login():
+    global ACTIVE_LOGIN_BROWSER, LOGIN_SESSION
+    with LOGIN_LOCK:
+        LOGIN_SESSION["status"] = "cancelled"
+        LOGIN_SESSION["message"] = "Login cancelled by user."
+    if ACTIVE_LOGIN_BROWSER:
+        try:
+            ACTIVE_LOGIN_BROWSER.close()
+        except Exception:
+            pass
+        ACTIVE_LOGIN_BROWSER = None
+    return {"status": "cancelled"}
+
+@app.post("/api/auth/start_login")
+def start_interactive_login():
+    global LOGIN_SESSION, ACTIVE_LOGIN_BROWSER
+    with LOGIN_LOCK:
+        if LOGIN_SESSION["status"] == "in_progress":
+            if ACTIVE_LOGIN_BROWSER and ACTIVE_LOGIN_BROWSER.is_connected():
+                return {"status": "in_progress", "message": "Login window is already active."}
+            else:
+                LOGIN_SESSION["status"] = "idle"
+
+        LOGIN_SESSION["status"] = "in_progress"
+        LOGIN_SESSION["message"] = "Initializing login window..."
+        LOGIN_SESSION["error"] = None
+        LOGIN_SESSION["user"] = None
+        LOGIN_SESSION["started_at"] = time.time()
+
+    t = threading.Thread(target=run_playwright_login_task, daemon=True)
+    t.start()
+    return {"status": "started", "message": "Login window opened. Please sign in."}
+
+@app.get("/api/auth/login_poll")
+def poll_interactive_login():
+    with LOGIN_LOCK:
+        return {
+            "status": LOGIN_SESSION["status"],
+            "message": LOGIN_SESSION.get("message", ""),
+            "error": LOGIN_SESSION.get("error"),
+            "user": LOGIN_SESSION.get("user"),
+            "synced": os.path.exists(AUTH_FILE)
+        }
 
 def save_headers_to_json(headers_str: str, filepath: str):
     headers_dict = {}
@@ -1850,21 +2238,17 @@ def save_headers_to_json(headers_str: str, filepath: str):
             parts = line.split(":", 1)
             key = parts[0].strip()
             value = parts[1].strip()
-            # Normalize key casing to match standard headers
             normalized_key = "-".join([w.capitalize() for w in key.split("-")])
             headers_dict[normalized_key] = value
             
-    # Validate that Cookie contains __Secure-3PAPISID
     cookie_key = next((k for k in headers_dict if k.lower() == 'cookie'), None)
-    if not cookie_key or "__Secure-3PAPISID" not in headers_dict[cookie_key]:
-        raise ValueError("Your cookie is missing the required secure credential (__Secure-3PAPISID). Please ensure you are logged in to YouTube Music on music.youtube.com.")
+    if not cookie_key or ("__Secure-3PAPISID" not in headers_dict[cookie_key] and "SAPISID" not in headers_dict[cookie_key]):
+        raise ValueError("Your cookie is missing the required secure credential (__Secure-3PAPISID / SAPISID). Please ensure you are logged in to YouTube Music on music.youtube.com.")
         
-    # Inject/force Authorization and Origin to trick ytmusicapi parser into BROWSER auth mode
     headers_dict["Authorization"] = "SAPISIDHASH dummy_value"
     headers_dict["Origin"] = "https://music.youtube.com"
     headers_dict["x-goog-authuser"] = "0"
     
-    # Add a fallback standard User-Agent if missing
     ua_key = next((k for k in headers_dict if k.lower() == 'user-agent'), None)
     if not ua_key:
         headers_dict["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -1889,7 +2273,8 @@ async def sync_account(req: SyncRequest):
         
         success = await asyncio.to_thread(init_ytmusic)
         if success:
-            return {"status": "success", "message": "Successfully synced with YouTube Music!"}
+            user_info = get_user_account_info(force_refresh=True)
+            return {"status": "success", "message": "Successfully synced with YouTube Music!", "user": user_info}
         else:
             if os.path.exists(AUTH_FILE):
                 os.remove(AUTH_FILE)
@@ -1909,7 +2294,6 @@ async def sync_bookmark(req: CookieRequest):
         if not cookie_val:
             return {"status": "error", "message": "Cookie is empty."}
             
-        # Construct standard headers around this cookie
         headers_str = f"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\nCookie: {cookie_val}"
         
         if os.path.exists(AUTH_FILE):
@@ -1922,7 +2306,8 @@ async def sync_bookmark(req: CookieRequest):
         
         success = await asyncio.to_thread(init_ytmusic)
         if success:
-            return {"status": "success", "message": "Successfully synced with YouTube Music!"}
+            user_info = get_user_account_info(force_refresh=True)
+            return {"status": "success", "message": "Successfully synced with YouTube Music!", "user": user_info}
         else:
             if os.path.exists(AUTH_FILE):
                 os.remove(AUTH_FILE)
@@ -1941,19 +2326,155 @@ def like_song(req: LikeRequest):
     if not ytmusic:
         return {"status": "error", "message": "Not authenticated with YouTube Music"}
     try:
-        # action can be 'LIKE', 'DISLIKE', 'INDIFFERENT'
         status = ytmusic.rate_song(req.id, req.action)
         return {"status": "success", "result": status}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
 @app.post("/api/unsync")
+@app.post("/api/auth/logout")
 def unsync_account():
     if os.path.exists(AUTH_FILE):
-        os.remove(AUTH_FILE)
-    global ytmusic
-    ytmusic = YTMusic()
-    return {"status": "success", "message": "Disconnected successfully."}
+        try:
+            os.remove(AUTH_FILE)
+        except Exception:
+            pass
+    global ytmusic, USER_PROFILE_CACHE, LOGIN_SESSION
+    USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
+    with LOGIN_LOCK:
+        LOGIN_SESSION["status"] = "idle"
+        LOGIN_SESSION["user"] = None
+        LOGIN_SESSION["error"] = None
+    init_ytmusic()
+    return {"status": "success", "message": "Disconnected successfully.", "synced": False}
+
+@app.get("/api/history")
+async def get_history_feed():
+    if not ytmusic or not os.path.exists(AUTH_FILE):
+        return {"status": "error", "message": "Not authenticated. Sign in with YouTube Music first.", "items": []}
+    
+    def fetch_history():
+        try:
+            raw_history = ytmusic.get_history()
+            items = []
+            for song in raw_history:
+                vid = song.get("videoId")
+                if not vid:
+                    continue
+                title = song.get("title", "Unknown")
+                artists = song.get("artists", [])
+                artist = ", ".join([a.get("name", "") for a in artists]) if artists else "Unknown Artist"
+                cover = ""
+                if song.get("thumbnails"):
+                    cover = song["thumbnails"][-1]["url"]
+                items.append({
+                    "id": vid,
+                    "title": title,
+                    "artist": artist,
+                    "cover": cover,
+                    "duration": song.get("duration", ""),
+                    "album": song.get("album", {}).get("name", "") if isinstance(song.get("album"), dict) else "",
+                    "type": "song"
+                })
+            return items
+        except Exception as e:
+            print(f"Error fetching history: {e}")
+            return []
+
+    items = await asyncio.to_thread(fetch_history)
+    return {"status": "success", "items": items}
+
+class PlaybackReportRequest(BaseModel):
+    id: str
+
+@app.post("/api/playback/report")
+async def report_playback(req: PlaybackReportRequest):
+    if not ytmusic or not os.path.exists(AUTH_FILE):
+        return {"status": "guest_ignored"}
+    
+    def do_report():
+        try:
+            song = ytmusic.get_song(req.id)
+            if song and "playbackTracking" in song:
+                ytmusic.add_history_item(song)
+                return True
+        except Exception as e:
+            pass
+        return False
+
+    asyncio.create_task(asyncio.to_thread(do_report))
+    return {"status": "reported"}
+
+@app.get("/api/library/yt_playlists")
+async def get_yt_playlists():
+    if not ytmusic or not os.path.exists(AUTH_FILE):
+        return {"status": "error", "message": "Not authenticated", "playlists": []}
+    
+    def fetch():
+        try:
+            raw = ytmusic.get_library_playlists(limit=50)
+            playlists = []
+            for p in raw:
+                p_id = p.get("playlistId")
+                if not p_id:
+                    continue
+                title = p.get("title", "Untitled Playlist")
+                cover = p["thumbnails"][-1]["url"] if p.get("thumbnails") else ""
+                count = p.get("count", 0)
+                playlists.append({
+                    "id": p_id,
+                    "title": title,
+                    "cover": cover,
+                    "trackCount": count
+                })
+            return playlists
+        except Exception as e:
+            print(f"Error fetching user playlists: {e}")
+            return []
+
+    playlists = await asyncio.to_thread(fetch)
+    return {"status": "success", "playlists": playlists}
+
+@app.get("/api/library/yt_playlist/{playlist_id}")
+async def get_yt_playlist_tracks(playlist_id: str):
+    if not ytmusic:
+        return {"status": "error", "message": "Not authenticated", "tracks": []}
+    
+    def fetch():
+        try:
+            pl_data = ytmusic.get_playlist(playlist_id, limit=300)
+            tracks = []
+            for t in pl_data.get("tracks", []):
+                vid = t.get("videoId")
+                if not vid:
+                    continue
+                title = t.get("title", "Unknown")
+                artist = ", ".join([a.get("name", "") for a in t.get("artists", [])]) if t.get("artists") else "Unknown"
+                cover = t["thumbnails"][-1]["url"] if t.get("thumbnails") else ""
+                duration = t.get("duration", "")
+                tracks.append({
+                    "id": vid,
+                    "title": title,
+                    "artist": artist,
+                    "cover": cover,
+                    "duration": duration,
+                    "album": t.get("album", {}).get("name", "") if isinstance(t.get("album"), dict) else ""
+                })
+            return {
+                "title": pl_data.get("title", "Playlist"),
+                "description": pl_data.get("description", ""),
+                "cover": pl_data.get("thumbnails", [{}])[-1].get("url", ""),
+                "trackCount": pl_data.get("trackCount", len(tracks)),
+                "tracks": tracks
+            }
+        except Exception as e:
+            print(f"Error fetching playlist {playlist_id}: {e}")
+            return None
+
+    result = await asyncio.to_thread(fetch)
+    if result:
+        return {"status": "success", **result}
+    return {"status": "error", "message": "Could not load playlist."}
 
 @app.get("/api/download")
 async def download_song(id: str, title: str):
@@ -2096,20 +2617,20 @@ async def sync_library():
         conn = get_db()
         cursor = conn.cursor()
         try:
-            liked = ytmusic.get_liked_songs(limit=200)
+            liked = ytmusic.get_liked_songs(limit=500)
             if 'tracks' in liked:
                 for song in liked['tracks']:
                     vid = song.get('videoId')
                     if not vid: continue
                     title = song.get('title', 'Unknown')
-                    artist = ", ".join([a['name'] for a in song.get('artists', [])])
+                    artist = ", ".join([a['name'] for a in song.get('artists', [])]) if song.get('artists') else 'Unknown'
                     cover = song['thumbnails'][-1]['url'] if song.get('thumbnails') else ''
                     cursor.execute("INSERT OR IGNORE INTO liked_songs (video_id, title, artist, cover) VALUES (?, ?, ?, ?)", (vid, title, artist, cover))
         except Exception as e:
             print("Error syncing likes", e)
             
         try:
-            library_playlists = ytmusic.get_library_playlists(limit=20)
+            library_playlists = ytmusic.get_library_playlists(limit=50)
             for pl in library_playlists:
                 pl_id = pl.get('playlistId')
                 title = pl.get('title', 'Unknown')
@@ -2123,7 +2644,7 @@ async def sync_library():
                 else:
                     local_pl_id = existing_pl['id']
                     
-                pl_tracks = ytmusic.get_playlist(pl_id, limit=100).get('tracks', [])
+                pl_tracks = ytmusic.get_playlist(pl_id, limit=200).get('tracks', [])
                 for i, track in enumerate(pl_tracks):
                     vid = track.get('videoId')
                     if not vid: continue
