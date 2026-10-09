@@ -658,147 +658,7 @@ async def search(q: str):
         
     raise HTTPException(status_code=404, detail="No results found")
 
-# --- PURE-PYTHON DES DECRYPTOR FOR JIOSAAVN 320KBPS MEDIA URLS ---
-_DES_IP = [58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4, 62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8, 57, 49, 41, 33, 25, 17, 9, 1, 59, 51, 43, 35, 27, 19, 11, 3, 61, 53, 45, 37, 29, 21, 13, 5, 63, 55, 47, 39, 31, 23, 15, 7]
-_DES_FP = [40, 8, 48, 16, 56, 24, 64, 32, 39, 7, 47, 15, 55, 23, 63, 31, 38, 6, 46, 14, 54, 22, 62, 30, 37, 5, 45, 13, 53, 21, 61, 29, 36, 4, 44, 12, 52, 20, 60, 28, 35, 3, 43, 11, 51, 19, 59, 27, 34, 2, 42, 10, 50, 18, 58, 26, 33, 1, 41, 9, 49, 17, 57, 25]
-_DES_PC1 = [57, 49, 41, 33, 25, 17, 9, 1, 58, 50, 42, 34, 26, 18, 10, 2, 59, 51, 43, 35, 27, 19, 11, 3, 60, 52, 44, 36, 63, 55, 47, 39, 31, 23, 15, 7, 62, 54, 46, 38, 30, 22, 14, 6, 61, 53, 45, 37, 29, 21, 13, 5, 28, 20, 12, 4]
-_DES_PC2 = [14, 17, 11, 24, 1, 5, 3, 28, 15, 6, 21, 10, 23, 19, 12, 4, 26, 8, 16, 7, 27, 20, 13, 2, 41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48, 44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32]
-_DES_SHIFTS = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
-_DES_E = [32, 1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12, 13, 12, 13, 14, 15, 16, 17, 16, 17, 18, 19, 20, 21, 20, 21, 22, 23, 24, 25, 24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32, 1]
-_DES_S = [
-    [[14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7], [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8], [4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0], [15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13]],
-    [[15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10], [3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5], [0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15], [13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9]],
-    [[10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8], [13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1], [13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7], [1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12]],
-    [[7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15], [13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9], [10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4], [3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14]],
-    [[2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9], [14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6], [4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14], [11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3]],
-    [[12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11], [10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8], [9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6], [4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13]],
-    [[4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1], [13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6], [1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2], [6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12]],
-    [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7], [1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2], [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8], [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]]
-]
-_DES_P = [16, 7, 20, 21, 29, 12, 28, 17, 1, 15, 23, 26, 5, 18, 31, 10, 2, 8, 24, 14, 32, 27, 3, 9, 19, 13, 30, 6, 22, 11, 4, 25]
-
-def _des_perm(b, t): return [b[x - 1] for x in t]
-def _des_b2bits(b):
-    r = []
-    for byte in b:
-        for i in range(7, -1, -1): r.append((byte >> i) & 1)
-    return r
-def _des_bits2b(bits):
-    r = bytearray()
-    for i in range(0, len(bits), 8):
-        v = 0
-        for b in bits[i:i+8]: v = (v << 1) | b
-        r.append(v)
-    return bytes(r)
-
-def _des_gen_subkeys(k):
-    kb = _des_perm(_des_b2bits(k), _DES_PC1)
-    C, D = kb[:28], kb[28:]
-    sk = []
-    for s in _DES_SHIFTS:
-        C, D = C[s:] + C[:s], D[s:] + D[:s]
-        sk.append(_des_perm(C + D, _DES_PC2))
-    return sk
-
-def des_decrypt(cipher_bytes: bytes, key_bytes: bytes) -> str:
-    subkeys = _des_gen_subkeys(key_bytes)
-    res = bytearray()
-    for i in range(0, len(cipher_bytes), 8):
-        blk = cipher_bytes[i:i+8]
-        if len(blk) < 8: break
-        bits = _des_perm(_des_b2bits(blk), _DES_IP)
-        L, R = bits[:32], bits[32:]
-        for sk in reversed(subkeys):
-            nL = R
-            exp = _des_perm(R, _DES_E)
-            xo = [a ^ b for a, b in zip(exp, sk)]
-            sout = []
-            for j in range(8):
-                c = xo[j*6:(j+1)*6]
-                row, col = (c[0] << 1) | c[5], (c[1] << 3) | (c[2] << 2) | (c[3] << 1) | c[4]
-                v = _DES_S[j][row][col]
-                for p in range(3, -1, -1): sout.append((v >> p) & 1)
-            f = _des_perm(sout, _DES_P)
-            R = [a ^ b for a, b in zip(L, f)]
-            L = nL
-        res.extend(_des_bits2b(_des_perm(R + L, _DES_FP)))
-    pad = res[-1]
-    if 1 <= pad <= 8 and res[-pad:] == bytes([pad]) * pad:
-        return res[:-pad].decode('utf-8', errors='ignore')
-    return res.decode('utf-8', errors='ignore')
-
-def clean_song_query(title: str, artist: str = "") -> str:
-    combined = f"{title} {artist}".strip()
-    combined = re.sub(r'[\(\[\{].*?[\)\]\}]', '', combined)
-    combined = re.sub(r'(?i)\b(official\s+video|official\s+audio|lyrics|music\s+video|full\s+song|remix|slowed\s+reverb|synthwave)\b', '', combined)
-    if "|" in combined:
-        combined = combined.split("|")[0]
-    return re.sub(r'\s+', ' ', combined).strip()
-
-async def resolve_jiosaavn_stream(title: str = "", artist: str = "", query: str = ""):
-    target_q = clean_song_query(title, artist) if (title or artist) else clean_song_query(query)
-    if not target_q:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=4.0) as client:
-            r = await client.get(
-                "https://www.jiosaavn.com/api.php",
-                params={
-                    "__call": "search.getResults",
-                    "q": target_q,
-                    "_format": "json",
-                    "p": "1",
-                    "n": "5"
-                }
-            )
-            if r.status_code != 200:
-                return None
-            data = r.json()
-            results = data.get("results", [])
-            if not results:
-                return None
-            
-            song = results[0]
-            enc_url = song.get("encrypted_media_url")
-            if not enc_url:
-                return None
-            
-            raw_enc = base64.b64decode(enc_url)
-            dec_url = des_decrypt(raw_enc, b"38346591")
-            if not dec_url or not dec_url.startswith("http"):
-                return None
-            
-            # Upgrade to 320kbps CD Quality
-            url_320 = dec_url.replace("_96.mp4", "_320.mp4").replace("_160.mp4", "_320.mp4")
-            try:
-                head_resp = await client.head(url_320, timeout=2.0)
-                final_url = url_320 if head_resp.status_code == 200 else dec_url
-                quality = "320kbps" if head_resp.status_code == 200 else "160kbps"
-            except Exception:
-                final_url = url_320
-                quality = "320kbps"
-            
-            dur = 0
-            try:
-                dur = int(song.get("duration", 0))
-            except Exception:
-                pass
-            
-            return {
-                "url": final_url,
-                "quality": quality,
-                "format_note": "m4a",
-                "duration": dur,
-                "cached": False,
-                "source": "jiosaavn",
-                "requires_proxy": False,
-                "title": song.get("song") or song.get("title"),
-                "artist": song.get("primary_artists") or song.get("singers") or ""
-            }
-    except Exception as e:
-        print(f"[JioSaavn Primary Resolver Error]: {e}")
-        return None
-
+# --- OFFICIAL YOUTUBE STREAM EXTRACTOR ---
 @app.get("/api/stream")
 async def stream(id: str, refresh: bool = False, title: str = "", artist: str = ""):
     now = time.time()
@@ -812,40 +672,18 @@ async def stream(id: str, refresh: bool = False, title: str = "", artist: str = 
                 "format_note": cached["format_note"],
                 "duration": cached.get("duration", 0),
                 "cached": True,
-                "source": cached.get("source", "cached"),
-                "requires_proxy": cached.get("requires_proxy", False)
+                "source": "youtube",
+                "requires_proxy": cached.get("requires_proxy", True),
+                "title": cached.get("title", ""),
+                "artist": cached.get("artist", "")
             }
 
-    # STEP 1: Try JioSaavn Primary High Quality (320kbps AAC Direct CDN)
-    meta_title = title
-    meta_artist = artist
-    if not meta_title and id:
-        try:
-            def fetch_meta():
-                return ytmusic.get_song(id)
-            meta = await run_sync(fetch_meta)
-            if meta and meta.get('videoDetails'):
-                meta_title = meta['videoDetails'].get('title', '')
-                meta_artist = meta['videoDetails'].get('author', '')
-        except Exception:
-            pass
-
-    if meta_title:
-        saavn_res = await resolve_jiosaavn_stream(meta_title, meta_artist)
-        if saavn_res:
-            STREAM_CACHE[cache_key] = {
-                **saavn_res,
-                "cached_at": time.time()
-            }
-            return saavn_res
-
-    # STEP 2: Fast YouTube Fallback (yt-dlp with SSL bypass & best format)
     ydl_opts = {
-        'format': 'bestaudio/best',
+        'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
-        'socket_timeout': 10,
+        'socket_timeout': 8,
         'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
     }
     try:
@@ -858,33 +696,54 @@ async def stream(id: str, refresh: bool = False, title: str = "", artist: str = 
     except Exception:
         pass
 
-    def run_ytdlp():
+    def run_ytdlp(target_id: str):
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(f"https://www.youtube.com/watch?v={id}", download=False)
+                info = ydl.extract_info(f"https://www.youtube.com/watch?v={target_id}", download=False)
                 abr = info.get('abr') or info.get('tbr') or 128
                 return {
                     "url": info['url'],
-                    "quality": f"{int(abr)}kbps" if abr else "128kbps",
+                    "quality": f"{int(abr)}kbps" if abr else "160kbps",
                     "format_note": info.get('ext', 'm4a'),
                     "duration": info.get('duration', 0),
                     "cached": False,
                     "source": "youtube",
-                    "requires_proxy": True
+                    "requires_proxy": True,
+                    "title": info.get('title', ''),
+                    "artist": info.get('uploader', '') or info.get('channel', '')
                 }
         except Exception as e:
-            print(f"[yt-dlp Fallback Error]: {type(e).__name__}: {str(e)[:200]}")
+            print(f"[yt-dlp Error on {target_id}]: {type(e).__name__}: {str(e)[:200]}")
             return None
 
-    yt_res = await asyncio.to_thread(run_ytdlp)
-    if yt_res:
+    yt_res = await asyncio.to_thread(run_ytdlp, id)
+
+    # Fallback to search if initial videoId failed and we have title metadata
+    if not yt_res and title:
+        try:
+            search_query = f"{title} {artist}".strip()
+            def search_yt_alt():
+                results = ytmusic.search(search_query, filter="songs")
+                if results:
+                    for r in results:
+                        alt_vid = r.get('videoId')
+                        if alt_vid and alt_vid != id:
+                            return alt_vid
+                return None
+            alt_id = await run_sync(search_yt_alt)
+            if alt_id:
+                yt_res = await asyncio.to_thread(run_ytdlp, alt_id)
+        except Exception as e:
+            print(f"[YouTube Alt Search Fallback Error]: {e}")
+
+    if yt_res and yt_res.get("url"):
         STREAM_CACHE[cache_key] = {
             **yt_res,
             "cached_at": time.time()
         }
         return yt_res
 
-    raise HTTPException(status_code=404, detail="Stream failed on all sources.")
+    raise HTTPException(status_code=404, detail="YouTube stream extraction failed.")
 
 @app.get("/api/proxy_stream")
 async def proxy_stream(request: Request, url: str):
@@ -1050,44 +909,30 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         if videoId:
             seen_vids.add(videoId)
 
-        # Blacklist terms that spoil queue quality
-        spam_keywords = ["10 hour", "10hour", "1 hour", "bass boosted", "slowed reverb", "slowed + reverb", "ringtone", "whatsapp status", "synthwave bootleg", "8d audio"]
+        # Blacklist spam/loop terms that spoil queue quality
+        spam_keywords = ["10 hour", "10hour", "1 hour", "bass boosted", "slowed reverb", "slowed + reverb", "ringtone", "whatsapp status"]
 
         for item in tracks:
             vid = item.get('videoId')
             if not vid or vid in seen_vids:
                 continue
 
-            raw_title = item.get('title', 'Unknown')
+            raw_title = item.get('title', 'Unknown').strip()
             lower_title = raw_title.lower()
 
-            # Skip spam / loop / remix garbage
+            # Skip spam / loop garbage
             if any(k in lower_title for k in spam_keywords):
                 continue
 
-            clean_title = clean_song_query(raw_title)
-            if not clean_title:
-                clean_title = raw_title
-            
-            norm_title = clean_title.lower().strip()
+            norm_title = lower_title.strip()
             if norm_title in seen_titles:
                 continue
 
             artist_name = "Unknown"
             if item.get('artists') and len(item['artists']) > 0:
-                artist_name = item['artists'][0].get('name', 'Unknown')
+                artist_name = ", ".join([a['name'] for a in item['artists'] if a.get('name')])
             elif item.get('author'):
                 artist_name = item['author']
-
-            # Sanitize record label channel names
-            labels = ["zee music company", "t-series", "sony music india", "speed records", "yrf", "tips official", "saregama", "geet mp3"]
-            if any(lbl in artist_name.lower() for lbl in labels):
-                # Try finding artist name after hyphen or in title
-                match = re.search(r'[\-–]\s*([A-Za-z0-9\s]+?)(?:\||$)', raw_title)
-                if match:
-                    cand = match.group(1).strip()
-                    if cand and len(cand) < 30:
-                        artist_name = cand
 
             thumb_list = item.get('thumbnails') or item.get('thumbnail') or []
             if isinstance(thumb_list, list) and len(thumb_list) > 0:
@@ -1104,12 +949,12 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             seen_titles.add(norm_title)
             
             recs.append({
-                "title": clean_title, 
+                "title": raw_title, 
                 "artist": artist_name, 
                 "cover": thumbnail,
                 "videoId": vid
             })
-            if len(recs) >= 20:
+            if len(recs) >= 25:
                 break
             
         res_data = {"status": "success", "recommendations": recs}
