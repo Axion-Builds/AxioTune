@@ -52,8 +52,8 @@ class LRUCacheDict(OrderedDict):
 API_CACHE = LRUCacheDict(maxsize=150)
 API_CACHE_TTL = 600  # 10 minutes cache for API responses
 
-# Cap worker threads to 4 to prevent RAM spikes on low-memory containers
-executor = ThreadPoolExecutor(max_workers=4)
+# ThreadPool worker pool for concurrent backend I/O requests
+executor = ThreadPoolExecutor(max_workers=12)
 async def run_sync(func, *args, **kwargs):
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(executor, lambda: func(*args, **kwargs))
@@ -1547,7 +1547,7 @@ async def fetch_lyricsplus_lyrics(title: str, artist: str, client: httpx.AsyncCl
     for base in mirrors:
         try:
             url = f"{base}/v2/lyrics/get"
-            r = await client.get(url, params={"title": title, "artist": artist}, timeout=5.0)
+            r = await client.get(url, params={"title": title, "artist": artist}, timeout=2.0)
             if r.status_code == 200:
                 data = r.json()
                 raw_items = data.get("lyrics", [])
@@ -1675,7 +1675,7 @@ async def fetch_kugou_lyrics(title: str, artist: str, client: httpx.AsyncClient)
     try:
         kw = f"{title} {artist}".strip()
         search_url = "http://mobileservice.kugou.com/api/v3/search/song"
-        r1 = await client.get(search_url, params={"keyword": kw, "page": 1, "pagesize": 2}, headers={"User-Agent": "KuGou/10.0"}, timeout=5.0)
+        r1 = await client.get(search_url, params={"keyword": kw, "page": 1, "pagesize": 2}, headers={"User-Agent": "KuGou/10.0"}, timeout=1.5)
         if r1.status_code != 200:
             return None
         info = r1.json().get("data", {}).get("info", [])
@@ -1686,7 +1686,7 @@ async def fetch_kugou_lyrics(title: str, artist: str, client: httpx.AsyncClient)
             return None
 
         # Step 2: Search lyrics candidates by hash
-        r2 = await client.get("http://lyrics.kugou.com/search", params={"ver": 1, "man": "yes", "client": "mobi", "hash": hash_val}, timeout=5.0)
+        r2 = await client.get("http://lyrics.kugou.com/search", params={"ver": 1, "man": "yes", "client": "mobi", "hash": hash_val}, timeout=1.5)
         if r2.status_code != 200:
             return None
         cands = r2.json().get("candidates", [])
@@ -1697,7 +1697,7 @@ async def fetch_kugou_lyrics(title: str, artist: str, client: httpx.AsyncClient)
         accesskey = cand.get("accesskey")
 
         # Step 3: Download LRC
-        r3 = await client.get("http://lyrics.kugou.com/download", params={"ver": 1, "client": "pc", "id": lrc_id, "accesskey": accesskey, "fmt": "lrc"}, timeout=5.0)
+        r3 = await client.get("http://lyrics.kugou.com/download", params={"ver": 1, "client": "pc", "id": lrc_id, "accesskey": accesskey, "fmt": "lrc"}, timeout=1.5)
         if r3.status_code != 200:
             return None
         b64 = r3.json().get("content", "")
@@ -1793,20 +1793,22 @@ async def get_lyrics(
     sources = []
     active_source = None
 
-    async with httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0"}, timeout=7.0) as client:
+    async with httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0"}, timeout=2.5) as client:
         # Build tasks for enabled providers in user's priority order
         tasks = []
         for p_key in provider_keys:
             if p_key in ("lrcred", "lrc_red", "lrc.red"):
                 tasks.append(("lrcred", fetch_lrcred_lyrics(c_title, c_artist, client)))
             elif p_key in ("musixmatch", "musicxmatch"):
-                tasks.append(("musixmatch", fetch_musixmatch_lyrics(c_title, c_artist, client, musixmatch_key)))
+                if musixmatch_key:
+                    tasks.append(("musixmatch", fetch_musixmatch_lyrics(c_title, c_artist, client, musixmatch_key)))
             elif p_key == "lyricsplus":
                 tasks.append(("lyricsplus", fetch_lyricsplus_lyrics(c_title, c_artist, client)))
             elif p_key == "betterlyrics":
                 tasks.append(("betterlyrics", fetch_betterlyrics_lyrics(c_title, c_artist, client, betterlyrics_key)))
             elif p_key == "paxsenix":
-                tasks.append(("paxsenix", fetch_paxsenix_lyrics(c_title, c_artist, paxsenix_key, client)))
+                if paxsenix_key:
+                    tasks.append(("paxsenix", fetch_paxsenix_lyrics(c_title, c_artist, paxsenix_key, client)))
             elif p_key == "simpmusic":
                 tasks.append(("simpmusic", fetch_simpmusic_lyrics(videoId, client)))
             elif p_key == "kugou":
@@ -1816,10 +1818,8 @@ async def get_lyrics(
 
         # Also fetch YouTube Music lyrics concurrently if videoId present
         yt_task = None
-        if videoId:
+        if videoId and ytmusic:
             def fetch_yt_lyrics():
-                if not ytmusic:
-                    return None
                 try:
                     watch = ytmusic.get_watch_playlist(videoId=videoId)
                     lyrics_id = watch.get("lyrics")
@@ -1842,7 +1842,7 @@ async def get_lyrics(
                 except Exception:
                     pass
                 return None
-            yt_task = asyncio.to_thread(fetch_yt_lyrics)
+            yt_task = asyncio.wait_for(asyncio.to_thread(fetch_yt_lyrics), timeout=2.0)
 
         # Run all provider fetches concurrently
         coros = [t[1] for t in tasks]

@@ -180,39 +180,36 @@ const audioPlayer = {
     set src(val) {
         this.initRealAudio();
         this._src = val;
-        let vid = val;
         
-        // Handle local downloaded files or blob URLs directly with HTMLAudioElement
-        if (val && (val.startsWith('/') || val.startsWith('blob:'))) {
+        if (!val) {
+            try { this._realAudio.pause(); } catch(e){}
+            this._realAudio.removeAttribute('src');
+            if (ytPlayer && ytPlayer.stopVideo) try { ytPlayer.stopVideo(); } catch(e){}
+            return;
+        }
+
+        // Handle ANY direct audio stream URL (http, https, relative proxy path, or blob)
+        if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/') || val.startsWith('blob:')) {
             this._mode = 'local';
-            if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+            if (ytPlayer && ytPlayer.pauseVideo) {
+                try { ytPlayer.pauseVideo(); } catch(e){}
+            }
             this._realAudio.src = val;
             this._realAudio.load();
             this.paused = true;
             return;
         }
-        
-        this._mode = 'yt';
-        this._realAudio.pause();
 
-        if (val && val.includes('proxy_stream')) {
-            try {
-                vid = decodeURIComponent(val.split('url=')[1]);
-                if (vid.includes('http')) {
-                    // if it's a full http URL (e.g. from yt-dlp fallback), we extract video ID if possible
-                    if (vid.includes('v=')) vid = vid.split('v=')[1].split('&')[0];
-                    else if (vid.includes('youtu.be/')) vid = vid.split('youtu.be/')[1].split('?')[0];
-                }
-            } catch(e){}
-        }
-        if (vid && vid.includes('http')) return; // Ignore full urls
-        
-        if (ytPlayer && ytPlayer.loadVideoById && vid) {
-            ytPlayer.loadVideoById(vid);
+        // Otherwise handle YouTube Video ID (e.g. 11-char ID like 'dQw4w9WgXcQ')
+        this._mode = 'yt';
+        try { this._realAudio.pause(); } catch(e){}
+
+        if (ytPlayer && ytPlayer.loadVideoById && val) {
+            ytPlayer.loadVideoById(val);
             this.paused = false;
             this.dispatchEvent('play');
-        } else if (vid) {
-            this._queuedVid = vid;
+        } else if (val) {
+            this._queuedVid = val;
         }
     },
     get src() { return this._src; },
@@ -3721,19 +3718,33 @@ function onPlayerStateChange(event) {
                 lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;">' + TERMINAL_LOADER_HTML + '</div>';
             }
 
-            // 1. Handover prefetched gapless stream if available, otherwise set src directly
+            // 1. Handover prefetched gapless stream if available, otherwise fetch instant high-speed stream
             if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
                 window.prefetchedStreamData = { url: prefetchedStreamUrl, quality: "Prefetched" };
                 audioPlayer.src = window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(prefetchedStreamUrl);
                 prefetchedStreamUrl = null;
                 prefetchVideoId = null;
+                audioPlayer.play().catch(e => console.warn("Queue play failed:", e));
+                prefetchNextSong();
             } else {
                 window.prefetchedStreamData = null;
-                audioPlayer.src = song.videoId; // This synchronously calls ytPlayer.loadVideoById in the setter
+                const targetVid = song.videoId;
+                const songT = song.title || '';
+                const songA = song.artist || '';
+                fetchStreamUrl(targetVid, false, songT, songA).then(streamData => {
+                    if (currentVideoId === targetVid && streamData && streamData.url) {
+                        audioPlayer._proxyDuration = streamData.duration || 0;
+                        audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
+                        audioPlayer.play().catch(e => console.warn("Queue stream play failed:", e));
+                        prefetchNextSong();
+                    }
+                }).catch(err => {
+                    if (currentVideoId === targetVid) {
+                        audioPlayer.src = targetVid;
+                        audioPlayer.play().catch(e => console.warn("Queue fallback failed:", e));
+                    }
+                });
             }
-
-            // 2. Play immediately
-            audioPlayer.play().catch(e => console.warn("Queue play failed:", e));
 
             // 3. Asynchronously fetch recommendations for infinite radio / next track queueing
             populateQueue(song.videoId, true, song.title, song.artist);
@@ -3910,7 +3921,6 @@ function onPlayerStateChange(event) {
                 const cleanArtist = songData.uploader.replace(/VEVO|Official|Topic|Music/gi, '').trim();
 
                 let streamData;
-                let lrc1;
                 
                 // Check Offline Database FIRST
                 let localSong = null;
@@ -3921,11 +3931,6 @@ function onPlayerStateChange(event) {
 
                 if (localSong && localSong.blob) {
                     streamData = { url: URL.createObjectURL(localSong.blob), quality: 'Offline HD' };
-                    try {
-                        lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal });
-                    } catch(e) {
-                        lrc1 = { json: async () => [] };
-                    }
                     if (myToken !== currentPlaybackToken) return;
                     audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
                     audioPlayer.play().catch(e => console.warn("Play failed:", e));
@@ -3937,16 +3942,12 @@ function onPlayerStateChange(event) {
                     audioPlayer._proxyDuration = streamData.duration || 0;
                     audioPlayer.src = window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(window.prefetchedStreamData.url);
                     window.prefetchedStreamData = null;
-                    lrc1 = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal });
                     if (myToken !== currentPlaybackToken) return; // Race condition check
                     
                     // src and play() were already triggered seamlessly in playQueueIndex
                     // Just ensure it's playing in case of browser autoplay blocks
                     if (audioPlayer.paused) audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 } else {
-                    // Start lyrics fetch in background
-                    const lyricsPromise = fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, { signal }).catch(e => null);
-                    
                     const songT = songData.title || '';
                     const songA = songData.uploader || songData.artist || '';
                     streamData = await fetchStreamUrl(songData.id, false, songT, songA).catch(e => {
@@ -3958,12 +3959,9 @@ function onPlayerStateChange(event) {
                     
                     audioPlayer._proxyDuration = streamData.duration || 0;
                     
-                    // Set src and play IMMEDIATELY
+                    // Set src and play IMMEDIATELY without waiting on external lyrics APIs
                     audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
                     audioPlayer.play().catch(e => console.warn("Play failed:", e));
-                    
-                    // Now await lyrics
-                    lrc1 = await lyricsPromise;
                 }
 
                 isSongLoaded = true;
@@ -5245,6 +5243,9 @@ function onPlayerStateChange(event) {
         // 2) Because Rows: 3 separate "Because you listened to X" rows from different songs
 
         let tasteMixToken = 0;
+        window._tasteMixCache = window._tasteMixCache || null;
+        window._tasteMixCacheTime = window._tasteMixCacheTime || 0;
+
         async function populateTasteMix(historyItems) {
             const section = document.getElementById('home-taste-mix-section');
             const container = document.getElementById('home-taste-mix-container');
@@ -5252,6 +5253,13 @@ function onPlayerStateChange(event) {
 
             const myToken = ++tasteMixToken;
             const valid = (historyItems || []).filter(h => h && (h.videoId || h.id || h.title));
+
+            // Instant render from memory cache if available and fresh (< 10 min)
+            const now = Date.now();
+            if (window._tasteMixCache && window._tasteMixCache.length > 0 && (now - window._tasteMixCacheTime) < 600000) {
+                section.style.display = 'block';
+                populateCinematicCards('home-taste-mix-container', window._tasteMixCache);
+            }
 
             // If no history items yet, load trending tracks into Taste Mix as a starter AI Mix
             if (valid.length === 0) {
@@ -5262,33 +5270,45 @@ function onPlayerStateChange(event) {
                     const items = trendData.results || trendData.trending || trendData.top_songs || [];
                     if (items.length > 0) {
                         section.style.display = 'block';
-                        populateCinematicCards('home-taste-mix-container', items.slice(0, 24).map(s => ({
+                        const cards = items.slice(0, 24).map(s => ({
                             videoId: s.videoId || s.id,
                             id: s.videoId || s.id,
                             title: s.title,
                             artist: s.artist || s.uploader || '',
                             cover: s.cover || s.thumbnail || (s.videoId ? `https://i.ytimg.com/vi/${s.videoId}/hqdefault.jpg` : ''),
                             type: 'song'
-                        })));
+                        }));
+                        window._tasteMixCache = cards;
+                        window._tasteMixCacheTime = Date.now();
+                        populateCinematicCards('home-taste-mix-container', cards);
                     }
                 } catch(e) {}
                 return;
             }
 
-            // Pick up to 5 diverse seeds from history
+            // Pick 2-3 freshest diverse seeds from history for maximum speed and relevance
             const seeds = [];
-            const step = Math.max(1, Math.floor(valid.length / 5));
-            for (let i = 0; i < valid.length && seeds.length < 5; i += step) {
-                seeds.push(valid[i]);
+            const seenSeedTitles = new Set();
+            for (const h of valid) {
+                const norm = (h.title || '').trim().toLowerCase();
+                if (norm && !seenSeedTitles.has(norm)) {
+                    seenSeedTitles.add(norm);
+                    seeds.push(h);
+                    if (seeds.length >= 3) break;
+                }
             }
             if (seeds.length === 0) seeds.push(valid[0]);
 
-            section.style.display = 'block';
-            container.innerHTML = '<div class="empty-state" style="padding:20px;">' + TERMINAL_LOADER_HTML + '</div>';
+            if (!window._tasteMixCache || window._tasteMixCache.length === 0) {
+                section.style.display = 'block';
+                container.innerHTML = '<div class="empty-state" style="padding:20px;">' + TERMINAL_LOADER_HTML + '</div>';
+            }
 
-            // Fetch recs for each seed in parallel
             const allRecs = [];
             const seenIds = new Set();
+            let firstSeedRendered = false;
+
+            // Fetch recs for each seed concurrently, progressively rendering on first seed completion
             await Promise.all(seeds.map(async (seed) => {
                 try {
                     const vid = seed.videoId || seed.id || '';
@@ -5301,7 +5321,9 @@ function onPlayerStateChange(event) {
 
                     const res = await fetch(`/api/recommendations?${params.toString()}`);
                     const data = await res.json();
-                    if (data.status === 'success' && data.recommendations) {
+                    if (myToken !== tasteMixToken) return;
+
+                    if (data.status === 'success' && data.recommendations && data.recommendations.length > 0) {
                         data.recommendations.forEach(s => {
                             const trackId = s.videoId || s.id;
                             if (trackId && !seenIds.has(trackId)) {
@@ -5316,6 +5338,13 @@ function onPlayerStateChange(event) {
                                 });
                             }
                         });
+
+                        // Progressive render: Display immediately on first seed completion
+                        if (!firstSeedRendered && allRecs.length >= 8 && myToken === tasteMixToken) {
+                            firstSeedRendered = true;
+                            section.style.display = 'block';
+                            populateCinematicCards('home-taste-mix-container', allRecs.slice(0, 24));
+                        }
                     }
                 } catch(e) {
                     console.warn("TasteMix seed error:", e);
@@ -5325,36 +5354,41 @@ function onPlayerStateChange(event) {
             if (myToken !== tasteMixToken) return;
 
             if (allRecs.length === 0) {
-                // Fallback to trending tracks if seed recommendations are empty
-                try {
-                    const trendRes = await fetch('/api/trending');
-                    const trendData = await trendRes.json();
-                    if (myToken !== tasteMixToken) return;
-                    const items = trendData.results || trendData.trending || trendData.top_songs || [];
-                    if (items.length > 0) {
-                        section.style.display = 'block';
-                        populateCinematicCards('home-taste-mix-container', items.slice(0, 24).map(s => ({
-                            videoId: s.videoId || s.id,
-                            id: s.videoId || s.id,
-                            title: s.title,
-                            artist: s.artist || s.uploader || '',
-                            cover: s.cover || s.thumbnail || (s.videoId ? `https://i.ytimg.com/vi/${s.videoId}/hqdefault.jpg` : ''),
-                            type: 'song'
-                        })));
-                        return;
-                    }
-                } catch(e) {}
-                section.style.display = 'none';
+                if (!window._tasteMixCache) {
+                    try {
+                        const trendRes = await fetch('/api/trending');
+                        const trendData = await trendRes.json();
+                        if (myToken !== tasteMixToken) return;
+                        const items = trendData.results || trendData.trending || trendData.top_songs || [];
+                        if (items.length > 0) {
+                            section.style.display = 'block';
+                            populateCinematicCards('home-taste-mix-container', items.slice(0, 24).map(s => ({
+                                videoId: s.videoId || s.id,
+                                id: s.videoId || s.id,
+                                title: s.title,
+                                artist: s.artist || s.uploader || '',
+                                cover: s.cover || s.thumbnail || (s.videoId ? `https://i.ytimg.com/vi/${s.videoId}/hqdefault.jpg` : ''),
+                                type: 'song'
+                            })));
+                            return;
+                        }
+                    } catch(e) {}
+                    section.style.display = 'none';
+                }
                 return;
             }
 
-            // Shuffle the pool for true mix feel
+            // Shuffle the pool for true AI mix variety
             for (let i = allRecs.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [allRecs[i], allRecs[j]] = [allRecs[j], allRecs[i]];
             }
 
-            populateCinematicCards('home-taste-mix-container', allRecs.slice(0, 24));
+            const finalCards = allRecs.slice(0, 24);
+            window._tasteMixCache = finalCards;
+            window._tasteMixCacheTime = Date.now();
+            section.style.display = 'block';
+            populateCinematicCards('home-taste-mix-container', finalCards);
         }
 
         let becauseRowsToken = 0;
@@ -5384,7 +5418,8 @@ function onPlayerStateChange(event) {
 
             rowsContainer.innerHTML = '';
 
-            for (const song of picks) {
+            // Fetch all because rows concurrently via Promise.all
+            await Promise.all(picks.map(async (song) => {
                 try {
                     const vid = song.videoId || song.id || '';
                     const title = song.title || '';
@@ -5398,10 +5433,10 @@ function onPlayerStateChange(event) {
                     if (myToken !== becauseRowsToken) return;
                     const data = await res.json();
                     if (myToken !== becauseRowsToken) return;
-                    if (data.status !== 'success' || !data.recommendations || data.recommendations.length === 0) continue;
+                    if (data.status !== 'success' || !data.recommendations || data.recommendations.length === 0) return;
 
                     const rowId = 'because-row-' + (vid || Math.random().toString(36).slice(2, 8));
-                    if (document.getElementById(rowId)) continue;
+                    if (document.getElementById(rowId)) return;
                     const sectionEl = document.createElement('div');
                     sectionEl.className = 'home-section';
                     sectionEl.style.marginBottom = '28px';
@@ -5432,7 +5467,7 @@ function onPlayerStateChange(event) {
                 } catch(e) {
                     console.warn("Because row error:", e);
                 }
-            }
+            }));
         }
 
         function populateVinylContainer(containerId, entries) {
