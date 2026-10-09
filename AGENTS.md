@@ -1,7 +1,7 @@
 # AxioTune Project Rules & Standards
 
 ## 1. Web Typography Guidelines & Mandatory Skill
-- Whenever tasked with improving, modifying, or reviewing fonts, typography, text styling, or reading comfort, **ALWAYS** activate and adhere to the `web-typography` skill (`.agents/skills/web-typography/SKILL.md` or `~/.gemini/config/skills/web-typography/SKILL.md`).
+- Whenever tasked with improving, modifying, or reviewing fonts, typography, text styling, or reading comfort, **ALWAYS** activate and adhere to the `web-typography` skill (`~/.gemini/config/skills/web-typography/SKILL.md`).
 - **Zero Guesswork / Random Swapping**: Never introduce unvetted display fonts or arbitrary font pairings without scoring against the 10-point diagnostic rubric in `web-typography`.
 - **Rhythm & Hierarchy**: Ensure clear scale ratio between hierarchy levels. Body text measure must stay within 45–75 characters (ideal 65ch) with 1.4–1.7 line-height. Headings should be tighter (1.1–1.25).
 - **Font Selection**: Default to proven web typography pairings (e.g. Outfit / Inter / system stacks) unless explicitly instructed otherwise with user approval.

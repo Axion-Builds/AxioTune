@@ -20,11 +20,15 @@ except ImportError:
     nav = None
     TAB_CONTENT = None
     parse_watch_playlist = None
+from typing import Dict, List, Any, Optional
 from pydantic import BaseModel
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
 import gc
+import sqlite3
+import random
+import socket
 
 # --- Memory-Safe LRU Caching & Concurrency (Tuned for Render 512MB RAM) ---
 class LRUCacheDict(OrderedDict):
@@ -58,7 +62,6 @@ app = FastAPI()
 AUTH_FILE = "headers_auth.json"
 ytmusic = None
 
-import sqlite3
 def init_db():
     conn = sqlite3.connect("music_db.sqlite")
     c = conn.cursor()
@@ -154,70 +157,60 @@ def read_root():
 
 @app.get("/{filename}.jpg")
 def get_jpg(filename: str):
-    import os
     if os.path.exists(f"{filename}.jpg"):
         return FileResponse(f"{filename}.jpg")
     raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/{filename}.svg")
 def get_svg(filename: str):
-    import os
     if os.path.exists(f"{filename}.svg"):
         return FileResponse(f"{filename}.svg", media_type="image/svg+xml")
     return {"error": "Not found"}
 
 @app.get("/{filename}.png")
 def get_png(filename: str):
-    import os
     if os.path.exists(f"{filename}.png"):
         return FileResponse(f"{filename}.png")
     raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/{filename}.gif")
 def get_gif(filename: str):
-    import os
     if os.path.exists(f"{filename}.gif"):
         return FileResponse(f"{filename}.gif")
     raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/{filename}.mp4")
 def get_mp4(filename: str):
-    import os
     if os.path.exists(f"{filename}.mp4"):
         return FileResponse(f"{filename}.mp4", media_type="video/mp4")
     return {"error": "Not found"}
 
 @app.get("/{filename}.css")
 def get_css(filename: str):
-    import os
     if os.path.exists(f"{filename}.css"):
         return FileResponse(f"{filename}.css")
     raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/{filename}.js")
 def get_js(filename: str):
-    import os
     if os.path.exists(f"{filename}.js"):
         return FileResponse(f"{filename}.js")
     raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/{filename}.json")
 def get_json(filename: str):
-    import os
     if os.path.exists(f"{filename}.json"):
         return FileResponse(f"{filename}.json", media_type="application/json")
     raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/{filename}.webp")
 def get_webp(filename: str):
-    import os
     if os.path.exists(f"{filename}.webp"):
         return FileResponse(f"{filename}.webp", media_type="image/webp")
     raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/{filename}.html")
 def get_html(filename: str):
-    import os
     if os.path.exists(f"{filename}.html"):
         return FileResponse(f"{filename}.html", media_type="text/html")
     raise HTTPException(status_code=404, detail="File not found")
@@ -1247,7 +1240,6 @@ def parse_time_str(t_str: str) -> float:
 
 def parse_ttml_lyrics(ttml_text: str):
     """Parses Apple Music TTML (Timed Text Markup Language) into structured line and word objects."""
-    import re
     if not ttml_text or '<tt' not in ttml_text.lower():
         return []
     lines = []
@@ -1288,7 +1280,6 @@ def parse_ttml_lyrics(ttml_text: str):
 
 def parse_synced_lrc(lrc_text: str):
     """Parses LRC timestamped lyrics string into line and word objects with smart vocal timing & 3-dot instrumental indicators."""
-    import re
     if not lrc_text:
         return []
 
@@ -1712,7 +1703,6 @@ async def fetch_kugou_lyrics(title: str, artist: str, client: httpx.AsyncClient)
         b64 = r3.json().get("content", "")
         if not b64:
             return None
-        import base64
         lrc_text = base64.b64decode(b64).decode("utf-8", errors="ignore")
         parsed = parse_synced_lrc(lrc_text)
         if parsed:
@@ -1999,7 +1989,6 @@ def format_headers(raw_input: str) -> str:
     
     # Parse cURL command if pasted
     if "curl " in raw_input.lower():
-        import re
         # Try matching single quotes first
         matches = re.findall(r'(?:-H|--header)\s+[\'"]([^\'"]+)[\'"]', raw_input, re.IGNORECASE)
         if not matches:
@@ -2702,7 +2691,6 @@ async def get_radio(mood: str):
                 "query": f"{t['title']} {', '.join([a['name'] for a in t.get('artists', [])]) if t.get('artists') else ''}"
             })
             
-        import random
         random.shuffle(results)
         return {"status": "success", "tracks": results}
     except Exception as e:
@@ -2762,8 +2750,6 @@ async def download_mp3(id: str, title: str = "Song"):
 # =========================================================================
 # LISTEN TOGETHER / PARTY MODE (WebSockets)
 # =========================================================================
-from typing import Dict, List, Any
-import json
 
 class PartyManager:
     def __init__(self):
@@ -2864,8 +2850,6 @@ async def party_endpoint(websocket: WebSocket, room_id: str, client_id: str, rol
                 pass
     except WebSocketDisconnect:
         await party_manager.disconnect(room_id, client_id)
-
-import socket
 
 @app.get("/api/ip")
 def get_ip():

@@ -20,9 +20,10 @@ search_play.py
 .DS_Store
 Thumbs.db
 
-# Editor
+# Editor & Local Agent configs
 .vscode/
 *.swp
+.agents/
 
 # SQLite local databases
 *.sqlite
