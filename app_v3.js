@@ -246,29 +246,60 @@ const audioPlayer = {
     }
 };
 
+async function handleIframePlaybackError(vid, errorCode) {
+    console.warn(`[YouTube IFrame] Error ${errorCode} on video ${vid}. Attempting high-speed stream fallback.`);
+    if (!vid) return;
+    try {
+        const res = await fetch(`/api/stream?id=${encodeURIComponent(vid)}`);
+        if (res.ok) {
+            const streamData = await res.json();
+            if (streamData && streamData.url) {
+                audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
+                audioPlayer.play().catch(e => console.warn("Fallback play error:", e));
+                return;
+            }
+        }
+    } catch (e) {
+        console.error("IFrame fallback stream error:", e);
+    }
+    audioPlayer.dispatchEvent('error');
+}
+
 window.onYouTubeIframeAPIReady = function() {
     ytPlayer = new YT.Player('youtube-player', {
-        height: '1',
-        width: '1',
+        height: '200',
+        width: '200',
         videoId: '',
         playerVars: {
             'playsinline': 1,
             'controls': 0,
             'disablekb': 1,
-            'autoplay': 1
+            'autoplay': 1,
+            'origin': window.location.origin
         },
         events: {
             'onReady': () => { 
                 audioPlayer.readyState = 4; 
                 if (audioPlayer._queuedVid) {
-                    ytPlayer.loadVideoById(audioPlayer._queuedVid);
+                    const qVid = audioPlayer._queuedVid;
+                    audioPlayer._queuedVid = null;
+                    ytPlayer.loadVideoById(qVid);
                     audioPlayer.paused = false;
                     audioPlayer.dispatchEvent('play');
-                    audioPlayer._queuedVid = null;
                 }
             },
             'onStateChange': onPlayerStateChange,
-            'onError': () => { audioPlayer.dispatchEvent('error'); }
+            'onError': (e) => { 
+                const errCode = e ? e.data : 0;
+                console.warn('[YouTube IFrame Player onError]:', errCode);
+                if (errCode === 101 || errCode === 150 || errCode === 100 || errCode === 2) {
+                    if (typeof handleIframePlaybackError === 'function') {
+                        handleIframePlaybackError(currentVideoId, errCode);
+                        return;
+                    }
+                }
+                audioPlayer.dispatchEvent('error'); 
+            }
         }
     });
 };
@@ -295,18 +326,28 @@ if (window.YT && window.YT.Player) {
     window.onYouTubeIframeAPIReady();
 }
 
-let timeupdateInterval;
+let timeupdateInterval = null;
 function onPlayerStateChange(event) {
     if (audioPlayer._mode !== 'yt') return;
     if (event.data == YT.PlayerState.PLAYING) {
         audioPlayer.paused = false;
+        audioPlayer.readyState = 4;
         audioPlayer.dispatchEvent('play');
+        audioPlayer.dispatchEvent('playing');
         audioPlayer.dispatchEvent('loadedmetadata');
+        if (timeupdateInterval) clearInterval(timeupdateInterval);
+        timeupdateInterval = setInterval(() => {
+            if (audioPlayer._mode === 'yt' && !audioPlayer.paused) {
+                audioPlayer.dispatchEvent('timeupdate');
+            }
+        }, 150);
     } else if (event.data == YT.PlayerState.PAUSED) {
         audioPlayer.paused = true;
+        if (timeupdateInterval) { clearInterval(timeupdateInterval); timeupdateInterval = null; }
         audioPlayer.dispatchEvent('pause');
     } else if (event.data == YT.PlayerState.ENDED) {
         audioPlayer.paused = true;
+        if (timeupdateInterval) { clearInterval(timeupdateInterval); timeupdateInterval = null; }
         audioPlayer.dispatchEvent('ended');
     } else if (event.data == YT.PlayerState.BUFFERING) {
         audioPlayer.dispatchEvent('stalled');
@@ -2736,29 +2777,15 @@ function onPlayerStateChange(event) {
         async function refreshCurrentStream(shouldResume = true) {
             if (!currentVideoId || streamRefreshInProgress) return false;
             streamRefreshInProgress = true;
-            // Only save time if metadata is loaded and we have a valid duration
-            const savedTime = (audioPlayer.readyState > 0 && audioPlayer.duration) ? (audioPlayer.currentTime || 0) : 0;
-            const wasPlaying = !audioPlayer.paused;
             try {
-                prefetchedStreamUrl = null;
-                prefetchVideoId = null;
-                window.prefetchedStreamData = null;
-                const songTitle = currentSongMeta?.title || trackTitleEl?.textContent || '';
-                const songArtist = currentSongMeta?.artist || currentSongMeta?.uploader || trackArtistEl?.textContent || '';
-                const streamData = await fetchStreamUrl(currentVideoId, true, songTitle, songArtist);
-                audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
-                audioPlayer.load();
-                if (savedTime > 0) {
-                    audioPlayer.currentTime = Math.min(savedTime, audioPlayer.duration || savedTime);
-                }
-                if (shouldResume && (wasPlaying || isSongLoaded)) {
-                    await audioPlayer.play().catch(() => {});
-                }
+                const savedTime = audioPlayer.currentTime || 0;
+                audioPlayer.src = currentVideoId;
+                if (savedTime > 0) audioPlayer.currentTime = savedTime;
+                if (shouldResume) await audioPlayer.play().catch(() => {});
                 showToast('Stream refreshed');
                 return true;
             } catch (e) {
                 console.warn('Stream refresh failed:', e);
-                showToast('Could not refresh stream — try searching again');
                 return false;
             } finally {
                 streamRefreshInProgress = false;
@@ -2768,12 +2795,9 @@ function onPlayerStateChange(event) {
         async function prefetchNextSong() {
             if (queueList.length === 0 || currentQueueIndex >= queueList.length - 1) return;
             const nextSong = queueList[currentQueueIndex + 1];
-            if (nextSong.videoId && prefetchVideoId !== nextSong.videoId) {
+            if (nextSong && nextSong.title && typeof fetchLyricsForQueueSong === 'function') {
                 try {
-                    const data = await fetchStreamUrl(nextSong.videoId, false, nextSong.title || '', nextSong.artist || '');
-                    prefetchedStreamUrl = data.url;
-                    prefetchVideoId = nextSong.videoId;
-                    window.prefetchedStreamData = data;
+                    fetchLyricsForQueueSong(nextSong.title, nextSong.artist, nextSong.videoId);
                 } catch(e) {}
             }
         }
@@ -3718,33 +3742,11 @@ function onPlayerStateChange(event) {
                 lyricsContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="margin-top:0;">' + TERMINAL_LOADER_HTML + '</div>';
             }
 
-            // 1. Handover prefetched gapless stream if available, otherwise fetch instant high-speed stream
-            if (isNext && prefetchVideoId === song.videoId && prefetchedStreamUrl) {
-                window.prefetchedStreamData = { url: prefetchedStreamUrl, quality: "Prefetched" };
-                audioPlayer.src = window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(prefetchedStreamUrl);
-                prefetchedStreamUrl = null;
-                prefetchVideoId = null;
-                audioPlayer.play().catch(e => console.warn("Queue play failed:", e));
-                prefetchNextSong();
-            } else {
-                window.prefetchedStreamData = null;
-                const targetVid = song.videoId;
-                const songT = song.title || '';
-                const songA = song.artist || '';
-                fetchStreamUrl(targetVid, false, songT, songA).then(streamData => {
-                    if (currentVideoId === targetVid && streamData && streamData.url) {
-                        audioPlayer._proxyDuration = streamData.duration || 0;
-                        audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
-                        audioPlayer.play().catch(e => console.warn("Queue stream play failed:", e));
-                        prefetchNextSong();
-                    }
-                }).catch(err => {
-                    if (currentVideoId === targetVid) {
-                        audioPlayer.src = targetVid;
-                        audioPlayer.play().catch(e => console.warn("Queue fallback failed:", e));
-                    }
-                });
-            }
+            // 1. Instant Official YouTube IFrame Playback (Zero server delay!)
+            const targetVid = song.videoId;
+            audioPlayer.src = targetVid;
+            audioPlayer.play().catch(e => console.warn("Queue play failed:", e));
+            prefetchNextSong();
 
             // 3. Asynchronously fetch recommendations for infinite radio / next track queueing
             populateQueue(song.videoId, true, song.title, song.artist);
@@ -3920,9 +3922,7 @@ function onPlayerStateChange(event) {
                 const cleanTitle = songData.title.split('(')[0].split('[')[0].split('|')[0].trim();
                 const cleanArtist = songData.uploader.replace(/VEVO|Official|Topic|Music/gi, '').trim();
 
-                let streamData;
-                
-                // Check Offline Database FIRST
+                // Check Offline Database FIRST (if user cached offline)
                 let localSong = null;
                 try {
                     const downloadedSongs = await getDownloadedSongs();
@@ -3930,37 +3930,14 @@ function onPlayerStateChange(event) {
                 } catch(e) { console.error("Offline DB read error:", e); }
 
                 if (localSong && localSong.blob) {
-                    streamData = { url: URL.createObjectURL(localSong.blob), quality: 'Offline HD' };
                     if (myToken !== currentPlaybackToken) return;
-                    audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
+                    audioPlayer.src = URL.createObjectURL(localSong.blob);
                     audioPlayer.play().catch(e => console.warn("Play failed:", e));
-                }
-                // If it was injected by playQueueIndex, it's valid.
-                // If it was lingering from prefetchNextSong but doesn't match the new search, discard it!
-                else if (window.prefetchedStreamData && (!prefetchVideoId || prefetchVideoId === currentVideoId)) {
-                    streamData = window.prefetchedStreamData;
-                    audioPlayer._proxyDuration = streamData.duration || 0;
-                    audioPlayer.src = window.prefetchedStreamData.requires_proxy === false ? window.prefetchedStreamData.url : '/api/proxy_stream?url=' + encodeURIComponent(window.prefetchedStreamData.url);
-                    window.prefetchedStreamData = null;
-                    if (myToken !== currentPlaybackToken) return; // Race condition check
-                    
-                    // src and play() were already triggered seamlessly in playQueueIndex
-                    // Just ensure it's playing in case of browser autoplay blocks
-                    if (audioPlayer.paused) audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 } else {
-                    const songT = songData.title || '';
-                    const songA = songData.uploader || songData.artist || '';
-                    streamData = await fetchStreamUrl(songData.id, false, songT, songA).catch(e => {
-                        throw new Error('Stream request failed');
-                    });
-                    
+                    // MAIN ENGINE: Official YouTube IFrame Instant Playback!
+                    const playVid = songData.videoId || songData.id || currentVideoId;
                     if (myToken !== currentPlaybackToken) return;
-                    if (!streamData.url) throw new Error(streamData.message || 'No stream URL returned');
-                    
-                    audioPlayer._proxyDuration = streamData.duration || 0;
-                    
-                    // Set src and play IMMEDIATELY without waiting on external lyrics APIs
-                    audioPlayer.src = streamData.requires_proxy === false ? streamData.url : '/api/proxy_stream?url=' + encodeURIComponent(streamData.url);
+                    audioPlayer.src = playVid;
                     audioPlayer.play().catch(e => console.warn("Play failed:", e));
                 }
 
@@ -3974,14 +3951,12 @@ function onPlayerStateChange(event) {
                     populateQueue(songData.videoId || songData.id || currentVideoId, true, songData.title, songData.uploader || songData.artist || '');
                 }
 
-                // Quality badge
-                if (streamData.quality) {
-                    const badge = document.createElement('div');
-                    badge.style.cssText = 'position:fixed;top:20px;right:80px;background:rgba(var(--accent-rgb),0.85);color:white;padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;z-index:9999;backdrop-filter:blur(10px);transition:opacity 1s;';
-                    badge.textContent = `🎵 ${streamData.quality}`;
-                    document.body.appendChild(badge);
-                    setTimeout(() => { badge.style.opacity = '0'; setTimeout(() => badge.remove(), 1000); }, 3000);
-                }
+                // Instant Player Badge
+                const badge = document.createElement('div');
+                badge.style.cssText = 'position:fixed;top:20px;right:80px;background:rgba(var(--accent-rgb),0.85);color:white;padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;z-index:9999;backdrop-filter:blur(10px);transition:opacity 1s;';
+                badge.textContent = '⚡ YouTube Official Player';
+                document.body.appendChild(badge);
+                setTimeout(() => { badge.style.opacity = '0'; setTimeout(() => badge.remove(), 1000); }, 3000);
 
                 // STEP 3: Now process lyrics via Word-by-Word Priority + YT Fallback Pipeline
                 fetchLyricsForQueueSong(cleanTitle, cleanArtist, songData.id || songData.videoId);
