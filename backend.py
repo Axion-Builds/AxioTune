@@ -829,79 +829,82 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         if cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < API_CACHE_TTL:
             return API_CACHE[cache_key]['data']
             
-        tracks = []
-        
-        # Strategy 1: Direct YouTube Music Radio extraction via RDAMVM
-        # Bypasses the upstream ytmusicapi 'endpoint' KeyError on tab 2
-        if videoId and nav and parse_watch_playlist:
-            def fetch_radio():
+        def extract_radio_from_id(target_id: str):
+            if not target_id or not ytmusic:
+                return []
+            try:
                 body = {
                     'enablePersistentPlaylistPanel': True,
                     'isAudioOnly': True,
-                    'videoId': videoId,
-                    'playlistId': f'RDAMVM{videoId}'
+                    'videoId': target_id,
+                    'playlistId': f'RDAMVM{target_id}'
                 }
                 resp = ytmusic._send_request('next', body)
-                renderer = nav(resp, ['contents', 'singleColumnMusicWatchNextResultsRenderer', 'tabbedRenderer', 'watchNextTabbedResultsRenderer'])
-                panel = nav(renderer, [*TAB_CONTENT, 'musicQueueRenderer', 'content', 'playlistPanelRenderer'], True)
-                if panel and 'contents' in panel:
-                    return parse_watch_playlist(panel['contents'])
-                return []
-            try:
-                tracks = await run_sync(fetch_radio)
+                renderer = resp.get('contents', {}).get('singleColumnMusicWatchNextResultsRenderer', {}).get('tabbedRenderer', {}).get('watchNextTabbedResultsRenderer', {})
+                for t in renderer.get('tabs', []):
+                    tr = t.get('tabRenderer', {})
+                    ppr = tr.get('content', {}).get('musicQueueRenderer', {}).get('content', {}).get('playlistPanelRenderer', {})
+                    if ppr and 'contents' in ppr and parse_watch_playlist:
+                        parsed = parse_watch_playlist(ppr['contents'])
+                        if parsed:
+                            return parsed
             except Exception as e:
-                print(f"[Recs] RDAMVM fetch failed: {e}")
-                tracks = []
-        
-        # Strategy 2: Standard watch_playlist fallback
-        if len(tracks) <= 1 and videoId:
-            try:
-                def fetch_watch():
-                    return ytmusic.get_watch_playlist(videoId=videoId, limit=25)
-                res = await run_sync(fetch_watch)
-                if res and res.get('tracks'):
-                    tracks = res['tracks']
-            except Exception:
-                pass
-                
-        # Strategy 3: Search similar songs using artist and/or title
-        if len(tracks) <= 1:
-            search_query = ""
-            if artist:
-                search_query = f"{artist} songs"
-            elif title:
-                search_query = title
-            elif videoId:
-                try:
-                    def get_song_info():
-                        s = ytmusic.get_song(videoId)
-                        a = s.get('videoDetails', {}).get('author', '')
-                        t = s.get('videoDetails', {}).get('title', '')
-                        return a, t
-                    a, t = await run_sync(get_song_info)
-                    search_query = f"{a} songs" if a else t
-                except Exception:
-                    search_query = ""
-            
-            if search_query:
-                try:
-                    def search_similar():
-                        return ytmusic.search(query=search_query, filter="songs", limit=25)
-                    tracks = await run_sync(search_similar)
-                except Exception as e:
-                    print(f"[Recs] Search fallback failed: {e}")
+                print(f"[Recs Radio {target_id}]: {e}")
+            return []
 
-        # Strategy 4: Fallback to top/trending songs so queue never runs dry
-        if len(tracks) <= 1:
-            try:
-                def fetch_trending():
-                    charts = ytmusic.get_charts(country="IN")
-                    return charts.get('videos', {}).get('items', []) or charts.get('songs', {}).get('items', [])
-                trend_tracks = await run_sync(fetch_trending)
-                if trend_tracks:
-                    tracks = trend_tracks
-            except Exception:
-                pass
+        def resolve_and_fetch():
+            tracks = []
+            # 1. Try direct videoId radio
+            if videoId:
+                tracks = extract_radio_from_id(videoId)
+
+            # 2. If <= 1 track, resolve official YouTube Music song ATV ID
+            if len(tracks) <= 1:
+                q = f"{title} {artist}".strip()
+                if not q and videoId:
+                    try:
+                        s_info = ytmusic.get_song(videoId)
+                        a_name = s_info.get('videoDetails', {}).get('author', '')
+                        t_name = s_info.get('videoDetails', {}).get('title', '')
+                        q = f"{t_name} {a_name}".strip()
+                    except Exception:
+                        pass
+                if q:
+                    try:
+                        songs = ytmusic.search(q, filter="songs", limit=3)
+                        for s in songs:
+                            alt_id = s.get('videoId')
+                            if alt_id and alt_id != videoId:
+                                alt_tracks = extract_radio_from_id(alt_id)
+                                if len(alt_tracks) > 1:
+                                    tracks = alt_tracks
+                                    break
+                    except Exception as e:
+                        print(f"[Recs ATV search error]: {e}")
+
+            # 3. If radio still not obtained, search similar songs strictly in song catalog
+            if len(tracks) <= 1:
+                search_q = ""
+                if artist:
+                    search_q = f"{artist} songs"
+                elif title:
+                    search_q = f"{title} songs"
+                if search_q:
+                    try:
+                        tracks = ytmusic.search(query=search_q, filter="songs", limit=25)
+                    except Exception as e:
+                        print(f"[Recs Search fallback error]: {e}")
+
+            # 4. Final safety net: global popular songs (never country-locked Indian trending charts)
+            if len(tracks) <= 1:
+                try:
+                    tracks = ytmusic.search(query="Popular Hits", filter="songs", limit=25)
+                except Exception:
+                    pass
+
+            return tracks
+
+        tracks = await run_sync(resolve_and_fetch)
         
         recs = []
         seen_vids = set()
@@ -1638,7 +1641,7 @@ async def get_lyrics(
     sources = []
     active_source = None
 
-    async with httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0"}, timeout=2.5) as client:
+    async with httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0"}, timeout=4.5) as client:
         # Build tasks for enabled providers in user's priority order
         tasks = []
         for p_key in provider_keys:
@@ -1661,33 +1664,40 @@ async def get_lyrics(
             elif p_key == "lrclib":
                 tasks.append(("lrclib", fetch_lrclib_lyrics(c_title, c_artist, client)))
 
-        # Also fetch YouTube Music lyrics concurrently if videoId present
+        # Also fetch YouTube Music official lyrics concurrently
         yt_task = None
-        if videoId and ytmusic:
+        if ytmusic and (videoId or c_title or c_artist):
             def fetch_yt_lyrics():
-                try:
-                    watch = ytmusic.get_watch_playlist(videoId=videoId)
-                    lyrics_id = watch.get("lyrics")
-                    if lyrics_id:
-                        return ytmusic.get_lyrics(lyrics_id)
-                except Exception:
-                    pass
-                try:
-                    res = ytmusic._send_request('next', {'videoId': videoId, 'isAudioOnly': True})
-                    tabs = res.get('contents', {}).get('singleColumnMusicWatchNextResultsRenderer', {}).get('tabbedRenderer', {}).get('watchNextTabbedResultsRenderer', {}).get('tabs', [])
-                    for t in tabs:
-                        tr = t.get('tabRenderer', {})
-                        title = tr.get('title', '')
-                        if 'Lyrics' in str(title):
-                            browse_id = tr.get('endpoint', {}).get('browseEndpoint', {}).get('browseId')
-                            if browse_id:
-                                lyr = ytmusic.get_lyrics(browse_id)
-                                if lyr and lyr.get('lyrics'):
-                                    return lyr
-                except Exception:
-                    pass
+                target_ids = []
+                if videoId:
+                    target_ids.append(videoId)
+                if c_title or c_artist:
+                    try:
+                        q_search = f"{c_title} {c_artist}".strip()
+                        if q_search:
+                            songs = ytmusic.search(q_search, filter="songs", limit=2)
+                            for s in songs:
+                                sid = s.get("videoId")
+                                if sid and sid not in target_ids:
+                                    target_ids.append(sid)
+                    except Exception:
+                        pass
+                for tid in target_ids:
+                    try:
+                        res = ytmusic._send_request('next', {'videoId': tid, 'isAudioOnly': True})
+                        tabs = res.get('contents', {}).get('singleColumnMusicWatchNextResultsRenderer', {}).get('tabbedRenderer', {}).get('watchNextTabbedResultsRenderer', {}).get('tabs', [])
+                        for t in tabs:
+                            tr = t.get('tabRenderer', {})
+                            if 'Lyrics' in str(tr.get('title', '')):
+                                browse_id = tr.get('endpoint', {}).get('browseEndpoint', {}).get('browseId')
+                                if browse_id:
+                                    lyr = ytmusic.get_lyrics(browse_id)
+                                    if lyr and lyr.get('lyrics'):
+                                        return lyr
+                    except Exception:
+                        continue
                 return None
-            yt_task = asyncio.wait_for(asyncio.to_thread(fetch_yt_lyrics), timeout=2.0)
+            yt_task = asyncio.wait_for(asyncio.to_thread(fetch_yt_lyrics), timeout=4.0)
 
         # Run all provider fetches concurrently
         coros = [t[1] for t in tasks]

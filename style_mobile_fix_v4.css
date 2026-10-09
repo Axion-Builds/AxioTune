@@ -2003,33 +2003,27 @@
                 inset 0 1px 1.5px rgba(255, 255, 255, 0.5);
         }
 
-        /* Source Selector Group — Hidden/Collapsed in compact state, expands smoothly on hover */
+        /* Source Selector Group — Always visible and prominent in floating dock */
         .lyrics-dock-source-group {
             position: relative;
             display: flex;
             align-items: center;
             gap: 2px;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 20px;
-            padding: 0;
-            border: 0px solid rgba(255, 255, 255, 0.08);
-            max-width: 0;
-            opacity: 0;
-            overflow: hidden;
-            pointer-events: none;
-            transition: max-width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease, padding 0.3s ease, margin 0.3s ease;
-            margin: 0;
-        }
-
-        .lyrics-floating-dock:hover .lyrics-dock-source-group,
-        .lyrics-floating-dock.expanded .lyrics-dock-source-group {
-            max-width: 220px;
+            padding: 2px 5px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            max-width: 240px;
             opacity: 1;
             overflow: visible;
             pointer-events: auto;
-            padding: 2px 4px;
-            border-width: 1px;
             margin-right: 3px;
+            transition: all 0.25s ease;
+        }
+
+        .lyrics-dock-source-group:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.28);
         }
 
         .lyrics-dock-arrow-btn {
@@ -2177,9 +2171,24 @@
             border: 1px solid rgba(255, 214, 10, 0.35);
         }
         .source-item.active .source-item-tag {
-            background: var(--accent, #ff476d) !important;
+            background: rgba(255, 255, 255, 0.22) !important;
             color: #ffffff !important;
-            border-color: transparent !important;
+            border-color: rgba(255, 255, 255, 0.45) !important;
+        }
+        .source-item.active .source-item-tag.word_synced {
+            background: rgba(196, 75, 255, 0.35) !important;
+            color: #f3d4ff !important;
+            border-color: rgba(196, 75, 255, 0.6) !important;
+        }
+        .source-item.active .source-item-tag.line_synced {
+            background: rgba(75, 159, 255, 0.35) !important;
+            color: #cce4ff !important;
+            border-color: rgba(75, 159, 255, 0.6) !important;
+        }
+        .source-item.active .source-item-tag.plain_text {
+            background: rgba(255, 214, 10, 0.3) !important;
+            color: #fff3a8 !important;
+            border-color: rgba(255, 214, 10, 0.5) !important;
         }
 
         /* Separator */
@@ -2187,9 +2196,9 @@
             width: 1px;
             height: 18px;
             background: rgba(255, 255, 255, 0.14);
-            margin: 0 1px;
-            max-width: 0;
-            opacity: 0;
+            margin: 0 3px;
+            max-width: 1px;
+            opacity: 1;
             overflow: hidden;
             transition: all 0.3s ease;
         }
@@ -2254,9 +2263,9 @@
             color: rgba(255, 255, 255, 0.75);
             font-size: 0.95rem;
             font-weight: 700;
-            width: 0;
-            max-width: 0;
-            opacity: 0;
+            width: 18px;
+            max-width: 18px;
+            opacity: 1;
             overflow: hidden;
             height: 20px;
             display: flex;
