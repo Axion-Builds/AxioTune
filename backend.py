@@ -922,9 +922,9 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 'playlist_items': '1-25',
                 'socket_timeout': 5
             }
-            for pl_type in [f'RDAMVM{target_vid}', f'RD{target_vid}']:
+            for pl_type in [f'RD{target_vid}', f'RDAMVM{target_vid}']:
                 try:
-                    url = f'https://music.youtube.com/watch?v={target_vid}&list={pl_type}'
+                    url = f'https://www.youtube.com/watch?v={target_vid}&list={pl_type}'
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(url, download=False)
                         entries = info.get('entries') or []
