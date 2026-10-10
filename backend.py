@@ -924,14 +924,11 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             tracks = []
             target_vid = videoId
 
-            # 1. Direct song radio if videoId provided
+            # 1. Official Song Radio (Direct RDAMVM)
             if target_vid:
-                try:
-                    tracks = extract_radio_from_id(target_vid)
-                except Exception as e:
-                    print(f"[Recs direct radio error]: {e}")
+                tracks = extract_radio_from_id(target_vid)
 
-            # 2. If radio not obtained, resolve official song on YouTube Music to get true videoId
+            # 2. If radio was empty or videoId was a non-radio video, resolve official song videoId and fetch its Radio
             if len(tracks) <= 1 and (title or artist):
                 try:
                     query = f"{title} {artist}".strip()
@@ -942,7 +939,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 except Exception as e:
                     print(f"[Recs song resolve error]: {e}")
 
-            # 3. If still no radio, fetch official Artist Radio (similar vibe & related artists)
+            # 3. If still empty, fetch official Artist Radio (RDEM...)
             if len(tracks) <= 1 and (artist or title):
                 try:
                     search_artist = (artist or title).split(',')[0].strip()
@@ -954,13 +951,6 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 except Exception as e:
                     print(f"[Recs artist radio error]: {e}")
 
-            # 4. Final safety net: Top Trending Songs (never search raw title+artist string to avoid literal word matches)
-            if len(tracks) <= 1:
-                try:
-                    tracks = ytmusic.search("Top Songs India Hindi Punjabi", filter="songs", limit=25) or []
-                except Exception as e:
-                    print(f"[Recs fallback error]: {e}")
-
             return tracks
 
         tracks = await run_sync(resolve_and_fetch)
@@ -968,19 +958,11 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         recs = []
         seen_vids = set()
         seen_titles = set()
-        artist_counts = {}
-        playing_artist_count = 0
-        
         norm_playing_title = title.lower().strip() if title else ""
-        norm_playing_artist = artist.lower().strip() if artist else ""
-        if norm_playing_artist and ',' in norm_playing_artist:
-            norm_playing_artist = norm_playing_artist.split(',')[0].strip()
-
         if videoId:
             seen_vids.add(videoId)
 
-        spam_keywords = ["10 hour", "10hour", "1 hour", "bass boosted", "slowed reverb", "slowed + reverb", "ringtone", "whatsapp status"]
-
+        # 100% Pure YouTube Music Queue: Keep exact tracks and order returned by YouTube
         for item in tracks:
             vid = item.get('videoId')
             if not vid or vid in seen_vids:
@@ -989,69 +971,18 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             raw_title = item.get('title', 'Unknown').strip()
             lower_title = raw_title.lower().strip()
 
-            if any(k in lower_title for k in spam_keywords):
-                continue
-
-            # Anti-duplicate: Skip if title matches playing song or is a variant (e.g. "Song (Acoustic)", "Song (Live)")
-            if norm_playing_title and (norm_playing_title == lower_title or 
-                                       (len(norm_playing_title) > 3 and norm_playing_title in lower_title)):
+            # Skip exact playing song
+            if norm_playing_title and norm_playing_title == lower_title:
                 continue
 
             if lower_title in seen_titles:
                 continue
 
-            artist_name = "Unknown"
-            artists_list = []
-            if item.get('artists') and len(item['artists']) > 0:
-                artists_list = [a['name'].strip() for a in item['artists'] if a.get('name')]
-                artist_name = ", ".join(artists_list)
-            elif item.get('artist'):
-                artist_name = item['artist'].strip()
-                artists_list = [a.strip() for a in artist_name.split(',') if a.strip()]
-            elif item.get('author'):
-                artist_name = item['author'].strip()
-                artists_list = [artist_name]
-
-            # Universal Anti-Monopoly: Check ALL artists on this track
-            # 1. The playing artist cannot appear more than 2 times in the entire queue!
-            is_playing_artist = False
-            if norm_playing_artist:
-                for a in artists_list:
-                    a_low = a.lower().strip()
-                    if a_low in norm_playing_artist or norm_playing_artist in a_low:
-                        is_playing_artist = True
-                        break
-            if is_playing_artist and playing_artist_count >= 2:
-                continue
-
-            # 2. No other individual artist can appear more than 2 times
-            too_frequent = False
-            for a in artists_list:
-                a_low = a.lower().strip()
-                if artist_counts.get(a_low, 0) >= 2:
-                    too_frequent = True
-                    break
-            if too_frequent:
-                continue
-
-            thumbnail = item.get('cover') or ''
-            if not thumbnail:
-                thumb_list = item.get('thumbnails') or item.get('thumbnail') or []
-                if isinstance(thumb_list, list) and len(thumb_list) > 0:
-                    thumbnail = thumb_list[-1].get('url', '')
-                elif isinstance(thumb_list, str):
-                    thumbnail = thumb_list
-                
-            if not thumbnail:
-                thumbnail = f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
+            artist_name = item.get('artist', 'Unknown').strip()
+            thumbnail = item.get('cover') or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
 
             seen_vids.add(vid)
             seen_titles.add(lower_title)
-            if is_playing_artist:
-                playing_artist_count += 1
-            for a in artists_list:
-                a_low = a.lower().strip()
-                artist_counts[a_low] = artist_counts.get(a_low, 0) + 1
             
             recs.append({
                 "title": raw_title, 
