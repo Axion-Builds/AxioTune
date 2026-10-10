@@ -912,89 +912,43 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                     items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
             return items
 
-        def _fetch_ytm_next_sync(vid: str):
-            if not vid:
+        def _extract_yt_radio_ytdlp(target_vid: str):
+            if not target_vid:
                 return []
-            is_playlist = vid.startswith(('RD', 'VL', 'PL'))
-            playlist_id = vid if is_playlist else f'RDAMVM{vid}'
-            
-            # Method 1: Official persistent ytmusic._session (Warm, authentic 50-song YTM radio)
-            try:
-                if ytmusic and hasattr(ytmusic, '_session') and ytmusic._session:
-                    body_web = {
-                        'context': {
-                            'client': {
-                                'clientName': 'WEB_REMIX',
-                                'clientVersion': '1.20240909.01.00',
-                                'hl': 'en',
-                                'gl': 'IN'
-                            }
-                        },
-                        'videoId': vid if not is_playlist else '',
-                        'playlistId': playlist_id,
-                        'isAudioOnly': True,
-                        'enablePersistentPlaylistPanel': True,
-                        'params': 'wAEB'
-                    }
-                    r = ytmusic._session.post(
-                        'https://music.youtube.com/youtubei/v1/next',
-                        json=body_web,
-                        timeout=8.0
-                    )
-                    if r.status_code == 200:
-                        panel = _find_playlist_panel(r.json())
-                        if panel and 'contents' in panel:
-                            items = _parse_panel_items(panel['contents'])
-                            if len(items) > 1:
-                                return items
-            except Exception as e:
-                print(f"[YTM Session Radio {vid}]: {e}")
-
-            # Method 2: Mobile ANDROID_MUSIC client fallback
-            try:
-                headers_android = {
-                    'User-Agent': 'com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 14; Pixel 8 Pro)',
-                    'Content-Type': 'application/json',
-                    'X-YouTube-Client-Name': '21',
-                    'X-YouTube-Client-Version': '6.41.52'
-                }
-                body_android = {
-                    'context': {
-                        'client': {
-                            'clientName': 'ANDROID_MUSIC',
-                            'clientVersion': '6.41.52',
-                            'androidSdkVersion': 34,
-                            'hl': 'en',
-                            'gl': 'IN'
-                        }
-                    },
-                    'videoId': vid if not is_playlist else '',
-                    'playlistId': playlist_id,
-                    'isAudioOnly': True,
-                    'enablePersistentPlaylistPanel': True,
-                    'params': 'wAEB'
-                }
-                r = requests.post(
-                    'https://www.youtube.com/youtubei/v1/next',
-                    json=body_android,
-                    headers=headers_android,
-                    timeout=5.0
-                )
-                if r.status_code == 200:
-                    panel = _find_playlist_panel(r.json())
-                    if panel and 'contents' in panel:
-                        items = _parse_panel_items(panel['contents'])
+            ydl_opts = {
+                'extract_flat': True,
+                'quiet': True,
+                'no_warnings': True,
+                'playlist_items': '1-25',
+                'socket_timeout': 5
+            }
+            for pl_type in [f'RDAMVM{target_vid}', f'RD{target_vid}']:
+                try:
+                    url = f'https://music.youtube.com/watch?v={target_vid}&list={pl_type}'
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(url, download=False)
+                        entries = info.get('entries') or []
+                        items = []
+                        for e in entries:
+                            if not e:
+                                continue
+                            evid = e.get('id') or e.get('url', '')
+                            etitle = e.get('title') or ''
+                            eart = e.get('uploader') or e.get('channel') or e.get('artist') or ''
+                            thumbs = e.get('thumbnails') or []
+                            ecov = thumbs[-1].get('url', '') if thumbs else (f'https://i.ytimg.com/vi/{evid}/hqdefault.jpg' if evid else '')
+                            if evid and etitle:
+                                items.append({'videoId': evid, 'title': etitle, 'artist': eart, 'cover': ecov})
                         if len(items) > 1:
                             return items
-            except Exception as e:
-                print(f"[YTM ANDROID_MUSIC Radio {vid}]: {e}")
-
+                except Exception:
+                    pass
             return []
 
         async def fetch_pure_youtube_music_radio(target_vid: str, song_title: str, song_artist: str):
-            # 1. Direct YouTube Music Radio via videoId
+            # 1. Direct YouTube Music Radio via yt_dlp on target_vid
             if target_vid:
-                items = await asyncio.to_thread(_fetch_ytm_next_sync, target_vid)
+                items = await asyncio.to_thread(_extract_yt_radio_ytdlp, target_vid)
                 if len(items) > 1:
                     return items
             
@@ -1006,7 +960,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                     if search_res and search_res[0].get('videoId'):
                         ytm_vid = search_res[0]['videoId']
                         if ytm_vid != target_vid:
-                            items = await asyncio.to_thread(_fetch_ytm_next_sync, ytm_vid)
+                            items = await asyncio.to_thread(_extract_yt_radio_ytdlp, ytm_vid)
                             if len(items) > 1:
                                 return items
                 except Exception as e:
