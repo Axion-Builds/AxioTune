@@ -939,7 +939,7 @@ async def debug_radio(videoId: str = "JF59DPVZeJg"):
     except Exception as e:
         results["post_android"] = {"error": str(e), "trace": traceback.format_exc()}
 
-    # 5. ytmusic._send_request
+    # 5. Raw ytmusic session inspector
     try:
         t0 = time.time()
         body = {
@@ -949,13 +949,38 @@ async def debug_radio(videoId: str = "JF59DPVZeJg"):
             'enablePersistentPlaylistPanel': True,
             'params': 'wAEB'
         }
-        d = ytmusic._send_request('next', body)
-        results["ytmusic_send_request"] = {
-            "keys": list(d.keys()) if isinstance(d, dict) else str(type(d)),
+        body.update(ytmusic.context)
+        resp = ytmusic._session.post(
+            'https://music.youtube.com/youtubei/v1/next?alt=json',
+            json=body,
+            headers=ytmusic.headers,
+            cookies=ytmusic.cookies,
+            timeout=10.0
+        )
+        results["raw_ytmusic_post"] = {
+            "status": resp.status_code,
+            "headers": dict(resp.headers),
+            "text_snippet": resp.text[:300],
+            "text_len": len(resp.text),
             "time": round(time.time() - t0, 2)
         }
     except Exception as e:
-        results["ytmusic_send_request"] = {"error": str(e), "trace": traceback.format_exc()}
+        results["raw_ytmusic_post"] = {"error": str(e), "trace": traceback.format_exc()}
+
+    # 6. Test Artist Browse (RDEM...)
+    try:
+        t0 = time.time()
+        a_res = ytmusic.search("Riyeor", filter="artists", limit=1)
+        b_id = a_res[0].get('browseId') if a_res else None
+        a_data = ytmusic.get_artist(b_id) if b_id else {}
+        results["artist_radio"] = {
+            "browseId": b_id,
+            "radioId": a_data.get('radioId'),
+            "songs_count": len(a_data.get('songs', {}).get('results', [])),
+            "time": round(time.time() - t0, 2)
+        }
+    except Exception as e:
+        results["artist_radio"] = {"error": str(e), "trace": traceback.format_exc()}
 
     return results
 
