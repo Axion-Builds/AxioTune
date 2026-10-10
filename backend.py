@@ -92,21 +92,25 @@ USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
 
 def configure_ytmusic_timeout(instance, timeout_secs=20.0):
     try:
-        if instance and hasattr(instance, '_session') and instance._session:
-            instance._session.headers.update({
+        if instance:
+            custom_headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
                 'Origin': 'https://music.youtube.com',
                 'Referer': 'https://music.youtube.com/',
                 'X-YouTube-Client-Name': '67',
                 'X-YouTube-Client-Version': '1.20240815.01.00',
                 'Accept-Language': 'en-IN,en;q=0.9,hi;q=0.8'
-            })
-            orig_send = instance._session.send
-            def timeout_send(request, **kwargs):
-                if 'timeout' not in kwargs or kwargs['timeout'] is None:
-                    kwargs['timeout'] = timeout_secs
-                return orig_send(request, **kwargs)
-            instance._session.send = timeout_send
+            }
+            if hasattr(instance, 'headers') and isinstance(instance.headers, dict):
+                instance.headers.update(custom_headers)
+            if hasattr(instance, '_session') and instance._session:
+                instance._session.headers.update(custom_headers)
+                orig_send = instance._session.send
+                def timeout_send(request, **kwargs):
+                    if 'timeout' not in kwargs or kwargs['timeout'] is None:
+                        kwargs['timeout'] = timeout_secs
+                    return orig_send(request, **kwargs)
+                instance._session.send = timeout_send
     except Exception:
         pass
 
@@ -953,9 +957,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             # 4. Final safety net: Top Trending Songs (never search raw title+artist string to avoid literal word matches)
             if len(tracks) <= 1:
                 try:
-                    clean_art = (artist or "").split(',')[0].strip()
-                    fallback_query = f"{clean_art} Top Songs" if clean_art else "Top Trending Songs"
-                    tracks = ytmusic.search(fallback_query, filter="songs", limit=25) or []
+                    tracks = ytmusic.search("Top Songs India Hindi Punjabi", filter="songs", limit=25) or []
                 except Exception as e:
                     print(f"[Recs fallback error]: {e}")
 
@@ -967,8 +969,13 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         seen_vids = set()
         seen_titles = set()
         artist_counts = {}
+        playing_artist_count = 0
         
         norm_playing_title = title.lower().strip() if title else ""
+        norm_playing_artist = artist.lower().strip() if artist else ""
+        if norm_playing_artist and ',' in norm_playing_artist:
+            norm_playing_artist = norm_playing_artist.split(',')[0].strip()
+
         if videoId:
             seen_vids.add(videoId)
 
@@ -1005,9 +1012,26 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 artist_name = item['author'].strip()
                 artists_list = [artist_name]
 
-            # Primary artist anti-monopoly: max 2 songs per artist across the recommendations!
-            primary_artist = artists_list[0].lower() if artists_list else "unknown"
-            if primary_artist != "unknown" and artist_counts.get(primary_artist, 0) >= 2:
+            # Universal Anti-Monopoly: Check ALL artists on this track
+            # 1. The playing artist cannot appear more than 2 times in the entire queue!
+            is_playing_artist = False
+            if norm_playing_artist:
+                for a in artists_list:
+                    a_low = a.lower().strip()
+                    if a_low in norm_playing_artist or norm_playing_artist in a_low:
+                        is_playing_artist = True
+                        break
+            if is_playing_artist and playing_artist_count >= 2:
+                continue
+
+            # 2. No other individual artist can appear more than 2 times
+            too_frequent = False
+            for a in artists_list:
+                a_low = a.lower().strip()
+                if artist_counts.get(a_low, 0) >= 2:
+                    too_frequent = True
+                    break
+            if too_frequent:
                 continue
 
             thumbnail = item.get('cover') or ''
@@ -1023,7 +1047,11 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
 
             seen_vids.add(vid)
             seen_titles.add(lower_title)
-            artist_counts[primary_artist] = artist_counts.get(primary_artist, 0) + 1
+            if is_playing_artist:
+                playing_artist_count += 1
+            for a in artists_list:
+                a_low = a.lower().strip()
+                artist_counts[a_low] = artist_counts.get(a_low, 0) + 1
             
             recs.append({
                 "title": raw_title, 
