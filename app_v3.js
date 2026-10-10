@@ -6672,35 +6672,37 @@ function onPlayerStateChange(event) {
         const unsyncBtn = document.getElementById('unsync-btn');
 
         // Tab switching logic
-        const tabBtnPopup = document.getElementById('tab-btn-popup') || document.getElementById('tab-btn-bookmark');
-        const tabBtnManual = document.getElementById('tab-btn-manual');
-        const panelPopup = document.getElementById('sync-method-popup-panel') || document.getElementById('sync-method-bookmark-panel');
-        const panelManual = document.getElementById('sync-method-manual-panel');
+        const tabBtnBookmark = document.getElementById('tab-btn-bookmark');
+        const tabBtnPopup = document.getElementById('tab-btn-popup');
+        const panelBookmark = document.getElementById('sync-method-bookmark-panel');
+        const panelPopup = document.getElementById('sync-method-popup-panel');
         const startGoogleLoginBtn = document.getElementById('start-google-login-btn');
         const loginPopupStatus = document.getElementById('login-popup-status');
+
+        tabBtnBookmark?.addEventListener('click', () => {
+            tabBtnBookmark.classList.add('active');
+            tabBtnBookmark.style.background = 'rgba(255,255,255,0.08)';
+            tabBtnBookmark.style.color = 'white';
+            if (tabBtnPopup) {
+                tabBtnPopup.classList.remove('active');
+                tabBtnPopup.style.background = 'transparent';
+                tabBtnPopup.style.color = 'rgba(255,255,255,0.6)';
+            }
+            if (panelBookmark) panelBookmark.style.display = 'flex';
+            if (panelPopup) panelPopup.style.display = 'none';
+        });
 
         tabBtnPopup?.addEventListener('click', () => {
             tabBtnPopup.classList.add('active');
             tabBtnPopup.style.background = 'rgba(255,255,255,0.08)';
             tabBtnPopup.style.color = 'white';
-            tabBtnManual.classList.remove('active');
-            tabBtnManual.style.background = 'transparent';
-            tabBtnManual.style.color = 'rgba(255,255,255,0.6)';
-            
+            if (tabBtnBookmark) {
+                tabBtnBookmark.classList.remove('active');
+                tabBtnBookmark.style.background = 'transparent';
+                tabBtnBookmark.style.color = 'rgba(255,255,255,0.6)';
+            }
             if (panelPopup) panelPopup.style.display = 'flex';
-            if (panelManual) panelManual.style.display = 'none';
-        });
-
-        tabBtnManual?.addEventListener('click', () => {
-            tabBtnManual.classList.add('active');
-            tabBtnManual.style.background = 'rgba(255,255,255,0.08)';
-            tabBtnManual.style.color = 'white';
-            tabBtnPopup.classList.remove('active');
-            tabBtnPopup.style.background = 'transparent';
-            tabBtnPopup.style.color = 'rgba(255,255,255,0.6)';
-            
-            if (panelPopup) panelPopup.style.display = 'none';
-            if (panelManual) panelManual.style.display = 'flex';
+            if (panelBookmark) panelBookmark.style.display = 'none';
         });
 
         // 1-Click Interactive Google Sign-in Handler
@@ -6753,12 +6755,12 @@ function onPlayerStateChange(event) {
                                 loginPollTimer = null;
                                 if (loginPopupStatus) {
                                     loginPopupStatus.style.color = '#ff9500';
-                                    loginPopupStatus.textContent = pollData.message || 'Direct desktop window unavailable. Please use manual cookie sync.';
+                                    loginPopupStatus.textContent = pollData.message || 'Direct desktop window unavailable. Please use the 1-Click Bookmarklet.';
                                 }
-                                showToast('💡 Desktop window unavailable. Switched to manual sync.');
+                                showToast('💡 Direct desktop window unavailable. Switched to Bookmarklet sync.');
                                 startGoogleLoginBtn.disabled = false;
                                 startGoogleLoginBtn.innerHTML = originalHtml;
-                                if (tabBtnManual) tabBtnManual.click();
+                                if (tabBtnBookmark) tabBtnBookmark.click();
                             } else if (pollData.status === 'cancelled') {
                                 clearInterval(loginPollTimer);
                                 loginPollTimer = null;
@@ -6788,12 +6790,12 @@ function onPlayerStateChange(event) {
                     if (loginPopupStatus) {
                         loginPopupStatus.style.display = 'block';
                         loginPopupStatus.style.color = '#ff9500';
-                        loginPopupStatus.textContent = startData.message || 'Direct desktop window unavailable in cloud mode. Switched to manual cookie sync.';
+                        loginPopupStatus.textContent = startData.message || 'Direct desktop window unavailable in cloud mode. Switched to 1-Click Bookmarklet.';
                     }
-                    showToast('💡 Please connect using your cookie or cURL token.');
+                    showToast('💡 Please use the 1-Click Bookmarklet to sync.');
                     startGoogleLoginBtn.disabled = false;
                     startGoogleLoginBtn.innerHTML = originalHtml;
-                    if (tabBtnManual) tabBtnManual.click();
+                    if (tabBtnBookmark) tabBtnBookmark.click();
                 } else {
                     showToast('⚠️ Could not open login window: ' + (startData.message || 'Unknown error'));
                     startGoogleLoginBtn.disabled = false;
@@ -6947,12 +6949,15 @@ function onPlayerStateChange(event) {
         }
 
         function initSyncBookmarklet() {
-            const link = document.getElementById('sync-bookmarklet-link');
-            if (!link) return;
+            const links = document.querySelectorAll('.sync-bookmarklet-link, #sync-bookmarklet-link, #login-bookmarklet-link');
+            if (!links || links.length === 0) return;
             const origin = window.location.origin;
             const js = `(function(){var c=document.cookie;if(!c||window.location.host.indexOf('music.youtube.com')===-1){alert('\\uD83D\\uDC49 Pehle music.youtube.com kholiye aur login karke fir click karein!');return;}window.open('${origin}/#sync_cookie='+encodeURIComponent(c),'_blank');})();`;
-            link.href = `javascript:${js}`;
+            links.forEach(link => {
+                link.href = `javascript:${js}`;
+            });
         }
+        window.initSyncBookmarklet = initSyncBookmarklet;
 
         initSyncBookmarklet();
 
