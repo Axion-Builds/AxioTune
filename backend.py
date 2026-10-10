@@ -91,6 +91,14 @@ if not os.path.exists(COVER_CACHE_DIR):
 
 USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
 
+RADIO_SESSION = requests.Session()
+RADIO_SESSION.headers.update({
+    'User-Agent': 'com.google.ios.youtubemusic/6.41.0 (iPhone16,2; U; CPU iOS 17_5 like Mac OS X)',
+    'Content-Type': 'application/json',
+    'Accept-Encoding': 'gzip, deflate'
+})
+RADIO_SESSION.cookies.set('SOCS', 'CAI', domain='.youtube.com')
+
 def configure_ytmusic_timeout(instance, timeout_secs=10.0):
     try:
         if instance:
@@ -907,15 +915,9 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 return []
             is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
             playlist_id = target_id if is_playlist else f'RDAMVM{target_id}'
-            cookies = {'SOCS': 'CAI'}
             
-            # Method 1: IOS_MUSIC InnerTube client (~0.8s, smaller compressed payload)
+            # Method 1: IOS_MUSIC InnerTube client (~0.8s, warm persistent session)
             try:
-                headers_ios = {
-                    'User-Agent': 'com.google.ios.youtubemusic/6.41.0 (iPhone16,2; U; CPU iOS 17_5 like Mac OS X)',
-                    'Content-Type': 'application/json',
-                    'Accept-Encoding': 'gzip, deflate'
-                }
                 body_ios = {
                     'context': {
                         'client': {
@@ -933,12 +935,10 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                     'enablePersistentPlaylistPanel': True,
                     'params': 'wAEB'
                 }
-                r = requests.post(
+                r = RADIO_SESSION.post(
                     'https://www.youtube.com/youtubei/v1/next',
                     json=body_ios,
-                    headers=headers_ios,
-                    cookies=cookies,
-                    timeout=4.0
+                    timeout=12.0
                 )
                 if r.status_code == 200:
                     panel = _find_playlist_panel(r.json())
@@ -948,45 +948,6 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                             return items
             except Exception as e:
                 print(f"[Radio IOS_MUSIC {target_id}]: {e}")
-
-            # Method 2: ANDROID_MUSIC InnerTube client
-            try:
-                headers_android = {
-                    'User-Agent': 'com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 14)',
-                    'Content-Type': 'application/json',
-                    'Accept-Encoding': 'gzip, deflate'
-                }
-                body_android = {
-                    'context': {
-                        'client': {
-                            'clientName': 'ANDROID_MUSIC',
-                            'clientVersion': '6.41.52',
-                            'androidSdkVersion': 34,
-                            'gl': 'IN',
-                            'hl': 'en'
-                        }
-                    },
-                    'videoId': target_id if not is_playlist else '',
-                    'playlistId': playlist_id,
-                    'isAudioOnly': True,
-                    'enablePersistentPlaylistPanel': True,
-                    'params': 'wAEB'
-                }
-                r2 = requests.post(
-                    'https://www.youtube.com/youtubei/v1/next',
-                    json=body_android,
-                    headers=headers_android,
-                    cookies=cookies,
-                    timeout=4.0
-                )
-                if r2.status_code == 200:
-                    panel = _find_playlist_panel(r2.json())
-                    if panel and 'contents' in panel:
-                        items = _parse_panel_items(panel['contents'])
-                        if len(items) > 1:
-                            return items
-            except Exception as e:
-                print(f"[Radio ANDROID_MUSIC {target_id}]: {e}")
 
             return []
 
@@ -1002,7 +963,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         if target_vid:
             tracks = await fetch_youtube_music_radio(target_vid)
 
-        # 2. Official YouTube Music Artist Graph (Immune to bot blocks, fast ~1.5s parallel)
+        # 2. Official YouTube Music Diverse Artist Graph (NEVER a single-artist video dump!)
         if len(tracks) <= 1 and (artist or title):
             try:
                 search_artist = (artist or title).split(',')[0].split('&')[0].split('feat.')[0].strip()
@@ -1012,17 +973,18 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                         b_id = a_results[0]['browseId']
                         a_data = await asyncio.to_thread(ytmusic.get_artist, b_id)
                         
-                        # Add primary artist's songs/singles/videos
-                        for sec in ['singles', 'songs', 'videos']:
-                            for it in a_data.get(sec, {}).get('results', []):
-                                vid = it.get('videoId')
-                                if vid:
-                                    thumbs = it.get('thumbnails', [])
-                                    cov = thumbs[-1].get('url', '') if thumbs else ''
-                                    tracks.append({'videoId': vid, 'title': it.get('title', ''), 'artist': search_artist, 'cover': cov})
+                        # At most 1 other popular song from the playing artist (NO duplicate music videos)
+                        for it in a_data.get('songs', {}).get('results', [])[:3]:
+                            vid = it.get('videoId')
+                            raw_t = it.get('title', '')
+                            if vid and not re.search(r'\b(official|video|visualizer|lyric)\b', raw_t, re.IGNORECASE):
+                                thumbs = it.get('thumbnails', [])
+                                cov = thumbs[-1].get('url', '') if thumbs else ''
+                                tracks.append({'videoId': vid, 'title': raw_t, 'artist': search_artist, 'cover': cov})
+                                break
                         
-                        # Add top songs of YouTube Music Related Artists in parallel
-                        rel_list = a_data.get('related', {}).get('results', [])[:6]
+                        # Distinct top songs from Related Artists on YouTube Music (1-2 per artist)
+                        rel_list = a_data.get('related', {}).get('results', [])[:10]
                         async def _fetch_rel_artist_songs(rel_item):
                             rel_bid = rel_item.get('browseId')
                             rel_name = rel_item.get('title', '')
@@ -1031,12 +993,13 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                             try:
                                 rel_info = await asyncio.to_thread(ytmusic.get_artist, rel_bid)
                                 sub_tracks = []
-                                for s in rel_info.get('songs', {}).get('results', [])[:3]:
+                                for s in rel_info.get('songs', {}).get('results', [])[:2]:
                                     svid = s.get('videoId')
-                                    if svid:
+                                    stitle = s.get('title', '')
+                                    if svid and not re.search(r'\b(official|video|visualizer|lyric)\b', stitle, re.IGNORECASE):
                                         sthumbs = s.get('thumbnails', [])
                                         scov = sthumbs[-1].get('url', '') if sthumbs else ''
-                                        sub_tracks.append({'videoId': svid, 'title': s.get('title', ''), 'artist': rel_name, 'cover': scov})
+                                        sub_tracks.append({'videoId': svid, 'title': stitle, 'artist': rel_name, 'cover': scov})
                                 return sub_tracks
                             except Exception:
                                 return []
@@ -1045,27 +1008,12 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                         for sub in rel_results:
                             tracks.extend(sub)
             except Exception as e:
-                print(f"[Recs artist graph error]: {e}")
-
-        # 3. Official YouTube Music Song Search fallback
-        if len(tracks) <= 1 and (title or artist):
-            try:
-                s_query = f"{title} {artist}".strip()
-                s_results = await asyncio.to_thread(ytmusic.search, s_query, filter="songs", limit=15)
-                for item in s_results:
-                    svid = item.get('videoId')
-                    if svid:
-                        art = item['artists'][0]['name'] if item.get('artists') else artist
-                        thumbs = item.get('thumbnails', [])
-                        cov = thumbs[-1].get('url', '') if thumbs else ''
-                        tracks.append({'videoId': svid, 'title': item.get('title', ''), 'artist': art, 'cover': cov})
-            except Exception as e:
-                print(f"[Recs search error]: {e}")
+                print(f"[Recs diverse fallback error]: {e}")
 
         recs = []
         seen_vids = set()
         seen_titles = set()
-        norm_playing_title = title.lower().strip() if title else ""
+        norm_playing_title = re.sub(r'\(.*?\)|\[.*?\]', '', (title or "").lower()).strip()
         if videoId:
             seen_vids.add(videoId)
 
@@ -1076,20 +1024,20 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 continue
 
             raw_title = item.get('title', 'Unknown').strip()
-            lower_title = raw_title.lower().strip()
+            norm_item_title = re.sub(r'\(.*?\)|\[.*?\]', '', raw_title.lower()).strip()
 
             # Skip exact playing song
-            if norm_playing_title and norm_playing_title == lower_title:
+            if norm_playing_title and norm_playing_title == norm_item_title:
                 continue
 
-            if lower_title in seen_titles:
+            if norm_item_title in seen_titles:
                 continue
 
             artist_name = item.get('artist', 'Unknown').strip()
             thumbnail = item.get('cover') or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
 
             seen_vids.add(vid)
-            seen_titles.add(lower_title)
+            seen_titles.add(norm_item_title)
             
             recs.append({
                 "title": raw_title, 
