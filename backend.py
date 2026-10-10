@@ -876,94 +876,92 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                                 return found
             return None
 
-        debug_log = []
-
-        def extract_radio_from_id(target_id: str):
-            if not target_id or not ytmusic:
-                debug_log.append(f"extract_radio: missing target_id={target_id} or ytmusic={bool(ytmusic)}")
+        async def fetch_youtube_music_radio(target_id: str):
+            if not target_id:
                 return []
-            try:
-                is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
-                body = {
-                    'enablePersistentPlaylistPanel': True,
-                    'isAudioOnly': True
-                }
-                if is_playlist:
-                    body['playlistId'] = target_id
-                else:
-                    body['videoId'] = target_id
-                    body['playlistId'] = f'RDAMVM{target_id}'
+            is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
+            body = {
+                'context': {
+                    'client': {
+                        'clientName': 'ANDROID_MUSIC',
+                        'clientVersion': '6.41.52',
+                        'androidSdkVersion': 34,
+                        'gl': 'IN',
+                        'hl': 'en'
+                    }
+                },
+                'enablePersistentPlaylistPanel': True,
+                'isAudioOnly': True
+            }
+            if is_playlist:
+                body['playlistId'] = target_id
+            else:
+                body['videoId'] = target_id
+                body['playlistId'] = f'RDAMVM{target_id}'
 
-                resp = ytmusic._send_request('next', body)
-                panel = _find_playlist_panel(resp)
-                if not panel:
-                    debug_log.append(f"panel not found for {target_id}, resp keys: {list(resp.keys()) if isinstance(resp, dict) else type(resp)}")
-                if panel and 'contents' in panel:
-                    items = []
-                    for c in panel['contents']:
-                        vr = c.get('playlistPanelVideoRenderer')
-                        if not vr:
-                            continue
-                        vid = vr.get('videoId')
-                        r_title = ''
-                        if vr.get('title', {}).get('runs'):
-                            r_title = vr['title']['runs'][0].get('text', '')
-                        r_artist = ''
-                        if vr.get('shortBylineText', {}).get('runs'):
-                            r_artist = vr['shortBylineText']['runs'][0].get('text', '')
-                        thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
-                        r_cover = thumbs[-1].get('url', '') if thumbs else ''
-                        if vid and r_title:
-                            items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
-                    debug_log.append(f"panel extracted {len(items)} items for {target_id}")
-                    if len(items) > 1:
-                        return items
-                    elif len(items) == 1:
-                        debug_log.append(f"panel had only 1 item for {target_id}")
+            headers = {
+                'User-Agent': 'com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 14)',
+                'Content-Type': 'application/json'
+            }
+
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    resp = await client.post('https://music.youtube.com/youtubei/v1/next', json=body, headers=headers)
+                    if resp.status_code == 200:
+                        panel = _find_playlist_panel(resp.json())
+                        if panel and 'contents' in panel:
+                            items = []
+                            for c in panel['contents']:
+                                vr = c.get('playlistPanelVideoRenderer')
+                                if not vr:
+                                    continue
+                                vid = vr.get('videoId')
+                                r_title = ''
+                                if vr.get('title', {}).get('runs'):
+                                    r_title = vr['title']['runs'][0].get('text', '')
+                                r_artist = ''
+                                if vr.get('shortBylineText', {}).get('runs'):
+                                    r_artist = vr['shortBylineText']['runs'][0].get('text', '')
+                                thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
+                                r_cover = thumbs[-1].get('url', '') if thumbs else ''
+                                if vid and r_title:
+                                    items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
+                            if len(items) > 1:
+                                return items
             except Exception as e:
-                debug_log.append(f"extract_radio error {target_id}: {type(e).__name__}: {str(e)}")
-                print(f"[Recs Radio {target_id}]: {e}")
+                print(f"[Radio Android {target_id}]: {e}")
             return []
 
-        def resolve_and_fetch():
-            tracks = []
-            target_vid = videoId
+        tracks = []
+        target_vid = videoId
 
-            # 1. Official Song Radio (Direct RDAMVM)
-            if target_vid:
-                tracks = extract_radio_from_id(target_vid)
+        # 1. Direct official Android YouTube Music Radio (Superfast ~1.2s!)
+        if target_vid:
+            tracks = await fetch_youtube_music_radio(target_vid)
 
-            # 2. If radio was empty or videoId was a non-radio video, resolve official song videoId and fetch its Radio
-            if len(tracks) <= 1 and (title or artist):
-                try:
-                    query = f"{title} {artist}".strip()
-                    search_res = ytmusic.search(query, filter="songs", limit=1)
-                    if search_res and search_res[0].get('videoId'):
-                        resolved_vid = search_res[0]['videoId']
-                        debug_log.append(f"resolved {query} -> {resolved_vid}")
-                        if resolved_vid != target_vid:
-                            tracks = extract_radio_from_id(resolved_vid)
-                except Exception as e:
-                    debug_log.append(f"search resolve error: {type(e).__name__}: {str(e)}")
-                    print(f"[Recs song resolve error]: {e}")
+        # 2. If radio was empty or videoId missing, resolve official song videoId and fetch its Radio
+        if len(tracks) <= 1 and (title or artist):
+            try:
+                query = f"{title} {artist}".strip()
+                search_res = await asyncio.to_thread(ytmusic.search, query, "songs", 1)
+                if search_res and search_res[0].get('videoId'):
+                    resolved_vid = search_res[0]['videoId']
+                    if resolved_vid != target_vid:
+                        tracks = await fetch_youtube_music_radio(resolved_vid)
+            except Exception as e:
+                print(f"[Recs song resolve error]: {e}")
 
-            # 3. If still empty, fetch official Artist Radio (RDEM...)
-            if len(tracks) <= 1 and (artist or title):
-                try:
-                    search_artist = (artist or title).split(',')[0].strip()
-                    a_results = ytmusic.search(search_artist, filter="artists", limit=1)
-                    if a_results and a_results[0].get('browseId'):
-                        a_data = ytmusic.get_artist(a_results[0]['browseId'])
-                        if a_data.get('radioId'):
-                            debug_log.append(f"artist radio: {a_data['radioId']}")
-                            tracks = extract_radio_from_id(a_data['radioId'])
-                except Exception as e:
-                    debug_log.append(f"artist radio error: {type(e).__name__}: {str(e)}")
-                    print(f"[Recs artist radio error]: {e}")
-
-            return tracks
-
-        tracks = await run_sync(resolve_and_fetch)
+        # 3. If still empty, fetch official Artist Radio (RDEM...)
+        if len(tracks) <= 1 and (artist or title):
+            try:
+                search_artist = (artist or title).split(',')[0].strip()
+                a_results = await asyncio.to_thread(ytmusic.search, search_artist, "artists", 1)
+                if a_results and a_results[0].get('browseId'):
+                    a_data = await asyncio.to_thread(ytmusic.get_artist, a_results[0]['browseId'])
+                    if a_data.get('radioId'):
+                        tracks = await fetch_youtube_music_radio(a_data['radioId'])
+            except Exception as e:
+                print(f"[Recs artist radio error]: {e}")
 
         recs = []
         seen_vids = set()
@@ -1003,7 +1001,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             if len(recs) >= 25:
                 break
             
-        res_data = {"status": "success", "recommendations": recs, "debug": debug_log}
+        res_data = {"status": "success", "recommendations": recs}
         if recs:
             API_CACHE[cache_key] = {'time': time.time(), 'data': res_data}
         return res_data
