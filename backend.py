@@ -860,229 +860,233 @@ async def get_trending():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+# =====================================================================
+#  /api/recommendations  -- DROP-IN REPLACEMENT
+#  backend.py me purana @app.get("/api/recommendations") wala poora function
+#  (decorator se leke uske `return {"status": "error", ...}` tak) delete karke
+#  ye poora block wahi paste karo. Upar ke imports/globals (ytmusic, API_CACHE,
+#  RADIO_SESSION, re, time, asyncio) already file me hain.
+# =====================================================================
+from itertools import zip_longest
+
+_NOISE_RE = re.compile(
+    r'\b(official|music video|lyric video|lyrics|visualizer|visualiser|audio|video|hd|4k)\b')
+
+
+def _squash(s: str) -> str:
+    s = re.sub(r'[^\w\s]', ' ', (s or '').lower())
+    return re.sub(r'\s+', ' ', s).strip()
+
+
+def _norm_title(raw: str, artists=()) -> str:
+    """'Shreea Kaul - Tere Bina (Official Music Video)' -> 'tere bina'"""
+    t = re.sub(r'\(.*?\)|\[.*?\]', ' ', (raw or '').lower())
+    t = _squash(_NOISE_RE.sub(' ', t))
+    for a in artists:
+        a = _squash(a)
+        if a and t.startswith(a + ' '):
+            t = t[len(a):].strip()
+            break
+    return t or _squash(raw)
+
+
+def _first_artist(s: str) -> str:
+    return _squash(re.split(r',|&|\bfeat\.?\b|\bft\.?\b|\bx\b|×', (s or '').lower())[0])
+
+
+def _parse_wp_track(t: dict):
+    vid, ttl = t.get('videoId'), (t.get('title') or '').strip()
+    if not vid or not ttl:
+        return None
+    names = [a.get('name', '') for a in (t.get('artists') or []) if a.get('name')]
+    thumbs = t.get('thumbnail') or t.get('thumbnails') or []
+    return {
+        'videoId': vid, 'title': ttl,
+        'artist': names[0] if names else 'Unknown',
+        'all_artists': names,
+        'cover': thumbs[-1].get('url', '') if thumbs else '',
+        'atv': t.get('videoType') == 'MUSIC_VIDEO_TYPE_ATV',
+    }
+
+
+# ---------- IOS_MUSIC InnerTube fallback (purana logic, module-level) ----------
+def _find_playlist_panel(obj):
+    if isinstance(obj, dict):
+        for k in ('playlistPanelRenderer', 'playlistPanelContinuation'):
+            if k in obj:
+                return obj[k]
+        children = obj.values()
+    elif isinstance(obj, list):
+        children = obj
+    else:
+        return None
+    for v in children:
+        found = _find_playlist_panel(v)
+        if found:
+            return found
+    return None
+
+
+def _ios_radio_sync(video_id: str):
+    body = {
+        'context': {'client': {'clientName': 'IOS_MUSIC', 'clientVersion': '6.41.0',
+                               'deviceMake': 'Apple', 'deviceModel': 'iPhone16,2',
+                               'gl': 'IN', 'hl': 'en'}},
+        'videoId': video_id, 'playlistId': 'RDAMVM' + video_id,
+        'isAudioOnly': True, 'enablePersistentPlaylistPanel': True, 'params': 'wAEB',
+    }
+    r = RADIO_SESSION.post('https://www.youtube.com/youtubei/v1/next', json=body, timeout=6)
+    r.raise_for_status()
+    panel = _find_playlist_panel(r.json())
+    out = []
+    for c in (panel or {}).get('contents', []):
+        vr = c.get('playlistPanelVideoRenderer')
+        if not vr:
+            continue
+        runs_t = (vr.get('title') or {}).get('runs') or [{}]
+        runs_a = (vr.get('shortBylineText') or {}).get('runs') or [{}]
+        thumbs = (vr.get('thumbnail') or {}).get('thumbnails') or []
+        name = runs_a[0].get('text', '')
+        item = {'videoId': vr.get('videoId'), 'title': runs_t[0].get('text', ''),
+                'artists': [{'name': name}] if name else [], 'thumbnail': thumbs,
+                'videoType': (vr.get('navigationEndpoint', {}).get('watchEndpoint', {})
+                              .get('watchEndpointMusicSupportedConfigs', {})
+                              .get('watchEndpointMusicConfig', {}).get('musicVideoType'))}
+        p = _parse_wp_track(item)
+        if p:
+            out.append(p)
+    return out
+
+
+async def _fetch_radio(video_id: str):
+    """YouTube Music ka asli 'Up next' / radio. Returns (tracks, source)."""
+    # 1) ytmusicapi: pehle radio=True, phir default. Timeout 8s (pehle 3s tha -> cold start pe fail).
+    for label, kw in (("ytmusicapi-radio", {'radio': True}), ("ytmusicapi", {})):
+        try:
+            res = await asyncio.wait_for(
+                asyncio.to_thread(lambda: ytmusic.get_watch_playlist(videoId=video_id, limit=50, **kw)),
+                timeout=8.0)
+            tracks = [p for p in (_parse_wp_track(t) for t in res.get('tracks', [])) if p]
+            if len(tracks) > 5:
+                return tracks, label
+            print(f"[recs] {label} sirf {len(tracks)} track diye ({video_id})")
+        except Exception as e:
+            print(f"[recs] {label} FAILED ({video_id}): {e!r}")
+    # 2) IOS_MUSIC client
+    try:
+        tracks = await asyncio.wait_for(asyncio.to_thread(_ios_radio_sync, video_id), timeout=8.0)
+        if len(tracks) > 5:
+            return tracks, "ios"
+        print(f"[recs] ios sirf {len(tracks)} track diye ({video_id})")
+    except Exception as e:
+        print(f"[recs] ios FAILED ({video_id}): {e!r}")
+    return [], "none"
+
+
+async def _artist_graph(artist: str):
+    """Last resort: playing artist + related artists, round-robin mix (pairs me grouped nahi)."""
+    name = (re.split(r',|&|feat\.?|ft\.?', artist or '')[0]).strip()
+    if not name:
+        return []
+    try:
+        found = await asyncio.to_thread(ytmusic.search, name, filter="artists", limit=1)
+        if not found or not found[0].get('browseId'):
+            return []
+        a_data = await asyncio.to_thread(ytmusic.get_artist, found[0]['browseId'])
+
+        def songs_of(data, who, n):
+            out = []
+            for s in (data.get('songs') or {}).get('results', [])[:n]:
+                p = _parse_wp_track({'videoId': s.get('videoId'), 'title': s.get('title'),
+                                     'artists': [{'name': who}], 'thumbnail': s.get('thumbnails')})
+                if p:
+                    out.append(p)
+            return out
+
+        async def rel(item):
+            try:
+                info = await asyncio.wait_for(
+                    asyncio.to_thread(ytmusic.get_artist, item['browseId']), timeout=5.0)
+                return songs_of(info, item.get('title', ''), 2)
+            except Exception:
+                return []
+
+        related = (a_data.get('related') or {}).get('results', [])[:8]
+        lists = [songs_of(a_data, name, 3)] + list(
+            await asyncio.gather(*[rel(r) for r in related if r.get('browseId')]))
+        mixed = []
+        for group in zip_longest(*lists):
+            mixed += [x for x in group if x]
+        return mixed
+    except Exception as e:
+        print(f"[recs] artist_graph FAILED: {e!r}")
+        return []
+
+
+def _clean_queue(tracks, seed_vid, seed_title, seed_artist, limit=30):
+    """YouTube ka order same rakhta hai, bas duplicates (audio vs music-video) hatata hai."""
+    seed_artists = [seed_artist] if seed_artist else []
+    seen_ids = {seed_vid} if seed_vid else set()
+    seed_keys = set()                      # playing gaane ka koi bhi dusra version na aaye
+    if seed_title:
+        seed_keys.add(_norm_title(seed_title, seed_artists))
+    for t in tracks:
+        if t['videoId'] == seed_vid:
+            seed_keys.add(_norm_title(t['title'], t['all_artists']))
+
+    out, index = [], {}
+    for t in tracks:
+        vid = t['videoId']
+        if vid in seen_ids:
+            continue
+        tkey = _norm_title(t['title'], t['all_artists'] or [t['artist']])
+        if tkey in seed_keys:
+            continue
+        key = (tkey, _first_artist(t['artist']))
+        if key in index:                   # same gaana dobara: audio version ko prefer karo
+            i = index[key]
+            if t['atv'] and not out[i]['atv']:
+                out[i] = t
+                seen_ids.add(vid)
+            continue
+        index[key] = len(out)
+        seen_ids.add(vid)
+        out.append(t)
+        if len(out) >= limit:
+            break
+    return [{'title': t['title'], 'artist': t['artist'],
+             'cover': t['cover'] or f"https://i.ytimg.com/vi/{t['videoId']}/hqdefault.jpg",
+             'videoId': t['videoId']} for t in out]
+
+
 @app.get("/api/recommendations")
 async def get_recommendations(videoId: str = "", title: str = "", artist: str = "", refresh: bool = False):
     try:
-        if not videoId and not title and not artist:
+        if not (videoId or title or artist):
             return {"status": "success", "recommendations": []}
-            
-        cache_key = f"recs_{videoId}_{title}_{artist}"
+
+        cache_key = f"recs_{videoId}" if videoId else f"recs_{artist}_{title}"
         now = time.time()
         if not refresh and cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < 120:
             return API_CACHE[cache_key]['data']
-            
-        def _find_playlist_panel(obj):
-            if not isinstance(obj, dict):
-                return None
-            if 'playlistPanelRenderer' in obj:
-                return obj['playlistPanelRenderer']
-            if 'playlistPanelContinuation' in obj:
-                return obj['playlistPanelContinuation']
-            for v in obj.values():
-                if isinstance(v, dict):
-                    found = _find_playlist_panel(v)
-                    if found:
-                        return found
-                elif isinstance(v, list):
-                    for item in v:
-                        if isinstance(item, dict):
-                            found = _find_playlist_panel(item)
-                            if found:
-                                return found
-            return None
 
-        def _parse_panel_items(contents):
-            items = []
-            for c in contents:
-                vr = c.get('playlistPanelVideoRenderer')
-                if not vr:
-                    continue
-                vid = vr.get('videoId')
-                r_title = ''
-                if vr.get('title', {}).get('runs'):
-                    r_title = vr['title']['runs'][0].get('text', '')
-                r_artist = ''
-                if vr.get('shortBylineText', {}).get('runs'):
-                    r_artist = vr['shortBylineText']['runs'][0].get('text', '')
-                thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
-                r_cover = thumbs[-1].get('url', '') if thumbs else ''
-                if vid and r_title:
-                    items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
-            return items
-
-        def _fetch_radio_sync(target_id: str):
-            if not target_id:
-                return []
-            is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
-            playlist_id = target_id if is_playlist else ''
-            
-            # Method 1: IOS_MUSIC InnerTube client
-            try:
-                body_ios = {
-                    'context': {
-                        'client': {
-                            'clientName': 'IOS_MUSIC',
-                            'clientVersion': '6.41.0',
-                            'deviceMake': 'Apple',
-                            'deviceModel': 'iPhone16,2',
-                            'gl': 'IN',
-                            'hl': 'en'
-                        }
-                    },
-                    'videoId': target_id if not is_playlist else '',
-                    'playlistId': playlist_id,
-                    'isAudioOnly': True,
-                    'enablePersistentPlaylistPanel': True,
-                    'params': 'wAEB'
-                }
-                r = RADIO_SESSION.post(
-                    'https://www.youtube.com/youtubei/v1/next',
-                    json=body_ios,
-                    timeout=2.5
-                )
-                if r.status_code == 200:
-                    panel = _find_playlist_panel(r.json())
-                    if panel and 'contents' in panel:
-                        items = _parse_panel_items(panel['contents'])
-                        if len(items) > 1:
-                            return items
-            except Exception as e:
-                print(f"[Radio IOS_MUSIC {target_id}]: {e}")
-
-            return []
-
-        async def fetch_youtube_music_radio(target_id: str):
-            if not target_id:
-                return []
-            
-            # 1. Native YouTube Music Watch Playlist Radio (Fastest ~1.0s, genuine radio mix)
-            try:
-                def _get_wp():
-                    res = ytmusic.get_watch_playlist(videoId=target_id, limit=25)
-                    items = []
-                    for t in res.get('tracks', []):
-                        vid = t.get('videoId')
-                        t_title = t.get('title', '')
-                        artists = t.get('artists', [])
-                        t_artist = artists[0].get('name', '') if artists else ''
-                        thumbs = t.get('thumbnail', [])
-                        t_cover = thumbs[-1].get('url', '') if thumbs else ''
-                        if vid and t_title:
-                            items.append({'videoId': vid, 'title': t_title, 'artist': t_artist, 'cover': t_cover})
-                    return items
-                items = await asyncio.wait_for(asyncio.to_thread(_get_wp), timeout=3.0)
-                if len(items) > 1:
-                    return items
-            except Exception as e:
-                print(f"[Radio watch_playlist {target_id}]: {e}")
-
-            # 2. IOS_MUSIC session fallback
-            try:
-                items = await asyncio.wait_for(asyncio.to_thread(_fetch_radio_sync, target_id), timeout=2.5)
-                if len(items) > 1:
-                    return items
-            except Exception as e:
-                print(f"[Radio IOS_MUSIC {target_id}]: {e}")
-
-            return []
-
-        tracks = []
-        target_vid = videoId
-
-        # 1. Direct official YouTube Music Radio pipe
-        if target_vid:
-            tracks = await fetch_youtube_music_radio(target_vid)
-
-        # 2. Official YouTube Music Diverse Artist Graph (NEVER a single-artist video dump!)
-        if len(tracks) <= 1 and (artist or title):
-            try:
-                search_artist = (artist or title).split(',')[0].split('&')[0].split('feat.')[0].strip()
-                if search_artist:
-                    a_results = await asyncio.to_thread(ytmusic.search, search_artist, filter="artists", limit=1)
-                    if a_results and a_results[0].get('browseId'):
-                        b_id = a_results[0]['browseId']
-                        a_data = await asyncio.to_thread(ytmusic.get_artist, b_id)
-                        
-                        # At most 1 other popular song from the playing artist (NO duplicate music videos)
-                        for it in a_data.get('songs', {}).get('results', [])[:3]:
-                            vid = it.get('videoId')
-                            raw_t = it.get('title', '')
-                            if vid and not re.search(r'\b(official|video|visualizer|lyric)\b', raw_t, re.IGNORECASE):
-                                thumbs = it.get('thumbnails', [])
-                                cov = thumbs[-1].get('url', '') if thumbs else ''
-                                tracks.append({'videoId': vid, 'title': raw_t, 'artist': search_artist, 'cover': cov})
-                                break
-                        
-                        # Distinct top songs from Related Artists on YouTube Music (1-2 per artist)
-                        rel_list = a_data.get('related', {}).get('results', [])[:10]
-                        async def _fetch_rel_artist_songs(rel_item):
-                            rel_bid = rel_item.get('browseId')
-                            rel_name = rel_item.get('title', '')
-                            if not rel_bid:
-                                return []
-                            try:
-                                rel_info = await asyncio.wait_for(asyncio.to_thread(ytmusic.get_artist, rel_bid), timeout=2.5)
-                                sub_tracks = []
-                                for s in rel_info.get('songs', {}).get('results', [])[:2]:
-                                    svid = s.get('videoId')
-                                    stitle = s.get('title', '')
-                                    if svid and not re.search(r'\b(official|video|visualizer|lyric)\b', stitle, re.IGNORECASE):
-                                        sthumbs = s.get('thumbnails', [])
-                                        scov = sthumbs[-1].get('url', '') if sthumbs else ''
-                                        sub_tracks.append({'videoId': svid, 'title': stitle, 'artist': rel_name, 'cover': scov})
-                                return sub_tracks
-                            except Exception:
-                                return []
-                        
-                        rel_results = await asyncio.gather(*[_fetch_rel_artist_songs(r) for r in rel_list])
-                        for sub in rel_results:
-                            tracks.extend(sub)
-            except Exception as e:
-                print(f"[Recs diverse fallback error]: {e}")
-
-        recs = []
-        seen_vids = set()
-        seen_titles = set()
-        norm_playing_title = re.sub(r'\(.*?\)|\[.*?\]', '', (title or "").lower()).strip()
+        tracks, source = ([], "none")
         if videoId:
-            seen_vids.add(videoId)
+            tracks, source = await _fetch_radio(videoId)
+        recs = _clean_queue(tracks, videoId, title, artist)
 
-        # 100% Pure YouTube Music Queue: Keep exact tracks and order returned by YouTube
-        for item in tracks:
-            vid = item.get('videoId')
-            if not vid or vid in seen_vids:
-                continue
+        if len(recs) < 5:                  # radio fail hua -> artist graph
+            graph = await _artist_graph(artist)
+            recs = _clean_queue(tracks + graph, videoId, title, artist)
+            source += "+artist_graph"
 
-            raw_title = item.get('title', 'Unknown').strip()
-            norm_item_title = re.sub(r'\(.*?\)|\[.*?\]', '', raw_title.lower()).strip()
-
-            # Skip exact playing song
-            if norm_playing_title and norm_playing_title == norm_item_title:
-                continue
-
-            if norm_item_title in seen_titles:
-                continue
-
-            artist_name = item.get('artist', 'Unknown').strip()
-            thumbnail = item.get('cover') or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
-
-            seen_vids.add(vid)
-            seen_titles.add(norm_item_title)
-            
-            recs.append({
-                "title": raw_title, 
-                "artist": artist_name, 
-                "cover": thumbnail,
-                "videoId": vid
-            })
-            if len(recs) >= 25:
-                break
-            
-        res_data = {"status": "success", "recommendations": recs}
-        if recs:
-            API_CACHE[cache_key] = {'time': time.time(), 'data': res_data}
-        return res_data
+        print(f"[recs] {videoId or title}: {len(recs)} tracks via {source}")
+        res = {"status": "success", "recommendations": recs, "source": source}
+        if recs and "artist_graph" not in source:      # fallback result cache nahi karte
+            API_CACHE[cache_key] = {'time': time.time(), 'data': res}
+        return res
     except Exception as e:
+        print(f"[recs] unexpected error: {e!r}")
         return {"status": "error", "message": str(e), "recommendations": []}
 
 @app.get("/api/home")
