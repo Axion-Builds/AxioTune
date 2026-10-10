@@ -6949,7 +6949,7 @@ function onPlayerStateChange(event) {
         }
 
         function initSyncBookmarklet() {
-            const links = document.querySelectorAll('.sync-bookmarklet-link, #sync-bookmarklet-link, #login-bookmarklet-link');
+            const links = document.querySelectorAll('.sync-bookmarklet-link, #sync-bookmarklet-link, #login-bookmarklet-link, #mandatory-bookmarklet-link');
             if (!links || links.length === 0) return;
             const origin = window.location.origin;
             const js = `(function(){var c=document.cookie;if(!c||window.location.host.indexOf('music.youtube.com')===-1){alert('\\uD83D\\uDC49 Pehle music.youtube.com kholiye aur login karke fir click karein!');return;}window.open('${origin}/#sync_cookie='+encodeURIComponent(c),'_blank');})();`;

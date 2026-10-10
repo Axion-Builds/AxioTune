@@ -566,6 +566,330 @@
         box-shadow: 0 6px 20px rgba(40, 205, 65, 0.45);
     }
 
+    /* ==========================================================================
+       MANDATORY YTM SYNC ONBOARDING SCREEN (PDF-INSPIRED EDITORIAL SPEC)
+       Typeset in Instrument Serif & Plus Jakarta Sans
+       ========================================================================== */
+    #axio-mandatory-sync-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 100000;
+        background: rgba(8, 9, 12, 0.92);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        color: #E6E1DA;
+    }
+
+    #axio-mandatory-sync-screen.modal-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    #axio-mandatory-sync-screen .modal-box {
+        width: 100%;
+        max-width: 760px;
+        max-height: 92vh;
+        background: #0E0F14;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 20px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        overflow-y: auto;
+        padding: 36px 40px;
+        box-sizing: border-box;
+        position: relative;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+
+    #axio-mandatory-sync-screen .meta-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #9E9689;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 14px;
+        margin-bottom: 20px;
+    }
+
+    #axio-mandatory-sync-screen .main-title {
+        font-family: 'Instrument Serif', Georgia, serif;
+        font-size: 2.85rem;
+        font-weight: 400;
+        line-height: 1.1;
+        color: #FFFFFF;
+        margin: 0 0 10px;
+        letter-spacing: -0.01em;
+    }
+
+    #axio-mandatory-sync-screen .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 22px;
+    }
+
+    #axio-mandatory-sync-screen .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #D1C7BA;
+    }
+
+    #axio-mandatory-sync-screen .badge.danger {
+        background: rgba(255, 71, 109, 0.12);
+        border-color: rgba(255, 71, 109, 0.35);
+        color: #FF6E8D;
+    }
+
+    #axio-mandatory-sync-screen .badge.success {
+        background: rgba(40, 205, 65, 0.12);
+        border-color: rgba(40, 205, 65, 0.35);
+        color: #38DF54;
+    }
+
+    #axio-mandatory-sync-screen .section-header {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #FFFFFF;
+        margin: 24px 0 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    #axio-mandatory-sync-screen .section-header .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #28cd41;
+        display: inline-block;
+    }
+
+    #axio-mandatory-sync-screen .prose-block {
+        font-size: 14px;
+        line-height: 1.65;
+        color: #C4B9AD;
+        margin-bottom: 18px;
+    }
+
+    #axio-mandatory-sync-screen .prose-block strong {
+        color: #FFFFFF;
+        font-weight: 700;
+    }
+
+    #axio-mandatory-sync-screen .steps-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 16px 0 24px;
+    }
+
+    #axio-mandatory-sync-screen .step-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 14px;
+        padding: 16px 20px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    #axio-mandatory-sync-screen .step-card:hover {
+        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.045);
+    }
+
+    #axio-mandatory-sync-screen .step-num {
+        font-family: 'Instrument Serif', Georgia, serif;
+        font-size: 1.8rem;
+        line-height: 1;
+        color: #28cd41;
+        font-weight: 400;
+        min-width: 32px;
+    }
+
+    #axio-mandatory-sync-screen .step-content {
+        flex: 1;
+    }
+
+    #axio-mandatory-sync-screen .step-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #FFFFFF;
+        margin-bottom: 4px;
+    }
+
+    #axio-mandatory-sync-screen .step-desc {
+        font-size: 13px;
+        line-height: 1.55;
+        color: #AFA699;
+    }
+
+    #axio-mandatory-sync-screen kbd {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: monospace;
+        font-size: 11.5px;
+        color: #FFFFFF;
+    }
+
+    #axio-mandatory-sync-screen .drag-btn-wrap {
+        margin: 12px 0 6px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    #axio-mandatory-sync-screen .sync-bookmark-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #28cd41, #1fb538);
+        color: #FFFFFF;
+        font-weight: 800;
+        font-size: 13.5px;
+        letter-spacing: 0.02em;
+        border-radius: 24px;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(40, 205, 65, 0.35);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        cursor: grab;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    #axio-mandatory-sync-screen .sync-bookmark-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 205, 65, 0.45);
+    }
+
+    #axio-mandatory-sync-screen .sync-bookmark-pill:active {
+        cursor: grabbing;
+    }
+
+    #axio-mandatory-sync-screen .callout-box {
+        background: rgba(40, 205, 65, 0.04);
+        border: 1px solid rgba(40, 205, 65, 0.2);
+        border-radius: 14px;
+        padding: 16px 20px;
+        margin: 18px 0;
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: #CFC8BE;
+    }
+
+    #axio-mandatory-sync-screen .callout-box strong {
+        color: #FFFFFF;
+    }
+
+    #axio-mandatory-sync-screen .actions-row {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    #axio-mandatory-sync-screen .btn-primary {
+        flex: 2;
+        padding: 14px 24px;
+        background: #FFFFFF;
+        color: #0E0F14;
+        font-weight: 800;
+        font-size: 13.5px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    #axio-mandatory-sync-screen .btn-primary:hover {
+        background: #E8E5DF;
+        transform: translateY(-1px);
+    }
+
+    #axio-mandatory-sync-screen .btn-secondary {
+        flex: 1;
+        padding: 14px 18px;
+        background: transparent;
+        color: #8C8478;
+        font-weight: 600;
+        font-size: 12.5px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    #axio-mandatory-sync-screen .btn-secondary:hover {
+        color: #FFFFFF;
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    #axio-mandatory-sync-screen .footer-note {
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #6C665D;
+        text-align: center;
+        margin-top: 18px;
+    }
+
+    @media (max-width: 640px) {
+        #axio-mandatory-sync-screen .modal-box {
+            padding: 24px 20px;
+            border-radius: 16px;
+        }
+        #axio-mandatory-sync-screen .main-title {
+            font-size: 2.2rem;
+        }
+        #axio-mandatory-sync-screen .meta-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+        #axio-mandatory-sync-screen .actions-row {
+            flex-direction: column;
+        }
+        #axio-mandatory-sync-screen .btn-primary,
+        #axio-mandatory-sync-screen .btn-secondary {
+            width: 100%;
+            text-align: center;
+        }
+    }
+
     /* ---------- Motion Keyframes ---------- */
     @keyframes axio-spin { to { transform: rotate(360deg); } }
     @keyframes axio-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -709,6 +1033,118 @@
         </div>
     </div>
 
+    <!-- ==========================================================================
+         MANDATORY YOUTUBE MUSIC ENGINE ACTIVATION MODAL
+         Typeset in Instrument Serif & Plus Jakarta Sans (Inspired by PDF Spec)
+         ========================================================================== -->
+    <div id="axio-mandatory-sync-screen" class="modal-hidden" role="dialog" aria-modal="true" aria-labelledby="mandatory-sync-title">
+        <div class="modal-box">
+            <!-- Top Metadata Bar -->
+            <div class="meta-header">
+                <span>AxioTune Core Architecture • Activation</span>
+                <span>Typeset in Instrument Serif &amp; Plus Jakarta Sans</span>
+            </div>
+
+            <!-- Main Heading -->
+            <h1 class="main-title" id="mandatory-sync-title">YouTube Music Engine Sync</h1>
+
+            <!-- Badge Row -->
+            <div class="badge-row">
+                <span class="badge danger">Required for Real-Time Queue</span>
+                <span class="badge success">1-Click Browser Sync</span>
+                <span class="badge">Zero Passwords</span>
+                <span class="badge">Zero Extensions</span>
+            </div>
+
+            <!-- Section 1: Why This Is Mandatory -->
+            <div class="section-header">
+                <span class="dot"></span>
+                <span>Why This Is Mandatory &amp; What It Powers</span>
+            </div>
+            <div class="prose-block">
+                YouTube Music protects its real-time recommendation algorithm and continuous <strong>Up Next autoplay queue</strong> behind authenticated browser session tokens.<br><br>
+                Without linking your session, YouTube blocks automated queue generation — <strong>causing playback to stop after a single track or loop repetitively</strong> without fresh song recommendations.<br><br>
+                Completing this 1-click sync authorizes YouTube Music's native Up Next engine directly in AxioTune: every song you play instantly generates a rich, diverse queue matched to your listening taste.
+            </div>
+
+            <!-- Section 2: 3-Step 1-Click Activation -->
+            <div class="section-header">
+                <span class="dot"></span>
+                <span>3-Step 1-Click Activation (Super Easy)</span>
+            </div>
+
+            <div class="steps-grid">
+                <!-- Step 1 -->
+                <div class="step-card">
+                    <div class="step-num">01</div>
+                    <div class="step-content">
+                        <div class="step-title">Ensure Bookmarks Bar Is Visible</div>
+                        <div class="step-desc">
+                            Press <kbd>Ctrl + Shift + B</kbd> (Windows/Linux) or <kbd>Cmd + Shift + B</kbd> (Mac) to show your browser's Bookmarks Bar if it is hidden.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card">
+                    <div class="step-num">02</div>
+                    <div class="step-content">
+                        <div class="step-title">Drag This Green Button to Your Bookmarks Bar</div>
+                        <div class="step-desc">
+                            Click and drag the green button below up into your Bookmarks Bar:
+                        </div>
+                        <div class="drag-btn-wrap">
+                            <a id="mandatory-bookmarklet-link" class="sync-bookmarklet-link sync-bookmark-pill" href="#"
+                               onclick="alert('👉 Please drag this button up to your Bookmarks Bar (Ctrl+Shift+B to show)! Then open music.youtube.com and click it.'); return false;">
+                               🟢 Drag to Bookmarks Bar: Sync YTM
+                            </a>
+                        </div>
+                        <div style="font-size: 11.5px; color: #9E9689; margin-top: 4px;">
+                            *(Do not click it here — drag &amp; drop it directly onto the top bookmarks bar)*
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card">
+                    <div class="step-num">03</div>
+                    <div class="step-content">
+                        <div class="step-title">Open music.youtube.com &amp; Click the Bookmark</div>
+                        <div class="step-desc">
+                            Open <a href="https://music.youtube.com" target="_blank" rel="noopener" style="color: #28cd41; text-decoration: underline; font-weight: 700;">music.youtube.com</a> in a new tab (make sure you're logged into your Google account), then click that <strong>Sync YTM</strong> bookmark from your bar.<br>
+                            <strong>Done! 🎉</strong> AxioTune automatically receives the token and unlocks the Up Next queue engine in 1 second.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Security & Privacy Box -->
+            <div class="callout-box">
+                <strong style="display: block; font-size: 13px; margin-bottom: 6px; color: #FFFFFF;">🔒 Security &amp; Zero-Friction Promise</strong>
+                • <strong>Zero Password Exposure:</strong> We never ask for, access, or store your Google password.<br>
+                • <strong>Zero Browser Extensions:</strong> Uses standard browser bookmarklet functionality with zero third-party software.<br>
+                • <strong>Instant Queue Access:</strong> Unlocks YouTube Music's live recommendation algorithm for seamless, endless playback.
+            </div>
+
+            <!-- Status Indicator -->
+            <div id="mandatory-sync-status" style="display: none; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; margin-top: 14px; text-align: center;"></div>
+
+            <!-- Action Buttons -->
+            <div class="actions-row">
+                <button type="button" class="btn-primary" id="btn-verify-mandatory-sync" onclick="if(typeof window.verifyMandatorySync === 'function') window.verifyMandatorySync();">
+                    ⚡ I've Done This — Verify &amp; Enter AxioTune
+                </button>
+                <button type="button" class="btn-secondary" id="btn-skip-mandatory-sync" onclick="if(typeof window.skipMandatorySync === 'function') window.skipMandatorySync();">
+                    Continue in Limited Mode
+                </button>
+            </div>
+
+            <div class="footer-note">
+                AxioTune Engine Architecture // Typeset in Instrument Serif &amp; Plus Jakarta Sans
+            </div>
+        </div>
+    </div>
+
     <script>
     (function() {
         'use strict';
@@ -719,19 +1155,118 @@
         const statusEl = document.getElementById('axio-login-status');
         if (!loginScreen) return;
 
+        window.isYtmSynced = false;
+
         window.openLoginPortal = function() {
             loginScreen.classList.remove('login-dismissed');
             if (statusEl) statusEl.textContent = '';
         };
 
-        window.dismissLoginPortal = function() {
+        window.openMandatorySyncModal = function() {
+            const modal = document.getElementById('axio-mandatory-sync-screen');
+            if (modal) {
+                modal.classList.remove('modal-hidden');
+                if (typeof initLoginBookmarklet === 'function') initLoginBookmarklet();
+                if (typeof initSyncBookmarklet === 'function') initSyncBookmarklet();
+            }
+        };
+
+        window.closeMandatorySyncModal = function() {
+            const modal = document.getElementById('axio-mandatory-sync-screen');
+            if (modal) {
+                modal.classList.add('modal-hidden');
+            }
+        };
+
+        window.dismissLoginPortal = function(forceSkipOnboarding = false) {
             loginScreen.classList.add('login-dismissed');
             if (pollInterval) {
                 clearInterval(pollInterval);
                 pollInterval = null;
                 fetch('/api/auth/cancel_login', { method: 'POST' }).catch(() => {});
             }
+            if (!forceSkipOnboarding && !window.isYtmSynced) {
+                setTimeout(function() {
+                    window.openMandatorySyncModal();
+                }, 250);
+            }
         };
+
+        window.verifyMandatorySync = async function() {
+            const btn = document.getElementById('btn-verify-mandatory-sync');
+            const statusBox = document.getElementById('mandatory-sync-status');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳ Verifying Connection...';
+            }
+            try {
+                const res = await fetch('/api/auth/status');
+                const data = await res.json();
+                if (data.synced) {
+                    window.isYtmSynced = true;
+                    if (statusBox) {
+                        statusBox.style.display = 'block';
+                        statusBox.style.background = 'rgba(40, 205, 65, 0.15)';
+                        statusBox.style.color = '#38DF54';
+                        statusBox.textContent = `🎉 Connected as ${data.user?.name || 'User'}! Up Next Queue Engine Unlocked.`;
+                    }
+                    setTimeout(function() {
+                        window.closeMandatorySyncModal();
+                        if (typeof fetchLibraryData === 'function') fetchLibraryData();
+                        if (typeof loadTrendingFeeds === 'function') loadTrendingFeeds();
+                        if (typeof checkSyncStatus === 'function') checkSyncStatus();
+                    }, 800);
+                } else {
+                    if (statusBox) {
+                        statusBox.style.display = 'block';
+                        statusBox.style.background = 'rgba(255, 149, 0, 0.15)';
+                        statusBox.style.color = '#FFB340';
+                        statusBox.textContent = '⚠️ Sync not detected yet. Drag the green button to your bookmarks bar, open music.youtube.com, and click it!';
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = "⚡ I've Done This — Verify & Enter AxioTune";
+                    }
+                }
+            } catch(e) {
+                if (statusBox) {
+                    statusBox.style.display = 'block';
+                    statusBox.style.background = 'rgba(255, 71, 109, 0.15)';
+                    statusBox.style.color = '#FF6E8D';
+                    statusBox.textContent = '⚠️ Failed to connect to server. Please try again.';
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "⚡ I've Done This — Verify & Enter AxioTune";
+                }
+            }
+        };
+
+        window.skipMandatorySync = function() {
+            if (confirm("⚠️ Are you sure? Without syncing, YouTube Music Up Next recommendations and continuous queue will not work. Continue in limited mode?")) {
+                window.closeMandatorySyncModal();
+            }
+        };
+
+        // Listen for sync event from other tabs (when user clicks bookmarklet on music.youtube.com)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'ytm_sync_trigger') {
+                window.isYtmSynced = true;
+                const statusBox = document.getElementById('mandatory-sync-status');
+                if (statusBox) {
+                    statusBox.style.display = 'block';
+                    statusBox.style.background = 'rgba(40, 205, 65, 0.15)';
+                    statusBox.style.color = '#38DF54';
+                    statusBox.textContent = '🎉 Sync Detected! Up Next Queue Engine Activated. Entering AxioTune...';
+                }
+                setTimeout(function() {
+                    window.closeMandatorySyncModal();
+                    if (typeof fetchLibraryData === 'function') fetchLibraryData();
+                    if (typeof loadTrendingFeeds === 'function') loadTrendingFeeds();
+                    if (typeof checkSyncStatus === 'function') checkSyncStatus();
+                }, 1000);
+            }
+        });
 
         // Guest handler
         btnGuest?.addEventListener('click', function() {
@@ -742,10 +1277,10 @@
             }
             if (statusEl) {
                 statusEl.style.color = '#C4B9AD';
-                statusEl.textContent = '🎧 Continuing as guest... Enjoy the soundscape!';
+                statusEl.textContent = '🎧 Continuing as guest... Opening Engine Activation...';
             }
             setTimeout(function() {
-                window.dismissLoginPortal();
+                window.dismissLoginPortal(false);
             }, 300);
         });
 
@@ -754,19 +1289,22 @@
             .then(res => res.json())
             .then(data => {
                 if (data.synced) {
+                    window.isYtmSynced = true;
                     if (statusEl) {
                         statusEl.style.color = '#28cd41';
                         statusEl.textContent = `Welcome back, ${data.user?.name || 'User'}! Loading soundscape...`;
                     }
                     setTimeout(function() {
-                        window.dismissLoginPortal();
+                        window.dismissLoginPortal(true);
                     }, 800);
+                } else {
+                    window.isYtmSynced = false;
                 }
             })
             .catch(() => {});
 
         function initLoginBookmarklet() {
-            const links = document.querySelectorAll('.sync-bookmarklet-link, #login-bookmarklet-link, #sync-bookmarklet-link');
+            const links = document.querySelectorAll('.sync-bookmarklet-link, #login-bookmarklet-link, #sync-bookmarklet-link, #mandatory-bookmarklet-link');
             const origin = window.location.origin;
             const js = `(function(){var c=document.cookie;if(!c||window.location.host.indexOf('music.youtube.com')===-1){alert('\\uD83D\\uDC49 Pehle music.youtube.com kholiye aur login karke fir click karein!');return;}window.open('${origin}/#sync_cookie='+encodeURIComponent(c),'_blank');})();`;
             links.forEach(link => {
@@ -2282,7 +2820,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=297"></script>
+    <script src="app_v3.js?v=298"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
