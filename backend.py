@@ -93,6 +93,14 @@ USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
 def configure_ytmusic_timeout(instance, timeout_secs=20.0):
     try:
         if instance and hasattr(instance, '_session') and instance._session:
+            instance._session.headers.update({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+                'Origin': 'https://music.youtube.com',
+                'Referer': 'https://music.youtube.com/',
+                'X-YouTube-Client-Name': '67',
+                'X-YouTube-Client-Version': '1.20240815.01.00',
+                'Accept-Language': 'en-IN,en;q=0.9,hi;q=0.8'
+            })
             orig_send = instance._session.send
             def timeout_send(request, **kwargs):
                 if 'timeout' not in kwargs or kwargs['timeout'] is None:
@@ -848,6 +856,26 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         if cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < API_CACHE_TTL:
             return API_CACHE[cache_key]['data']
             
+        def _find_playlist_panel(obj):
+            if not isinstance(obj, dict):
+                return None
+            if 'playlistPanelRenderer' in obj:
+                return obj['playlistPanelRenderer']
+            if 'playlistPanelContinuation' in obj:
+                return obj['playlistPanelContinuation']
+            for v in obj.values():
+                if isinstance(v, dict):
+                    found = _find_playlist_panel(v)
+                    if found:
+                        return found
+                elif isinstance(v, list):
+                    for item in v:
+                        if isinstance(item, dict):
+                            found = _find_playlist_panel(item)
+                            if found:
+                                return found
+            return None
+
         def extract_radio_from_id(target_id: str):
             if not target_id or not ytmusic:
                 return []
@@ -864,29 +892,26 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                     body['playlistId'] = f'RDAMVM{target_id}'
 
                 resp = ytmusic._send_request('next', body)
-                renderer = resp.get('contents', {}).get('singleColumnMusicWatchNextResultsRenderer', {}).get('tabbedRenderer', {}).get('watchNextTabbedResultsRenderer', {})
-                for t in renderer.get('tabs', []):
-                    tr = t.get('tabRenderer', {})
-                    ppr = tr.get('content', {}).get('musicQueueRenderer', {}).get('content', {}).get('playlistPanelRenderer', {})
-                    if ppr and 'contents' in ppr:
-                        items = []
-                        for c in ppr['contents']:
-                            vr = c.get('playlistPanelVideoRenderer')
-                            if not vr:
-                                continue
-                            vid = vr.get('videoId')
-                            r_title = ''
-                            if vr.get('title', {}).get('runs'):
-                                r_title = vr['title']['runs'][0].get('text', '')
-                            r_artist = ''
-                            if vr.get('shortBylineText', {}).get('runs'):
-                                r_artist = vr['shortBylineText']['runs'][0].get('text', '')
-                            thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
-                            r_cover = thumbs[-1].get('url', '') if thumbs else ''
-                            if vid and r_title:
-                                items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
-                        if len(items) > 1:
-                            return items
+                panel = _find_playlist_panel(resp)
+                if panel and 'contents' in panel:
+                    items = []
+                    for c in panel['contents']:
+                        vr = c.get('playlistPanelVideoRenderer')
+                        if not vr:
+                            continue
+                        vid = vr.get('videoId')
+                        r_title = ''
+                        if vr.get('title', {}).get('runs'):
+                            r_title = vr['title']['runs'][0].get('text', '')
+                        r_artist = ''
+                        if vr.get('shortBylineText', {}).get('runs'):
+                            r_artist = vr['shortBylineText']['runs'][0].get('text', '')
+                        thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
+                        r_cover = thumbs[-1].get('url', '') if thumbs else ''
+                        if vid and r_title:
+                            items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
+                    if len(items) > 1:
+                        return items
             except Exception as e:
                 print(f"[Recs Radio {target_id}]: {e}")
             return []
@@ -925,10 +950,11 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 except Exception as e:
                     print(f"[Recs artist radio error]: {e}")
 
-            # 4. Final safety net: Top Tracks fallback (never empty queue)
+            # 4. Final safety net: Top Trending Songs (never search raw title+artist string to avoid literal word matches)
             if len(tracks) <= 1:
                 try:
-                    fallback_query = f"{title} {artist}".strip() if (title or artist) else "Top Songs India Hindi Punjabi"
+                    clean_art = (artist or "").split(',')[0].strip()
+                    fallback_query = f"{clean_art} Top Songs" if clean_art else "Top Trending Songs"
                     tracks = ytmusic.search(fallback_query, filter="songs", limit=25) or []
                 except Exception as e:
                     print(f"[Recs fallback error]: {e}")
