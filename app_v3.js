@@ -2719,7 +2719,7 @@ function onPlayerStateChange(event) {
                     if (targetTitle) params.set('title', targetTitle);
                     if (targetArtist) params.set('artist', targetArtist);
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 12000);
+                    const timeoutId = setTimeout(() => controller.abort(), 20000);
                     try {
                         const res = await fetch(`/api/recommendations?${params.toString()}`, { signal: controller.signal });
                         clearTimeout(timeoutId);
@@ -2733,8 +2733,14 @@ function onPlayerStateChange(event) {
                 }
 
                 // Official YouTube Music Radio queue fetch
-                const recs = await fetchRecs(vid, title, artist);
+                let recs = await fetchRecs(vid, title, artist);
+                if (myToken !== queuePopulationToken) return;
 
+                if (!recs || recs.length === 0) {
+                    if (title || artist) {
+                        recs = await fetchRecs('', title, artist);
+                    }
+                }
                 if (myToken !== queuePopulationToken) return;
 
                 if (recs && recs.length > 0) {

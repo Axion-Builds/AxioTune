@@ -916,7 +916,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
             playlist_id = target_id if is_playlist else f'RDAMVM{target_id}'
             
-            # Method 1: IOS_MUSIC InnerTube client (~0.8s, warm persistent session)
+            # Method 1: IOS_MUSIC InnerTube client
             try:
                 body_ios = {
                     'context': {
@@ -938,7 +938,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 r = RADIO_SESSION.post(
                     'https://www.youtube.com/youtubei/v1/next',
                     json=body_ios,
-                    timeout=12.0
+                    timeout=2.5
                 )
                 if r.status_code == 200:
                     panel = _find_playlist_panel(r.json())
@@ -954,7 +954,37 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         async def fetch_youtube_music_radio(target_id: str):
             if not target_id:
                 return []
-            return await asyncio.to_thread(_fetch_radio_sync, target_id)
+            
+            # 1. Native YouTube Music Watch Playlist Radio (Fastest ~1.0s, genuine radio mix)
+            try:
+                def _get_wp():
+                    res = ytmusic.get_watch_playlist(videoId=target_id, radio=True, limit=25)
+                    items = []
+                    for t in res.get('tracks', []):
+                        vid = t.get('videoId')
+                        t_title = t.get('title', '')
+                        artists = t.get('artists', [])
+                        t_artist = artists[0].get('name', '') if artists else ''
+                        thumbs = t.get('thumbnail', [])
+                        t_cover = thumbs[-1].get('url', '') if thumbs else ''
+                        if vid and t_title:
+                            items.append({'videoId': vid, 'title': t_title, 'artist': t_artist, 'cover': t_cover})
+                    return items
+                items = await asyncio.wait_for(asyncio.to_thread(_get_wp), timeout=3.0)
+                if len(items) > 1:
+                    return items
+            except Exception as e:
+                print(f"[Radio watch_playlist {target_id}]: {e}")
+
+            # 2. IOS_MUSIC session fallback
+            try:
+                items = await asyncio.wait_for(asyncio.to_thread(_fetch_radio_sync, target_id), timeout=2.5)
+                if len(items) > 1:
+                    return items
+            except Exception as e:
+                print(f"[Radio IOS_MUSIC {target_id}]: {e}")
+
+            return []
 
         tracks = []
         target_vid = videoId
@@ -991,7 +1021,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                             if not rel_bid:
                                 return []
                             try:
-                                rel_info = await asyncio.to_thread(ytmusic.get_artist, rel_bid)
+                                rel_info = await asyncio.wait_for(asyncio.to_thread(ytmusic.get_artist, rel_bid), timeout=2.5)
                                 sub_tracks = []
                                 for s in rel_info.get('songs', {}).get('results', [])[:2]:
                                     svid = s.get('videoId')
