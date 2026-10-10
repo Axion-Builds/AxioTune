@@ -88,15 +88,29 @@ if not os.path.exists(COVER_CACHE_DIR):
 
 USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
 
+def configure_ytmusic_timeout(instance, timeout_secs=5.0):
+    try:
+        if instance and hasattr(instance, '_session') and instance._session:
+            orig_send = instance._session.send
+            def timeout_send(request, **kwargs):
+                if 'timeout' not in kwargs or kwargs['timeout'] is None:
+                    kwargs['timeout'] = timeout_secs
+                return orig_send(request, **kwargs)
+            instance._session.send = timeout_send
+    except Exception:
+        pass
+
 def init_ytmusic():
     global ytmusic, USER_PROFILE_CACHE
     USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
+    loaded_auth = False
     if os.path.exists(AUTH_FILE):
         try:
             candidate = YTMusic(AUTH_FILE)
             # Verify session validity by attempting to get account info
             info = candidate.get_account_info()
             ytmusic = candidate
+            configure_ytmusic_timeout(ytmusic, 5.0)
             USER_PROFILE_CACHE["data"] = {
                 "name": info.get("accountName", "Google User"),
                 "handle": info.get("channelHandle", ""),
@@ -104,7 +118,7 @@ def init_ytmusic():
             }
             USER_PROFILE_CACHE["timestamp"] = time.time()
             print("=== Success: Authenticated YTMusic session loaded ===")
-            return True
+            loaded_auth = True
         except Exception as e:
             print(f"=== Stale/expired session detected: {e}. Removing stale auth file. Falling back to guest. ===")
             try:
@@ -112,11 +126,14 @@ def init_ytmusic():
             except Exception:
                 pass
             ytmusic = YTMusic()
-            return False
+            configure_ytmusic_timeout(ytmusic, 5.0)
+            loaded_auth = False
     else:
         print("=== No authenticated session found. Running as Guest. ===")
         ytmusic = YTMusic()
-        return False
+        configure_ytmusic_timeout(ytmusic, 5.0)
+        loaded_auth = False
+    return loaded_auth
 
 # Initialize
 init_ytmusic()
@@ -856,9 +873,12 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             tracks = []
             # 1. Try direct videoId radio
             if videoId:
-                tracks = extract_radio_from_id(videoId)
+                try:
+                    tracks = extract_radio_from_id(videoId)
+                except Exception as e:
+                    print(f"[Recs direct radio error]: {e}")
 
-            # 2. If <= 1 track, resolve official YouTube Music song ATV ID
+            # 2. If radio not obtained, search similar songs directly in song catalog (super fast: ~0.8s)
             if len(tracks) <= 1:
                 q = f"{title} {artist}".strip()
                 if not q and videoId:
@@ -871,31 +891,20 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                         pass
                 if q:
                     try:
-                        songs = ytmusic.search(q, filter="songs", limit=3)
-                        for s in songs:
-                            alt_id = s.get('videoId')
-                            if alt_id and alt_id != videoId:
-                                alt_tracks = extract_radio_from_id(alt_id)
-                                if len(alt_tracks) > 1:
-                                    tracks = alt_tracks
-                                    break
+                        tracks = ytmusic.search(q, filter="songs", limit=25)
                     except Exception as e:
-                        print(f"[Recs ATV search error]: {e}")
+                        print(f"[Recs song catalog search error]: {e}")
 
-            # 3. If radio still not obtained, search similar songs strictly in song catalog
+            # 3. If still <= 1 track, search by artist or title
             if len(tracks) <= 1:
-                search_q = ""
-                if artist:
-                    search_q = f"{artist} songs"
-                elif title:
-                    search_q = f"{title} songs"
+                search_q = f"{artist} songs" if artist else (f"{title} songs" if title else "")
                 if search_q:
                     try:
                         tracks = ytmusic.search(query=search_q, filter="songs", limit=25)
                     except Exception as e:
                         print(f"[Recs Search fallback error]: {e}")
 
-            # 4. Final safety net: global popular songs (never country-locked Indian trending charts)
+            # 4. Final safety net: global popular songs
             if len(tracks) <= 1:
                 try:
                     tracks = ytmusic.search(query="Popular Hits", filter="songs", limit=25)
@@ -904,7 +913,16 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
 
             return tracks
 
-        tracks = await run_sync(resolve_and_fetch)
+        try:
+            tracks = await asyncio.wait_for(run_sync(resolve_and_fetch), timeout=6.0)
+        except Exception as e:
+            print(f"[Recs timeout/fallback]: {e}")
+            tracks = []
+            try:
+                fallback_q = (artist or title or "Popular Hits").strip()
+                tracks = await run_sync(lambda: ytmusic.search(query=f"{fallback_q} songs", filter="songs", limit=20))
+            except Exception:
+                tracks = []
         
         recs = []
         seen_vids = set()

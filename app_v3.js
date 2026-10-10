@@ -2682,8 +2682,14 @@ function onPlayerStateChange(event) {
             if (pauseIcon) pauseIcon.style.display = playing ? 'block' : 'none';
         }
 
+        let queuePopulationToken = 0;
+        window._isQueueLoading = false;
+
         async function populateQueue(videoId, append = false, currentTitle = '', currentArtist = '') {
             if (!videoId && !currentTitle) return;
+            const myToken = ++queuePopulationToken;
+            window._isQueueLoading = true;
+
             if (!append) {
                 queueRenderLimit = 10;
                 // Instantly update queue with the playing song to prevent stale queue bugs
@@ -2696,20 +2702,67 @@ function onPlayerStateChange(event) {
                 }];
                 currentQueueIndex = 0;
                 renderQueue();
+            } else {
+                if (queueList.length <= currentQueueIndex + 1) {
+                    renderQueue();
+                }
             }
             
             try {
                 const title = currentTitle || currentSongMeta?.title || '';
                 const artist = currentArtist || currentSongMeta?.artist || currentSongMeta?.uploader || '';
-                const params = new URLSearchParams();
                 const vid = videoId || currentVideoId || '';
-                if (vid) params.set('videoId', vid);
-                if (title) params.set('title', title);
-                if (artist) params.set('artist', artist);
 
-                const res = await fetch(`/api/recommendations?${params.toString()}`);
-                const data = await res.json();
-                if (data.status === 'success' && data.recommendations && data.recommendations.length > 0) {
+                async function fetchRecs(targetVid, targetTitle, targetArtist) {
+                    const params = new URLSearchParams();
+                    if (targetVid) params.set('videoId', targetVid);
+                    if (targetTitle) params.set('title', targetTitle);
+                    if (targetArtist) params.set('artist', targetArtist);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 7000);
+                    try {
+                        const res = await fetch(`/api/recommendations?${params.toString()}`, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        if (!res.ok) return [];
+                        const data = await res.json();
+                        return (data.status === 'success' && Array.isArray(data.recommendations)) ? data.recommendations : [];
+                    } catch(e) {
+                        clearTimeout(timeoutId);
+                        return [];
+                    }
+                }
+
+                // 1. Primary Attempt: with videoId + title + artist
+                let recs = await fetchRecs(vid, title, artist);
+
+                // 2. Fallback Attempt: with title + artist if videoId was unhelpful
+                if ((!recs || recs.length < 2) && (title || artist) && myToken === queuePopulationToken) {
+                    recs = await fetchRecs('', title, artist);
+                }
+
+                // 3. Safety Fallback: fetch trending tracks so upcoming queue is NEVER empty
+                if ((!recs || recs.length < 2) && myToken === queuePopulationToken) {
+                    try {
+                        const trendRes = await fetch('/api/trending');
+                        if (trendRes.ok) {
+                            const trendData = await trendRes.json();
+                            const trendItems = trendData.results || trendData.trending || trendData.top_songs || [];
+                            if (trendItems.length > 0) {
+                                recs = trendItems.map(s => ({
+                                    videoId: s.videoId || s.id,
+                                    id: s.videoId || s.id,
+                                    title: s.title,
+                                    artist: s.artist || s.uploader || '',
+                                    cover: s.cover || s.thumbnail || ''
+                                }));
+                            }
+                        }
+                    } catch(te) {}
+                }
+
+                if (myToken !== queuePopulationToken) return;
+
+                if (recs && recs.length > 0) {
                     const existingIds = new Set(queueList.map(s => s.videoId || s.id).filter(Boolean));
                     let addedAny = false;
 
@@ -2720,7 +2773,7 @@ function onPlayerStateChange(event) {
                         currentQueueIndex = 1;
                     }
 
-                    data.recommendations.slice(0, 18).forEach(s => {
+                    recs.slice(0, 18).forEach(s => {
                         const trackId = s.videoId || s.id;
                         if (trackId && !existingIds.has(trackId)) {
                             existingIds.add(trackId);
@@ -2735,12 +2788,26 @@ function onPlayerStateChange(event) {
                         }
                     });
                     if (addedAny) {
-                        renderQueue();
                         prefetchNextSong(); // Start prefetching the next song for zero latency
                     }
                 }
-            } catch(e) { console.error('Failed to populate queue:', e); }
+            } catch(e) {
+                console.error('Failed to populate queue:', e);
+            } finally {
+                if (myToken === queuePopulationToken) {
+                    window._isQueueLoading = false;
+                    renderQueue();
+                }
+            }
         }
+
+        window.retryPopulateQueue = function() {
+            if (!currentSongMeta && !currentVideoId) return;
+            const title = currentSongMeta?.title || trackTitleEl?.textContent || '';
+            const artist = currentSongMeta?.artist || trackArtistEl?.textContent || '';
+            const vid = currentVideoId || currentSongMeta?.videoId || '';
+            populateQueue(vid, true, title, artist);
+        };
         
         window.playTrackFromList = function(songJsonStr) {
             try {
@@ -5107,8 +5174,7 @@ function onPlayerStateChange(event) {
                 `;
                 card.onclick = () => {
                     if (videoId) {
-                        const songJson = JSON.stringify({title, artist: subtitle, cover: effectiveThumb, videoId}).replace(/"/g, '&quot;');
-                        window.playSong(videoId, songJson, card);
+                        window.playSong(videoId, {title, artist: subtitle, cover: effectiveThumb, videoId}, card);
                     } else {
                         songSearchInput.value = `${title} ${subtitle}`; searchBtn.click();
                     }
@@ -5221,30 +5287,42 @@ function onPlayerStateChange(event) {
         window._tasteMixCache = window._tasteMixCache || null;
         window._tasteMixCacheTime = window._tasteMixCacheTime || 0;
 
+        try {
+            if (!window._tasteMixCache) {
+                const storedMix = localStorage.getItem('axio_taste_mix_cache');
+                if (storedMix) {
+                    window._tasteMixCache = JSON.parse(storedMix);
+                    window._tasteMixCacheTime = parseInt(localStorage.getItem('axio_taste_mix_cache_time') || '0', 10);
+                }
+            }
+        } catch(e) {}
+
         async function populateTasteMix(historyItems) {
             const section = document.getElementById('home-taste-mix-section');
             const container = document.getElementById('home-taste-mix-container');
             if (!section || !container) return;
 
             const myToken = ++tasteMixToken;
-            const valid = (historyItems || []).filter(h => h && (h.videoId || h.id || h.title));
+            section.style.display = 'block';
 
-            // Instant render from memory cache if available and fresh (< 10 min)
-            const now = Date.now();
-            if (window._tasteMixCache && window._tasteMixCache.length > 0 && (now - window._tasteMixCacheTime) < 600000) {
-                section.style.display = 'block';
+            // Instant render from cache (in-memory or localStorage) immediately
+            if (window._tasteMixCache && Array.isArray(window._tasteMixCache) && window._tasteMixCache.length > 0) {
                 populateCinematicCards('home-taste-mix-container', window._tasteMixCache);
             }
 
+            const valid = (historyItems || []).filter(h => h && (h.videoId || h.id || h.title));
+
             // If no history items yet, load trending tracks into Taste Mix as a starter AI Mix
             if (valid.length === 0) {
+                if (!window._tasteMixCache || window._tasteMixCache.length === 0) {
+                    container.innerHTML = '<div class="empty-state" style="padding:24px;">' + TERMINAL_LOADER_HTML + '</div>';
+                }
                 try {
                     const trendRes = await fetch('/api/trending');
                     const trendData = await trendRes.json();
                     if (myToken !== tasteMixToken) return;
                     const items = trendData.results || trendData.trending || trendData.top_songs || [];
                     if (items.length > 0) {
-                        section.style.display = 'block';
                         const cards = items.slice(0, 24).map(s => ({
                             videoId: s.videoId || s.id,
                             id: s.videoId || s.id,
@@ -5255,6 +5333,10 @@ function onPlayerStateChange(event) {
                         }));
                         window._tasteMixCache = cards;
                         window._tasteMixCacheTime = Date.now();
+                        try {
+                            localStorage.setItem('axio_taste_mix_cache', JSON.stringify(cards));
+                            localStorage.setItem('axio_taste_mix_cache_time', String(Date.now()));
+                        } catch(e) {}
                         populateCinematicCards('home-taste-mix-container', cards);
                     }
                 } catch(e) {}
@@ -5275,8 +5357,7 @@ function onPlayerStateChange(event) {
             if (seeds.length === 0) seeds.push(valid[0]);
 
             if (!window._tasteMixCache || window._tasteMixCache.length === 0) {
-                section.style.display = 'block';
-                container.innerHTML = '<div class="empty-state" style="padding:20px;">' + TERMINAL_LOADER_HTML + '</div>';
+                container.innerHTML = '<div class="empty-state" style="padding:24px;">' + TERMINAL_LOADER_HTML + '</div>';
             }
 
             const allRecs = [];
@@ -5294,11 +5375,14 @@ function onPlayerStateChange(event) {
                     if (title) params.set('title', title);
                     if (artist) params.set('artist', artist);
 
-                    const res = await fetch(`/api/recommendations?${params.toString()}`);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6500);
+                    const res = await fetch(`/api/recommendations?${params.toString()}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
                     const data = await res.json();
                     if (myToken !== tasteMixToken) return;
 
-                    if (data.status === 'success' && data.recommendations && data.recommendations.length > 0) {
+                    if (data.status === 'success' && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
                         data.recommendations.forEach(s => {
                             const trackId = s.videoId || s.id;
                             if (trackId && !seenIds.has(trackId)) {
@@ -5317,7 +5401,6 @@ function onPlayerStateChange(event) {
                         // Progressive render: Display immediately on first seed completion
                         if (!firstSeedRendered && allRecs.length >= 8 && myToken === tasteMixToken) {
                             firstSeedRendered = true;
-                            section.style.display = 'block';
                             populateCinematicCards('home-taste-mix-container', allRecs.slice(0, 24));
                         }
                     }
@@ -5329,26 +5412,30 @@ function onPlayerStateChange(event) {
             if (myToken !== tasteMixToken) return;
 
             if (allRecs.length === 0) {
-                if (!window._tasteMixCache) {
+                if (!window._tasteMixCache || window._tasteMixCache.length === 0) {
                     try {
                         const trendRes = await fetch('/api/trending');
                         const trendData = await trendRes.json();
                         if (myToken !== tasteMixToken) return;
                         const items = trendData.results || trendData.trending || trendData.top_songs || [];
                         if (items.length > 0) {
-                            section.style.display = 'block';
-                            populateCinematicCards('home-taste-mix-container', items.slice(0, 24).map(s => ({
+                            const fallbackCards = items.slice(0, 24).map(s => ({
                                 videoId: s.videoId || s.id,
                                 id: s.videoId || s.id,
                                 title: s.title,
                                 artist: s.artist || s.uploader || '',
                                 cover: s.cover || s.thumbnail || (s.videoId ? `https://i.ytimg.com/vi/${s.videoId}/hqdefault.jpg` : ''),
                                 type: 'song'
-                            })));
-                            return;
+                            }));
+                            window._tasteMixCache = fallbackCards;
+                            window._tasteMixCacheTime = Date.now();
+                            try {
+                                localStorage.setItem('axio_taste_mix_cache', JSON.stringify(fallbackCards));
+                                localStorage.setItem('axio_taste_mix_cache_time', String(Date.now()));
+                            } catch(e) {}
+                            populateCinematicCards('home-taste-mix-container', fallbackCards);
                         }
                     } catch(e) {}
-                    section.style.display = 'none';
                 }
                 return;
             }
@@ -5362,7 +5449,10 @@ function onPlayerStateChange(event) {
             const finalCards = allRecs.slice(0, 24);
             window._tasteMixCache = finalCards;
             window._tasteMixCacheTime = Date.now();
-            section.style.display = 'block';
+            try {
+                localStorage.setItem('axio_taste_mix_cache', JSON.stringify(finalCards));
+                localStorage.setItem('axio_taste_mix_cache_time', String(Date.now()));
+            } catch(e) {}
             populateCinematicCards('home-taste-mix-container', finalCards);
         }
 
@@ -6176,13 +6266,24 @@ function onPlayerStateChange(event) {
         }
         window.showRemotePlaylistPage = showRemotePlaylistPage;
 
-        window.playSong = function(videoId, songJsonStr, element) {
+        window.playSong = function(videoId, songDataOrJson, element) {
             try {
-                const song = JSON.parse(songJsonStr.replace(/&quot;/g, '"'));
-                songSearchInput.value = song.title + ' ' + song.artist;
-                window._forceQueueSong = { id: videoId, videoId, title: song.title, artist: song.artist, thumbnail: song.cover || song.thumbnail };
+                let song = songDataOrJson;
+                if (typeof songDataOrJson === 'string') {
+                    try {
+                        song = JSON.parse(songDataOrJson.replace(/&quot;/g, '"'));
+                    } catch(err) {
+                        song = { title: songDataOrJson, artist: 'Unknown' };
+                    }
+                }
+                if (!song || typeof song !== 'object') song = {};
+                const sTitle = song.title || '';
+                const sArtist = song.artist || song.uploader || '';
+                const sThumb = song.cover || song.thumbnail || (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '');
+                songSearchInput.value = `${sTitle} ${sArtist}`.trim();
+                window._forceQueueSong = { id: videoId, videoId, title: sTitle, artist: sArtist, thumbnail: sThumb };
                 searchBtn.click();
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error('playSong error:', e); }
         };
 
         // ── COVER ART FLOAT ANIMATION & PLAYBACK REPORTING ──
@@ -6408,10 +6509,19 @@ function onPlayerStateChange(event) {
                 if (totalUpcoming <= 0) {
                     const emptyUpcoming = document.createElement('div');
                     emptyUpcoming.className = 'pq-empty-state';
-                    emptyUpcoming.innerHTML = `
-                        <div class="pq-empty-title">No upcoming songs</div>
-                        <div class="pq-empty-desc">${isSongLoaded ? 'AutoPlay will recommend similar music soon...' : 'Add songs to queue or enable AutoPlay'}</div>
-                    `;
+                    if (window._isQueueLoading) {
+                        emptyUpcoming.innerHTML = `
+                            <div class="pq-loading-spinner" style="width:24px;height:24px;border:2px solid rgba(255,255,255,0.15);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px auto;"></div>
+                            <div class="pq-empty-title">Curating upcoming tracks...</div>
+                            <div class="pq-empty-desc">Finding tracks matching your current vibe</div>
+                        `;
+                    } else {
+                        emptyUpcoming.innerHTML = `
+                            <div class="pq-empty-title">No upcoming songs</div>
+                            <div class="pq-empty-desc">${isSongLoaded ? 'AutoPlay will recommend similar music soon...' : 'Add songs to queue or enable AutoPlay'}</div>
+                            ${isSongLoaded ? '<button class="pq-retry-btn" onclick="retryPopulateQueue()" style="margin-top:14px;padding:8px 18px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);border-radius:20px;color:#fff;font-size:0.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s ease;">✦ Discover similar songs</button>' : ''}
+                        `;
+                    }
                     upcomingListEl.appendChild(emptyUpcoming);
                 } else {
                     for (let idx = startIndex; idx < queueList.length; idx++) {
