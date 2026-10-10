@@ -852,6 +852,113 @@ async def get_trending():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.get("/api/debug-radio")
+async def debug_radio(videoId: str = "JF59DPVZeJg"):
+    import traceback
+    results = {}
+    
+    # 1. DNS
+    try:
+        ip = socket.gethostbyname("music.youtube.com")
+        results["dns_music"] = ip
+    except Exception as e:
+        results["dns_music"] = f"ERROR: {e}"
+
+    # 2. Connectivity to music.youtube.com
+    try:
+        t0 = time.time()
+        r = requests.get("https://music.youtube.com/robots.txt", timeout=4.0)
+        results["music_robots"] = {"status": r.status_code, "time": round(time.time() - t0, 2)}
+    except Exception as e:
+        results["music_robots"] = {"error": str(e)}
+
+    # 3. Raw POST to music.youtube.com/youtubei/v1/next
+    try:
+        t0 = time.time()
+        cookies = {'SOCS': 'CAI'}
+        headers_web = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+            'Origin': 'https://music.youtube.com',
+            'Referer': 'https://music.youtube.com/',
+            'Content-Type': 'application/json',
+            'Accept-Encoding': 'gzip, deflate'
+        }
+        body_web = {
+            'context': {'client': {'clientName': 'WEB_REMIX', 'clientVersion': '1.20240815.01.00', 'gl': 'IN', 'hl': 'en'}},
+            'videoId': videoId,
+            'playlistId': f'RDAMVM{videoId}',
+            'isAudioOnly': True,
+            'enablePersistentPlaylistPanel': True,
+            'params': 'wAEB'
+        }
+        r = requests.post(
+            'https://music.youtube.com/youtubei/v1/next?alt=json',
+            json=body_web,
+            headers=headers_web,
+            cookies=cookies,
+            timeout=5.0
+        )
+        data = r.json()
+        results["post_web_remix"] = {
+            "status": r.status_code,
+            "keys": list(data.keys()) if isinstance(data, dict) else str(type(data)),
+            "time": round(time.time() - t0, 2)
+        }
+    except Exception as e:
+        results["post_web_remix"] = {"error": str(e), "trace": traceback.format_exc()}
+
+    # 4. Raw POST to www.youtube.com/youtubei/v1/next (ANDROID)
+    try:
+        t0 = time.time()
+        headers_android = {
+            'User-Agent': 'com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 14)',
+            'Content-Type': 'application/json',
+            'Accept-Encoding': 'gzip, deflate'
+        }
+        body_android = {
+            'context': {'client': {'clientName': 'ANDROID_MUSIC', 'clientVersion': '6.41.52', 'androidSdkVersion': 34, 'gl': 'IN', 'hl': 'en'}},
+            'videoId': videoId,
+            'playlistId': f'RDAMVM{videoId}',
+            'isAudioOnly': True,
+            'enablePersistentPlaylistPanel': True,
+            'params': 'wAEB'
+        }
+        r3 = requests.post(
+            'https://www.youtube.com/youtubei/v1/next',
+            json=body_android,
+            headers=headers_android,
+            cookies={'SOCS': 'CAI'},
+            timeout=5.0
+        )
+        data3 = r3.json()
+        results["post_android"] = {
+            "status": r3.status_code,
+            "keys": list(data3.keys()) if isinstance(data3, dict) else str(type(data3)),
+            "time": round(time.time() - t0, 2)
+        }
+    except Exception as e:
+        results["post_android"] = {"error": str(e), "trace": traceback.format_exc()}
+
+    # 5. ytmusic._send_request
+    try:
+        t0 = time.time()
+        body = {
+            'videoId': videoId,
+            'playlistId': f'RDAMVM{videoId}',
+            'isAudioOnly': True,
+            'enablePersistentPlaylistPanel': True,
+            'params': 'wAEB'
+        }
+        d = ytmusic._send_request('next', body)
+        results["ytmusic_send_request"] = {
+            "keys": list(d.keys()) if isinstance(d, dict) else str(type(d)),
+            "time": round(time.time() - t0, 2)
+        }
+    except Exception as e:
+        results["ytmusic_send_request"] = {"error": str(e), "trace": traceback.format_exc()}
+
+    return results
+
 @app.get("/api/recommendations")
 async def get_recommendations(videoId: str = "", title: str = "", artist: str = "", refresh: bool = False):
     try:
