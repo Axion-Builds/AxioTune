@@ -12,6 +12,7 @@ import time
 import hashlib
 import re
 import threading
+import subprocess
 import base64
 from ytmusicapi import YTMusic
 try:
@@ -855,7 +856,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                     'enablePersistentPlaylistPanel': True,
                     'isAudioOnly': True,
                     'videoId': target_id,
-                    'playlistId': f'RDAMVM{target_id}'
+                    'playlistId': f'RDAMVM{target_id}' if not target_id.startswith(('RD', 'VL')) else target_id
                 }
                 resp = ytmusic._send_request('next', body)
                 renderer = resp.get('contents', {}).get('singleColumnMusicWatchNextResultsRenderer', {}).get('tabbedRenderer', {}).get('watchNextTabbedResultsRenderer', {})
@@ -864,7 +865,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                     ppr = tr.get('content', {}).get('musicQueueRenderer', {}).get('content', {}).get('playlistPanelRenderer', {})
                     if ppr and 'contents' in ppr and parse_watch_playlist:
                         parsed = parse_watch_playlist(ppr['contents'])
-                        if parsed:
+                        if parsed and len(parsed) > 1:
                             return parsed
             except Exception as e:
                 print(f"[Recs Radio {target_id}]: {e}")
@@ -872,66 +873,60 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
 
         def resolve_and_fetch():
             tracks = []
-            # 1. Try direct videoId radio
-            if videoId:
+            target_vid = videoId
+
+            # 1. Direct song radio if videoId provided
+            if target_vid:
                 try:
-                    tracks = extract_radio_from_id(videoId)
+                    tracks = extract_radio_from_id(target_vid)
                 except Exception as e:
                     print(f"[Recs direct radio error]: {e}")
 
-            # 2. If radio not obtained, search similar songs directly in song catalog (super fast: ~0.8s)
-            if len(tracks) <= 1:
-                q = f"{title} {artist}".strip()
-                if not q and videoId:
-                    try:
-                        s_info = ytmusic.get_song(videoId)
-                        a_name = s_info.get('videoDetails', {}).get('author', '')
-                        t_name = s_info.get('videoDetails', {}).get('title', '')
-                        q = f"{t_name} {a_name}".strip()
-                    except Exception:
-                        pass
-                if q:
-                    try:
-                        tracks = ytmusic.search(q, filter="songs", limit=25)
-                    except Exception as e:
-                        print(f"[Recs song catalog search error]: {e}")
+            # 2. If radio not obtained, resolve official song on YouTube Music to get true videoId
+            if len(tracks) <= 1 and (title or artist):
+                try:
+                    query = f"{title} {artist}".strip()
+                    search_res = ytmusic.search(query, filter="songs", limit=1)
+                    if search_res and search_res[0].get('videoId'):
+                        resolved_vid = search_res[0]['videoId']
+                        tracks = extract_radio_from_id(resolved_vid)
+                except Exception as e:
+                    print(f"[Recs song resolve error]: {e}")
 
-            # 3. If still <= 1 track, search by artist or title
-            if len(tracks) <= 1:
-                search_q = f"{artist} songs" if artist else (f"{title} songs" if title else "")
-                if search_q:
-                    try:
-                        tracks = ytmusic.search(query=search_q, filter="songs", limit=25)
-                    except Exception as e:
-                        print(f"[Recs Search fallback error]: {e}")
+            # 3. If still no radio, fetch official Artist Radio (similar vibe & related artists)
+            if len(tracks) <= 1 and (artist or title):
+                try:
+                    search_artist = (artist or title).split(',')[0].strip()
+                    a_results = ytmusic.search(search_artist, filter="artists", limit=1)
+                    if a_results and a_results[0].get('browseId'):
+                        a_data = ytmusic.get_artist(a_results[0]['browseId'])
+                        if a_data.get('radioId'):
+                            tracks = extract_radio_from_id(a_data['radioId'])
+                except Exception as e:
+                    print(f"[Recs artist radio error]: {e}")
 
-            # 4. Final safety net: global popular songs
+            # 4. Final safety net: YouTube Music Trending / Charts (never generic single-query text search)
             if len(tracks) <= 1:
                 try:
-                    tracks = ytmusic.search(query="Popular Hits", filter="songs", limit=25)
+                    charts = ytmusic.get_charts(country="IN")
+                    tracks = (charts.get('videos', {}).get('items', []) or 
+                              charts.get('songs', {}).get('items', []) or [])
                 except Exception:
                     pass
 
             return tracks
 
-        try:
-            tracks = await asyncio.wait_for(run_sync(resolve_and_fetch), timeout=6.0)
-        except Exception as e:
-            print(f"[Recs timeout/fallback]: {e}")
-            tracks = []
-            try:
-                fallback_q = (artist or title or "Popular Hits").strip()
-                tracks = await run_sync(lambda: ytmusic.search(query=f"{fallback_q} songs", filter="songs", limit=20))
-            except Exception:
-                tracks = []
-        
+        tracks = await run_sync(resolve_and_fetch)
+
         recs = []
         seen_vids = set()
         seen_titles = set()
+        artist_counts = {}
+        
+        norm_playing_title = title.lower().strip() if title else ""
         if videoId:
             seen_vids.add(videoId)
 
-        # Blacklist spam/loop terms that spoil queue quality
         spam_keywords = ["10 hour", "10hour", "1 hour", "bass boosted", "slowed reverb", "slowed + reverb", "ringtone", "whatsapp status"]
 
         for item in tracks:
@@ -940,21 +935,32 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 continue
 
             raw_title = item.get('title', 'Unknown').strip()
-            lower_title = raw_title.lower()
+            lower_title = raw_title.lower().strip()
 
-            # Skip spam / loop garbage
             if any(k in lower_title for k in spam_keywords):
                 continue
 
-            norm_title = lower_title.strip()
-            if norm_title in seen_titles:
+            # Anti-duplicate: Skip if title matches playing song or is a variant (e.g. "Song (Acoustic)", "Song (Live)")
+            if norm_playing_title and (norm_playing_title == lower_title or 
+                                       (len(norm_playing_title) > 3 and norm_playing_title in lower_title)):
+                continue
+
+            if lower_title in seen_titles:
                 continue
 
             artist_name = "Unknown"
+            artists_list = []
             if item.get('artists') and len(item['artists']) > 0:
-                artist_name = ", ".join([a['name'] for a in item['artists'] if a.get('name')])
+                artists_list = [a['name'].strip() for a in item['artists'] if a.get('name')]
+                artist_name = ", ".join(artists_list)
             elif item.get('author'):
-                artist_name = item['author']
+                artist_name = item['author'].strip()
+                artists_list = [artist_name]
+
+            # Primary artist anti-monopoly: max 2 songs per artist across the recommendations!
+            primary_artist = artists_list[0].lower() if artists_list else "unknown"
+            if primary_artist != "unknown" and artist_counts.get(primary_artist, 0) >= 2:
+                continue
 
             thumb_list = item.get('thumbnails') or item.get('thumbnail') or []
             if isinstance(thumb_list, list) and len(thumb_list) > 0:
@@ -968,7 +974,8 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 thumbnail = f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
 
             seen_vids.add(vid)
-            seen_titles.add(norm_title)
+            seen_titles.add(lower_title)
+            artist_counts[primary_artist] = artist_counts.get(primary_artist, 0) + 1
             
             recs.append({
                 "title": raw_title, 
@@ -1883,158 +1890,9 @@ def format_headers(raw_input: str) -> str:
 class SyncRequest(BaseModel):
     headers: str
 
-ACTIVE_LOGIN_BROWSER = None
-
-LOGIN_SESSION = {
-    "status": "idle",       # "idle", "in_progress", "success", "cancelled", "error"
-    "message": "",
-    "user": None,
-    "error": None,
-    "started_at": 0
-}
+ACTIVE_LOGIN_PROCESS = None
 LOGIN_LOCK = threading.Lock()
-
-def run_playwright_login_task():
-    global LOGIN_SESSION, USER_PROFILE_CACHE, ACTIVE_LOGIN_BROWSER
-    with LOGIN_LOCK:
-        LOGIN_SESSION["status"] = "in_progress"
-        LOGIN_SESSION["message"] = "Opening secure login window..."
-        LOGIN_SESSION["error"] = None
-        LOGIN_SESSION["user"] = None
-        LOGIN_SESSION["started_at"] = time.time()
-
-    playwright_instance = None
-    browser = None
-    try:
-        from playwright.sync_api import sync_playwright
-        playwright_instance = sync_playwright().start()
-
-        # Try msedge first (native on Windows), then chrome, then bundled chromium
-        browser = None
-        for channel in ["msedge", "chrome", None]:
-            try:
-                launch_kwargs = {
-                    "headless": False,
-                    "args": [
-                        "--disable-blink-features=AutomationControlled",
-                        "--no-default-browser-check",
-                        "--window-size=500,720"
-                    ],
-                    "ignore_default_args": ["--enable-automation"]
-                }
-                if channel:
-                    launch_kwargs["channel"] = channel
-                browser = playwright_instance.chromium.launch(**launch_kwargs)
-                ACTIVE_LOGIN_BROWSER = browser
-                break
-            except Exception as b_err:
-                print(f"Failed to launch browser with channel {channel}: {b_err}")
-                continue
-
-        if not browser:
-            raise RuntimeError("Could not launch browser (Edge or Chrome). Please ensure Microsoft Edge or Google Chrome is installed.")
-
-        context = browser.new_context(
-            viewport={"width": 480, "height": 700},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
-        page = context.new_page()
-        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-
-        # Official Google Sign-in with continue to YouTube Music
-        login_url = "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fmusic.youtube.com"
-        page.goto(login_url)
-
-        with LOGIN_LOCK:
-            LOGIN_SESSION["message"] = "Official Google sign-in window is open. Sign in to your account — it will auto-close when done!"
-
-        # Wait loop (up to 300 seconds / 5 mins)
-        start_time = time.time()
-        authenticated = False
-        captured_cookies = []
-
-        while time.time() - start_time < 300:
-            time.sleep(1.0)
-
-            # Check if user closed the window or page was closed
-            if page.is_closed() or not browser.is_connected():
-                if not authenticated:
-                    with LOGIN_LOCK:
-                        LOGIN_SESSION["status"] = "cancelled"
-                        LOGIN_SESSION["message"] = "Login window was closed."
-                    return
-
-            try:
-                current_url = page.url
-            except Exception:
-                break
-
-            cookies = context.cookies()
-            has_sapisid = any(c.get("name") in ["SAPISID", "__Secure-3PAPISID"] for c in cookies)
-
-            if ("music.youtube.com" in current_url or "youtube.com" in current_url) and has_sapisid:
-                authenticated = True
-                captured_cookies = cookies
-                break
-
-        if not authenticated:
-            with LOGIN_LOCK:
-                LOGIN_SESSION["status"] = "error"
-                LOGIN_SESSION["error"] = "Login timed out or credentials not detected."
-            return
-
-        # Build cookie string
-        cookie_parts = []
-        for c in captured_cookies:
-            if c.get("name") and c.get("value"):
-                cookie_parts.append(f"{c['name']}={c['value']}")
-        cookie_str = "; ".join(cookie_parts)
-
-        # Save to headers_auth.json
-        headers_dict = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
-            "Content-Type": "application/json",
-            "Origin": "https://music.youtube.com",
-            "Cookie": cookie_str,
-            "Authorization": "SAPISIDHASH dummy_value",
-            "x-goog-authuser": "0"
-        }
-        with open(AUTH_FILE, "w", encoding="utf-8") as f:
-            json.dump(headers_dict, f, indent=4)
-
-        # Re-initialize YTMusic
-        success = init_ytmusic()
-        if success:
-            user_info = get_user_account_info(force_refresh=True)
-            with LOGIN_LOCK:
-                LOGIN_SESSION["status"] = "success"
-                LOGIN_SESSION["message"] = f"Welcome back, {user_info.get('name', 'User') if user_info else 'User'}!"
-                LOGIN_SESSION["user"] = user_info
-        else:
-            with LOGIN_LOCK:
-                LOGIN_SESSION["status"] = "error"
-                LOGIN_SESSION["error"] = "Failed to initialize YouTube Music session."
-
-    except Exception as e:
-        print(f"Exception during Playwright login: {e}")
-        with LOGIN_LOCK:
-            LOGIN_SESSION["status"] = "manual_required"
-            LOGIN_SESSION["error"] = "Could not launch desktop browser. Please connect using your YouTube Music cookie or cURL token."
-            LOGIN_SESSION["message"] = "Could not launch desktop browser. Please connect using your YouTube Music cookie or cURL token."
-    finally:
-        try:
-            if browser:
-                browser.close()
-        except Exception:
-            pass
-        ACTIVE_LOGIN_BROWSER = None
-        try:
-            if playwright_instance:
-                playwright_instance.stop()
-        except Exception:
-            pass
+LOGIN_STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "login_state.json")
 
 def check_playwright_capability():
     is_headless_cloud = bool(
@@ -2064,60 +1922,97 @@ def sync_status():
 
 @app.post("/api/auth/cancel_login")
 def cancel_interactive_login():
-    global ACTIVE_LOGIN_BROWSER, LOGIN_SESSION
-    with LOGIN_LOCK:
-        LOGIN_SESSION["status"] = "cancelled"
-        LOGIN_SESSION["message"] = "Login cancelled by user."
-    if ACTIVE_LOGIN_BROWSER:
+    global ACTIVE_LOGIN_PROCESS
+    if ACTIVE_LOGIN_PROCESS and ACTIVE_LOGIN_PROCESS.poll() is None:
         try:
-            ACTIVE_LOGIN_BROWSER.close()
+            ACTIVE_LOGIN_PROCESS.terminate()
         except Exception:
             pass
-        ACTIVE_LOGIN_BROWSER = None
+    ACTIVE_LOGIN_PROCESS = None
+    try:
+        with open(LOGIN_STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump({
+                "status": "cancelled",
+                "message": "Login cancelled by user.",
+                "updated_at": time.time()
+            }, f)
+    except Exception:
+        pass
     return {"status": "cancelled"}
 
 @app.post("/api/auth/start_login")
 def start_interactive_login():
-    global LOGIN_SESSION, ACTIVE_LOGIN_BROWSER
+    global ACTIVE_LOGIN_PROCESS
     can_run, mode, reason = check_playwright_capability()
     if not can_run:
-        with LOGIN_LOCK:
-            LOGIN_SESSION["status"] = "manual_required"
-            LOGIN_SESSION["message"] = reason
-            LOGIN_SESSION["error"] = reason
+        try:
+            with open(LOGIN_STATE_FILE, "w", encoding="utf-8") as f:
+                json.dump({
+                    "status": "manual_required",
+                    "message": reason,
+                    "error": reason,
+                    "updated_at": time.time()
+                }, f)
+        except Exception:
+            pass
         return {
             "status": "manual_required",
             "mode": mode,
             "message": reason
         }
 
-    with LOGIN_LOCK:
-        if LOGIN_SESSION["status"] == "in_progress":
-            if ACTIVE_LOGIN_BROWSER and ACTIVE_LOGIN_BROWSER.is_connected():
-                return {"status": "in_progress", "message": "Login window is already active."}
-            else:
-                LOGIN_SESSION["status"] = "idle"
+    if ACTIVE_LOGIN_PROCESS and ACTIVE_LOGIN_PROCESS.poll() is None:
+        return {"status": "in_progress", "message": "Login window is already active."}
 
-        LOGIN_SESSION["status"] = "in_progress"
-        LOGIN_SESSION["message"] = "Initializing login window..."
-        LOGIN_SESSION["error"] = None
-        LOGIN_SESSION["user"] = None
-        LOGIN_SESSION["started_at"] = time.time()
+    # Reset state file
+    try:
+        with open(LOGIN_STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump({
+                "status": "in_progress",
+                "message": "Opening secure login window...",
+                "started_at": time.time()
+            }, f)
+    except Exception:
+        pass
 
-    t = threading.Thread(target=run_playwright_login_task, daemon=True)
-    t.start()
+    worker_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yt_login_worker.py")
+    ACTIVE_LOGIN_PROCESS = subprocess.Popen([sys.executable, worker_script])
     return {"status": "started", "message": "Login window opened. Please sign in."}
 
 @app.get("/api/auth/login_poll")
 def poll_interactive_login():
-    with LOGIN_LOCK:
-        return {
-            "status": LOGIN_SESSION["status"],
-            "message": LOGIN_SESSION.get("message", ""),
-            "error": LOGIN_SESSION.get("error"),
-            "user": LOGIN_SESSION.get("user"),
-            "synced": os.path.exists(AUTH_FILE)
-        }
+    global ACTIVE_LOGIN_PROCESS
+    state = {
+        "status": "idle",
+        "message": "",
+        "error": None,
+        "user": None,
+        "synced": os.path.exists(AUTH_FILE)
+    }
+    if os.path.exists(LOGIN_STATE_FILE):
+        try:
+            with open(LOGIN_STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                state["status"] = data.get("status", "idle")
+                state["message"] = data.get("message", "")
+                state["error"] = data.get("error")
+        except Exception:
+            pass
+
+    if state["status"] == "in_progress":
+        if ACTIVE_LOGIN_PROCESS and ACTIVE_LOGIN_PROCESS.poll() is not None:
+            # Process exited without success
+            if not os.path.exists(AUTH_FILE):
+                state["status"] = "cancelled"
+                state["message"] = "Login window was closed."
+
+    if state["status"] == "success":
+        if init_ytmusic():
+            user_info = get_user_account_info(force_refresh=True)
+            state["user"] = user_info
+            state["synced"] = True
+
+    return state
 
 def save_headers_to_json(headers_str: str, filepath: str):
     headers_dict = {}

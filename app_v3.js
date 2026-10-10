@@ -2735,12 +2735,7 @@ function onPlayerStateChange(event) {
                 // 1. Primary Attempt: with videoId + title + artist
                 let recs = await fetchRecs(vid, title, artist);
 
-                // 2. Fallback Attempt: with title + artist if videoId was unhelpful
-                if ((!recs || recs.length < 2) && (title || artist) && myToken === queuePopulationToken) {
-                    recs = await fetchRecs('', title, artist);
-                }
-
-                // 3. Safety Fallback: fetch trending tracks so upcoming queue is NEVER empty
+                // 2. Safety Fallback: fetch trending tracks so upcoming queue is NEVER empty
                 if ((!recs || recs.length < 2) && myToken === queuePopulationToken) {
                     try {
                         const trendRes = await fetch('/api/trending');
@@ -3815,8 +3810,10 @@ function onPlayerStateChange(event) {
             audioPlayer.play().catch(e => console.warn("Queue play failed:", e));
             prefetchNextSong();
 
-            // 3. Asynchronously fetch recommendations for infinite radio / next track queueing
-            populateQueue(song.videoId, true, song.title, song.artist);
+            // 3. Asynchronously fetch recommendations for infinite radio / next track queueing (only when queue is running low)
+            if (queueList.length - currentQueueIndex < 6) {
+                populateQueue(song.videoId, true, song.title, song.artist);
+            }
 
             // 4. Asynchronously fetch & render lyrics
             fetchLyricsForQueueSong(song.title, song.artist, song.videoId);
