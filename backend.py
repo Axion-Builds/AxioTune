@@ -850,14 +850,14 @@ async def get_trending():
         return {"status": "error", "message": str(e)}
 
 @app.get("/api/recommendations")
-async def get_recommendations(videoId: str = "", title: str = "", artist: str = ""):
+async def get_recommendations(videoId: str = "", title: str = "", artist: str = "", refresh: bool = False):
     try:
         if not videoId and not title and not artist:
             return {"status": "success", "recommendations": []}
             
         cache_key = f"recs_{videoId}_{title}_{artist}"
         now = time.time()
-        if cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < API_CACHE_TTL:
+        if not refresh and cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < 120:
             return API_CACHE[cache_key]['data']
             
         def _find_playlist_panel(obj):
