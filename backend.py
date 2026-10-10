@@ -90,7 +90,7 @@ if not os.path.exists(COVER_CACHE_DIR):
 
 USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
 
-def configure_ytmusic_timeout(instance, timeout_secs=5.0):
+def configure_ytmusic_timeout(instance, timeout_secs=20.0):
     try:
         if instance and hasattr(instance, '_session') and instance._session:
             orig_send = instance._session.send
@@ -108,11 +108,11 @@ def init_ytmusic():
     loaded_auth = False
     if os.path.exists(AUTH_FILE):
         try:
-            candidate = YTMusic(AUTH_FILE)
+            candidate = YTMusic(AUTH_FILE, language='en', location='IN')
             # Verify session validity by attempting to get account info
             info = candidate.get_account_info()
             ytmusic = candidate
-            configure_ytmusic_timeout(ytmusic, 5.0)
+            configure_ytmusic_timeout(ytmusic, 20.0)
             USER_PROFILE_CACHE["data"] = {
                 "name": info.get("accountName", "Google User"),
                 "handle": info.get("channelHandle", ""),
@@ -127,13 +127,13 @@ def init_ytmusic():
                 os.remove(AUTH_FILE)
             except Exception:
                 pass
-            ytmusic = YTMusic()
-            configure_ytmusic_timeout(ytmusic, 5.0)
+            ytmusic = YTMusic(language='en', location='IN')
+            configure_ytmusic_timeout(ytmusic, 20.0)
             loaded_auth = False
     else:
         print("=== No authenticated session found. Running as Guest. ===")
-        ytmusic = YTMusic()
-        configure_ytmusic_timeout(ytmusic, 5.0)
+        ytmusic = YTMusic(language='en', location='IN')
+        configure_ytmusic_timeout(ytmusic, 20.0)
         loaded_auth = False
     return loaded_auth
 
@@ -925,14 +925,13 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 except Exception as e:
                     print(f"[Recs artist radio error]: {e}")
 
-            # 4. Final safety net: YouTube Music Trending / Charts (never generic single-query text search)
+            # 4. Final safety net: Top Tracks fallback (never empty queue)
             if len(tracks) <= 1:
                 try:
-                    charts = ytmusic.get_charts(country="IN")
-                    tracks = (charts.get('videos', {}).get('items', []) or 
-                              charts.get('songs', {}).get('items', []) or [])
-                except Exception:
-                    pass
+                    fallback_query = f"{title} {artist}".strip() if (title or artist) else "Top Songs India Hindi Punjabi"
+                    tracks = ytmusic.search(fallback_query, filter="songs", limit=25) or []
+                except Exception as e:
+                    print(f"[Recs fallback error]: {e}")
 
             return tracks
 
@@ -1010,7 +1009,8 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 break
             
         res_data = {"status": "success", "recommendations": recs}
-        API_CACHE[cache_key] = {'time': time.time(), 'data': res_data}
+        if recs:
+            API_CACHE[cache_key] = {'time': time.time(), 'data': res_data}
         return res_data
     except Exception as e:
         return {"status": "error", "message": str(e), "recommendations": []}
