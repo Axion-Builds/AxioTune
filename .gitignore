@@ -7,6 +7,7 @@ __pycache__/
 headers_auth.json
 test_auth.json
 test_auth2.json
+login_state.json
 
 # Cache directories
 .cover_cache/

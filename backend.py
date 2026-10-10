@@ -813,8 +813,8 @@ async def proxy_stream(request: Request, url: str):
 async def get_trending():
     try:
         def fetch_trending():
-            top = ytmusic.search("Top Songs Hits", filter="songs", limit=10)
-            trend = ytmusic.search("Viral Trending Songs", filter="songs", limit=10)
+            top = ytmusic.search("Top Songs India Hindi Punjabi", filter="songs", limit=15)
+            trend = ytmusic.search("Trending Hits India", filter="songs", limit=15)
             return top, trend
             
         top_res, trend_res = await asyncio.to_thread(fetch_trending)
@@ -852,21 +852,41 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             if not target_id or not ytmusic:
                 return []
             try:
+                is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
                 body = {
                     'enablePersistentPlaylistPanel': True,
-                    'isAudioOnly': True,
-                    'videoId': target_id,
-                    'playlistId': f'RDAMVM{target_id}' if not target_id.startswith(('RD', 'VL')) else target_id
+                    'isAudioOnly': True
                 }
+                if is_playlist:
+                    body['playlistId'] = target_id
+                else:
+                    body['videoId'] = target_id
+                    body['playlistId'] = f'RDAMVM{target_id}'
+
                 resp = ytmusic._send_request('next', body)
                 renderer = resp.get('contents', {}).get('singleColumnMusicWatchNextResultsRenderer', {}).get('tabbedRenderer', {}).get('watchNextTabbedResultsRenderer', {})
                 for t in renderer.get('tabs', []):
                     tr = t.get('tabRenderer', {})
                     ppr = tr.get('content', {}).get('musicQueueRenderer', {}).get('content', {}).get('playlistPanelRenderer', {})
-                    if ppr and 'contents' in ppr and parse_watch_playlist:
-                        parsed = parse_watch_playlist(ppr['contents'])
-                        if parsed and len(parsed) > 1:
-                            return parsed
+                    if ppr and 'contents' in ppr:
+                        items = []
+                        for c in ppr['contents']:
+                            vr = c.get('playlistPanelVideoRenderer')
+                            if not vr:
+                                continue
+                            vid = vr.get('videoId')
+                            r_title = ''
+                            if vr.get('title', {}).get('runs'):
+                                r_title = vr['title']['runs'][0].get('text', '')
+                            r_artist = ''
+                            if vr.get('shortBylineText', {}).get('runs'):
+                                r_artist = vr['shortBylineText']['runs'][0].get('text', '')
+                            thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
+                            r_cover = thumbs[-1].get('url', '') if thumbs else ''
+                            if vid and r_title:
+                                items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
+                        if len(items) > 1:
+                            return items
             except Exception as e:
                 print(f"[Recs Radio {target_id}]: {e}")
             return []
@@ -953,6 +973,9 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             if item.get('artists') and len(item['artists']) > 0:
                 artists_list = [a['name'].strip() for a in item['artists'] if a.get('name')]
                 artist_name = ", ".join(artists_list)
+            elif item.get('artist'):
+                artist_name = item['artist'].strip()
+                artists_list = [a.strip() for a in artist_name.split(',') if a.strip()]
             elif item.get('author'):
                 artist_name = item['author'].strip()
                 artists_list = [artist_name]
@@ -962,13 +985,13 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             if primary_artist != "unknown" and artist_counts.get(primary_artist, 0) >= 2:
                 continue
 
-            thumb_list = item.get('thumbnails') or item.get('thumbnail') or []
-            if isinstance(thumb_list, list) and len(thumb_list) > 0:
-                thumbnail = thumb_list[-1].get('url', '')
-            elif isinstance(thumb_list, str):
-                thumbnail = thumb_list
-            else:
-                thumbnail = ""
+            thumbnail = item.get('cover') or ''
+            if not thumbnail:
+                thumb_list = item.get('thumbnails') or item.get('thumbnail') or []
+                if isinstance(thumb_list, list) and len(thumb_list) > 0:
+                    thumbnail = thumb_list[-1].get('url', '')
+                elif isinstance(thumb_list, str):
+                    thumbnail = thumb_list
                 
             if not thumbnail:
                 thumbnail = f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"

@@ -2719,7 +2719,7 @@ function onPlayerStateChange(event) {
                     if (targetTitle) params.set('title', targetTitle);
                     if (targetArtist) params.set('artist', targetArtist);
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 7000);
+                    const timeoutId = setTimeout(() => controller.abort(), 18000);
                     try {
                         const res = await fetch(`/api/recommendations?${params.toString()}`, { signal: controller.signal });
                         clearTimeout(timeoutId);
@@ -2732,28 +2732,8 @@ function onPlayerStateChange(event) {
                     }
                 }
 
-                // 1. Primary Attempt: with videoId + title + artist
-                let recs = await fetchRecs(vid, title, artist);
-
-                // 2. Safety Fallback: fetch trending tracks so upcoming queue is NEVER empty
-                if ((!recs || recs.length < 2) && myToken === queuePopulationToken) {
-                    try {
-                        const trendRes = await fetch('/api/trending');
-                        if (trendRes.ok) {
-                            const trendData = await trendRes.json();
-                            const trendItems = trendData.results || trendData.trending || trendData.top_songs || [];
-                            if (trendItems.length > 0) {
-                                recs = trendItems.map(s => ({
-                                    videoId: s.videoId || s.id,
-                                    id: s.videoId || s.id,
-                                    title: s.title,
-                                    artist: s.artist || s.uploader || '',
-                                    cover: s.cover || s.thumbnail || ''
-                                }));
-                            }
-                        }
-                    } catch(te) {}
-                }
+                // Official YouTube Music Radio queue fetch
+                const recs = await fetchRecs(vid, title, artist);
 
                 if (myToken !== queuePopulationToken) return;
 
