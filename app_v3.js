@@ -2719,7 +2719,7 @@ function onPlayerStateChange(event) {
                     if (targetTitle) params.set('title', targetTitle);
                     if (targetArtist) params.set('artist', targetArtist);
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 18000);
+                    const timeoutId = setTimeout(() => controller.abort(), 35000);
                     try {
                         const res = await fetch(`/api/recommendations?${params.toString()}`, { signal: controller.signal });
                         clearTimeout(timeoutId);

@@ -90,19 +90,15 @@ if not os.path.exists(COVER_CACHE_DIR):
 
 USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
 
-def configure_ytmusic_timeout(instance, timeout_secs=20.0):
+def configure_ytmusic_timeout(instance, timeout_secs=10.0):
     try:
         if instance:
             custom_headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
                 'Origin': 'https://music.youtube.com',
                 'Referer': 'https://music.youtube.com/',
-                'X-YouTube-Client-Name': '67',
-                'X-YouTube-Client-Version': '1.20240815.01.00',
                 'Accept-Language': 'en-IN,en;q=0.9,hi;q=0.8'
             }
-            if hasattr(instance, 'headers') and isinstance(instance.headers, dict):
-                instance.headers.update(custom_headers)
             if hasattr(instance, '_session') and instance._session:
                 instance._session.headers.update(custom_headers)
                 orig_send = instance._session.send
@@ -880,8 +876,11 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                                 return found
             return None
 
+        debug_log = []
+
         def extract_radio_from_id(target_id: str):
             if not target_id or not ytmusic:
+                debug_log.append(f"extract_radio: missing target_id={target_id} or ytmusic={bool(ytmusic)}")
                 return []
             try:
                 is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
@@ -897,6 +896,8 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
 
                 resp = ytmusic._send_request('next', body)
                 panel = _find_playlist_panel(resp)
+                if not panel:
+                    debug_log.append(f"panel not found for {target_id}, resp keys: {list(resp.keys()) if isinstance(resp, dict) else type(resp)}")
                 if panel and 'contents' in panel:
                     items = []
                     for c in panel['contents']:
@@ -914,9 +915,13 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                         r_cover = thumbs[-1].get('url', '') if thumbs else ''
                         if vid and r_title:
                             items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
+                    debug_log.append(f"panel extracted {len(items)} items for {target_id}")
                     if len(items) > 1:
                         return items
+                    elif len(items) == 1:
+                        debug_log.append(f"panel had only 1 item for {target_id}")
             except Exception as e:
+                debug_log.append(f"extract_radio error {target_id}: {type(e).__name__}: {str(e)}")
                 print(f"[Recs Radio {target_id}]: {e}")
             return []
 
@@ -935,8 +940,11 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                     search_res = ytmusic.search(query, filter="songs", limit=1)
                     if search_res and search_res[0].get('videoId'):
                         resolved_vid = search_res[0]['videoId']
-                        tracks = extract_radio_from_id(resolved_vid)
+                        debug_log.append(f"resolved {query} -> {resolved_vid}")
+                        if resolved_vid != target_vid:
+                            tracks = extract_radio_from_id(resolved_vid)
                 except Exception as e:
+                    debug_log.append(f"search resolve error: {type(e).__name__}: {str(e)}")
                     print(f"[Recs song resolve error]: {e}")
 
             # 3. If still empty, fetch official Artist Radio (RDEM...)
@@ -947,8 +955,10 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                     if a_results and a_results[0].get('browseId'):
                         a_data = ytmusic.get_artist(a_results[0]['browseId'])
                         if a_data.get('radioId'):
+                            debug_log.append(f"artist radio: {a_data['radioId']}")
                             tracks = extract_radio_from_id(a_data['radioId'])
                 except Exception as e:
+                    debug_log.append(f"artist radio error: {type(e).__name__}: {str(e)}")
                     print(f"[Recs artist radio error]: {e}")
 
             return tracks
@@ -993,7 +1003,7 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             if len(recs) >= 25:
                 break
             
-        res_data = {"status": "success", "recommendations": recs}
+        res_data = {"status": "success", "recommendations": recs, "debug": debug_log}
         if recs:
             API_CACHE[cache_key] = {'time': time.time(), 'data': res_data}
         return res_data
