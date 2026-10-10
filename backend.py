@@ -876,11 +876,33 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                                 return found
             return None
 
-        async def fetch_youtube_music_radio(target_id: str):
+        def _parse_panel_items(contents):
+            items = []
+            for c in contents:
+                vr = c.get('playlistPanelVideoRenderer')
+                if not vr:
+                    continue
+                vid = vr.get('videoId')
+                r_title = ''
+                if vr.get('title', {}).get('runs'):
+                    r_title = vr['title']['runs'][0].get('text', '')
+                r_artist = ''
+                if vr.get('shortBylineText', {}).get('runs'):
+                    r_artist = vr['shortBylineText']['runs'][0].get('text', '')
+                thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
+                r_cover = thumbs[-1].get('url', '') if thumbs else ''
+                if vid and r_title:
+                    items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
+            return items
+
+        def _fetch_radio_sync(target_id: str):
             if not target_id:
                 return []
             is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
-            body = {
+            cookies = {'SOCS': 'CAI'}
+            
+            # 1. Android Music Client
+            body_android = {
                 'context': {
                     'client': {
                         'clientName': 'ANDROID_MUSIC',
@@ -894,43 +916,76 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                 'isAudioOnly': True
             }
             if is_playlist:
-                body['playlistId'] = target_id
+                body_android['playlistId'] = target_id
             else:
-                body['videoId'] = target_id
-                body['playlistId'] = f'RDAMVM{target_id}'
+                body_android['videoId'] = target_id
+                body_android['playlistId'] = f'RDAMVM{target_id}'
 
-            headers = {
+            headers_android = {
                 'User-Agent': 'com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 14)',
                 'Content-Type': 'application/json'
             }
 
             try:
-                async with httpx.AsyncClient(timeout=5.0) as client:
-                    resp = await client.post('https://music.youtube.com/youtubei/v1/next', json=body, headers=headers)
-                    if resp.status_code == 200:
-                        panel = _find_playlist_panel(resp.json())
-                        if panel and 'contents' in panel:
-                            items = []
-                            for c in panel['contents']:
-                                vr = c.get('playlistPanelVideoRenderer')
-                                if not vr:
-                                    continue
-                                vid = vr.get('videoId')
-                                r_title = ''
-                                if vr.get('title', {}).get('runs'):
-                                    r_title = vr['title']['runs'][0].get('text', '')
-                                r_artist = ''
-                                if vr.get('shortBylineText', {}).get('runs'):
-                                    r_artist = vr['shortBylineText']['runs'][0].get('text', '')
-                                thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
-                                r_cover = thumbs[-1].get('url', '') if thumbs else ''
-                                if vid and r_title:
-                                    items.append({'videoId': vid, 'title': r_title, 'artist': r_artist, 'cover': r_cover})
-                            if len(items) > 1:
-                                return items
+                r = requests.post(
+                    'https://music.youtube.com/youtubei/v1/next',
+                    json=body_android,
+                    headers=headers_android,
+                    cookies=cookies,
+                    timeout=5.0
+                )
+                if r.status_code == 200:
+                    panel = _find_playlist_panel(r.json())
+                    if panel and 'contents' in panel:
+                        items = _parse_panel_items(panel['contents'])
+                        if len(items) > 1:
+                            return items
             except Exception as e:
-                print(f"[Radio Android {target_id}]: {e}")
+                print(f"[Radio Android Requests {target_id}]: {e}")
+
+            # 2. Web Remix Client Fallback
+            try:
+                body_web = {
+                    'context': {
+                        'client': {
+                            'clientName': 'WEB_REMIX',
+                            'clientVersion': '1.20240815.01.00',
+                            'gl': 'IN',
+                            'hl': 'en'
+                        }
+                    },
+                    'enablePersistentPlaylistPanel': True,
+                    'isAudioOnly': True,
+                    'videoId': target_id if not is_playlist else '',
+                    'playlistId': f'RDAMVM{target_id}' if not is_playlist else target_id
+                }
+                headers_web = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+                    'Origin': 'https://music.youtube.com',
+                    'Content-Type': 'application/json'
+                }
+                r2 = requests.post(
+                    'https://music.youtube.com/youtubei/v1/next',
+                    json=body_web,
+                    headers=headers_web,
+                    cookies=cookies,
+                    timeout=5.0
+                )
+                if r2.status_code == 200:
+                    panel = _find_playlist_panel(r2.json())
+                    if panel and 'contents' in panel:
+                        items = _parse_panel_items(panel['contents'])
+                        if len(items) > 1:
+                            return items
+            except Exception as e:
+                print(f"[Radio Web Requests {target_id}]: {e}")
+
             return []
+
+        async def fetch_youtube_music_radio(target_id: str):
+            if not target_id:
+                return []
+            return await asyncio.to_thread(_fetch_radio_sync, target_id)
 
         tracks = []
         target_vid = videoId

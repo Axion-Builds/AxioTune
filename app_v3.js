@@ -2719,7 +2719,7 @@ function onPlayerStateChange(event) {
                     if (targetTitle) params.set('title', targetTitle);
                     if (targetArtist) params.set('artist', targetArtist);
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 35000);
+                    const timeoutId = setTimeout(() => controller.abort(), 12000);
                     try {
                         const res = await fetch(`/api/recommendations?${params.toString()}`, { signal: controller.signal });
                         clearTimeout(timeoutId);
@@ -2769,10 +2769,8 @@ function onPlayerStateChange(event) {
             } catch(e) {
                 console.error('Failed to populate queue:', e);
             } finally {
-                if (myToken === queuePopulationToken) {
-                    window._isQueueLoading = false;
-                    renderQueue();
-                }
+                window._isQueueLoading = false;
+                renderQueue();
             }
         }
 
