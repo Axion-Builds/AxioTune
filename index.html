@@ -294,6 +294,8 @@
         margin-left: calc(var(--slant) * -1);
         z-index: 5;
         box-shadow: -10px 0 36px rgba(0, 0, 0, 0.5);
+        max-height: 100vh;
+        overflow-y: auto;
     }
 
     #axio-login-screen .side {
@@ -533,6 +535,137 @@
         color: var(--white-pure);
     }
 
+    /* Token / Cookie Drawer Styles */
+    #axio-login-screen .axio-token-toggle-wrap {
+        margin: 14px 0 0;
+        display: flex;
+        justify-content: center;
+    }
+    #axio-login-screen .axio-token-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        border: none;
+        color: var(--camel-light);
+        font-family: 'Satoshi', 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition: background-color 0.2s, color 0.2s;
+    }
+    #axio-login-screen .axio-token-toggle:hover {
+        background: rgba(224, 159, 107, 0.1);
+        color: #FFFFFF;
+    }
+    #axio-login-screen .axio-token-toggle .chevron {
+        transition: transform 0.2s ease;
+    }
+    #axio-login-screen .axio-token-toggle[aria-expanded="true"] .chevron {
+        transform: rotate(180deg);
+    }
+    #axio-login-screen .axio-token-drawer {
+        margin-top: 12px;
+        animation: axio-fade 0.2s ease-out;
+    }
+    #axio-login-screen .axio-token-box {
+        background: rgba(20, 16, 14, 0.75);
+        border: 1px solid rgba(224, 159, 107, 0.28);
+        border-radius: 10px;
+        padding: 14px;
+        text-align: left;
+    }
+    #axio-login-screen .axio-token-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-heading);
+        margin-bottom: 6px;
+        letter-spacing: 0.02em;
+    }
+    #axio-login-screen .axio-token-textarea {
+        width: 100%;
+        box-sizing: border-box;
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 6px;
+        padding: 10px;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 12px;
+        color: #FFFFFF;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    #axio-login-screen .axio-token-textarea:focus {
+        border-color: var(--camel);
+    }
+    #axio-login-screen .axio-token-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+        gap: 10px;
+    }
+    #axio-login-screen .btn-token-submit {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--sunset-gradient);
+        color: #FFFFFF;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        transition: transform 0.15s, opacity 0.15s;
+    }
+    #axio-login-screen .btn-token-submit:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.1);
+    }
+    #axio-login-screen .btn-token-submit[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    #axio-login-screen .axio-token-help {
+        background: transparent;
+        border: none;
+        padding: 0;
+        font-size: 11.5px;
+        color: var(--text-muted);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        cursor: pointer;
+    }
+    #axio-login-screen .axio-token-help:hover {
+        color: var(--camel-light);
+    }
+    #axio-login-screen .axio-token-guide {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 11.5px;
+        line-height: 1.6;
+        color: var(--text-muted);
+    }
+    #axio-login-screen .axio-token-guide ol {
+        margin: 0;
+        padding-left: 18px;
+    }
+    #axio-login-screen .axio-token-guide a {
+        color: var(--camel-light);
+    }
+    #axio-login-screen .axio-token-guide kbd {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 11px;
+    }
+
     /* ---------- Motion Keyframes ---------- */
     @keyframes axio-spin { to { transform: rotate(360deg); } }
     @keyframes axio-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -648,6 +781,36 @@
                             </button>
                         </div>
 
+                        <div class="axio-token-toggle-wrap">
+                            <button type="button" class="axio-token-toggle" id="btn-toggle-token-drawer" aria-expanded="false">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                <span>Connect via Cookie / cURL Token</span>
+                                <svg class="chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                            </button>
+                        </div>
+
+                        <div class="axio-token-drawer" id="axio-token-drawer" style="display: none;">
+                            <div class="axio-token-box">
+                                <label for="axio-token-input" class="axio-token-label">Paste YouTube Music Cookie or cURL</label>
+                                <textarea id="axio-token-input" class="axio-token-textarea" placeholder="Paste Cookie or cURL from music.youtube.com here...&#10;(e.g. VISITOR_INFO1_LIVE=...; SAPISID=... or cURL command)" rows="3"></textarea>
+                                <div class="axio-token-actions">
+                                    <button type="button" class="btn-token-submit" id="btn-submit-token">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+                                        Connect Account
+                                    </button>
+                                    <button type="button" class="axio-token-help" id="btn-token-help">How to copy?</button>
+                                </div>
+                                <div class="axio-token-guide" id="axio-token-guide" style="display: none;">
+                                    <ol>
+                                        <li>Open <a href="https://music.youtube.com" target="_blank" rel="noopener">music.youtube.com</a> &amp; sign in.</li>
+                                        <li>Press <kbd>F12</kbd> &rarr; <b>Network</b> tab.</li>
+                                        <li>Right-click any request &rarr; <b>Copy as cURL</b>, then paste above.</li>
+                                    </ol>
+                                </div>
+                                <p class="axio-token-status" id="axio-token-status" style="margin: 10px 0 0; font-size: 12px; font-weight: 600; display: none;"></p>
+                            </div>
+                        </div>
+
                         <div class="or">or</div>
 
                         <button class="btn guest" type="button" id="btn-login-guest" data-auth="guest">Continue as guest</button>
@@ -716,6 +879,91 @@
             })
             .catch(() => {});
 
+        const btnToggleTokenDrawer = document.getElementById('btn-toggle-token-drawer');
+        const tokenDrawer = document.getElementById('axio-token-drawer');
+        const tokenInput = document.getElementById('axio-token-input');
+        const btnSubmitToken = document.getElementById('btn-submit-token');
+        const btnTokenHelp = document.getElementById('btn-token-help');
+        const tokenGuide = document.getElementById('axio-token-guide');
+        const tokenStatusEl = document.getElementById('axio-token-status');
+
+        function setTokenStatus(msg, color, isVisible = true) {
+            if (tokenStatusEl) {
+                tokenStatusEl.textContent = msg;
+                tokenStatusEl.style.color = color;
+                tokenStatusEl.style.display = isVisible ? 'block' : 'none';
+            }
+            if (statusEl) {
+                statusEl.textContent = msg;
+                statusEl.style.color = color;
+            }
+        }
+
+        function openTokenDrawer(autoFocus = false) {
+            if (tokenDrawer) tokenDrawer.style.display = 'block';
+            if (btnToggleTokenDrawer) btnToggleTokenDrawer.setAttribute('aria-expanded', 'true');
+            if (autoFocus && tokenInput) {
+                setTimeout(() => tokenInput.focus(), 150);
+            }
+        }
+
+        btnToggleTokenDrawer?.addEventListener('click', function() {
+            if (!tokenDrawer) return;
+            const isOpen = tokenDrawer.style.display === 'block';
+            tokenDrawer.style.display = isOpen ? 'none' : 'block';
+            btnToggleTokenDrawer.setAttribute('aria-expanded', !isOpen);
+            if (!isOpen && tokenInput) setTimeout(() => tokenInput.focus(), 100);
+        });
+
+        btnTokenHelp?.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!tokenGuide) return;
+            tokenGuide.style.display = tokenGuide.style.display === 'none' ? 'block' : 'none';
+        });
+
+        btnSubmitToken?.addEventListener('click', async function() {
+            const rawVal = (tokenInput?.value || '').trim();
+            if (!rawVal) {
+                setTokenStatus('⚠️ Please paste your YouTube Music cookie or cURL command above.', '#D86B42');
+                tokenInput?.focus();
+                return;
+            }
+
+            btnSubmitToken.disabled = true;
+            btnSubmitToken.textContent = 'Connecting...';
+            setTokenStatus('⏳ Verifying YouTube Music credentials...', '#E09F6B');
+
+            try {
+                const res = await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ headers: rawVal })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    setTokenStatus(`🎉 Connected! Welcome, ${data.user?.name || 'User'}! Syncing soundscape...`, '#28cd41');
+                    try { await fetch('/api/sync_library', { method: 'POST' }); } catch(e){}
+                    if (typeof checkSyncStatus === 'function') checkSyncStatus();
+                    if (typeof fetchLibraryData === 'function') fetchLibraryData();
+                    if (typeof loadTrendingFeeds === 'function') loadTrendingFeeds();
+                    setTimeout(function() {
+                        window.dismissLoginPortal();
+                        btnSubmitToken.disabled = false;
+                        btnSubmitToken.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Connect Account`;
+                    }, 1200);
+                } else {
+                    setTokenStatus(`⚠️ ${data.message || 'Invalid cookie/cURL token. Please verify and try again.'}`, '#D86B42');
+                    btnSubmitToken.disabled = false;
+                    btnSubmitToken.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Connect Account`;
+                }
+            } catch (err) {
+                setTokenStatus('⚠️ Failed to connect. Please check server connection.', '#D86B42');
+                btnSubmitToken.disabled = false;
+                btnSubmitToken.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Connect Account`;
+            }
+        });
+
         // Google / YouTube Music sign-in flow
         let pollInterval = null;
         async function triggerSignIn(provider) {
@@ -755,6 +1003,15 @@
                                     window.dismissLoginPortal();
                                     allBtns.forEach(b => b.disabled = false);
                                 }, 1200);
+                            } else if (pData.status === 'manual_required') {
+                                clearInterval(pollInterval);
+                                pollInterval = null;
+                                if (statusEl) {
+                                    statusEl.style.color = '#E09F6B';
+                                    statusEl.textContent = '💡 ' + (pData.message || 'Please connect using your YouTube Music cookie or cURL token below:');
+                                }
+                                allBtns.forEach(b => b.disabled = false);
+                                openTokenDrawer(true);
                             } else if (pData.status === 'cancelled') {
                                 clearInterval(pollInterval);
                                 pollInterval = null;
@@ -776,10 +1033,17 @@
                             console.error('Poll error', err);
                         }
                     }, 1500);
+                } else if (startData.status === 'manual_required') {
+                    if (statusEl) {
+                        statusEl.style.color = '#E09F6B';
+                        statusEl.textContent = '💡 ' + (startData.message || 'Please connect using your YouTube Music cookie or cURL token below:');
+                    }
+                    allBtns.forEach(b => b.disabled = false);
+                    openTokenDrawer(true);
                 } else {
                     if (statusEl) {
                         statusEl.style.color = '#D86B42';
-                        statusEl.textContent = '⚠️ Could not launch sign-in window: ' + (startData.message || 'Error');
+                        statusEl.textContent = '⚠️ ' + (startData.message || 'Could not launch sign-in window.');
                     }
                     allBtns.forEach(b => b.disabled = false);
                 }

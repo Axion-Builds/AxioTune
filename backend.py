@@ -2018,8 +2018,9 @@ def run_playwright_login_task():
     except Exception as e:
         print(f"Exception during Playwright login: {e}")
         with LOGIN_LOCK:
-            LOGIN_SESSION["status"] = "error"
-            LOGIN_SESSION["error"] = str(e)
+            LOGIN_SESSION["status"] = "manual_required"
+            LOGIN_SESSION["error"] = "Could not launch desktop browser. Please connect using your YouTube Music cookie or cURL token."
+            LOGIN_SESSION["message"] = "Could not launch desktop browser. Please connect using your YouTube Music cookie or cURL token."
     finally:
         try:
             if browser:
@@ -2032,6 +2033,20 @@ def run_playwright_login_task():
                 playwright_instance.stop()
         except Exception:
             pass
+
+def check_playwright_capability():
+    is_headless_cloud = bool(
+        os.environ.get('RENDER') or 
+        (sys.platform.startswith('linux') and not os.environ.get('DISPLAY'))
+    )
+    if is_headless_cloud:
+        return False, "cloud_mode", "Cloud Server: Direct desktop window is available when running locally on PC. On Web/Render, please connect with your YouTube Music cookie or cURL token below!"
+
+    try:
+        from playwright.sync_api import sync_playwright
+        return True, "available", "Playwright is ready."
+    except ImportError:
+        return False, "missing_module", "Playwright is not installed. To use 1-click desktop popup, run 'pip install playwright && playwright install chromium' locally, or connect with your cookie below."
 
 @app.get("/api/auth/status")
 @app.get("/api/sync_status")
@@ -2062,6 +2077,18 @@ def cancel_interactive_login():
 @app.post("/api/auth/start_login")
 def start_interactive_login():
     global LOGIN_SESSION, ACTIVE_LOGIN_BROWSER
+    can_run, mode, reason = check_playwright_capability()
+    if not can_run:
+        with LOGIN_LOCK:
+            LOGIN_SESSION["status"] = "manual_required"
+            LOGIN_SESSION["message"] = reason
+            LOGIN_SESSION["error"] = reason
+        return {
+            "status": "manual_required",
+            "mode": mode,
+            "message": reason
+        }
+
     with LOGIN_LOCK:
         if LOGIN_SESSION["status"] == "in_progress":
             if ACTIVE_LOGIN_BROWSER and ACTIVE_LOGIN_BROWSER.is_connected():

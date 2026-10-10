@@ -6767,6 +6767,17 @@ function onPlayerStateChange(event) {
                                 loadTrendingFeeds();
                                 startGoogleLoginBtn.disabled = false;
                                 startGoogleLoginBtn.innerHTML = originalHtml;
+                            } else if (pollData.status === 'manual_required') {
+                                clearInterval(loginPollTimer);
+                                loginPollTimer = null;
+                                if (loginPopupStatus) {
+                                    loginPopupStatus.style.color = '#ff9500';
+                                    loginPopupStatus.textContent = pollData.message || 'Direct desktop window unavailable. Please use manual cookie sync.';
+                                }
+                                showToast('💡 Desktop window unavailable. Switched to manual sync.');
+                                startGoogleLoginBtn.disabled = false;
+                                startGoogleLoginBtn.innerHTML = originalHtml;
+                                if (tabBtnManual) tabBtnManual.click();
                             } else if (pollData.status === 'cancelled') {
                                 clearInterval(loginPollTimer);
                                 loginPollTimer = null;
@@ -6792,6 +6803,16 @@ function onPlayerStateChange(event) {
                             console.error('Polling error:', pErr);
                         }
                     }, 1500);
+                } else if (startData.status === 'manual_required') {
+                    if (loginPopupStatus) {
+                        loginPopupStatus.style.display = 'block';
+                        loginPopupStatus.style.color = '#ff9500';
+                        loginPopupStatus.textContent = startData.message || 'Direct desktop window unavailable in cloud mode. Switched to manual cookie sync.';
+                    }
+                    showToast('💡 Please connect using your cookie or cURL token.');
+                    startGoogleLoginBtn.disabled = false;
+                    startGoogleLoginBtn.innerHTML = originalHtml;
+                    if (tabBtnManual) tabBtnManual.click();
                 } else {
                     showToast('⚠️ Could not open login window: ' + (startData.message || 'Unknown error'));
                     startGoogleLoginBtn.disabled = false;
