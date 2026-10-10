@@ -5,6 +5,7 @@ import yt_dlp
 import uvicorn
 import asyncio
 import httpx
+import requests
 import json
 import os
 import sys
@@ -101,12 +102,18 @@ def configure_ytmusic_timeout(instance, timeout_secs=10.0):
             }
             if hasattr(instance, '_session') and instance._session:
                 instance._session.headers.update(custom_headers)
+                try:
+                    instance._session.cookies.set('SOCS', 'CAI', domain='.youtube.com')
+                except Exception:
+                    pass
                 orig_send = instance._session.send
                 def timeout_send(request, **kwargs):
                     if 'timeout' not in kwargs or kwargs['timeout'] is None:
                         kwargs['timeout'] = timeout_secs
                     return orig_send(request, **kwargs)
                 instance._session.send = timeout_send
+        if hasattr(instance, 'cookies'):
+            instance.cookies['SOCS'] = 'CAI'
     except Exception:
         pass
 
@@ -899,52 +906,37 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             if not target_id:
                 return []
             is_playlist = target_id.startswith(('RD', 'VL', 'PL'))
-            cookies = {'SOCS': 'CAI'}
+            playlist_id = target_id if is_playlist else f'RDAMVM{target_id}'
             
-            # 1. Android Music Client
-            body_android = {
-                'context': {
-                    'client': {
-                        'clientName': 'ANDROID_MUSIC',
-                        'clientVersion': '6.41.52',
-                        'androidSdkVersion': 34,
-                        'gl': 'IN',
-                        'hl': 'en'
+            # Method 1: Official ytmusic._send_request (High speed ~1s, exact YouTube Music queue)
+            if ytmusic is not None and hasattr(ytmusic, '_send_request'):
+                try:
+                    body = {
+                        'videoId': target_id if not is_playlist else '',
+                        'playlistId': playlist_id,
+                        'isAudioOnly': True,
+                        'enablePersistentPlaylistPanel': True,
+                        'params': 'wAEB'
                     }
-                },
-                'enablePersistentPlaylistPanel': True,
-                'isAudioOnly': True
-            }
-            if is_playlist:
-                body_android['playlistId'] = target_id
-            else:
-                body_android['videoId'] = target_id
-                body_android['playlistId'] = f'RDAMVM{target_id}'
-
-            headers_android = {
-                'User-Agent': 'com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 14)',
-                'Content-Type': 'application/json'
-            }
-
-            try:
-                r = requests.post(
-                    'https://music.youtube.com/youtubei/v1/next',
-                    json=body_android,
-                    headers=headers_android,
-                    cookies=cookies,
-                    timeout=5.0
-                )
-                if r.status_code == 200:
-                    panel = _find_playlist_panel(r.json())
+                    data = ytmusic._send_request('next', body)
+                    panel = _find_playlist_panel(data)
                     if panel and 'contents' in panel:
                         items = _parse_panel_items(panel['contents'])
                         if len(items) > 1:
                             return items
-            except Exception as e:
-                print(f"[Radio Android Requests {target_id}]: {e}")
+                except Exception as e:
+                    print(f"[Radio ytmusic._send_request {target_id}]: {e}")
 
-            # 2. Web Remix Client Fallback
+            # Method 2: Direct HTTP WEB_REMIX session with Gzip & SOCS cookie (~0.9s)
             try:
+                cookies = {'SOCS': 'CAI'}
+                headers_web = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+                    'Origin': 'https://music.youtube.com',
+                    'Referer': 'https://music.youtube.com/',
+                    'Content-Type': 'application/json',
+                    'Accept-Encoding': 'gzip, deflate'
+                }
                 body_web = {
                     'context': {
                         'client': {
@@ -954,31 +946,66 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                             'hl': 'en'
                         }
                     },
-                    'enablePersistentPlaylistPanel': True,
-                    'isAudioOnly': True,
                     'videoId': target_id if not is_playlist else '',
-                    'playlistId': f'RDAMVM{target_id}' if not is_playlist else target_id
+                    'playlistId': playlist_id,
+                    'isAudioOnly': True,
+                    'enablePersistentPlaylistPanel': True,
+                    'params': 'wAEB'
                 }
-                headers_web = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-                    'Origin': 'https://music.youtube.com',
-                    'Content-Type': 'application/json'
-                }
-                r2 = requests.post(
-                    'https://music.youtube.com/youtubei/v1/next',
+                r = requests.post(
+                    'https://music.youtube.com/youtubei/v1/next?alt=json',
                     json=body_web,
                     headers=headers_web,
                     cookies=cookies,
-                    timeout=5.0
+                    timeout=8.0
                 )
-                if r2.status_code == 200:
-                    panel = _find_playlist_panel(r2.json())
+                if r.status_code == 200:
+                    panel = _find_playlist_panel(r.json())
                     if panel and 'contents' in panel:
                         items = _parse_panel_items(panel['contents'])
                         if len(items) > 1:
                             return items
             except Exception as e:
-                print(f"[Radio Web Requests {target_id}]: {e}")
+                print(f"[Radio WEB_REMIX requests {target_id}]: {e}")
+
+            # Method 3: Direct Android InnerTube radio session (~1.1s)
+            try:
+                headers_android = {
+                    'User-Agent': 'com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 14)',
+                    'Content-Type': 'application/json',
+                    'Accept-Encoding': 'gzip, deflate'
+                }
+                body_android = {
+                    'context': {
+                        'client': {
+                            'clientName': 'ANDROID_MUSIC',
+                            'clientVersion': '6.41.52',
+                            'androidSdkVersion': 34,
+                            'gl': 'IN',
+                            'hl': 'en'
+                        }
+                    },
+                    'videoId': target_id if not is_playlist else '',
+                    'playlistId': playlist_id,
+                    'isAudioOnly': True,
+                    'enablePersistentPlaylistPanel': True,
+                    'params': 'wAEB'
+                }
+                r3 = requests.post(
+                    'https://www.youtube.com/youtubei/v1/next',
+                    json=body_android,
+                    headers=headers_android,
+                    cookies={'SOCS': 'CAI'},
+                    timeout=8.0
+                )
+                if r3.status_code == 200:
+                    panel = _find_playlist_panel(r3.json())
+                    if panel and 'contents' in panel:
+                        items = _parse_panel_items(panel['contents'])
+                        if len(items) > 1:
+                            return items
+            except Exception as e:
+                print(f"[Radio Android requests {target_id}]: {e}")
 
             return []
 
