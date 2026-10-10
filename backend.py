@@ -7,6 +7,7 @@ import asyncio
 import httpx
 import json
 import os
+import sys
 import time
 import hashlib
 import re
@@ -1938,6 +1939,7 @@ def run_playwright_login_task():
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
         page = context.new_page()
+        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
         # Official Google Sign-in with continue to YouTube Music
         login_url = "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fmusic.youtube.com"
