@@ -918,26 +918,35 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             is_playlist = vid.startswith(('RD', 'VL', 'PL'))
             playlist_id = vid if is_playlist else f'RDAMVM{vid}'
             
-            body = {
-                'context': {
-                    'client': {
-                        'clientName': 'WEB_REMIX',
-                        'clientVersion': '1.20240909.01.00',
-                        'hl': 'en',
-                        'gl': 'IN'
-                    }
-                },
-                'videoId': vid if not is_playlist else '',
-                'playlistId': playlist_id,
-                'isAudioOnly': True,
-                'enablePersistentPlaylistPanel': True,
-                'params': 'wAEB'
-            }
+            # Method 1: ANDROID_MUSIC client (Most reliable, immune to datacenter blocks)
             try:
-                r = RADIO_SESSION.post(
-                    'https://music.youtube.com/youtubei/v1/next',
-                    json=body,
-                    timeout=5.0
+                headers_android = {
+                    'User-Agent': 'com.google.android.apps.youtube.music/6.41.52 (Linux; U; Android 14; Pixel 8 Pro)',
+                    'Content-Type': 'application/json',
+                    'X-YouTube-Client-Name': '21',
+                    'X-YouTube-Client-Version': '6.41.52'
+                }
+                body_android = {
+                    'context': {
+                        'client': {
+                            'clientName': 'ANDROID_MUSIC',
+                            'clientVersion': '6.41.52',
+                            'androidSdkVersion': 34,
+                            'hl': 'en',
+                            'gl': 'IN'
+                        }
+                    },
+                    'videoId': vid if not is_playlist else '',
+                    'playlistId': playlist_id,
+                    'isAudioOnly': True,
+                    'enablePersistentPlaylistPanel': True,
+                    'params': 'wAEB'
+                }
+                r = requests.post(
+                    'https://www.youtube.com/youtubei/v1/next',
+                    json=body_android,
+                    headers=headers_android,
+                    timeout=4.0
                 )
                 if r.status_code == 200:
                     panel = _find_playlist_panel(r.json())
@@ -946,7 +955,47 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
                         if len(items) > 1:
                             return items
             except Exception as e:
-                print(f"[YTM Next Radio {vid}]: {e}")
+                print(f"[YTM ANDROID_MUSIC Radio {vid}]: {e}")
+
+            # Method 2: IOS_MUSIC client fallback
+            try:
+                headers_ios = {
+                    'User-Agent': 'com.google.ios.youtubemusic/6.41.0 (iPhone16,2; U; CPU iOS 17_5 like Mac OS X)',
+                    'Content-Type': 'application/json',
+                    'X-YouTube-Client-Name': '26',
+                    'X-YouTube-Client-Version': '6.41.0'
+                }
+                body_ios = {
+                    'context': {
+                        'client': {
+                            'clientName': 'IOS_MUSIC',
+                            'clientVersion': '6.41.0',
+                            'deviceMake': 'Apple',
+                            'deviceModel': 'iPhone16,2',
+                            'hl': 'en',
+                            'gl': 'IN'
+                        }
+                    },
+                    'videoId': vid if not is_playlist else '',
+                    'playlistId': playlist_id,
+                    'isAudioOnly': True,
+                    'enablePersistentPlaylistPanel': True,
+                    'params': 'wAEB'
+                }
+                r = requests.post(
+                    'https://www.youtube.com/youtubei/v1/next',
+                    json=body_ios,
+                    headers=headers_ios,
+                    timeout=4.0
+                )
+                if r.status_code == 200:
+                    panel = _find_playlist_panel(r.json())
+                    if panel and 'contents' in panel:
+                        items = _parse_panel_items(panel['contents'])
+                        if len(items) > 1:
+                            return items
+            except Exception as e:
+                print(f"[YTM IOS_MUSIC Radio {vid}]: {e}")
 
             return []
 
