@@ -1102,6 +1102,43 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         print(f"[recs] unexpected error: {e!r}")
         return {"status": "error", "message": str(e), "recommendations": []}
 
+@app.get("/api/debug_recs")
+def debug_recs(videoId: str = "d349wN8Z81M"):
+    report = {
+        "has_auth_file": os.path.exists(AUTH_FILE),
+        "auth_type": str(getattr(ytmusic, "auth_type", "None")),
+        "errors": {}
+    }
+    if os.path.exists(AUTH_FILE):
+        try:
+            with open(AUTH_FILE, "r") as f:
+                d = json.load(f)
+                cookie_str = d.get("Cookie", "")
+                report["cookie_keys"] = [p.split("=")[0].strip() for p in cookie_str.split(";") if "=" in p]
+                report["headers_keys"] = list(d.keys())
+        except Exception as e:
+            report["auth_file_read_error"] = str(e)
+            
+    try:
+        res = ytmusic.get_watch_playlist(videoId=videoId, limit=10)
+        report["wp_no_radio"] = {"tracks": len(res.get("tracks", []))}
+    except Exception as e:
+        report["errors"]["wp_no_radio"] = f"{type(e).__name__}: {e}"
+
+    try:
+        res = ytmusic.get_watch_playlist(videoId=videoId, radio=True, limit=10)
+        report["wp_radio"] = {"tracks": len(res.get("tracks", []))}
+    except Exception as e:
+        report["errors"]["wp_radio"] = f"{type(e).__name__}: {e}"
+
+    try:
+        res = _ios_radio_sync(videoId)
+        report["ios_radio"] = {"tracks": len(res)}
+    except Exception as e:
+        report["errors"]["ios_radio"] = f"{type(e).__name__}: {e}"
+
+    return report
+
 @app.get("/api/home")
 async def get_home():
     try:
