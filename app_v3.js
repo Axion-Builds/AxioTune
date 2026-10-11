@@ -6820,6 +6820,25 @@ function onPlayerStateChange(event) {
                     if (syncForm) syncForm.style.display = 'none';
                     if (unsyncForm) unsyncForm.style.display = 'flex';
                 } else {
+                    const savedCookie = localStorage.getItem('axio_ytm_cookie');
+                    if (savedCookie) {
+                        try {
+                            const restoreRes = await fetch('/api/sync_bookmark', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ cookie: savedCookie })
+                            });
+                            const restoreData = await restoreRes.json();
+                            if (restoreData.status === 'success') {
+                                if (syncDot) syncDot.style.background = '#28cd41';
+                                const userGreeting = restoreData.user && restoreData.user.name ? `Synced as ${restoreData.user.name} (${restoreData.user.handle || 'YouTube Music'})` : 'Synced with your YouTube Music Account!';
+                                if (syncText) syncText.textContent = userGreeting;
+                                if (syncForm) syncForm.style.display = 'none';
+                                if (unsyncForm) unsyncForm.style.display = 'flex';
+                                return;
+                            }
+                        } catch(re) {}
+                    }
                     if (syncDot) syncDot.style.background = '#ff476d'; // Red/Rose
                     if (syncText) syncText.textContent = 'Running in Guest Mode (Anonymous)';
                     if (syncForm) syncForm.style.display = 'flex';
@@ -6871,6 +6890,7 @@ function onPlayerStateChange(event) {
             if (!confirm("Are you sure you want to disconnect your YouTube Music account?")) return;
 
             try {
+                localStorage.removeItem('axio_ytm_cookie');
                 const res = await fetch('/api/unsync', { method: 'POST' });
                 const data = await res.json();
                 showToast("☁️ Account Disconnected!");
@@ -6920,6 +6940,8 @@ function onPlayerStateChange(event) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
+                    // Persist for seamless auto-reconnect across Render deploys & restarts
+                    localStorage.setItem('axio_ytm_cookie', cookieVal);
                     // Alert other tabs (like the main streamer tab) to auto-reload feeds
                     localStorage.setItem('ytm_sync_trigger', Date.now());
                     

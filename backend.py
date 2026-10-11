@@ -125,10 +125,83 @@ def configure_ytmusic_timeout(instance, timeout_secs=10.0):
     except Exception:
         pass
 
+def save_headers_to_json(headers_str: str, filepath: str):
+    headers_dict = {}
+    for line in headers_str.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if ":" in line:
+            parts = line.split(":", 1)
+            key = parts[0].strip()
+            value = parts[1].strip()
+            normalized_key = "-".join([w.capitalize() for w in key.split("-")])
+            headers_dict[normalized_key] = value
+            
+    cookie_key = next((k for k in headers_dict if k.lower() == 'cookie'), None)
+    if not cookie_key:
+        raise ValueError("No cookie provided in request headers. Make sure you are logged in on music.youtube.com.")
+        
+    raw_cookie = headers_dict[cookie_key]
+    
+    # Extract SAPISID or __Secure-3PAPISID token
+    sapisid_match = re.search(r'(?:^|;\s*)(?:__Secure-3PAPISID|SAPISID)=([^;]+)', raw_cookie)
+    if not sapisid_match:
+        raise ValueError("Your cookie is missing SAPISID. Please ensure you are logged into YouTube Music on music.youtube.com before syncing.")
+        
+    sapisid_val = sapisid_match.group(1).strip().strip('"')
+    
+    # Clean and sanitize cookies so Python http.cookies.SimpleCookie never fails
+    from http.cookies import SimpleCookie
+    valid_cookies = [f"__Secure-3PAPISID={sapisid_val}", f"SAPISID={sapisid_val}"]
+    seen_keys = {"__secure-3papisid", "sapisid"}
+    
+    for part in raw_cookie.split(';'):
+        part = part.strip()
+        if not part or '=' not in part:
+            continue
+        k, v = part.split('=', 1)
+        k = k.strip()
+        v = v.strip().strip('"')
+        if k.lower() in seen_keys:
+            continue
+        if not re.match(r'^[a-zA-Z0-9_!#$%&\'*+\-.^`|~]+$', k):
+            continue
+        test_c = SimpleCookie()
+        try:
+            test_c.load(f"{k}={v}")
+            if k in test_c:
+                valid_cookies.append(f"{k}={v}")
+                seen_keys.add(k.lower())
+        except Exception:
+            continue
+            
+    headers_dict["Cookie"] = "; ".join(valid_cookies)
+    headers_dict["Authorization"] = "SAPISIDHASH dummy_value"
+    headers_dict["Origin"] = "https://music.youtube.com"
+    if "X-Goog-Authuser" not in headers_dict:
+        headers_dict["X-Goog-Authuser"] = "0"
+    if "User-Agent" not in headers_dict:
+        headers_dict["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(headers_dict, f, indent=4)
+
 def init_ytmusic():
     global ytmusic, USER_PROFILE_CACHE
     USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
     loaded_auth = False
+
+    # Check if YTM_COOKIE is provided via environment variable (persists across Render deploys)
+    if not os.path.exists(AUTH_FILE) and os.environ.get("YTM_COOKIE"):
+        try:
+            env_cookie = os.environ.get("YTM_COOKIE").strip()
+            headers_str = f"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\nCookie: {env_cookie}"
+            save_headers_to_json(headers_str, AUTH_FILE)
+            print("=== Generated headers_auth.json from YTM_COOKIE environment variable ===")
+        except Exception as ee:
+            print(f"[init_ytmusic] Failed to generate auth from YTM_COOKIE: {ee}")
+
     if os.path.exists(AUTH_FILE):
         try:
             candidate = YTMusic(AUTH_FILE, language='en', location='IN')
@@ -941,44 +1014,51 @@ def _find_playlist_panel(obj):
 
 
 def _ios_radio_sync(video_id: str):
-    body = {
-        'context': {'client': {'clientName': 'IOS_MUSIC', 'clientVersion': '6.41.0',
-                               'deviceMake': 'Apple', 'deviceModel': 'iPhone16,2',
-                               'gl': 'IN', 'hl': 'en'}},
-        'videoId': video_id, 'playlistId': 'RDAMVM' + video_id,
-        'isAudioOnly': True, 'enablePersistentPlaylistPanel': True, 'params': 'wAEB',
-    }
-    r = RADIO_SESSION.post('https://www.youtube.com/youtubei/v1/next', json=body, timeout=6)
-    r.raise_for_status()
-    panel = _find_playlist_panel(r.json())
-    out = []
-    for c in (panel or {}).get('contents', []):
-        vr = c.get('playlistPanelVideoRenderer')
-        if not vr:
+    for pid in ('', 'RDAMVM' + video_id):
+        try:
+            body = {
+                'context': {'client': {'clientName': 'IOS_MUSIC', 'clientVersion': '6.41.0',
+                                       'deviceMake': 'Apple', 'deviceModel': 'iPhone16,2',
+                                       'gl': 'IN', 'hl': 'en'}},
+                'videoId': video_id, 'playlistId': pid,
+                'isAudioOnly': True, 'enablePersistentPlaylistPanel': True, 'params': 'wAEB',
+            }
+            r = RADIO_SESSION.post('https://www.youtube.com/youtubei/v1/next', json=body, timeout=5)
+            if r.status_code != 200:
+                continue
+            panel = _find_playlist_panel(r.json())
+            out = []
+            for c in (panel or {}).get('contents', []):
+                vr = c.get('playlistPanelVideoRenderer')
+                if not vr:
+                    continue
+                runs_t = (vr.get('title') or {}).get('runs') or [{}]
+                runs_a = (vr.get('shortBylineText') or {}).get('runs') or [{}]
+                thumbs = (vr.get('thumbnail') or {}).get('thumbnails') or []
+                name = runs_a[0].get('text', '')
+                item = {'videoId': vr.get('videoId'), 'title': runs_t[0].get('text', ''),
+                        'artists': [{'name': name}] if name else [], 'thumbnail': thumbs,
+                        'videoType': (vr.get('navigationEndpoint', {}).get('watchEndpoint', {})
+                                      .get('watchEndpointMusicSupportedConfigs', {})
+                                      .get('watchEndpointMusicConfig', {}).get('musicVideoType'))}
+                p = _parse_wp_track(item)
+                if p:
+                    out.append(p)
+            if len(out) > 5:
+                return out
+        except Exception:
             continue
-        runs_t = (vr.get('title') or {}).get('runs') or [{}]
-        runs_a = (vr.get('shortBylineText') or {}).get('runs') or [{}]
-        thumbs = (vr.get('thumbnail') or {}).get('thumbnails') or []
-        name = runs_a[0].get('text', '')
-        item = {'videoId': vr.get('videoId'), 'title': runs_t[0].get('text', ''),
-                'artists': [{'name': name}] if name else [], 'thumbnail': thumbs,
-                'videoType': (vr.get('navigationEndpoint', {}).get('watchEndpoint', {})
-                              .get('watchEndpointMusicSupportedConfigs', {})
-                              .get('watchEndpointMusicConfig', {}).get('musicVideoType'))}
-        p = _parse_wp_track(item)
-        if p:
-            out.append(p)
-    return out
+    return []
 
 
 async def _fetch_radio(video_id: str):
     """YouTube Music ka asli 'Up next' / radio. Returns (tracks, source)."""
-    # 1) ytmusicapi: pehle radio=True, phir default. Timeout 8s (pehle 3s tha -> cold start pe fail).
-    for label, kw in (("ytmusicapi-radio", {'radio': True}), ("ytmusicapi", {})):
+    # 1) ytmusicapi: pehle standard Up Next queue (radio=False, genuine YTM queue order), phir radio=True
+    for label, kw in (("ytmusicapi", {}), ("ytmusicapi-radio", {'radio': True})):
         try:
             res = await asyncio.wait_for(
-                asyncio.to_thread(lambda: ytmusic.get_watch_playlist(videoId=video_id, limit=50, **kw)),
-                timeout=8.0)
+                asyncio.to_thread(lambda: ytmusic.get_watch_playlist(videoId=video_id, limit=35, **kw)),
+                timeout=7.0)
             tracks = [p for p in (_parse_wp_track(t) for t in res.get('tracks', [])) if p]
             if len(tracks) > 5:
                 return tracks, label
@@ -987,7 +1067,7 @@ async def _fetch_radio(video_id: str):
             print(f"[recs] {label} FAILED ({video_id}): {e!r}")
     # 2) IOS_MUSIC client
     try:
-        tracks = await asyncio.wait_for(asyncio.to_thread(_ios_radio_sync, video_id), timeout=8.0)
+        tracks = await asyncio.wait_for(asyncio.to_thread(_ios_radio_sync, video_id), timeout=6.0)
         if len(tracks) > 5:
             return tracks, "ios"
         print(f"[recs] ios sirf {len(tracks)} track diye ({video_id})")
@@ -2161,67 +2241,6 @@ def poll_interactive_login():
 
     return state
 
-def save_headers_to_json(headers_str: str, filepath: str):
-    headers_dict = {}
-    for line in headers_str.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        if ":" in line:
-            parts = line.split(":", 1)
-            key = parts[0].strip()
-            value = parts[1].strip()
-            normalized_key = "-".join([w.capitalize() for w in key.split("-")])
-            headers_dict[normalized_key] = value
-            
-    cookie_key = next((k for k in headers_dict if k.lower() == 'cookie'), None)
-    if not cookie_key:
-        raise ValueError("No cookie provided in request headers. Make sure you are logged in on music.youtube.com.")
-        
-    raw_cookie = headers_dict[cookie_key]
-    
-    # Extract SAPISID or __Secure-3PAPISID token
-    sapisid_match = re.search(r'(?:^|;\s*)(?:__Secure-3PAPISID|SAPISID)=([^;]+)', raw_cookie)
-    if not sapisid_match:
-        raise ValueError("Your cookie is missing SAPISID. Please ensure you are logged into YouTube Music on music.youtube.com before syncing.")
-        
-    sapisid_val = sapisid_match.group(1).strip().strip('"')
-    
-    # Clean and sanitize cookies so Python http.cookies.SimpleCookie never fails
-    from http.cookies import SimpleCookie
-    valid_cookies = [f"__Secure-3PAPISID={sapisid_val}", f"SAPISID={sapisid_val}"]
-    seen_keys = {"__secure-3papisid", "sapisid"}
-    
-    for part in raw_cookie.split(';'):
-        part = part.strip()
-        if not part or '=' not in part:
-            continue
-        k, v = part.split('=', 1)
-        k = k.strip()
-        v = v.strip().strip('"')
-        if k.lower() in seen_keys:
-            continue
-        if not re.match(r'^[a-zA-Z0-9_!#$%&\'*+\-.^`|~]+$', k):
-            continue
-        test_c = SimpleCookie()
-        try:
-            test_c.load(f"{k}={v}")
-            if k in test_c:
-                valid_cookies.append(f"{k}={v}")
-                seen_keys.add(k.lower())
-        except Exception:
-            continue
-            
-    headers_dict["Cookie"] = "; ".join(valid_cookies)
-    headers_dict["Authorization"] = "SAPISIDHASH dummy_value"
-    headers_dict["Origin"] = "https://music.youtube.com"
-    if "X-Goog-Authuser" not in headers_dict:
-        headers_dict["X-Goog-Authuser"] = "0"
-    if "User-Agent" not in headers_dict:
-        headers_dict["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(headers_dict, f, indent=4)
 
 @app.post("/api/sync")
 async def sync_account(req: SyncRequest):
@@ -2307,12 +2326,8 @@ def unsync_account():
             os.remove(AUTH_FILE)
         except Exception:
             pass
-    global ytmusic, USER_PROFILE_CACHE, LOGIN_SESSION
+    global ytmusic, USER_PROFILE_CACHE
     USER_PROFILE_CACHE = {"data": None, "timestamp": 0}
-    with LOGIN_LOCK:
-        LOGIN_SESSION["status"] = "idle"
-        LOGIN_SESSION["user"] = None
-        LOGIN_SESSION["error"] = None
     init_ytmusic()
     return {"status": "success", "message": "Disconnected successfully.", "synced": False}
 

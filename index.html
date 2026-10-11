@@ -1298,7 +1298,30 @@
                         window.dismissLoginPortal(true);
                     }, 800);
                 } else {
-                    window.isYtmSynced = false;
+                    const savedCookie = localStorage.getItem('axio_ytm_cookie');
+                    if (savedCookie) {
+                        fetch('/api/sync_bookmark', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ cookie: savedCookie })
+                        })
+                        .then(r => r.json())
+                        .then(resData => {
+                            if (resData.status === 'success') {
+                                window.isYtmSynced = true;
+                                if (statusEl) {
+                                    statusEl.style.color = '#28cd41';
+                                    statusEl.textContent = `Welcome back, ${resData.user?.name || 'User'}! Restored synced session.`;
+                                }
+                                setTimeout(() => window.dismissLoginPortal(true), 600);
+                            } else {
+                                window.isYtmSynced = false;
+                            }
+                        })
+                        .catch(() => { window.isYtmSynced = false; });
+                    } else {
+                        window.isYtmSynced = false;
+                    }
                 }
             })
             .catch(() => {});
