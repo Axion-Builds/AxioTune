@@ -132,20 +132,31 @@ def init_ytmusic():
     if os.path.exists(AUTH_FILE):
         try:
             candidate = YTMusic(AUTH_FILE, language='en', location='IN')
-            # Verify session validity by attempting to get account info
-            info = candidate.get_account_info()
+            # Extract profile metadata safely; failure of Google Account menu must never invalidate the session
+            profile_data = {
+                "name": "YouTube Music User",
+                "handle": "",
+                "avatar": ""
+            }
+            try:
+                info = candidate.get_account_info()
+                if info and isinstance(info, dict):
+                    profile_data = {
+                        "name": info.get("accountName") or "YouTube Music User",
+                        "handle": info.get("channelHandle") or "",
+                        "avatar": info.get("accountPhotoUrl") or ""
+                    }
+            except Exception as pe:
+                print(f"[init_ytmusic] Note: get_account_info skipped/warning ({pe}). Continuing with authenticated session.")
+
             ytmusic = candidate
             configure_ytmusic_timeout(ytmusic, 20.0)
-            USER_PROFILE_CACHE["data"] = {
-                "name": info.get("accountName", "Google User"),
-                "handle": info.get("channelHandle", ""),
-                "avatar": info.get("accountPhotoUrl", "")
-            }
+            USER_PROFILE_CACHE["data"] = profile_data
             USER_PROFILE_CACHE["timestamp"] = time.time()
             print("=== Success: Authenticated YTMusic session loaded ===")
             loaded_auth = True
         except Exception as e:
-            print(f"=== Stale/expired session detected: {e}. Removing stale auth file. Falling back to guest. ===")
+            print(f"=== Session load error: {e}. Removing invalid auth file. Falling back to guest. ===")
             try:
                 os.remove(AUTH_FILE)
             except Exception:
@@ -173,15 +184,17 @@ def get_user_account_info(force_refresh=False):
     try:
         info = ytmusic.get_account_info()
         USER_PROFILE_CACHE["data"] = {
-            "name": info.get("accountName", "Google User"),
-            "handle": info.get("channelHandle", ""),
-            "avatar": info.get("accountPhotoUrl", "")
+            "name": info.get("accountName") or "YouTube Music User",
+            "handle": info.get("channelHandle") or "",
+            "avatar": info.get("accountPhotoUrl") or ""
         }
         USER_PROFILE_CACHE["timestamp"] = now
         return USER_PROFILE_CACHE["data"]
     except Exception as e:
-        print(f"Error fetching account info: {e}")
-        return None
+        print(f"[get_user_account_info] Warning: {e}")
+        if USER_PROFILE_CACHE["data"]:
+            return USER_PROFILE_CACHE["data"]
+        return {"name": "YouTube Music User", "handle": "", "avatar": ""}
 
 
 app.add_middleware(
@@ -2125,15 +2138,49 @@ def save_headers_to_json(headers_str: str, filepath: str):
             headers_dict[normalized_key] = value
             
     cookie_key = next((k for k in headers_dict if k.lower() == 'cookie'), None)
-    if not cookie_key or ("__Secure-3PAPISID" not in headers_dict[cookie_key] and "SAPISID" not in headers_dict[cookie_key]):
-        raise ValueError("Your cookie is missing the required secure credential (__Secure-3PAPISID / SAPISID). Please ensure you are logged in to YouTube Music on music.youtube.com.")
+    if not cookie_key:
+        raise ValueError("No cookie provided in request headers. Make sure you are logged in on music.youtube.com.")
         
+    raw_cookie = headers_dict[cookie_key]
+    
+    # Extract SAPISID or __Secure-3PAPISID token
+    sapisid_match = re.search(r'(?:^|;\s*)(?:__Secure-3PAPISID|SAPISID)=([^;]+)', raw_cookie)
+    if not sapisid_match:
+        raise ValueError("Your cookie is missing SAPISID. Please ensure you are logged into YouTube Music on music.youtube.com before syncing.")
+        
+    sapisid_val = sapisid_match.group(1).strip().strip('"')
+    
+    # Clean and sanitize cookies so Python http.cookies.SimpleCookie never fails
+    from http.cookies import SimpleCookie
+    valid_cookies = [f"__Secure-3PAPISID={sapisid_val}", f"SAPISID={sapisid_val}"]
+    seen_keys = {"__secure-3papisid", "sapisid"}
+    
+    for part in raw_cookie.split(';'):
+        part = part.strip()
+        if not part or '=' not in part:
+            continue
+        k, v = part.split('=', 1)
+        k = k.strip()
+        v = v.strip().strip('"')
+        if k.lower() in seen_keys:
+            continue
+        if not re.match(r'^[a-zA-Z0-9_!#$%&\'*+\-.^`|~]+$', k):
+            continue
+        test_c = SimpleCookie()
+        try:
+            test_c.load(f"{k}={v}")
+            if k in test_c:
+                valid_cookies.append(f"{k}={v}")
+                seen_keys.add(k.lower())
+        except Exception:
+            continue
+            
+    headers_dict["Cookie"] = "; ".join(valid_cookies)
     headers_dict["Authorization"] = "SAPISIDHASH dummy_value"
     headers_dict["Origin"] = "https://music.youtube.com"
-    headers_dict["x-goog-authuser"] = "0"
-    
-    ua_key = next((k for k in headers_dict if k.lower() == 'user-agent'), None)
-    if not ua_key:
+    if "X-Goog-Authuser" not in headers_dict:
+        headers_dict["X-Goog-Authuser"] = "0"
+    if "User-Agent" not in headers_dict:
         headers_dict["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         
     with open(filepath, "w", encoding="utf-8") as f:
@@ -2175,7 +2222,7 @@ async def sync_bookmark(req: CookieRequest):
     try:
         cookie_val = req.cookie.strip()
         if not cookie_val:
-            return {"status": "error", "message": "Cookie is empty."}
+            return {"status": "error", "message": "Cookie is empty. Make sure you are logged in on music.youtube.com."}
             
         headers_str = f"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\nCookie: {cookie_val}"
         
@@ -2194,8 +2241,9 @@ async def sync_bookmark(req: CookieRequest):
         else:
             if os.path.exists(AUTH_FILE):
                 os.remove(AUTH_FILE)
-            return {"status": "error", "message": "Failed to authenticate with copied cookies."}
+            return {"status": "error", "message": "Failed to authenticate with copied cookies. Please make sure you are logged in on music.youtube.com."}
     except Exception as e:
+        print(f"[sync_bookmark] Exception during sync: {e}")
         if os.path.exists(AUTH_FILE):
             os.remove(AUTH_FILE)
         return {"status": "error", "message": str(e)}

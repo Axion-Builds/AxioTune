@@ -1306,7 +1306,7 @@
         function initLoginBookmarklet() {
             const links = document.querySelectorAll('.sync-bookmarklet-link, #login-bookmarklet-link, #sync-bookmarklet-link, #mandatory-bookmarklet-link');
             const origin = window.location.origin;
-            const js = `(function(){var c=document.cookie;if(!c||window.location.host.indexOf('music.youtube.com')===-1){alert('\\uD83D\\uDC49 Pehle music.youtube.com kholiye aur login karke fir click karein!');return;}window.open('${origin}/#sync_cookie='+encodeURIComponent(c),'_blank');})();`;
+            const js = `(function(){if(window.location.host.indexOf('music.youtube.com')===-1){alert('\\uD83D\\uDC49 Pehle music.youtube.com kholiye aur login karke fir click karein!');return;}var c=document.cookie||'';if(!c||c.indexOf('SAPISID')===-1){alert('\\u26A0\\uFE0F Aap YouTube Music par logged in nahi hain! Pehle music.youtube.com par Google se sign in karein, fir is bookmark par click karein.');return;}window.open('${origin}/#sync_cookie='+encodeURIComponent(c),'_blank');})();`;
             links.forEach(link => {
                 link.href = `javascript:${js}`;
             });
@@ -2820,7 +2820,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=298"></script>
+    <script src="app_v3.js?v=299"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -6926,8 +6926,8 @@ function onPlayerStateChange(event) {
                     overlay.innerHTML = `
                         <div style="font-size: 3.5rem; margin-bottom: 24px;">🎉</div>
                         <div style="font-size: 1.6rem; font-weight: 700; color: #28cd41; margin-bottom: 12px; letter-spacing:-0.5px;">Sync Successful!</div>
-                        <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">Your personalized YouTube Music feed, playlists, and liked songs have been successfully loaded.</div>
-                        <button onclick="window.close();" style="padding: 12px 28px; background: #28cd41; color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer; box-shadow: 0 4px 15px rgba(40,205,65,0.3);">Close This Tab</button>
+                        <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">Your personalized YouTube Music recommendations and Up Next queue have been successfully activated!</div>
+                        <button onclick="window.close(); setTimeout(function(){ window.location.href='/'; }, 300);" style="padding: 12px 28px; background: #28cd41; color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer; box-shadow: 0 4px 15px rgba(40,205,65,0.3);">Go to AxioTune</button>
                     `;
                 } else {
                     overlay.innerHTML = `
@@ -6942,7 +6942,7 @@ function onPlayerStateChange(event) {
                 overlay.innerHTML = `
                     <div style="font-size: 3.5rem; margin-bottom: 24px;">❌</div>
                     <div style="font-size: 1.6rem; font-weight: 700; color: #ff476d; margin-bottom: 12px; letter-spacing:-0.5px;">Connection Error</div>
-                    <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">Could not communicate with the local server. Make sure Apple Music Streamer is running.</div>
+                    <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width:400px; line-height:1.5;">Could not communicate with the local server. Make sure AxioTune is running.</div>
                     <button onclick="document.body.removeChild(this.parentNode);" style="padding: 12px 28px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 12px; font-weight: 700; font-size:0.95rem; cursor: pointer;">Close</button>
                 `;
             });
@@ -6952,7 +6952,7 @@ function onPlayerStateChange(event) {
             const links = document.querySelectorAll('.sync-bookmarklet-link, #sync-bookmarklet-link, #login-bookmarklet-link, #mandatory-bookmarklet-link');
             if (!links || links.length === 0) return;
             const origin = window.location.origin;
-            const js = `(function(){var c=document.cookie;if(!c||window.location.host.indexOf('music.youtube.com')===-1){alert('\\uD83D\\uDC49 Pehle music.youtube.com kholiye aur login karke fir click karein!');return;}window.open('${origin}/#sync_cookie='+encodeURIComponent(c),'_blank');})();`;
+            const js = `(function(){if(window.location.host.indexOf('music.youtube.com')===-1){alert('\\uD83D\\uDC49 Pehle music.youtube.com kholiye aur login karke fir click karein!');return;}var c=document.cookie||'';if(!c||c.indexOf('SAPISID')===-1){alert('\\u26A0\\uFE0F Aap YouTube Music par logged in nahi hain! Pehle music.youtube.com par Google se sign in karein, fir is bookmark par click karein.');return;}window.open('${origin}/#sync_cookie='+encodeURIComponent(c),'_blank');})();`;
             links.forEach(link => {
                 link.href = `javascript:${js}`;
             });
