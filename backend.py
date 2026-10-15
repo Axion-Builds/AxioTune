@@ -1057,7 +1057,7 @@ async def _fetch_radio(video_id: str):
     for label, kw in (("ytmusicapi", {}), ("ytmusicapi-radio", {'radio': True})):
         try:
             res = await asyncio.wait_for(
-                asyncio.to_thread(lambda: ytmusic.get_watch_playlist(videoId=video_id, limit=35, **kw)),
+                asyncio.to_thread(lambda: ytmusic.get_watch_playlist(videoId=video_id, limit=60, **kw)),
                 timeout=7.0)
             tracks = [p for p in (_parse_wp_track(t) for t in res.get('tracks', [])) if p]
             if len(tracks) > 5:
@@ -1116,7 +1116,7 @@ async def _artist_graph(artist: str):
         return []
 
 
-def _clean_queue(tracks, seed_vid, seed_title, seed_artist, limit=30):
+def _clean_queue(tracks, seed_vid, seed_title, seed_artist, limit=50):
     """YouTube ka order same rakhta hai, bas duplicates (audio vs music-video) hatata hai."""
     seed_artists = [seed_artist] if seed_artist else []
     seen_ids = {seed_vid} if seed_vid else set()
@@ -1166,11 +1166,11 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
         tracks, source = ([], "none")
         if videoId:
             tracks, source = await _fetch_radio(videoId)
-        recs = _clean_queue(tracks, videoId, title, artist)
+        recs = _clean_queue(tracks, videoId, title, artist, limit=50)
 
         if len(recs) < 5:                  # radio fail hua -> artist graph
             graph = await _artist_graph(artist)
-            recs = _clean_queue(tracks + graph, videoId, title, artist)
+            recs = _clean_queue(tracks + graph, videoId, title, artist, limit=50)
             source += "+artist_graph"
 
         print(f"[recs] {videoId or title}: {len(recs)} tracks via {source}")
@@ -1223,11 +1223,14 @@ def debug_recs(videoId: str = "d349wN8Z81M"):
 async def get_home():
     try:
         def fetch_home():
-            return ytmusic.get_home(limit=15)
+            return ytmusic.get_home(limit=25)
         home_data = await asyncio.to_thread(fetch_home)
         
-        # Clean up the data a bit to make it easier for frontend
+        # Clean up the data and extract Quick Picks to place at top
         clean_feed = []
+        all_songs_pool = []
+        quick_picks_section = None
+
         for section in home_data:
             if not section.get("contents"):
                 continue
@@ -1261,7 +1264,7 @@ async def get_home():
                 elif b_id:
                     c_type = "artist" if "artist" in b_id.lower() else "album"
                 
-                clean_section["contents"].append({
+                entry = {
                     "title": item.get("title", ""),
                     "artist": artist_name,
                     "cover": thumbnail,
@@ -1270,8 +1273,44 @@ async def get_home():
                     "playlistId": p_id,
                     "browseId": b_id,
                     "query": f"{item.get('title', '')} {artist_name}"
-                })
-            clean_feed.append(clean_section)
+                }
+                clean_section["contents"].append(entry)
+                if c_type == "song" and (entry["videoId"] or entry["title"]):
+                    all_songs_pool.append(entry)
+
+            title_lower = clean_section["title"].lower()
+            if "quick pick" in title_lower:
+                quick_picks_section = clean_section
+            else:
+                clean_feed.append(clean_section)
+
+        # If quick picks exists or can be constructed from top songs
+        if not quick_picks_section and len(all_songs_pool) >= 8:
+            quick_picks_section = {
+                "title": "⚡ Quick Picks",
+                "contents": []
+            }
+
+        if quick_picks_section:
+            # Enrich Quick Picks up to 32 songs using available song recommendations
+            existing_ids = {s.get("videoId") for s in quick_picks_section["contents"] if s.get("videoId")}
+            existing_titles = {s.get("title", "").strip().lower() for s in quick_picks_section["contents"]}
+
+            for s in all_songs_pool:
+                if len(quick_picks_section["contents"]) >= 32:
+                    break
+                vid = s.get("videoId")
+                title = s.get("title", "").strip().lower()
+                if (vid and vid in existing_ids) or (title and title in existing_titles):
+                    continue
+                if vid:
+                    existing_ids.add(vid)
+                if title:
+                    existing_titles.add(title)
+                quick_picks_section["contents"].append(s)
+
+            # Insert Quick Picks at index 0 (Top of Home Feed)
+            clean_feed.insert(0, quick_picks_section)
             
         return {"status": "success", "feed": clean_feed}
     except Exception as e:

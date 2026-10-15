@@ -2463,7 +2463,27 @@ function onPlayerStateChange(event) {
                             uniqueHistory.push(h);
                         }
                     }
-                    populateArtGrid('jump-back-in-container', uniqueHistory.slice(0, 64));
+
+                    // Pad with liked songs or available history so every desktop slide has 18 items (no 2-card gap)
+                    let filledHistory = [...uniqueHistory];
+                    const remainder = filledHistory.length % 18;
+                    if (remainder !== 0) {
+                        let liked = [];
+                        try {
+                            liked = JSON.parse(localStorage.getItem('liked_songs') || '[]');
+                        } catch(e) {}
+                        const pool = [...liked, ...uniqueHistory];
+                        for (let p of pool) {
+                            if (filledHistory.length % 18 === 0) break;
+                            const pUid = (p.videoId || p.id || '') + '|' + (p.title || '');
+                            if (!seen.has(pUid)) {
+                                seen.add(pUid);
+                                filledHistory.push(p);
+                            }
+                        }
+                    }
+
+                    populateArtGrid('jump-back-in-container', filledHistory.slice(0, 54));
                     populateTasteMix(uniqueHistory);
                     populateBecauseRows(uniqueHistory);
                 } else {
@@ -2754,7 +2774,7 @@ function onPlayerStateChange(event) {
                         currentQueueIndex = 1;
                     }
 
-                    recs.slice(0, 18).forEach(s => {
+                    recs.slice(0, 50).forEach(s => {
                         const trackId = s.videoId || s.id;
                         if (trackId && !existingIds.has(trackId)) {
                             existingIds.add(trackId);
@@ -4912,11 +4932,26 @@ function onPlayerStateChange(event) {
                 
                 if (data.status === 'success' && data.feed && data.feed.length > 0) {
                     dynamicContainer.innerHTML = '';
+                    const quickSec = document.getElementById('home-quick-picks-section');
+                    const quickCont = document.getElementById('home-quick-picks-container');
+                    const quickTitle = document.getElementById('home-quick-picks-title');
+                    let quickPicksHandled = false;
+
                     data.feed.forEach((section, idx) => {
                         if (!section.contents || section.contents.length === 0) return;
+
+                        // Check if this is Quick Picks (must be placed first at top of Home screen)
+                        const isQuickPicks = section.title && section.title.toLowerCase().includes('quick pick');
+                        if (isQuickPicks && !quickPicksHandled && quickSec && quickCont) {
+                            if (quickTitle) quickTitle.textContent = section.title.includes('⚡') ? section.title : `⚡ ${section.title}`;
+                            populateDenseGrid('home-quick-picks-container', section.contents);
+                            quickSec.style.display = 'block';
+                            quickPicksHandled = true;
+                            return; // Do not duplicate in lower dynamic sections
+                        }
                         
                         const sectionId = 'home-sec-' + idx;
-                        // Use grid for song lists (like Quick Picks), vinyl scroll rows for playlists/albums
+                        // Use grid for song lists, vinyl scroll rows for playlists/albums
                         const isGrid = section.contents.some(item => item.type === 'song');
                         const layoutClass = isGrid ? 'dense-grid-container' : 'vinyl-scroll-container';
                         
@@ -5029,7 +5064,7 @@ function onPlayerStateChange(event) {
             container.innerHTML = '';
             container.className = 'jump-back-wrapper';
 
-            const chunkSize = 16;
+            const chunkSize = 18;
             const numPages = Math.ceil(entries.length / chunkSize);
             
             for (let i = 0; i < entries.length; i += chunkSize) {
