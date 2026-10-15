@@ -2044,139 +2044,150 @@
 
 
         <!-- ══════════════════════════════════════════════════════════════
-             🍅 ZEN FOCUS & STUDY SANCTUARY (Pomato-Spec + Cozy Lo-Fi Bunny)
+             🍅 POMATO FOCUS SANCTUARY (Exact Video Spec + Cozy Lo-Fi Bunny)
         ══════════════════════════════════════════════════════════════ -->
         <div id="focus-screen" class="screen-view hidden-screen focus-sanctuary-screen">
-            <!-- Top Bar Navigation & Controls -->
-            <div class="focus-top-bar">
-                <div class="focus-top-left">
-                    <button class="screen-back-btn focus-back-btn" title="Back to Home" onclick="window.goBack()">
-                        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-                    </button>
-                    <div class="focus-brand-pill">
-                        <span class="focus-brand-icon">🍅</span>
-                        <span class="focus-brand-text">Focus Sanctuary</span>
-                    </div>
-                </div>
+            <div class="pomato-master-card" id="pomato-master-card">
+                <!-- ── Left Panel (Task Creation, Today List, Harvest) ── -->
+                <aside class="pomato-left-panel">
+                    <div class="pomato-left-top">
+                        <!-- Logo -->
+                        <div class="pomato-brand-header">
+                            <span class="pomato-brand-emoji">🍅</span>
+                            <span class="pomato-brand-title">Pomato</span>
+                        </div>
 
-                <!-- Center Segmented Mode Control -->
-                <div class="focus-mode-switcher">
-                    <button class="focus-mode-btn active" id="fmode-pomodoro" onclick="setFocusMode('pomodoro')">POMODORO</button>
-                    <button class="focus-mode-btn" id="fmode-short-break" onclick="setFocusMode('shortBreak')">SHORT BREAK</button>
-                    <button class="focus-mode-btn" id="fmode-long-break" onclick="setFocusMode('longBreak')">LONG BREAK</button>
-                </div>
+                        <div class="pomato-section-tag">YOUR FOCUS</div>
 
-                <!-- Right Quick Actions -->
-                <div class="focus-top-actions">
-                    <button class="focus-icon-btn active" id="focus-sound-btn" onclick="toggleFocusSound()" title="Sound Notification Toggle">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
-                    </button>
-                    <button class="focus-icon-btn" id="focus-theme-btn" onclick="toggleFocusTheme()" title="Toggle Warm Night Theme">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.9c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.17 19.45 10.53 20 12 20c4.97 0 9-4.03 9-9 0-4.97-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
-                    </button>
-                    <button class="focus-icon-btn" id="focus-reset-btn" onclick="resetFocusTimer()" title="Reset Timer">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-                    </button>
-                </div>
-            </div>
+                        <!-- State A: Form when entering new focus or clicking "+ add session" -->
+                        <div class="pomato-form-view" id="pomato-form-view">
+                            <h2 class="pomato-form-heading">What are we<br>working on?</h2>
+                            <div class="pomato-input-wrap">
+                                <input type="text" id="focus-task-input" class="pomato-text-input" placeholder="Type your focus..." maxlength="45" onkeydown="if(event.key==='Enter') lockInFocusTask()">
+                            </div>
 
-            <!-- Main Layout Grid -->
-            <div class="focus-main-grid">
-                <!-- ── Left Task Creator & Harvest ── -->
-                <aside class="focus-sidebar-card">
-                    <!-- Task Input -->
-                    <div class="focus-input-group">
-                        <label class="focus-input-label">YOUR FOCUS</label>
-                        <div class="focus-input-title">What are we working on?</div>
-                        <div class="focus-input-wrap">
-                            <input type="text" id="focus-task-input" class="focus-task-input" placeholder="e.g. Physics Revision, Math Notes..." maxlength="50" onkeydown="if(event.key==='Enter') lockInFocusTask()">
+                            <div class="pomato-duration-tag">HOW LONG?</div>
+                            <div class="pomato-pills-row">
+                                <button type="button" class="pomato-pill-btn" data-min="15" onclick="selectFocusDuration(15)">15</button>
+                                <button type="button" class="pomato-pill-btn active" data-min="25" onclick="selectFocusDuration(25)">25</button>
+                                <button type="button" class="pomato-pill-btn" data-min="45" onclick="selectFocusDuration(45)">45</button>
+                                <button type="button" class="pomato-pill-btn" data-min="60" onclick="selectFocusDuration(60)">60</button>
+                                <span class="pomato-min-label">min</span>
+                            </div>
+
+                            <button type="button" class="pomato-lock-btn" id="focus-lock-btn" onclick="lockInFocusTask()">
+                                LOCK THIS IN
+                            </button>
+                        </div>
+
+                        <!-- State B: Active Task Display with "+ add session" trigger -->
+                        <div class="pomato-active-summary" id="pomato-active-summary" style="display: none;">
+                            <h2 class="pomato-active-task-heading" id="pomato-active-task-title">Organize Files</h2>
+                            <div class="pomato-active-duration-sub" id="pomato-active-duration-sub">25 min session</div>
+                            <button type="button" class="pomato-add-session-link" onclick="togglePomatoForm(true)">+ add session</button>
+                        </div>
+
+                        <!-- Today Sessions List -->
+                        <div class="pomato-today-block">
+                            <div class="pomato-today-header">
+                                <span class="pomato-section-tag">TODAY</span>
+                                <button type="button" class="pomato-clear-btn" onclick="clearCompletedFocusTasks()" title="Clear Finished">Clear</button>
+                            </div>
+                            <div class="pomato-tasks-list" id="focus-tasks-list">
+                                <!-- Populated dynamically by JS -->
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Duration Select Pills -->
-                    <div class="focus-duration-group">
-                        <div class="focus-input-label">HOW LONG?</div>
-                        <div class="focus-pills-row">
-                            <button class="focus-time-pill" data-min="15" onclick="selectFocusDuration(15)">15</button>
-                            <button class="focus-time-pill active" data-min="25" onclick="selectFocusDuration(25)">25</button>
-                            <button class="focus-time-pill" data-min="45" onclick="selectFocusDuration(45)">45</button>
-                            <button class="focus-time-pill" data-min="60" onclick="selectFocusDuration(60)">60</button>
-                            <span class="focus-min-tag">min</span>
+                    <!-- Bottom Total Harvest -->
+                    <div class="pomato-harvest-box">
+                        <div class="pomato-section-tag">TOTAL HARVEST</div>
+                        <div class="pomato-harvest-stat">
+                            <span class="pomato-harvest-tomato">🍅</span>
+                            <span class="pomato-harvest-mins"><strong id="focus-harvest-total">0</strong> min focused</span>
                         </div>
-                    </div>
-
-                    <!-- Lock in Button -->
-                    <button class="focus-lock-btn" id="focus-lock-btn" onclick="lockInFocusTask()">
-                        <span>LOCK THIS IN</span>
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                    </button>
-
-                    <!-- Today's Tasks List -->
-                    <div class="focus-tasks-section">
-                        <div class="focus-tasks-header">
-                            <span class="focus-tasks-label">TODAY</span>
-                            <button class="focus-tasks-clear-btn" onclick="clearCompletedFocusTasks()" title="Clear Completed">Clear Finished</button>
-                        </div>
-                        <div class="focus-tasks-list" id="focus-tasks-list">
-                            <!-- Populated dynamically by JS -->
-                        </div>
-                    </div>
-
-                    <!-- Total Harvest -->
-                    <div class="focus-harvest-card">
-                        <div class="focus-harvest-icon">🌱</div>
-                        <div class="focus-harvest-info">
-                            <div class="focus-harvest-label">TOTAL HARVEST</div>
-                            <div class="focus-harvest-val"><span id="focus-harvest-total">0</span> min focused</div>
-                            <div class="focus-harvest-sub">Every finished focus adds to your harvest</div>
-                        </div>
+                        <div class="pomato-harvest-note">Every finished focus adds to your harvest.</div>
                     </div>
                 </aside>
 
-                <!-- ── Center Hero Stage ── -->
-                <main class="focus-stage-card" id="focus-stage-card">
-                    <!-- Monolithic Digital Timer Display -->
-                    <div class="focus-timer-display" id="focus-timer-digits">25:00</div>
+                <!-- ── Right Panel (Header Bar, Huge Timer, Mascot, CTA, Session Dots) ── -->
+                <main class="pomato-right-panel">
+                    <!-- Top Action Header inside the Card -->
+                    <div class="pomato-card-header">
+                        <!-- Back to App -->
+                        <button type="button" class="pomato-circle-btn pomato-back-btn" title="Back to Music Player" onclick="window.goBack()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
 
-                    <!-- Cozy Study Bunny Stage -->
-                    <div class="focus-character-stage" id="focus-character-stage">
-                        <div class="focus-desk-ambient-glow"></div>
-                        <div class="focus-character-art-frame">
-                            <img src="focus_bunny_study.png" alt="Cozy Study Bunny" class="focus-character-img" id="focus-character-img">
+                        <!-- Centered Segmented Control: POMODORO vs BREAK -->
+                        <div class="pomato-segmented-control">
+                            <button type="button" class="pomato-segment-btn active" id="fmode-pomodoro" onclick="setFocusMode('pomodoro')">POMODORO</button>
+                            <button type="button" class="pomato-segment-btn" id="fmode-short-break" onclick="setFocusMode('shortBreak')">BREAK</button>
+                        </div>
 
-                            <!-- Subtle Loop Animation Layers -->
-                            <!-- 1. Warm Tea Steam Rising -->
-                            <div class="focus-steam-container" title="Warm Tea Steam">
-                                <span class="focus-steam-wisp wisp-1"></span>
-                                <span class="focus-steam-wisp wisp-2"></span>
-                                <span class="focus-steam-wisp wisp-3"></span>
-                            </div>
-
-                            <!-- 2. Subtle Pencil Writing Shimmer -->
-                            <div class="focus-pencil-sparkle"></div>
-
-                            <!-- 3. Warm Desk Lamp Ambient Pulse -->
-                            <div class="focus-lamp-beam"></div>
+                        <!-- Right Utility Circles: Reset & Theme & Sound -->
+                        <div class="pomato-right-actions">
+                            <button type="button" class="pomato-circle-btn" id="focus-reset-btn" onclick="resetFocusTimer()" title="Reset Timer">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2.5 2v6h6M21.5 22v-6h-6"/>
+                                    <path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8M2 12.5a10 10 0 0 0 18.8 4.3l.7-.8"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="pomato-circle-btn" id="focus-sound-btn" onclick="toggleFocusSound()" title="Sound Toggle">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="pomato-circle-btn" id="focus-theme-btn" onclick="toggleFocusTheme()" title="Toggle Cozy Night Mode">
+                                <span id="focus-theme-icon">🌙</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Active Task Capsule -->
-                    <div class="focus-active-task-pill" id="focus-active-task-display">
-                        <span class="focus-active-dot"></span>
-                        <span id="focus-active-task-name">General Focus</span>
-                    </div>
+                    <!-- Center Stage Content -->
+                    <div class="pomato-hero-stage">
+                        <!-- Huge Digital Clock -->
+                        <div class="pomato-timer-digits" id="focus-timer-digits">25:00</div>
 
-                    <!-- Big CTA Play/Pause Button -->
-                    <div class="focus-cta-row">
-                        <button class="focus-main-action-btn" id="focus-main-action-btn" onclick="toggleFocusTimer()">
+                        <!-- Mascot Character (Cozy Bunny Study) -->
+                        <div class="pomato-mascot-wrapper" id="pomato-mascot-wrapper">
+                            <div class="pomato-mascot-frame">
+                                <img src="focus_bunny_study.png" alt="Study Character" class="pomato-mascot-img" id="focus-character-img">
+
+                                <!-- Steam animation rising from teacup -->
+                                <div class="pomato-steam-layer" aria-hidden="true">
+                                    <span class="pomato-steam-wisp w1"></span>
+                                    <span class="pomato-steam-wisp w2"></span>
+                                    <span class="pomato-steam-wisp w3"></span>
+                                </div>
+
+                                <!-- Subtle micro-writing hand motion overlay -->
+                                <div class="pomato-hand-sparkle" aria-hidden="true"></div>
+                            </div>
+                        </div>
+
+                        <!-- Subtitle below character -->
+                        <div class="pomato-task-subtitle" id="focus-active-task-name">Organize Files</div>
+
+                        <!-- Big Tactile CTA Button -->
+                        <button type="button" class="pomato-cta-btn" id="focus-main-action-btn" onclick="toggleFocusTimer()">
                             <span id="focus-main-btn-label">START FOCUS</span>
                         </button>
-                    </div>
 
-                    <!-- Session Dots (e.g. SESSION 1 OF 4) -->
-                    <div class="focus-session-dots-wrapper">
-                        <div class="focus-dots-row" id="focus-dots-row"></div>
-                        <div class="focus-session-label" id="focus-session-label">SESSION 1 OF 4</div>
+                        <!-- Bottom Session Dots: ○ ○ ○ ○ ○ ○ SESSION 1 OF 6 -->
+                        <div class="pomato-dots-container">
+                            <div class="pomato-dots-row" id="focus-dots-row">
+                                <span class="pdot active"></span>
+                                <span class="pdot"></span>
+                                <span class="pdot"></span>
+                                <span class="pdot"></span>
+                                <span class="pdot"></span>
+                                <span class="pdot"></span>
+                            </div>
+                            <span class="pomato-dots-label" id="focus-session-label">SESSION 1 OF 6</span>
+                        </div>
                     </div>
                 </main>
             </div>
