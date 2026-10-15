@@ -4915,6 +4915,67 @@ function onPlayerStateChange(event) {
         
         coverArt.addEventListener('load', updateDynamicColors);
 
+        // --- 🧬 SMART HYBRID TASTE ENGINE ---
+        function getTasteSeeds() {
+            try {
+                const historyList = (typeof getHistoryList === 'function' ? getHistoryList() : []);
+                const likedSongs = (typeof getLikedSongs === 'function' ? getLikedSongs() : []);
+                const scores = new Map();
+
+                // 1. Frequency & recency in history
+                historyList.forEach((item, idx) => {
+                    const vid = item.videoId || item.id;
+                    if (!vid) return;
+                    const recencyBonus = Math.max(0, (20 - idx) * 0.1);
+                    const current = scores.get(vid) || { score: 0, item };
+                    current.score += 1.5 + recencyBonus;
+                    scores.set(vid, current);
+                });
+
+                // 2. Liked songs high priority
+                likedSongs.forEach(item => {
+                    const vid = item.video_id || item.videoId || item.id;
+                    if (!vid) return;
+                    const current = scores.get(vid) || { score: 0, item };
+                    current.score += 3.0;
+                    scores.set(vid, current);
+                });
+
+                const sorted = Array.from(scores.entries()).sort((a, b) => b[1].score - a[1].score);
+                return sorted.slice(0, 4).map(entry => entry[0]);
+            } catch(e) {
+                console.warn('getTasteSeeds error:', e);
+                return [];
+            }
+        }
+        window.getTasteSeeds = getTasteSeeds;
+
+        window.refreshQuickPicks = async function(event) {
+            if (event) event.stopPropagation();
+            const btn = document.getElementById('qp-refresh-btn');
+            if (btn) {
+                btn.style.transform = 'rotate(360deg)';
+                btn.style.transition = 'transform 0.6s ease';
+                setTimeout(() => { if (btn) { btn.style.transform = ''; btn.style.transition = ''; } }, 600);
+            }
+            const container = document.getElementById('home-quick-picks-container');
+            if (!container) return;
+            try {
+                const seeds = getTasteSeeds();
+                const url = `/api/quick_picks?refresh=true${seeds.length > 0 ? '&seeds=' + encodeURIComponent(seeds.join(',')) : ''}`;
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'success' && data.section && data.section.contents && data.section.contents.length > 0) {
+                        populateDenseGrid('home-quick-picks-container', data.section.contents);
+                        if (typeof showToast === 'function') showToast('Refreshed Smart Quick Picks ⚡');
+                    }
+                }
+            } catch(e) {
+                console.error('refreshQuickPicks error:', e);
+            }
+        };
+
         // --- AUTO-TRENDING & PERSONALIZATION ---
         async function loadTrendingFeeds() {
             try {
@@ -4927,7 +4988,10 @@ function onPlayerStateChange(event) {
                 if (!dynamicContainer) return;
                 dynamicContainer.innerHTML = '<div class="empty-state loading-state-wrapper" style="padding:40px;">' + TERMINAL_LOADER_HTML + '</div>';
                 
-                const res = await fetch('/api/home');
+                // Smart Hybrid Seeds: extract user's top played/liked songs for personalized Quick Picks
+                const seeds = getTasteSeeds();
+                const homeUrl = seeds.length > 0 ? `/api/home?seeds=${encodeURIComponent(seeds.join(','))}` : '/api/home';
+                const res = await fetch(homeUrl);
                 const data = await res.json();
                 
                 if (data.status === 'success' && data.feed && data.feed.length > 0) {

@@ -1666,10 +1666,16 @@
 
 
 
-        <!-- ⚡ Quick Picks Section (Placed First as Requested) -->
+        <!-- ⚡ Quick Picks Section (Smart Hybrid Mix) -->
         <div class="home-section" id="home-quick-picks-section" style="display:none; margin-bottom:36px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h2 class="section-title" id="home-quick-picks-title" style="margin:0;">⚡ Quick Picks</h2>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <h2 class="section-title" id="home-quick-picks-title" style="margin:0;">⚡ Quick Picks</h2>
+                    <span class="ai-mix-badge" style="font-size:0.72rem; padding:3px 9px; border-radius:12px; background:rgba(255,45,85,0.12); border:1px solid rgba(255,45,85,0.25); color:#ff5e7e;"><span class="ai-sparkle">✦</span> Smart Mix</span>
+                </div>
+                <button id="qp-refresh-btn" class="qp-refresh-btn" onclick="window.refreshQuickPicks(event)" title="Refresh picks" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.7); cursor:pointer; transition:0.25s;" onmouseover="this.style.background='rgba(255,255,255,0.14)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='rgba(255,255,255,0.7)';">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                </button>
             </div>
             <div class="dense-grid-container" id="home-quick-picks-container"></div>
         </div>

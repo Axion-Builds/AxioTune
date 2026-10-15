@@ -1219,8 +1219,132 @@ def debug_recs(videoId: str = "d349wN8Z81M"):
 
     return report
 
+
+async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None, all_home_songs: list = None, limit: int = 32):
+    """
+    Smart Hybrid Quick Picks:
+    1. Runs parallel radio queues for top user seeds via YouTube Music Up-Next.
+    2. Interleaves seed radios so vibes alternate nicely (round-robin).
+    3. Merges with user's top favorite seeds & YouTube Music server Quick Picks.
+    4. Deduplicates against duplicates and audio/video duplicates.
+    5. Returns a rich, 32-song collection matching the user's authentic taste.
+    """
+    combined_tracks = []
+    seen_ids = set()
+    seen_titles = set()
+
+    def add_item(item):
+        if not item or not isinstance(item, dict):
+            return False
+        vid = item.get('videoId') or item.get('id') or ''
+        title = (item.get('title') or '').strip()
+        if not title:
+            return False
+        norm = re.sub(r'[^\w\s]', '', title.lower()).strip()
+        if (vid and vid in seen_ids) or (norm and norm in seen_titles):
+            return False
+        if vid:
+            seen_ids.add(vid)
+        if norm:
+            seen_titles.add(norm)
+        
+        artist = item.get('artist') or item.get('uploader') or 'Unknown'
+        cover = item.get('cover') or item.get('thumbnail') or (f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg" if vid else "")
+        combined_tracks.append({
+            "title": title,
+            "artist": artist,
+            "cover": cover,
+            "type": "song",
+            "videoId": vid,
+            "query": f"{title} {artist}"
+        })
+        return True
+
+    # 1. Fetch radios for seed tracks concurrently
+    radio_results = []
+    clean_seeds = [v.strip() for v in seed_vids if v and len(v.strip()) > 5][:4] if seed_vids else []
+    if clean_seeds:
+        async def get_radio_safe(v):
+            try:
+                tracks, _ = await asyncio.wait_for(_fetch_radio(v), timeout=5.0)
+                return tracks or []
+            except Exception:
+                return []
+        gathered = await asyncio.gather(*[get_radio_safe(v) for v in clean_seeds], return_exceptions=True)
+        radio_results = [r for r in gathered if isinstance(r, list) and r]
+
+    # 2. Interleave radio tracks from each seed (round-robin mixing)
+    if radio_results:
+        for group in zip_longest(*radio_results):
+            for t in group:
+                if t and len(combined_tracks) < limit:
+                    add_item(t)
+
+    # 3. If ytm_quick_picks provided from home feed, blend in
+    if ytm_quick_picks and ytm_quick_picks.get("contents"):
+        for item in ytm_quick_picks["contents"]:
+            if len(combined_tracks) >= limit:
+                break
+            add_item(item)
+
+    # 4. If still under limit, backfill from other home songs
+    if all_home_songs:
+        for item in all_home_songs:
+            if len(combined_tracks) >= limit:
+                break
+            add_item(item)
+
+    return {
+        "title": "⚡ Quick Picks",
+        "contents": combined_tracks[:limit]
+    }
+
+
+@app.get("/api/quick_picks")
+async def get_quick_picks(seeds: str = "", refresh: bool = False):
+    try:
+        seed_list = [s.strip() for s in seeds.split(",") if s.strip()] if seeds else []
+        cache_key = f"smart_qp_{'_'.join(sorted(seed_list))}" if seed_list else "smart_qp_guest"
+        now = time.time()
+        if not refresh and cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < 180:
+            return API_CACHE[cache_key]['data']
+
+        try:
+            home_data = await asyncio.wait_for(asyncio.to_thread(lambda: ytmusic.get_home(limit=15)), timeout=6.0)
+        except Exception:
+            home_data = []
+
+        all_home_songs = []
+        ytm_qp = None
+        for sec in home_data:
+            t_lower = sec.get("title", "").lower()
+            is_qp = "quick pick" in t_lower
+            for item in sec.get("contents", []):
+                vid = item.get("videoId") or ""
+                p_id = item.get("playlistId") or ""
+                b_id = item.get("browseId") or ""
+                c_type = "playlist" if p_id else ("artist" if "artist" in b_id.lower() else ("album" if b_id else "song"))
+                if c_type == "song" and vid:
+                    art = item.get("artists", [{}])[0].get("name") if item.get("artists") else (item.get("description") or "Unknown")
+                    thumb = item.get("thumbnails", [{}])[-1].get("url") if item.get("thumbnails") else ""
+                    parsed = {"title": item.get("title", ""), "artist": art, "cover": thumb, "videoId": vid, "type": "song"}
+                    all_home_songs.append(parsed)
+                    if is_qp and not ytm_qp:
+                        ytm_qp = {"title": sec.get("title", "⚡ Quick Picks"), "contents": []}
+                    if is_qp:
+                        ytm_qp["contents"].append(parsed)
+
+        qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=ytm_qp, all_home_songs=all_home_songs, limit=32)
+        res = {"status": "success", "section": qp}
+        API_CACHE[cache_key] = {"time": time.time(), "data": res}
+        return res
+    except Exception as e:
+        print(f"[quick_picks] error: {e!r}")
+        return {"status": "error", "message": str(e), "section": {"title": "⚡ Quick Picks", "contents": []}}
+
+
 @app.get("/api/home")
-async def get_home():
+async def get_home(seeds: str = ""):
     try:
         def fetch_home():
             return ytmusic.get_home(limit=25)
@@ -1284,33 +1408,38 @@ async def get_home():
             else:
                 clean_feed.append(clean_section)
 
-        # If quick picks exists or can be constructed from top songs
-        if not quick_picks_section and len(all_songs_pool) >= 8:
-            quick_picks_section = {
-                "title": "⚡ Quick Picks",
-                "contents": []
-            }
+        # Smart Hybrid Quick Picks if user provided seeds
+        seed_list = [s.strip() for s in seeds.split(",") if s.strip()] if seeds else []
+        if seed_list:
+            smart_qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=quick_picks_section, all_home_songs=all_songs_pool, limit=32)
+            clean_feed.insert(0, smart_qp)
+        else:
+            # Fallback to standard Quick Picks if no seeds
+            if not quick_picks_section and len(all_songs_pool) >= 8:
+                quick_picks_section = {
+                    "title": "⚡ Quick Picks",
+                    "contents": []
+                }
 
-        if quick_picks_section:
-            # Enrich Quick Picks up to 32 songs using available song recommendations
-            existing_ids = {s.get("videoId") for s in quick_picks_section["contents"] if s.get("videoId")}
-            existing_titles = {s.get("title", "").strip().lower() for s in quick_picks_section["contents"]}
+            if quick_picks_section:
+                # Enrich Quick Picks up to 32 songs using available song recommendations
+                existing_ids = {s.get("videoId") for s in quick_picks_section["contents"] if s.get("videoId")}
+                existing_titles = {s.get("title", "").strip().lower() for s in quick_picks_section["contents"]}
 
-            for s in all_songs_pool:
-                if len(quick_picks_section["contents"]) >= 32:
-                    break
-                vid = s.get("videoId")
-                title = s.get("title", "").strip().lower()
-                if (vid and vid in existing_ids) or (title and title in existing_titles):
-                    continue
-                if vid:
-                    existing_ids.add(vid)
-                if title:
-                    existing_titles.add(title)
-                quick_picks_section["contents"].append(s)
+                for s in all_songs_pool:
+                    if len(quick_picks_section["contents"]) >= 32:
+                        break
+                    vid = s.get("videoId")
+                    title = s.get("title", "").strip().lower()
+                    if (vid and vid in existing_ids) or (title and title in existing_titles):
+                        continue
+                    if vid:
+                        existing_ids.add(vid)
+                    if title:
+                        existing_titles.add(title)
+                    quick_picks_section["contents"].append(s)
 
-            # Insert Quick Picks at index 0 (Top of Home Feed)
-            clean_feed.insert(0, quick_picks_section)
+                clean_feed.insert(0, quick_picks_section)
             
         return {"status": "success", "feed": clean_feed}
     except Exception as e:
