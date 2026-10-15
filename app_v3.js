@@ -4742,9 +4742,9 @@ function onPlayerStateChange(event) {
                 } else if (action === 'library') {
                     if (typeof showLibrary === 'function') showLibrary();
                     else if (typeof showScreenExcept === 'function') showScreenExcept('library-screen');
-                } else if (action === 'history') {
-                    if (typeof showHistory === 'function') showHistory();
-                    else if (typeof showScreenExcept === 'function') showScreenExcept('history-screen');
+                } else if (action === 'history' || action === 'focus') {
+                    if (typeof showFocus === 'function') showFocus();
+                    else if (typeof showScreenExcept === 'function') showScreenExcept('focus-screen');
                 } else if (action === 'queue') {
                     if (typeof window.toggleQueue === 'function') {
                         window.toggleQueue();
@@ -5660,7 +5660,7 @@ function onPlayerStateChange(event) {
         // --- ARTIST & ALBUM PAGES ---
         function showScreenExcept(showId, skipPushState = false) {
             // Record current screen in history for back button
-            const currentScreen = ['home-screen','player-screen','history-screen','settings-screen','artist-screen','album-screen','library-screen','search-screen','playlist-full-screen'].find(id => {
+            const currentScreen = ['home-screen','player-screen','history-screen','focus-screen','settings-screen','artist-screen','album-screen','library-screen','search-screen','playlist-full-screen'].find(id => {
                 const el = document.getElementById(id);
                 return el && el.classList.contains('active-screen');
             });
@@ -5689,7 +5689,7 @@ function onPlayerStateChange(event) {
                 }
             }
 
-            ['home-screen', 'player-screen', 'history-screen', 'settings-screen', 'artist-screen', 'album-screen', 'library-screen', 'search-screen', 'playlist-full-screen'].forEach(id => {
+            ['home-screen', 'player-screen', 'history-screen', 'focus-screen', 'settings-screen', 'artist-screen', 'album-screen', 'library-screen', 'search-screen', 'playlist-full-screen'].forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 if (id === showId) {
@@ -8524,3 +8524,400 @@ window.playSurpriseTrack = function() {
     }
     document.addEventListener('DOMContentLoaded', updateFooterEq);
 })();
+
+// ══════════════════════════════════════════════════════════════════════════
+// 🍅 ZEN FOCUS & STUDY SANCTUARY ENGINE (Pomato-Spec + Cozy Lo-Fi Bunny)
+// ══════════════════════════════════════════════════════════════════════════
+(function() {
+    let focusTimerState = {
+        mode: 'pomodoro', // 'pomodoro' | 'shortBreak' | 'longBreak'
+        durationMins: 25,
+        remainingSecs: 25 * 60,
+        isRunning: false,
+        timerInterval: null,
+        activeTaskName: 'General Focus',
+        currentSession: 1,
+        totalSessions: 4,
+        soundEnabled: true,
+        warmTheme: false
+    };
+
+    // Load saved tasks & harvest from localStorage
+    function loadSavedFocusData() {
+        try {
+            const savedHarvest = parseInt(localStorage.getItem('axio_focus_harvest') || '0', 10);
+            const totalEl = document.getElementById('focus-harvest-total');
+            if (totalEl) totalEl.textContent = isNaN(savedHarvest) ? '0' : savedHarvest;
+
+            renderFocusTasks();
+            renderSessionDots();
+        } catch(e) {
+            console.warn('loadSavedFocusData error:', e);
+        }
+    }
+
+    function getFocusTasks() {
+        try {
+            return JSON.parse(localStorage.getItem('axio_focus_tasks') || '[]');
+        } catch(e) {
+            return [];
+        }
+    }
+
+    function saveFocusTasks(tasks) {
+        try {
+            localStorage.setItem('axio_focus_tasks', JSON.stringify(tasks));
+        } catch(e) {}
+    }
+
+    // ── Synthesized Audiophile Bell Chime (Web Audio API) ──
+    function playChimeBell() {
+        if (!focusTimerState.soundEnabled) return;
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const now = ctx.currentTime;
+
+            // Frequencies for a Tibetan Singing Bowl / Zen Temple Chime (528Hz Solfeggio)
+            const freqs = [528, 1056, 1584];
+            freqs.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = idx === 0 ? 'sine' : 'triangle';
+                osc.frequency.setValueAtTime(freq, now);
+
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.exponentialRampToValueAtTime(0.2 / (idx + 1), now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 3.0);
+            });
+        } catch(e) {
+            console.warn('playChimeBell error:', e);
+        }
+    }
+
+    // ── Screen Activator ──
+    window.showFocus = function() {
+        if (typeof showScreenExcept === 'function') {
+            showScreenExcept('focus-screen');
+        }
+        // Update dock item active state
+        document.querySelectorAll('.bezel-nav-item').forEach(b => {
+            const action = b.getAttribute('data-action');
+            b.classList.toggle('active', action === 'focus' || action === 'history');
+        });
+        updateFocusTimerDisplay();
+        loadSavedFocusData();
+    };
+
+    // ── Mode Switcher ──
+    window.setFocusMode = function(mode) {
+        if (focusTimerState.isRunning) {
+            clearInterval(focusTimerState.timerInterval);
+            focusTimerState.isRunning = false;
+        }
+
+        focusTimerState.mode = mode;
+        const screenEl = document.getElementById('focus-screen');
+        if (screenEl) {
+            screenEl.classList.toggle('focus-break-mode', mode !== 'pomodoro');
+        }
+
+        // Update mode buttons
+        document.querySelectorAll('.focus-mode-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const activeBtn = document.getElementById(
+            mode === 'pomodoro' ? 'fmode-pomodoro' : (mode === 'shortBreak' ? 'fmode-short-break' : 'fmode-long-break')
+        );
+        if (activeBtn) activeBtn.classList.add('active');
+
+        // Set durations
+        const btnLabel = document.getElementById('focus-main-btn-label');
+        if (mode === 'pomodoro') {
+            focusTimerState.remainingSecs = focusTimerState.durationMins * 60;
+            if (btnLabel) btnLabel.textContent = 'START FOCUS';
+        } else if (mode === 'shortBreak') {
+            focusTimerState.remainingSecs = 5 * 60;
+            if (btnLabel) btnLabel.textContent = 'START BREAK';
+        } else if (mode === 'longBreak') {
+            focusTimerState.remainingSecs = 15 * 60;
+            if (btnLabel) btnLabel.textContent = 'START LONG BREAK';
+        }
+
+        const actionBtn = document.getElementById('focus-main-action-btn');
+        if (actionBtn) actionBtn.classList.remove('paused');
+
+        updateFocusTimerDisplay();
+    };
+
+    // ── Select Duration Pills (15, 25, 45, 60 min) ──
+    window.selectFocusDuration = function(mins) {
+        focusTimerState.durationMins = mins;
+
+        document.querySelectorAll('.focus-time-pill').forEach(pill => {
+            const pMin = parseInt(pill.getAttribute('data-min'), 10);
+            pill.classList.toggle('active', pMin === mins);
+        });
+
+        if (focusTimerState.mode === 'pomodoro' && !focusTimerState.isRunning) {
+            focusTimerState.remainingSecs = mins * 60;
+            updateFocusTimerDisplay();
+        }
+    };
+
+    // ── Lock In Task ──
+    window.lockInFocusTask = function() {
+        const input = document.getElementById('focus-task-input');
+        const taskText = (input ? input.value : '').trim();
+        if (!taskText) {
+            if (typeof showToast === 'function') showToast('Please enter a task name first ✍️');
+            return;
+        }
+
+        const newTask = {
+            id: 'task_' + Date.now(),
+            name: taskText,
+            duration: focusTimerState.durationMins,
+            completed: false,
+            createdAt: new Date().toISOString()
+        };
+
+        const tasks = getFocusTasks();
+        tasks.unshift(newTask);
+        saveFocusTasks(tasks);
+
+        focusTimerState.activeTaskName = taskText;
+        const activeLabel = document.getElementById('focus-active-task-name');
+        if (activeLabel) activeLabel.textContent = taskText;
+
+        if (input) input.value = '';
+        renderFocusTasks();
+        if (typeof showToast === 'function') showToast(`Locked in: "${taskText}" (${newTask.duration}m) 🔒`);
+    };
+
+    // ── Render Tasks ──
+    function renderFocusTasks() {
+        const container = document.getElementById('focus-tasks-list');
+        if (!container) return;
+        const tasks = getFocusTasks();
+
+        if (tasks.length === 0) {
+            container.innerHTML = '<div style="font-size:0.8rem; color:rgba(255,255,255,0.35); text-align:center; padding:16px 0;">No sessions locked in yet. Add your first task above!</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        tasks.forEach(t => {
+            const isActive = t.name === focusTimerState.activeTaskName && !t.completed;
+            const item = document.createElement('div');
+            item.className = `focus-task-item ${isActive ? 'active' : ''} ${t.completed ? 'completed' : ''}`;
+            item.onclick = () => selectFocusTask(t.id);
+
+            const safeName = typeof escapeHtml === 'function' ? escapeHtml(t.name) : t.name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            item.innerHTML = `
+                <div class="focus-task-info">
+                    <span class="focus-task-name">${safeName}</span>
+                    <span class="focus-task-duration">${t.duration} min session</span>
+                </div>
+                <span class="focus-task-status-tag">${t.completed ? '✓ Done' : (isActive ? 'Active' : 'Locked')}</span>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    window.selectFocusTask = function(taskId) {
+        const tasks = getFocusTasks();
+        const found = tasks.find(t => t.id === taskId);
+        if (!found) return;
+
+        focusTimerState.activeTaskName = found.name;
+        selectFocusDuration(found.duration);
+        const activeLabel = document.getElementById('focus-active-task-name');
+        if (activeLabel) activeLabel.textContent = found.name;
+        renderFocusTasks();
+    };
+
+    window.clearCompletedFocusTasks = function() {
+        const tasks = getFocusTasks().filter(t => !t.completed);
+        saveFocusTasks(tasks);
+        renderFocusTasks();
+        if (typeof showToast === 'function') showToast('Cleared finished tasks 🧹');
+    };
+
+    // ── Timer Toggle (Start / Pause) ──
+    window.toggleFocusTimer = function() {
+        const actionBtn = document.getElementById('focus-main-action-btn');
+        const btnLabel = document.getElementById('focus-main-btn-label');
+
+        if (focusTimerState.isRunning) {
+            // PAUSE
+            clearInterval(focusTimerState.timerInterval);
+            focusTimerState.isRunning = false;
+            if (btnLabel) btnLabel.textContent = focusTimerState.mode === 'pomodoro' ? 'RESUME FOCUS' : 'RESUME BREAK';
+            if (actionBtn) actionBtn.classList.add('paused');
+        } else {
+            // START / RESUME
+            focusTimerState.isRunning = true;
+            if (btnLabel) btnLabel.textContent = 'PAUSE';
+            if (actionBtn) actionBtn.classList.remove('paused');
+
+            focusTimerState.timerInterval = setInterval(() => {
+                if (focusTimerState.remainingSecs > 0) {
+                    focusTimerState.remainingSecs--;
+                    updateFocusTimerDisplay();
+                } else {
+                    onFocusTimerFinish();
+                }
+            }, 1000);
+        }
+    };
+
+    // ── Timer Reset ──
+    window.resetFocusTimer = function() {
+        if (focusTimerState.isRunning) {
+            clearInterval(focusTimerState.timerInterval);
+            focusTimerState.isRunning = false;
+        }
+
+        const actionBtn = document.getElementById('focus-main-action-btn');
+        const btnLabel = document.getElementById('focus-main-btn-label');
+        if (actionBtn) actionBtn.classList.remove('paused');
+
+        if (focusTimerState.mode === 'pomodoro') {
+            focusTimerState.remainingSecs = focusTimerState.durationMins * 60;
+            if (btnLabel) btnLabel.textContent = 'START FOCUS';
+        } else if (focusTimerState.mode === 'shortBreak') {
+            focusTimerState.remainingSecs = 5 * 60;
+            if (btnLabel) btnLabel.textContent = 'START BREAK';
+        } else {
+            focusTimerState.remainingSecs = 15 * 60;
+            if (btnLabel) btnLabel.textContent = 'START LONG BREAK';
+        }
+
+        updateFocusTimerDisplay();
+        if (typeof showToast === 'function') showToast('Timer reset ⏱️');
+    };
+
+    // ── Update Display (MM:SS) ──
+    function updateFocusTimerDisplay() {
+        const total = Math.max(0, focusTimerState.remainingSecs);
+        const mins = Math.floor(total / 60);
+        const secs = total % 60;
+        const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        const displayEl = document.getElementById('focus-timer-digits');
+        if (displayEl) displayEl.textContent = formatted;
+
+        // Sync browser tab title when on focus screen
+        const focusScreen = document.getElementById('focus-screen');
+        if (focusScreen && focusScreen.classList.contains('active-screen') && focusTimerState.isRunning) {
+            document.title = `(${formatted}) ${focusTimerState.activeTaskName} • AxioTune Focus`;
+        }
+    }
+
+    // ── Timer Finish Event ──
+    function onFocusTimerFinish() {
+        clearInterval(focusTimerState.timerInterval);
+        focusTimerState.isRunning = false;
+
+        playChimeBell();
+
+        if (focusTimerState.mode === 'pomodoro') {
+            // Harvest addition
+            const completedMins = focusTimerState.durationMins;
+            const currentHarvest = parseInt(localStorage.getItem('axio_focus_harvest') || '0', 10);
+            const newHarvest = currentHarvest + completedMins;
+            localStorage.setItem('axio_focus_harvest', newHarvest.toString());
+            const harvestTotalEl = document.getElementById('focus-harvest-total');
+            if (harvestTotalEl) harvestTotalEl.textContent = newHarvest.toString();
+
+            // Check off active task
+            const tasks = getFocusTasks();
+            const activeIdx = tasks.findIndex(t => t.name === focusTimerState.activeTaskName && !t.completed);
+            if (activeIdx !== -1) {
+                tasks[activeIdx].completed = true;
+                saveFocusTasks(tasks);
+                renderFocusTasks();
+            }
+
+            // Session dot advance
+            if (focusTimerState.currentSession < focusTimerState.totalSessions) {
+                focusTimerState.currentSession++;
+                renderSessionDots();
+                if (typeof showToast === 'function') showToast('Pomodoro Complete! Enjoy a short break 🍵');
+                setFocusMode('shortBreak');
+            } else {
+                focusTimerState.currentSession = 1;
+                renderSessionDots();
+                if (typeof showToast === 'function') showToast('Cycle complete! Enjoy a long break 🌟');
+                setFocusMode('longBreak');
+            }
+        } else {
+            // Break finished -> back to Pomodoro
+            if (typeof showToast === 'function') showToast('Break complete! Ready to focus? ⚡');
+            setFocusMode('pomodoro');
+        }
+    }
+
+    // ── Session Dots ──
+    function renderSessionDots() {
+        const row = document.getElementById('focus-dots-row');
+        const label = document.getElementById('focus-session-label');
+        if (!row) return;
+
+        row.innerHTML = '';
+        for (let i = 1; i <= focusTimerState.totalSessions; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'focus-dot';
+            if (i < focusTimerState.currentSession) {
+                dot.classList.add('completed');
+            } else if (i === focusTimerState.currentSession) {
+                dot.classList.add('active');
+            }
+            row.appendChild(dot);
+        }
+
+        if (label) {
+            label.textContent = `SESSION ${focusTimerState.currentSession} OF ${focusTimerState.totalSessions}`;
+        }
+    }
+
+    // ── Sound Notification Toggle ──
+    window.toggleFocusSound = function() {
+        focusTimerState.soundEnabled = !focusTimerState.soundEnabled;
+        const btn = document.getElementById('focus-sound-btn');
+        if (btn) {
+            btn.classList.toggle('active', focusTimerState.soundEnabled);
+        }
+        if (typeof showToast === 'function') {
+            showToast(focusTimerState.soundEnabled ? 'Chime sound enabled 🔔' : 'Chime sound muted 🔕');
+        }
+    };
+
+    // ── Warm Night Theme Toggle ──
+    window.toggleFocusTheme = function() {
+        focusTimerState.warmTheme = !focusTimerState.warmTheme;
+        const screenEl = document.getElementById('focus-screen');
+        const btn = document.getElementById('focus-theme-btn');
+        if (screenEl) screenEl.classList.toggle('focus-warm-theme', focusTimerState.warmTheme);
+        if (btn) btn.classList.toggle('active', focusTimerState.warmTheme);
+        if (typeof showToast === 'function') {
+            showToast(focusTimerState.warmTheme ? 'Warm Lo-Fi Peach Theme 🕯️' : 'Midnight OLED Dark Theme 🌙');
+        }
+    };
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSavedFocusData();
+        updateFocusTimerDisplay();
+    });
+})();
+
