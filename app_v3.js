@@ -8586,7 +8586,7 @@ window.playSurpriseTrack = function() {
         updateFocusTimerDisplay();
     };
 
-    function loadSavedSageData() {
+    async function loadSavedSageData() {
         try {
             const savedTheme = localStorage.getItem('axio_focus_theme') || 'light';
             const screen = document.getElementById('focus-screen');
@@ -8597,9 +8597,68 @@ window.playSurpriseTrack = function() {
                 const icon = document.getElementById('focus-theme-icon');
                 if (icon) icon.textContent = isDark ? '☀️' : '🌙';
             }
+
+            // Sync with FastAPI backend
+            const res = await fetch('/api/focus/dashboard');
+            if (res.ok) {
+                const data = await res.json();
+                const weekTotalEl = document.getElementById('sage-week-total');
+                if (weekTotalEl && data.week_total_hours) {
+                    weekTotalEl.textContent = `Week total: ${data.week_total_hours}h`;
+                }
+                const totalHoursEl = document.getElementById('sage-total-hours');
+                if (totalHoursEl && data.project_time_hours) {
+                    totalHoursEl.textContent = `${data.project_time_hours}h`;
+                }
+                if (!sageTimerState.isRunning && sageTimerState.period === 'today' && data.today_seconds) {
+                    sageTimerState.totalSecs = data.today_seconds;
+                    sageTimerState.remainingSecs = data.today_seconds;
+                    updateFocusTimerDisplay();
+                }
+                if (Array.isArray(data.meetings)) {
+                    renderBackendMeetings(data.meetings);
+                }
+            }
         } catch(e) {
-            console.warn('loadSavedSageData error:', e);
+            console.warn('loadSavedSageData backend fetch warning:', e);
         }
+    }
+
+    function renderBackendMeetings(meetings) {
+        const list = document.getElementById('sage-meetings-list');
+        const countBadge = document.getElementById('sage-meetings-count');
+        if (!list) return;
+        if (countBadge) countBadge.textContent = meetings.length.toString();
+
+        list.innerHTML = '';
+        meetings.forEach(m => {
+            const row = document.createElement('div');
+            row.className = 'sage-meeting-row';
+            row.setAttribute('data-id', m.id);
+
+            const safeTitle = typeof escapeHtml === 'function' ? escapeHtml(m.title) : m.title;
+            const safeSub = typeof escapeHtml === 'function' ? escapeHtml(m.subtitle || 'Focus Session') : (m.subtitle || 'Focus Session');
+
+            row.innerHTML = `
+                <span class="sage-meeting-time">${m.time}</span>
+                <div class="sage-meeting-details">
+                    <h4 class="sage-meeting-name">${safeTitle}</h4>
+                    <span class="sage-meeting-sub">${safeSub}</span>
+                </div>
+                <div class="sage-meeting-avatars">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av1" onerror="this.style.display='none'">
+                    ${m.id === 1 ? '<img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av2" onerror="this.style.display=\'none\'"><span class="sage-avatar-bubble">+2</span>' : ''}
+                </div>
+                <div class="sage-privacy-control">
+                    <span class="sage-privacy-label">Privacy</span>
+                    <label class="sage-toggle-switch">
+                        <input type="checkbox" id="privacy-toggle-${m.id}" ${m.privacy ? 'checked' : ''} onchange="togglePrivacy(${m.id}, this.checked)">
+                        <span class="sage-toggle-slider"></span>
+                    </label>
+                </div>
+            `;
+            list.appendChild(row);
+        });
     }
 
     // ── Update Display & Circular Gauge Dial ──
@@ -8635,7 +8694,6 @@ window.playSurpriseTrack = function() {
         }
 
         if (headDot) {
-            // angle from -90 deg (top center) clockwise
             const angleDeg = (ratio * 360) - 90;
             const angleRad = (angleDeg * Math.PI) / 180;
             const cx = 110 + 95 * Math.cos(angleRad);
@@ -8648,6 +8706,22 @@ window.playSurpriseTrack = function() {
         const focusScreen = document.getElementById('focus-screen');
         if (focusScreen && focusScreen.classList.contains('active-screen') && sageTimerState.isRunning) {
             document.title = `(${formatted}) Time Tracker • AxioTune`;
+        }
+    }
+
+    // ── Log completed session to backend ──
+    async function logSessionToBackend(durationSecs) {
+        try {
+            await fetch('/api/focus/log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    duration_seconds: durationSecs,
+                    project_name: sageTimerState.period === 'today' ? 'Norsic project' : 'Focus Sprint'
+                })
+            });
+        } catch(e) {
+            console.warn('Error logging session to backend:', e);
         }
     }
 
@@ -8680,6 +8754,7 @@ window.playSurpriseTrack = function() {
                     if (iconContainer) {
                         iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
                     }
+                    logSessionToBackend(sageTimerState.totalSecs);
                     if (typeof showToast === 'function') showToast('Time Tracker session completed! 🌿');
                 }
             }, 1000);
@@ -8744,47 +8819,47 @@ window.playSurpriseTrack = function() {
         updateFocusTimerDisplay();
     };
 
-    // ── Privacy Toggle ──
-    window.togglePrivacy = function(id, isChecked) {
+    // ── Privacy Toggle with Backend Persistence ──
+    window.togglePrivacy = async function(id, isChecked) {
         if (typeof showToast === 'function') {
-            showToast(isChecked ? `Meeting ${id}: Privacy active (DND) 🔒` : `Meeting ${id}: Privacy off 🔓`);
+            showToast(isChecked ? `Session ${id}: Privacy active (DND) 🔒` : `Session ${id}: Privacy off 🔓`);
+        }
+        try {
+            await fetch(`/api/focus/meetings/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ privacy: isChecked })
+            });
+        } catch(e) {
+            console.warn('Error updating privacy toggle:', e);
         }
     };
 
-    // ── Add New Meeting / Focus Block ──
-    window.openAddSessionModal = function() {
+    // ── Add New Meeting / Focus Block with Backend Persistence ──
+    window.openAddSessionModal = async function() {
         const title = prompt('Enter Focus Block / Meeting title:', 'Deep Work Sprint');
         if (!title) return;
-        const list = document.getElementById('sage-meetings-list');
-        const countBadge = document.getElementById('sage-meetings-count');
-        if (list) {
-            const now = new Date();
-            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            const newRow = document.createElement('div');
-            newRow.className = 'sage-meeting-row';
-            newRow.innerHTML = `
-                <span class="sage-meeting-time">${timeStr}</span>
-                <div class="sage-meeting-details">
-                    <h4 class="sage-meeting-name">${title}</h4>
-                    <span class="sage-meeting-sub">Custom session</span>
-                </div>
-                <div class="sage-meeting-avatars">
-                    <span class="sage-avatar-bubble">+1</span>
-                </div>
-                <div class="sage-privacy-control">
-                    <span class="sage-privacy-label">Privacy</span>
-                    <label class="sage-toggle-switch">
-                        <input type="checkbox" checked onchange="togglePrivacy(3, this.checked)">
-                        <span class="sage-toggle-slider"></span>
-                    </label>
-                </div>
-            `;
-            list.appendChild(newRow);
-            if (countBadge) {
-                const cur = parseInt(countBadge.textContent, 10) || 2;
-                countBadge.textContent = (cur + 1).toString();
+        
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        try {
+            const res = await fetch('/api/focus/meetings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    time_str: timeStr,
+                    title: title,
+                    subtitle: 'Custom focus session',
+                    privacy: true
+                })
+            });
+            if (res.ok) {
+                loadSavedSageData();
+                if (typeof showToast === 'function') showToast(`Added: "${title}" ✨`);
             }
-            if (typeof showToast === 'function') showToast(`Added: "${title}" ✨`);
+        } catch(e) {
+            console.warn('Error creating meeting:', e);
         }
     };
 
