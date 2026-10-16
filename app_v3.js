@@ -8540,7 +8540,16 @@ window.playSurpriseTrack = function() {
         isRunning: false,
         timerInterval: null,
         soundEnabled: true,
-        isDarkTheme: false
+        isDarkTheme: false,
+        isTimeless: false,
+        timelessElapsedSecs: 0,
+        activeTask: {
+            id: null,
+            title: "Physics - Rotational Motion",
+            subject: "Physics",
+            isTimeless: false
+        },
+        cachedSubjects: []
     };
 
     // ── Synthesized Zen Chime (Web Audio API) ──
@@ -8602,21 +8611,52 @@ window.playSurpriseTrack = function() {
             const res = await fetch('/api/focus/dashboard');
             if (res.ok) {
                 const data = await res.json();
+                
+                // Top header stats
                 const weekTotalEl = document.getElementById('sage-week-total');
                 if (weekTotalEl && data.week_total_hours) {
                     weekTotalEl.textContent = `Week total: ${data.week_total_hours}h`;
                 }
-                const totalHoursEl = document.getElementById('sage-total-hours');
-                if (totalHoursEl && data.project_time_hours) {
-                    totalHoursEl.textContent = `${data.project_time_hours}h`;
+
+                // 1. Red Box: Active Study Task
+                if (data.current_task) {
+                    const statusEl = document.getElementById('sage-current-task-status');
+                    const glyphEl = document.getElementById('sage-current-task-glyph');
+                    const titleEl = document.getElementById('sage-current-task-title');
+                    const subEl = document.getElementById('sage-current-task-sub');
+                    if (statusEl) statusEl.textContent = data.current_task.badge || 'ACTIVE';
+                    if (titleEl) titleEl.textContent = data.current_task.title || 'Physics - Rotational Motion';
+                    if (subEl) subEl.textContent = data.current_task.subtitle || 'Focus Session • In Progress';
+
+                    const tLower = (data.current_task.title || '').toLowerCase();
+                    if (glyphEl) {
+                        if (tLower.includes('physic')) glyphEl.textContent = '⚛️';
+                        else if (tLower.includes('math')) glyphEl.textContent = '📐';
+                        else if (tLower.includes('chem')) glyphEl.textContent = '🧪';
+                        else if (tLower.includes('code') || tLower.includes('prog')) glyphEl.textContent = '💻';
+                        else glyphEl.textContent = '📚';
+                    }
                 }
-                if (!sageTimerState.isRunning && sageTimerState.period === 'today' && data.today_seconds) {
+
+                // 2. Yellow Box: Cumulative Study Report & Total Hours
+                const totalHoursEl = document.getElementById('sage-total-hours');
+                if (totalHoursEl && (data.total_study_hours || data.project_time_hours)) {
+                    totalHoursEl.textContent = `${data.total_study_hours || data.project_time_hours}h`;
+                }
+                if (Array.isArray(data.subjects_report)) {
+                    renderStudyReport(data.subjects_report, data.total_study_hours);
+                }
+
+                // 3. Green Box: To-Do Tasks
+                if (Array.isArray(data.tasks)) {
+                    renderTasksList(data.tasks);
+                }
+
+                // Initial Timer setup if not already running
+                if (!sageTimerState.isRunning && !sageTimerState.isTimeless && sageTimerState.period === 'today' && data.today_seconds) {
                     sageTimerState.totalSecs = data.today_seconds;
                     sageTimerState.remainingSecs = data.today_seconds;
                     updateFocusTimerDisplay();
-                }
-                if (Array.isArray(data.meetings)) {
-                    renderBackendMeetings(data.meetings);
                 }
             }
         } catch(e) {
@@ -8624,37 +8664,270 @@ window.playSurpriseTrack = function() {
         }
     }
 
-    function renderBackendMeetings(meetings) {
-        const list = document.getElementById('sage-meetings-list');
-        const countBadge = document.getElementById('sage-meetings-count');
+    // ── Yellow Box: Toggle Expand/Collapse Subject Report ──
+    window.toggleReportExpand = function() {
+        const listEl = document.getElementById('sage-report-expanded-list');
+        const btnEl = document.getElementById('sage-report-toggle-btn');
+        if (!listEl) return;
+        const isOpen = listEl.classList.toggle('open');
+        if (btnEl) btnEl.classList.toggle('expanded', isOpen);
+    };
+
+    function renderStudyReport(subjects, totalHours) {
+        if (!Array.isArray(subjects) || subjects.length === 0) return;
+        sageTimerState.cachedSubjects = subjects;
+
+        // Top summary breakdown bar & percentages
+        const pctContainer = document.getElementById('sage-breakdown-percentages');
+        const barContainer = document.getElementById('sage-breakdown-bar');
+
+        if (pctContainer) {
+            pctContainer.innerHTML = subjects.slice(0, 3).map((s, idx) => {
+                const cls = idx === 0 ? 'pct-green' : (idx === 1 ? 'pct-dark' : 'pct-light');
+                return `<span class="sage-pct ${cls}">${s.name} ${s.percentage}%</span>`;
+            }).join('');
+        }
+
+        if (barContainer) {
+            barContainer.innerHTML = subjects.slice(0, 3).map((s, idx) => {
+                const cls = idx === 0 ? 'seg-green' : (idx === 1 ? 'seg-dark' : 'seg-light');
+                return `<span class="sage-bar-segment ${cls}" style="width: ${s.percentage}%;"></span>`;
+            }).join('');
+        }
+
+        // Expandable Detailed Subject List
+        const innerContainer = document.getElementById('sage-report-subjects-container');
+        if (innerContainer) {
+            innerContainer.innerHTML = subjects.map(s => `
+                <div class="sage-subject-item">
+                    <div class="sage-subject-item-left">
+                        <span class="sage-subject-color-dot" style="background-color: ${s.color};"></span>
+                        <span class="sage-subject-name">${s.name}</span>
+                        <span class="sage-subject-sessions-badge">${s.sessions} sessions</span>
+                    </div>
+                    <div class="sage-subject-item-right">
+                        <span class="sage-subject-hours">${s.formatted}</span>
+                        <span class="sage-subject-pct">${s.percentage}%</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // ── Green Box: To-Do Tasks Management ──
+    window.toggleTaskForm = function(force) {
+        const form = document.getElementById('sage-task-form');
+        if (!form) return;
+        const isShown = force !== undefined ? force : (form.style.display !== 'none');
+        form.style.display = isShown ? 'none' : 'flex';
+        if (!isShown) {
+            const titleInput = document.getElementById('sage-task-input-title');
+            if (titleInput) titleInput.focus();
+        }
+    };
+
+    window.handleCreateTask = async function(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        const titleInput = document.getElementById('sage-task-input-title');
+        const timeInput = document.getElementById('sage-task-input-time');
+        const title = titleInput ? titleInput.value.trim() : '';
+        const timeStr = timeInput && timeInput.value.trim() ? timeInput.value.trim() : '25m';
+        if (!title) return;
+
+        let subject = 'Physics';
+        const tLower = title.toLowerCase();
+        if (tLower.includes('math')) subject = 'Mathematics';
+        else if (tLower.includes('chem')) subject = 'Chemistry';
+        else if (tLower.includes('code') || tLower.includes('prog')) subject = 'Coding';
+        else if (tLower.includes('physic')) subject = 'Physics';
+        else subject = 'General';
+
+        let durationMins = 25;
+        const match = timeStr.match(/(\d+)\s*m/i);
+        if (match) durationMins = parseInt(match[1], 10);
+
+        try {
+            await fetch('/api/focus/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title,
+                    subject: subject,
+                    time_str: timeStr,
+                    is_timeless: false,
+                    duration_mins: durationMins
+                })
+            });
+            if (titleInput) titleInput.value = '';
+            if (timeInput) timeInput.value = '';
+            toggleTaskForm(false);
+            loadSavedSageData();
+            if (typeof showToast === 'function') showToast(`Added task: "${title}" 🌿`);
+        } catch(e) {
+            console.warn('Error creating task:', e);
+        }
+    };
+
+    window.handleCreateTimelessTask = async function() {
+        const titleInput = document.getElementById('sage-task-input-title');
+        const title = titleInput && titleInput.value.trim() ? titleInput.value.trim() : 'Open Focus Session';
+
+        let subject = 'Physics';
+        const tLower = title.toLowerCase();
+        if (tLower.includes('math')) subject = 'Mathematics';
+        else if (tLower.includes('chem')) subject = 'Chemistry';
+        else if (tLower.includes('code') || tLower.includes('prog')) subject = 'Coding';
+
+        try {
+            await fetch('/api/focus/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title,
+                    subject: subject,
+                    time_str: 'Timeless ∞',
+                    is_timeless: true,
+                    duration_mins: 0
+                })
+            });
+            if (titleInput) titleInput.value = '';
+            toggleTaskForm(false);
+            loadSavedSageData();
+            if (typeof showToast === 'function') showToast(`Created Timeless Task: "${title}" ∞ 🌿`);
+        } catch(e) {
+            console.warn('Error creating timeless task:', e);
+        }
+    };
+
+    window.toggleTaskCompleted = async function(taskId, completed) {
+        try {
+            await fetch(`/api/focus/tasks/${taskId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed: completed })
+            });
+            loadSavedSageData();
+        } catch(e) {
+            console.warn('Error updating task status:', e);
+        }
+    };
+
+    window.deleteTask = async function(taskId) {
+        try {
+            await fetch(`/api/focus/tasks/${taskId}`, {
+                method: 'DELETE'
+            });
+            loadSavedSageData();
+            if (typeof showToast === 'function') showToast('Task removed 🗑️');
+        } catch(e) {
+            console.warn('Error deleting task:', e);
+        }
+    };
+
+    window.selectTaskForFocus = async function(task) {
+        sageTimerState.activeTask = {
+            id: task.id,
+            title: task.title,
+            subject: task.subject || 'Physics',
+            isTimeless: !!task.is_timeless
+        };
+
+        // Update Red Box immediately
+        const titleEl = document.getElementById('sage-current-task-title');
+        const subEl = document.getElementById('sage-current-task-sub');
+        const glyphEl = document.getElementById('sage-current-task-glyph');
+        if (titleEl) titleEl.textContent = task.title;
+        if (subEl) subEl.textContent = `${task.subject} • ${task.time_str || 'Focus'}`;
+        if (glyphEl) {
+            const sLower = (task.subject || '').toLowerCase();
+            if (sLower.includes('physic')) glyphEl.textContent = '⚛️';
+            else if (sLower.includes('math')) glyphEl.textContent = '📐';
+            else if (sLower.includes('chem')) glyphEl.textContent = '🧪';
+            else if (sLower.includes('code')) glyphEl.textContent = '💻';
+            else glyphEl.textContent = '📚';
+        }
+
+        // Notify backend of active task
+        try {
+            await fetch('/api/focus/active-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: task.title,
+                    subject: task.subject || 'Physics',
+                    time_desc: task.is_timeless ? 'Timeless ∞' : (task.time_str || '25m Focus')
+                })
+            });
+        } catch(e) {}
+
+        // Configure Timer
+        if (sageTimerState.isRunning) {
+            clearInterval(sageTimerState.timerInterval);
+            sageTimerState.isRunning = false;
+        }
+
+        if (task.is_timeless) {
+            sageTimerState.isTimeless = true;
+            sageTimerState.timelessElapsedSecs = 0;
+            sageTimerState.unit = 'TIMELESS ∞';
+            sageTimerState.remainingSecs = 0;
+            sageTimerState.totalSecs = 3600;
+            const digitsEl = document.getElementById('focus-timer-digits');
+            const unitEl = document.getElementById('focus-timer-unit');
+            if (digitsEl) digitsEl.textContent = '00:00';
+            if (unitEl) unitEl.textContent = 'TIMELESS ∞';
+            if (typeof showToast === 'function') showToast(`Timeless mode ready: "${task.title}" ∞`);
+        } else {
+            sageTimerState.isTimeless = false;
+            let durationSecs = (task.duration_mins || 25) * 60;
+            sageTimerState.totalSecs = durationSecs;
+            sageTimerState.remainingSecs = durationSecs;
+            sageTimerState.unit = durationSecs >= 3600 ? 'HOURS' : 'MINUTES';
+            updateFocusTimerDisplay();
+            if (typeof showToast === 'function') showToast(`Ready to study: "${task.title}" (${task.duration_mins || 25}m) 🌿`);
+        }
+    };
+
+    function renderTasksList(tasks) {
+        const list = document.getElementById('sage-tasks-list');
+        const countBadge = document.getElementById('sage-tasks-count');
         if (!list) return;
-        if (countBadge) countBadge.textContent = meetings.length.toString();
+        if (countBadge) countBadge.textContent = tasks.length.toString();
 
         list.innerHTML = '';
-        meetings.forEach(m => {
-            const row = document.createElement('div');
-            row.className = 'sage-meeting-row';
-            row.setAttribute('data-id', m.id);
+        if (tasks.length === 0) {
+            list.innerHTML = '<div style="text-align: center; padding: 24px 0; color: #7A8574; font-size: 13px;">No study tasks scheduled for today. Click "+ Add new task" above!</div>';
+            return;
+        }
 
-            const safeTitle = typeof escapeHtml === 'function' ? escapeHtml(m.title) : m.title;
-            const safeSub = typeof escapeHtml === 'function' ? escapeHtml(m.subtitle || 'Focus Session') : (m.subtitle || 'Focus Session');
+        tasks.forEach(task => {
+            const row = document.createElement('div');
+            row.className = 'sage-task-row';
+            row.setAttribute('data-id', task.id);
+
+            const isTimeless = !!task.is_timeless;
+            const timeDisplay = isTimeless ? '∞' : (task.time_str || '25m');
+            const badgeCls = isTimeless ? 'sage-task-time-badge timeless' : 'sage-task-time-badge';
+
+            const safeTitle = typeof escapeHtml === 'function' ? escapeHtml(task.title) : task.title;
+            const safeSubject = typeof escapeHtml === 'function' ? escapeHtml(task.subject || 'Study') : (task.subject || 'Study');
 
             row.innerHTML = `
-                <span class="sage-meeting-time">${m.time}</span>
-                <div class="sage-meeting-details">
-                    <h4 class="sage-meeting-name">${safeTitle}</h4>
-                    <span class="sage-meeting-sub">${safeSub}</span>
+                <div class="sage-task-left">
+                    <input type="checkbox" class="sage-task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTaskCompleted(${task.id}, this.checked)" title="Mark completed" />
+                    <span class="${badgeCls}" title="${isTimeless ? 'Timeless open-ended session' : 'Scheduled time'}">${timeDisplay}</span>
+                    <div class="sage-task-texts">
+                        <h4 class="sage-task-name ${task.completed ? 'completed' : ''}">${safeTitle}</h4>
+                        <span class="sage-task-subject-tag">${safeSubject}</span>
+                    </div>
                 </div>
-                <div class="sage-meeting-avatars">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av1" onerror="this.style.display='none'">
-                    ${m.id === 1 ? '<img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av2" onerror="this.style.display=\'none\'"><span class="sage-avatar-bubble">+2</span>' : ''}
-                </div>
-                <div class="sage-privacy-control">
-                    <span class="sage-privacy-label">Privacy</span>
-                    <label class="sage-toggle-switch">
-                        <input type="checkbox" id="privacy-toggle-${m.id}" ${m.privacy ? 'checked' : ''} onchange="togglePrivacy(${m.id}, this.checked)">
-                        <span class="sage-toggle-slider"></span>
-                    </label>
+                <div class="sage-task-actions">
+                    <button type="button" class="sage-btn-focus-task" onclick='selectTaskForFocus(${JSON.stringify(task).replace(/'/g, "&#39;")})' title="Set as Current Task and focus">
+                        ▶ Focus
+                    </button>
+                    <button type="button" class="sage-btn-del-task" onclick="deleteTask(${task.id})" title="Delete task">
+                        ✕
+                    </button>
                 </div>
             `;
             list.appendChild(row);
@@ -8663,6 +8936,34 @@ window.playSurpriseTrack = function() {
 
     // ── Update Display & Circular Gauge Dial ──
     function updateFocusTimerDisplay() {
+        if (sageTimerState.isTimeless) {
+            const elapsed = sageTimerState.timelessElapsedSecs;
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            const digitsEl = document.getElementById('focus-timer-digits');
+            const unitEl = document.getElementById('focus-timer-unit');
+            if (digitsEl) digitsEl.textContent = formatted;
+            if (unitEl) unitEl.textContent = 'TIMELESS ∞';
+
+            // Animate gauge loop
+            const circle = document.getElementById('sage-dial-progress-circle');
+            const headDot = document.getElementById('sage-dial-head-dot');
+            const circumference = 596.9;
+            const ratio = (elapsed % 3600) / 3600;
+            const offset = circumference * (1 - ratio);
+
+            if (circle) circle.setAttribute('stroke-dashoffset', offset.toFixed(1));
+            if (headDot) {
+                const angleDeg = (ratio * 360) - 90;
+                const angleRad = (angleDeg * Math.PI) / 180;
+                headDot.setAttribute('cx', (110 + 95 * Math.cos(angleRad)).toFixed(1));
+                headDot.setAttribute('cy', (110 + 95 * Math.sin(angleRad)).toFixed(1));
+            }
+            return;
+        }
+
         const total = Math.max(0, sageTimerState.remainingSecs);
         let formatted = '';
 
@@ -8709,17 +9010,21 @@ window.playSurpriseTrack = function() {
         }
     }
 
-    // ── Log completed session to backend ──
+    // ── Log completed session to backend and update cumulative subject hours ──
     async function logSessionToBackend(durationSecs) {
+        if (durationSecs <= 0) return;
+        const activeSubject = sageTimerState.activeTask.subject || 'Physics';
         try {
             await fetch('/api/focus/log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     duration_seconds: durationSecs,
-                    project_name: sageTimerState.period === 'today' ? 'Norsic project' : 'Focus Sprint'
+                    project_name: activeSubject
                 })
             });
+            // Automatically reload dashboard to update cumulative subject calculation
+            loadSavedSageData();
         } catch(e) {
             console.warn('Error logging session to backend:', e);
         }
@@ -8736,6 +9041,10 @@ window.playSurpriseTrack = function() {
             if (iconContainer) {
                 iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
             }
+            // If timeless, log time accrued so far
+            if (sageTimerState.isTimeless && sageTimerState.timelessElapsedSecs > 10) {
+                logSessionToBackend(sageTimerState.timelessElapsedSecs);
+            }
         } else {
             // Play / Resume
             sageTimerState.isRunning = true;
@@ -8744,18 +9053,25 @@ window.playSurpriseTrack = function() {
             }
 
             sageTimerState.timerInterval = setInterval(() => {
-                if (sageTimerState.remainingSecs > 0) {
-                    sageTimerState.remainingSecs--;
+                if (sageTimerState.isTimeless) {
+                    // Timeless mode: count up until user stops it
+                    sageTimerState.timelessElapsedSecs++;
                     updateFocusTimerDisplay();
                 } else {
-                    clearInterval(sageTimerState.timerInterval);
-                    sageTimerState.isRunning = false;
-                    playChimeBell();
-                    if (iconContainer) {
-                        iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
+                    // Timed mode: count down
+                    if (sageTimerState.remainingSecs > 0) {
+                        sageTimerState.remainingSecs--;
+                        updateFocusTimerDisplay();
+                    } else {
+                        clearInterval(sageTimerState.timerInterval);
+                        sageTimerState.isRunning = false;
+                        playChimeBell();
+                        if (iconContainer) {
+                            iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
+                        }
+                        logSessionToBackend(sageTimerState.totalSecs);
+                        if (typeof showToast === 'function') showToast(`Focus session completed! Logged to ${sageTimerState.activeTask.subject || 'Study'} 🌿`);
                     }
-                    logSessionToBackend(sageTimerState.totalSecs);
-                    if (typeof showToast === 'function') showToast('Time Tracker session completed! 🌿');
                 }
             }, 1000);
         }
@@ -8767,26 +9083,44 @@ window.playSurpriseTrack = function() {
             clearInterval(sageTimerState.timerInterval);
             sageTimerState.isRunning = false;
         }
-        sageTimerState.remainingSecs = sageTimerState.totalSecs;
+
+        if (sageTimerState.isTimeless) {
+            const elapsed = sageTimerState.timelessElapsedSecs;
+            if (elapsed > 5) {
+                logSessionToBackend(elapsed);
+                if (typeof showToast === 'function') showToast(`Logged ${Math.round(elapsed / 60)}m to ${sageTimerState.activeTask.subject || 'Study'} 🌿`);
+            }
+            sageTimerState.timelessElapsedSecs = 0;
+            const digitsEl = document.getElementById('focus-timer-digits');
+            if (digitsEl) digitsEl.textContent = '00:00';
+        } else {
+            sageTimerState.remainingSecs = sageTimerState.totalSecs;
+            updateFocusTimerDisplay();
+        }
+
         const iconContainer = document.getElementById('sage-play-pause-icon');
         if (iconContainer) {
             iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
         }
-        updateFocusTimerDisplay();
         if (typeof showToast === 'function') showToast('Timer reset ⏱️');
     };
 
     // ── Add Time (+15 min) ──
     window.addFocusMinutes = function(mins) {
         const addSecs = (mins || 15) * 60;
-        sageTimerState.remainingSecs += addSecs;
-        sageTimerState.totalSecs += addSecs;
+        if (sageTimerState.isTimeless) {
+            sageTimerState.timelessElapsedSecs += addSecs;
+        } else {
+            sageTimerState.remainingSecs += addSecs;
+            sageTimerState.totalSecs += addSecs;
+        }
         updateFocusTimerDisplay();
         if (typeof showToast === 'function') showToast(`+${mins} min added to tracker 🌿`);
     };
 
     // ── Toggle Period (Today 07:16 vs Focus 25m vs Deep Work 45m) ──
     window.toggleSagePeriod = function() {
+        sageTimerState.isTimeless = false;
         const periodText = document.getElementById('sage-period-text');
         if (sageTimerState.period === 'today') {
             sageTimerState.period = 'focus25';
@@ -8817,50 +9151,6 @@ window.playSurpriseTrack = function() {
             }
         }
         updateFocusTimerDisplay();
-    };
-
-    // ── Privacy Toggle with Backend Persistence ──
-    window.togglePrivacy = async function(id, isChecked) {
-        if (typeof showToast === 'function') {
-            showToast(isChecked ? `Session ${id}: Privacy active (DND) 🔒` : `Session ${id}: Privacy off 🔓`);
-        }
-        try {
-            await fetch(`/api/focus/meetings/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ privacy: isChecked })
-            });
-        } catch(e) {
-            console.warn('Error updating privacy toggle:', e);
-        }
-    };
-
-    // ── Add New Meeting / Focus Block with Backend Persistence ──
-    window.openAddSessionModal = async function() {
-        const title = prompt('Enter Focus Block / Meeting title:', 'Deep Work Sprint');
-        if (!title) return;
-        
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        
-        try {
-            const res = await fetch('/api/focus/meetings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    time_str: timeStr,
-                    title: title,
-                    subtitle: 'Custom focus session',
-                    privacy: true
-                })
-            });
-            if (res.ok) {
-                loadSavedSageData();
-                if (typeof showToast === 'function') showToast(`Added: "${title}" ✨`);
-            }
-        } catch(e) {
-            console.warn('Error creating meeting:', e);
-        }
     };
 
     // ── Sound Notification Toggle ──

@@ -2239,95 +2239,84 @@
 
                 <!-- ── ROW 2: BOTTOM LEFT ── -->
                 <div class="sage-bottom-left-subgrid">
-                    <!-- Sub-Card 1: Future Anniversary Milestone -->
-                    <div class="sage-widget sage-milestone-card">
-                        <div class="sage-milestone-date">
-                            <span class="sage-date-month">June</span>
-                            <span class="sage-date-day">02</span>
+                    <!-- Sub-Card 1: CURRENT ACTIVE STUDY TASK (Red Box) -->
+                    <div class="sage-widget sage-current-task-card" id="sage-current-task-card">
+                        <div class="sage-current-task-badge">
+                            <span class="sage-live-dot"></span>
+                            <span class="sage-current-task-status" id="sage-current-task-status">ACTIVE</span>
                         </div>
-                        <div class="sage-milestone-divider"></div>
-                        <div class="sage-milestone-avatar-wrap">
-                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Ann Stollen" class="sage-avatar-img" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 40 40\'><circle cx=\'20\' cy=\'20\' r=\'20\' fill=\'%23c7a9d8\'/><text x=\'50%25\' y=\'55%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'white\' font-size=\'14\' font-weight=\'bold\'>AS</text></svg>'">
+                        <div class="sage-current-task-divider"></div>
+                        <div class="sage-current-task-icon-wrap" id="sage-current-task-icon-wrap">
+                            <span id="sage-current-task-glyph">⚛️</span>
                         </div>
-                        <div class="sage-milestone-info">
-                            <h4 class="sage-milestone-title">FUTURE ANNIVERSARY</h4>
-                            <span class="sage-milestone-subtitle">Ann Stollen</span>
+                        <div class="sage-current-task-info">
+                            <h4 class="sage-current-task-title" id="sage-current-task-title">Physics - Rotational Motion</h4>
+                            <span class="sage-current-task-subtitle" id="sage-current-task-sub">Focus Session • In Progress</span>
                         </div>
                     </div>
 
-                    <!-- Sub-Card 2: Project Time & Multi-Segment Progress -->
-                    <div class="sage-widget sage-progress-card">
-                        <div class="sage-progress-total">
-                            <span class="sage-progress-label">Project time</span>
-                            <span class="sage-progress-value" id="sage-total-hours">68h</span>
+                    <!-- Sub-Card 2: CUMULATIVE STUDY REPORT WITH EXPANDABLE BREAKDOWN (Yellow Box) -->
+                    <div class="sage-widget sage-progress-card sage-study-report-card" id="sage-study-report-card">
+                        <div class="sage-report-summary-row" onclick="toggleReportExpand()">
+                            <div class="sage-progress-total">
+                                <span class="sage-progress-label">Total Study Time</span>
+                                <span class="sage-progress-value" id="sage-total-hours">68h</span>
+                            </div>
+                            <div class="sage-report-toggle-btn" id="sage-report-toggle-btn" title="Expand / Collapse Subject Breakdown">
+                                <span>Subject Breakdown</span>
+                                <svg class="sage-report-chevron" viewBox="0 0 10 6" width="10" height="6"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
                         </div>
                         <div class="sage-progress-breakdown">
-                            <div class="sage-breakdown-percentages">
-                                <span class="sage-pct pct-green">65%</span>
-                                <span class="sage-pct pct-dark">12%</span>
-                                <span class="sage-pct pct-light">8%</span>
+                            <div class="sage-breakdown-percentages" id="sage-breakdown-percentages">
+                                <span class="sage-pct pct-green" id="sage-pct-1">Physics 65%</span>
+                                <span class="sage-pct pct-dark" id="sage-pct-2">Maths 20%</span>
+                                <span class="sage-pct pct-light" id="sage-pct-3">Chemistry 15%</span>
                             </div>
-                            <div class="sage-breakdown-bar">
-                                <span class="sage-bar-segment seg-green" style="width: 65%;"></span>
-                                <span class="sage-bar-segment seg-dark" style="width: 12%;"></span>
-                                <span class="sage-bar-segment seg-light" style="width: 8%;"></span>
+                            <div class="sage-breakdown-bar" id="sage-breakdown-bar">
+                                <span class="sage-bar-segment seg-green" id="sage-bar-seg-1" style="width: 65%;"></span>
+                                <span class="sage-bar-segment seg-dark" id="sage-bar-seg-2" style="width: 20%;"></span>
+                                <span class="sage-bar-segment seg-light" id="sage-bar-seg-3" style="width: 15%;"></span>
+                            </div>
+                        </div>
+                        <!-- Expandable breakdown of each subject and cumulative study time -->
+                        <div class="sage-report-expanded-list" id="sage-report-expanded-list">
+                            <div class="sage-report-list-inner" id="sage-report-subjects-container">
+                                <!-- Populated dynamically by JavaScript -->
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ── ROW 2: BOTTOM RIGHT ── -->
-                <!-- Card 5: TODAY'S MEETINGS / FOCUS SESSIONS -->
-                <div class="sage-widget sage-meetings-card">
+                <!-- Card 5: TODAY'S STUDY TASKS & TO-DO LIST (Green Box) -->
+                <div class="sage-widget sage-meetings-card sage-tasks-card">
                     <div class="sage-meetings-header">
                         <div class="sage-meetings-title-wrap">
-                            <h3 class="sage-card-title-dark">TODAY'S MEETINGS</h3>
-                            <span class="sage-badge-count" id="sage-meetings-count">2</span>
+                            <h3 class="sage-card-title-dark">TODAY'S STUDY TASKS</h3>
+                            <span class="sage-badge-count" id="sage-tasks-count">2</span>
                         </div>
-                        <span class="sage-add-meet-link" onclick="openAddSessionModal()">+ Add new meet</span>
+                        <span class="sage-add-meet-link" onclick="toggleTaskForm()">+ Add new task</span>
                     </div>
 
-                    <!-- Meetings List -->
-                    <div class="sage-meetings-list" id="sage-meetings-list">
-                        <!-- Meeting 1 -->
-                        <div class="sage-meeting-row">
-                            <span class="sage-meeting-time">09:20</span>
-                            <div class="sage-meeting-details">
-                                <h4 class="sage-meeting-name">Daily Project Review</h4>
-                                <span class="sage-meeting-sub">Team organization</span>
-                            </div>
-                            <div class="sage-meeting-avatars">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av1" onerror="this.style.display='none'">
-                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av2" onerror="this.style.display='none'">
-                                <span class="sage-avatar-bubble">+2</span>
-                            </div>
-                            <div class="sage-privacy-control">
-                                <span class="sage-privacy-label">Privacy</span>
-                                <label class="sage-toggle-switch">
-                                    <input type="checkbox" id="privacy-toggle-1" checked onchange="togglePrivacy(1, this.checked)">
-                                    <span class="sage-toggle-slider"></span>
-                                </label>
-                            </div>
+                    <!-- Inline Quick Task Form with Timeless Mode -->
+                    <form id="sage-task-form" class="sage-task-form" onsubmit="handleCreateTask(event)" style="display: none;">
+                        <div class="sage-form-inputs-row">
+                            <input type="text" id="sage-task-input-title" class="sage-form-input" placeholder="Task name (e.g. Physics - Kinematics)" required />
+                            <input type="text" id="sage-task-input-time" class="sage-form-input sage-time-input" placeholder="09:20 - 10:30 (or 25m)" />
                         </div>
+                        <div class="sage-form-actions-row">
+                            <button type="submit" class="sage-btn-confirm">Confirm</button>
+                            <button type="button" class="sage-btn-timeless" onclick="handleCreateTimelessTask()" title="Timer continues counting until manually stopped">
+                                <span>Timeless</span> <span class="sage-infinity-glyph">∞</span>
+                            </button>
+                            <button type="button" class="sage-btn-cancel-task" onclick="toggleTaskForm(false)">Cancel</button>
+                        </div>
+                    </form>
 
-                        <!-- Meeting 2 -->
-                        <div class="sage-meeting-row">
-                            <span class="sage-meeting-time">11:00</span>
-                            <div class="sage-meeting-details">
-                                <h4 class="sage-meeting-name">Sprint Surge</h4>
-                                <span class="sage-meeting-sub">Daily Boost for Agile Progress</span>
-                            </div>
-                            <div class="sage-meeting-avatars">
-                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av1" onerror="this.style.display='none'">
-                            </div>
-                            <div class="sage-privacy-control">
-                                <span class="sage-privacy-label">Privacy</span>
-                                <label class="sage-toggle-switch">
-                                    <input type="checkbox" id="privacy-toggle-2" onchange="togglePrivacy(2, this.checked)">
-                                    <span class="sage-toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
+                    <!-- Tasks List Container -->
+                    <div class="sage-meetings-list sage-tasks-list" id="sage-tasks-list">
+                        <!-- Populated dynamically by JavaScript -->
                     </div>
                 </div>
 

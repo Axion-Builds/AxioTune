@@ -80,6 +80,16 @@ def init_db():
         completed BOOLEAN DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS focus_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        subject TEXT DEFAULT 'Physics',
+        time_str TEXT,
+        is_timeless BOOLEAN DEFAULT 0,
+        duration_mins INTEGER DEFAULT 25,
+        completed BOOLEAN DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
     c.execute('''CREATE TABLE IF NOT EXISTS focus_meetings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         time_str TEXT,
@@ -99,19 +109,29 @@ def init_db():
         avatar TEXT
     )''')
 
-    # Seed initial meetings if empty
-    c.execute("SELECT COUNT(*) FROM focus_meetings")
+    # Seed initial tasks if empty
+    c.execute("SELECT COUNT(*) FROM focus_tasks")
     if c.fetchone()[0] == 0:
-        c.execute("""INSERT INTO focus_meetings (time_str, title, subtitle, privacy, avatars) VALUES 
-            ('09:20', 'Daily Project Review', 'Team organization', 1, '["av1", "av2", "+2"]'),
-            ('11:00', 'Sprint Surge', 'Daily Boost for Agile Progress', 0, '["av3"]')
+        c.execute("""INSERT INTO focus_tasks (title, subject, time_str, is_timeless, duration_mins, completed) VALUES 
+            ('Physics - Rotational Motion & Torque', 'Physics', '09:20 - 10:30', 0, 70, 0),
+            ('Calculus Integration & Area Under Curve', 'Mathematics', '11:00 - 12:15', 0, 75, 0),
+            ('Organic Chemistry Mechanisms & Practice', 'Chemistry', 'Timeless ∞', 1, 0, 0)
+        """)
+
+    # Seed initial sessions for subjects if empty (Total 68h base)
+    c.execute("SELECT COUNT(*) FROM focus_sessions")
+    if c.fetchone()[0] == 0:
+        c.execute("""INSERT INTO focus_sessions (duration_seconds, project_name, completed) VALUES 
+            (159300, 'Physics', 1),
+            (49200, 'Mathematics', 1),
+            (36300, 'Chemistry', 1)
         """)
 
     # Seed initial milestone if empty
     c.execute("SELECT COUNT(*) FROM focus_milestones")
     if c.fetchone()[0] == 0:
         c.execute("""INSERT INTO focus_milestones (date_month, date_day, title, subtitle, avatar) VALUES 
-            ('June', '02', 'FUTURE ANNIVERSARY', 'Ann Stollen', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80')
+            ('June', '02', 'PHYSICS ROTATIONAL MOTION', 'Active Target Session', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80')
         """)
 
     conn.commit()
@@ -3067,21 +3087,23 @@ class FocusSessionLog(BaseModel):
 class MeetingCreate(BaseModel):
     time_str: str
     title: str
-    subtitle: Optional[str] = "Team organization"
-    privacy: Optional[bool] = True
+class TaskCreate(BaseModel):
+    title: str
+    subject: Optional[str] = "Physics"
+    time_str: Optional[str] = "09:20 - 10:30"
+    is_timeless: Optional[bool] = False
+    duration_mins: Optional[int] = 25
 
-class MeetingUpdate(BaseModel):
-    privacy: Optional[bool] = None
+class TaskUpdate(BaseModel):
     completed: Optional[bool] = None
     title: Optional[str] = None
-    subtitle: Optional[str] = None
+    subject: Optional[str] = None
+    time_str: Optional[str] = None
 
-class MilestoneUpdate(BaseModel):
-    date_month: str
-    date_day: str
+class ActiveTaskUpdate(BaseModel):
+    subject: str
     title: str
-    subtitle: str
-    avatar: Optional[str] = None
+    time_desc: Optional[str] = "Active Focus Session"
 
 @app.get("/api/focus/dashboard")
 def get_focus_dashboard():
@@ -3089,154 +3111,213 @@ def get_focus_dashboard():
     conn = get_db()
     c = conn.cursor()
     
-    # 1. Fetch meetings
-    c.execute("SELECT id, time_str, title, subtitle, privacy, completed, avatars FROM focus_meetings ORDER BY id ASC")
-    meetings = []
+    # 1. Fetch tasks
+    c.execute("SELECT id, title, subject, time_str, is_timeless, duration_mins, completed FROM focus_tasks ORDER BY completed ASC, id ASC")
+    tasks = []
     for r in c.fetchall():
-        meetings.append({
+        tasks.append({
             "id": r["id"],
-            "time": r["time_str"],
             "title": r["title"],
-            "subtitle": r["subtitle"],
-            "privacy": bool(r["privacy"]),
+            "subject": r["subject"],
+            "time_str": r["time_str"],
+            "is_timeless": bool(r["is_timeless"]),
+            "duration_mins": r["duration_mins"],
             "completed": bool(r["completed"])
         })
         
-    # 2. Fetch milestone
+    # 2. Fetch current study task / milestone (Red Box)
     c.execute("SELECT date_month, date_day, title, subtitle, avatar FROM focus_milestones ORDER BY id ASC LIMIT 1")
     m_row = c.fetchone()
-    milestone = {
-        "date_month": m_row["date_month"] if m_row else "June",
-        "date_day": m_row["date_day"] if m_row else "02",
-        "title": m_row["title"] if m_row else "FUTURE ANNIVERSARY",
-        "subtitle": m_row["subtitle"] if m_row else "Ann Stollen",
+    current_task = {
+        "badge": m_row["date_month"] if m_row else "NOW",
+        "day": m_row["date_day"] if m_row else "01",
+        "title": m_row["title"] if m_row else "Physics - Rotational Motion",
+        "subtitle": m_row["subtitle"] if m_row else "Active Session • 25m Focus",
         "avatar": m_row["avatar"] if m_row and m_row["avatar"] else "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
     }
     
-    # 3. Calculate tracked session hours
+    # 3. Calculate accumulated study time per subject (Total Study Report - Yellow Box)
+    c.execute("""
+        SELECT project_name, COALESCE(SUM(duration_seconds), 0) as total_secs, COUNT(*) as count 
+        FROM focus_sessions 
+        GROUP BY project_name 
+        ORDER BY total_secs DESC
+    """)
+    subject_rows = c.fetchall()
+    
+    total_study_secs = sum(r["total_secs"] for r in subject_rows)
+    if total_study_secs == 0:
+        total_study_secs = 68 * 3600
+        
+    subjects_report = []
+    color_map = {
+        "Physics": "#85A958",
+        "Mathematics": "#1B2314",
+        "Chemistry": "#C4CDBF",
+        "Coding": "#4D6836",
+        "General": "#7EA550"
+    }
+    
+    for r in subject_rows:
+        s_name = r["project_name"]
+        s_secs = r["total_secs"]
+        s_pct = round((s_secs / total_study_secs) * 100) if total_study_secs > 0 else 0
+        hrs = s_secs // 3600
+        mins = (s_secs % 3600) // 60
+        subjects_report.append({
+            "name": s_name,
+            "seconds": s_secs,
+            "formatted": f"{hrs}h {mins:02d}m",
+            "percentage": s_pct,
+            "color": color_map.get(s_name, "#85A958"),
+            "sessions": r["count"]
+        })
+        
+    if not subjects_report:
+        subjects_report = [
+            {"name": "Physics", "seconds": 159300, "formatted": "44h 15m", "percentage": 65, "color": "#85A958", "sessions": 5},
+            {"name": "Mathematics", "seconds": 49200, "formatted": "13h 40m", "percentage": 20, "color": "#1B2314", "sessions": 3},
+            {"name": "Chemistry", "seconds": 36300, "formatted": "10h 05m", "percentage": 15, "color": "#C4CDBF", "sessions": 2}
+        ]
+
+    # 4. Calculate today and week logged seconds
     c.execute("SELECT COALESCE(SUM(duration_seconds), 0) FROM focus_sessions WHERE date(created_at) = date('now')")
     today_logged_secs = c.fetchone()[0]
     
     c.execute("SELECT COALESCE(SUM(duration_seconds), 0) FROM focus_sessions WHERE created_at >= date('now', '-7 days')")
     week_logged_secs = c.fetchone()[0]
-    
     conn.close()
     
-    # Base defaults matching reference UI
+    total_study_hrs = total_study_secs // 3600
+    
     base_today_secs = 7 * 3600 + 16 * 60 # 07:16
     total_today_secs = base_today_secs + today_logged_secs
     today_hrs = total_today_secs // 3600
     today_mins = (total_today_secs % 3600) // 60
     today_hours_str = f"{today_hrs:02d}:{today_mins:02d}"
     
-    base_week_hours = 56
-    week_total_hours = base_week_hours + (week_logged_secs // 3600)
-    
-    project_time_hours = 68 + (week_logged_secs // 3600)
-    
+    week_total_hours = 56 + (week_logged_secs // 3600)
+
     return {
         "week_total_hours": week_total_hours,
         "today_hours_str": today_hours_str,
         "today_seconds": total_today_secs,
-        "project_time_hours": project_time_hours,
-        "project_breakdown": [
-            {"name": "Norsic project", "percentage": 65, "color": "#C7A9D8"},
-            {"name": "TechRise project", "percentage": 12, "color": "#1B2314"},
-            {"name": "SwiftHive project", "percentage": 8, "color": "#C4CDBF"}
-        ],
-        "milestone": milestone,
-        "meetings": meetings
+        "total_study_hours": total_study_hrs,
+        "current_task": current_task,
+        "subjects_report": subjects_report,
+        "tasks": tasks
     }
 
 @app.post("/api/focus/log")
 def log_focus_session(payload: FocusSessionLog):
-    """Log a completed focus / study timer session."""
+    """Log a completed focus session and accumulate time to subject."""
     conn = get_db()
     c = conn.cursor()
     c.execute(
         "INSERT INTO focus_sessions (duration_seconds, project_name, completed) VALUES (?, ?, 1)",
-        (payload.duration_seconds, payload.project_name)
+        (payload.duration_seconds, payload.project_name or "Physics")
     )
     conn.commit()
     conn.close()
-    return {"status": "ok", "logged_seconds": payload.duration_seconds}
+    return {"status": "ok", "logged_seconds": payload.duration_seconds, "subject": payload.project_name}
 
-@app.get("/api/focus/meetings")
-def list_focus_meetings():
-    """List all scheduled meetings / focus blocks."""
+@app.get("/api/focus/tasks")
+def list_focus_tasks():
+    """List all to-do tasks."""
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT id, time_str, title, subtitle, privacy, completed FROM focus_meetings ORDER BY id ASC")
-    items = []
+    c.execute("SELECT id, title, subject, time_str, is_timeless, duration_mins, completed FROM focus_tasks ORDER BY completed ASC, id ASC")
+    tasks = []
     for r in c.fetchall():
-        items.append({
+        tasks.append({
             "id": r["id"],
-            "time": r["time_str"],
             "title": r["title"],
-            "subtitle": r["subtitle"],
-            "privacy": bool(r["privacy"]),
+            "subject": r["subject"],
+            "time_str": r["time_str"],
+            "is_timeless": bool(r["is_timeless"]),
+            "duration_mins": r["duration_mins"],
             "completed": bool(r["completed"])
         })
     conn.close()
-    return items
+    return tasks
 
-@app.post("/api/focus/meetings")
-def create_focus_meeting(payload: MeetingCreate):
-    """Create a new meeting or focus session."""
+@app.post("/api/focus/tasks")
+def create_focus_task(payload: TaskCreate):
+    """Create a new task with schedule or Timeless mode."""
     conn = get_db()
     c = conn.cursor()
     c.execute(
-        "INSERT INTO focus_meetings (time_str, title, subtitle, privacy) VALUES (?, ?, ?, ?)",
-        (payload.time_str, payload.title, payload.subtitle, int(payload.privacy))
+        "INSERT INTO focus_tasks (title, subject, time_str, is_timeless, duration_mins, completed) VALUES (?, ?, ?, ?, ?, 0)",
+        (payload.title, payload.subject or "Physics", payload.time_str or "Timeless ∞", int(payload.is_timeless), payload.duration_mins or 25)
     )
     new_id = c.lastrowid
     conn.commit()
     conn.close()
     return {
         "id": new_id,
-        "time": payload.time_str,
         "title": payload.title,
-        "subtitle": payload.subtitle,
-        "privacy": payload.privacy,
+        "subject": payload.subject or "Physics",
+        "time_str": payload.time_str or "Timeless ∞",
+        "is_timeless": payload.is_timeless,
+        "duration_mins": payload.duration_mins or 25,
         "completed": False
     }
 
-@app.patch("/api/focus/meetings/{meeting_id}")
-def update_focus_meeting(meeting_id: int, payload: MeetingUpdate):
-    """Update meeting privacy toggle or completion status."""
+@app.patch("/api/focus/tasks/{task_id}")
+def update_focus_task(task_id: int, payload: TaskUpdate):
+    """Update task completion or title."""
     conn = get_db()
     c = conn.cursor()
     updates = []
     params = []
-    if payload.privacy is not None:
-        updates.append("privacy = ?")
-        params.append(int(payload.privacy))
     if payload.completed is not None:
         updates.append("completed = ?")
         params.append(int(payload.completed))
     if payload.title is not None:
         updates.append("title = ?")
         params.append(payload.title)
-    if payload.subtitle is not None:
-        updates.append("subtitle = ?")
-        params.append(payload.subtitle)
+    if payload.subject is not None:
+        updates.append("subject = ?")
+        params.append(payload.subject)
+    if payload.time_str is not None:
+        updates.append("time_str = ?")
+        params.append(payload.time_str)
         
     if not updates:
         conn.close()
         return {"status": "no-op"}
         
-    params.append(meeting_id)
-    c.execute(f"UPDATE focus_meetings SET {', '.join(updates)} WHERE id = ?", params)
+    params.append(task_id)
+    c.execute(f"UPDATE focus_tasks SET {', '.join(updates)} WHERE id = ?", params)
     conn.commit()
     conn.close()
-    return {"status": "ok", "updated_id": meeting_id}
+    return {"status": "ok", "updated_id": task_id}
 
-@app.delete("/api/focus/meetings/{meeting_id}")
-def delete_focus_meeting(meeting_id: int):
-    """Delete a meeting from the schedule."""
+@app.delete("/api/focus/tasks/{task_id}")
+def delete_focus_task(task_id: int):
+    """Delete a task."""
     conn = get_db()
     c = conn.cursor()
-    c.execute("DELETE FROM focus_meetings WHERE id = ?", (meeting_id,))
+    c.execute("DELETE FROM focus_tasks WHERE id = ?", (task_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "deleted", "id": task_id}
+
+@app.post("/api/focus/active-task")
+def set_active_study_task(payload: ActiveTaskUpdate):
+    """Update current active study task in Red Box."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id FROM focus_milestones LIMIT 1")
+    row = c.fetchone()
+    if row:
+        c.execute(
+            "UPDATE focus_milestones SET title = ?, subtitle = ? WHERE id = ?",
+            (payload.title, f"{payload.subject} • {payload.time_desc}", row["id"])
+        )
+    conn.commit()
+    conn.close()
+    return {"status": "ok", "active_task": payload.dict()}
     conn.commit()
     conn.close()
     return {"status": "deleted", "id": meeting_id}

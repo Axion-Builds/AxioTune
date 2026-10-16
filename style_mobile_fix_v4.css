@@ -8895,32 +8895,40 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
 /* ── CRITICAL: Hide global bars when on Focus screen so NO buttons are covered ── */
 
 body.focus-screen-active #top-bar-wrapper,
-
 body.focus-screen-active #pc-sticky-header,
-
-body.focus-screen-active .bezel-nav-container,
-
-body.focus-screen-active #radial-nav-container,
-
-body.focus-screen-active #mini-player,
-
 body.focus-screen-active #background-layer,
-
-body.focus-screen-active #floating-queue-btn,
-
-body.focus-screen-active #side-nav {
-
+body.focus-screen-active #floating-queue-btn {
     display: none !important;
-
     opacity: 0 !important;
-
     visibility: hidden !important;
-
     pointer-events: none !important;
-
 }
 
+/* Ensure Left Edge Bezel Navigation, Side Nav, and Mini Player stay active and elevated on Focus Screen */
+body.focus-screen-active .bezel-nav-container,
+body.focus-screen-active #radial-nav-container {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: 1000000 !important;
+}
 
+body.focus-screen-active #side-nav {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: 1000000 !important;
+}
+
+body.focus-screen-active #mini-player {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: 1000000 !important;
+}
 
 /* ── Fullscreen Isolated Sage Dashboard Canvas ── */
 #focus-screen.sage-tracker-screen {
@@ -8931,9 +8939,9 @@ body.focus-screen-active #side-nav {
     bottom: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    z-index: 999999 !important;
+    z-index: 99999 !important;
     margin: 0 !important;
-    padding: 16px 20px 24px 20px !important;
+    padding: 16px 24px 120px 115px !important;
     box-sizing: border-box !important;
     background: #E2E8DC !important;
     display: flex !important;
@@ -8941,6 +8949,7 @@ body.focus-screen-active #side-nav {
     align-items: center !important;
     justify-content: flex-start !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     transition: background 0.3s ease !important;
 }
@@ -9977,4 +9986,601 @@ body.focus-screen-active #side-nav {
         max-width: 520px;
     }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RED BOX: CURRENT ACTIVE STUDY TASK CARD
+   ══════════════════════════════════════════════════════════════════════════ */
+.sage-current-task-card {
+    background: #FFFFFF;
+    border-radius: 28px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+#focus-screen.dark-theme .sage-current-task-card {
+    background: #171E16;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.sage-current-task-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex-shrink: 0;
+    min-width: 54px;
+}
+
+.sage-live-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #6DA037;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(109, 160, 55, 0.6);
+    animation: sagePulse 2s infinite;
+}
+
+@keyframes sagePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(109, 160, 55, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(109, 160, 55, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(109, 160, 55, 0);
+    }
+}
+
+.sage-current-task-status {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #6A9E34;
+    text-transform: uppercase;
+}
+
+#focus-screen.dark-theme .sage-current-task-status {
+    color: #8EBF58;
+}
+
+.sage-current-task-divider {
+    width: 1px;
+    height: 40px;
+    background: #E8ECE3;
+    flex-shrink: 0;
+}
+
+#focus-screen.dark-theme .sage-current-task-divider {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sage-current-task-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    background: #F1F6EC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+#focus-screen.dark-theme .sage-current-task-icon-wrap {
+    background: #232D21;
+}
+
+.sage-current-task-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sage-current-task-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #1A2215;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+}
+
+#focus-screen.dark-theme .sage-current-task-title {
+    color: #F1F6EE;
+}
+
+.sage-current-task-subtitle {
+    font-size: 12px;
+    font-weight: 500;
+    color: #727D6F;
+    margin-top: 3px;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#focus-screen.dark-theme .sage-current-task-subtitle {
+    color: #8C9988;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   YELLOW BOX: COMPREHENSIVE STUDY REPORT & EXPANDABLE BREAKDOWN
+   ══════════════════════════════════════════════════════════════════════════ */
+.sage-study-report-card {
+    cursor: default;
+}
+
+.sage-report-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sage-report-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #F2F6ED;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 6px 13px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #374631;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sage-report-toggle-btn:hover {
+    background: #E6EFE0;
+    color: #1F281B;
+}
+
+#focus-screen.dark-theme .sage-report-toggle-btn {
+    background: #232E21;
+    border-color: rgba(255, 255, 255, 0.06);
+    color: #C7D4C2;
+}
+
+#focus-screen.dark-theme .sage-report-toggle-btn:hover {
+    background: #2C3A2A;
+    color: #FFFFFF;
+}
+
+.sage-report-chevron {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sage-report-toggle-btn.expanded .sage-report-chevron {
+    transform: rotate(180deg);
+}
+
+/* Expandable subject list details */
+.sage-report-expanded-list {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin 0.3s ease;
+    margin-top: 0;
+}
+
+.sage-report-expanded-list.open {
+    max-height: 420px;
+    opacity: 1;
+    margin-top: 16px;
+    overflow-y: auto;
+}
+
+.sage-report-list-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+#focus-screen.dark-theme .sage-report-list-inner {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.sage-subject-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: #F7FAF4;
+    transition: background 0.2s;
+}
+
+#focus-screen.dark-theme .sage-subject-item {
+    background: #202A1E;
+}
+
+.sage-subject-item:hover {
+    background: #EDF3E8;
+}
+
+#focus-screen.dark-theme .sage-subject-item:hover {
+    background: #283626;
+}
+
+.sage-subject-item-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sage-subject-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.sage-subject-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1A2216;
+}
+
+#focus-screen.dark-theme .sage-subject-name {
+    color: #EFF4EC;
+}
+
+.sage-subject-sessions-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.06);
+    color: #55624F;
+}
+
+#focus-screen.dark-theme .sage-subject-sessions-badge {
+    background: rgba(255, 255, 255, 0.08);
+    color: #BAC7B5;
+}
+
+.sage-subject-item-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sage-subject-hours {
+    font-size: 13.5px;
+    font-weight: 800;
+    font-family: 'Plus Jakarta Sans', monospace;
+    color: #1B2314;
+}
+
+#focus-screen.dark-theme .sage-subject-hours {
+    color: #EFF5ED;
+}
+
+.sage-subject-pct {
+    font-size: 11px;
+    font-weight: 600;
+    color: #798674;
+    min-width: 32px;
+    text-align: right;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   GREEN BOX: TO-DO STUDY TASKS & TIMELESS MODE
+   ══════════════════════════════════════════════════════════════════════════ */
+.sage-tasks-card {
+    min-height: 220px;
+}
+
+.sage-task-form {
+    background: #F3F7EE;
+    border-radius: 20px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    animation: sageFadeIn 0.25s ease;
+}
+
+@keyframes sageFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#focus-screen.dark-theme .sage-task-form {
+    background: #202A1E;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.sage-form-inputs-row {
+    display: flex;
+    gap: 10px;
+}
+
+.sage-form-input {
+    flex: 1;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #1B2314;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.sage-form-input:focus {
+    border-color: #6C9F36;
+    box-shadow: 0 0 0 3px rgba(108, 159, 54, 0.15);
+}
+
+#focus-screen.dark-theme .sage-form-input {
+    background: #171E16;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #F1F6EE;
+}
+
+.sage-time-input {
+    max-width: 150px;
+}
+
+.sage-form-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sage-btn-confirm {
+    background: #1B2314;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 14px;
+    padding: 7px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.sage-btn-confirm:hover {
+    background: #2D3A23;
+    transform: translateY(-1px);
+}
+
+#focus-screen.dark-theme .sage-btn-confirm {
+    background: #7DA650;
+    color: #10160F;
+}
+
+#focus-screen.dark-theme .sage-btn-confirm:hover {
+    background: #90BF5E;
+}
+
+/* Timeless Mode Button */
+.sage-btn-timeless {
+    background: #E8F2DC;
+    color: #344722;
+    border: 1px solid rgba(52, 71, 34, 0.18);
+    border-radius: 14px;
+    padding: 7px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.sage-btn-timeless:hover {
+    background: #DCECCB;
+    border-color: #6C9F36;
+    color: #1F2E14;
+    transform: translateY(-1px);
+}
+
+#focus-screen.dark-theme .sage-btn-timeless {
+    background: #273624;
+    color: #D2E4C4;
+    border-color: rgba(210, 228, 196, 0.2);
+}
+
+#focus-screen.dark-theme .sage-btn-timeless:hover {
+    background: #31442E;
+    color: #FFFFFF;
+}
+
+.sage-infinity-glyph {
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.sage-btn-cancel-task {
+    background: transparent;
+    color: #727D6F;
+    border: none;
+    border-radius: 14px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.sage-btn-cancel-task:hover {
+    color: #1B2314;
+}
+
+#focus-screen.dark-theme .sage-btn-cancel-task:hover {
+    color: #FFFFFF;
+}
+
+/* Task Item Row */
+.sage-task-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 14px;
+    transition: background 0.2s;
+}
+
+.sage-task-row:hover {
+    background: #F4F8EF;
+}
+
+#focus-screen.dark-theme .sage-task-row:hover {
+    background: #1F281D;
+}
+
+.sage-task-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.sage-task-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #6C9F36;
+    cursor: pointer;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.sage-task-time-badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: #1F251C;
+    background: #EAF0E3;
+    padding: 4px 8px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    font-family: 'Plus Jakarta Sans', monospace;
+}
+
+.sage-task-time-badge.timeless {
+    background: #E2ECDA;
+    color: #395223;
+}
+
+#focus-screen.dark-theme .sage-task-time-badge {
+    background: #253123;
+    color: #EFF4EC;
+}
+
+#focus-screen.dark-theme .sage-task-time-badge.timeless {
+    background: #2A3B27;
+    color: #CBE0BC;
+}
+
+.sage-task-texts {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sage-task-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1F251C;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#focus-screen.dark-theme .sage-task-name {
+    color: #EFF4EC;
+}
+
+.sage-task-name.completed {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+.sage-task-subject-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: #727E6F;
+}
+
+#focus-screen.dark-theme .sage-task-subject-tag {
+    color: #8D9989;
+}
+
+.sage-task-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.sage-btn-focus-task {
+    background: #1B2314;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.sage-btn-focus-task:hover {
+    background: #6C9F36;
+    transform: scale(1.04);
+}
+
+#focus-screen.dark-theme .sage-btn-focus-task {
+    background: #7DA650;
+    color: #121810;
+}
+
+#focus-screen.dark-theme .sage-btn-focus-task:hover {
+    background: #93C460;
+}
+
+.sage-btn-del-task {
+    background: transparent;
+    border: none;
+    color: #A0AAA0;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+
+.sage-btn-del-task:hover {
+    color: #D34343;
+}
+
 
