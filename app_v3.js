@@ -8532,11 +8532,12 @@ window.playSurpriseTrack = function() {
 // ══════════════════════════════════════════════════════════════════════════
 
 (function() {
+    let selectedSubjectColor = '#85A958';
     let sageTimerState = {
         period: 'today',
-        unit: 'HOURS',
-        totalSecs: 7 * 3600 + 16 * 60, // 07:16 matching exact user image
-        remainingSecs: 7 * 3600 + 16 * 60,
+        unit: 'MINUTES',
+        totalSecs: 0,
+        remainingSecs: 0,
         isRunning: false,
         timerInterval: null,
         soundEnabled: true,
@@ -8545,8 +8546,8 @@ window.playSurpriseTrack = function() {
         timelessElapsedSecs: 0,
         activeTask: {
             id: null,
-            title: "Physics - Rotational Motion",
-            subject: "Physics",
+            title: "No Active Task",
+            subject: "General",
             isTimeless: false
         },
         cachedSubjects: []
@@ -8614,19 +8615,22 @@ window.playSurpriseTrack = function() {
                 
                 // Top header stats
                 const weekTotalEl = document.getElementById('sage-week-total');
-                if (weekTotalEl && data.week_total_hours) {
-                    weekTotalEl.textContent = `Week total: ${data.week_total_hours}h`;
+                if (weekTotalEl) {
+                    weekTotalEl.textContent = `Week total: ${data.week_total_hours || 0}h`;
                 }
 
-                // 1. Red Box: Active Study Task
-                if (data.current_task) {
-                    const statusEl = document.getElementById('sage-current-task-status');
-                    const glyphEl = document.getElementById('sage-current-task-glyph');
-                    const titleEl = document.getElementById('sage-current-task-title');
-                    const subEl = document.getElementById('sage-current-task-sub');
+                // 1. Red Box: Active Study Task (Clean: default to 'No Active Task' if none)
+                const statusEl = document.getElementById('sage-current-task-status');
+                const glyphEl = document.getElementById('sage-current-task-glyph');
+                const titleEl = document.getElementById('sage-current-task-title');
+                const subEl = document.getElementById('sage-current-task-sub');
+                const dotEl = document.getElementById('sage-live-dot');
+
+                if (data.current_task && data.current_task.title && data.current_task.title !== 'No Active Task') {
                     if (statusEl) statusEl.textContent = data.current_task.badge || 'ACTIVE';
-                    if (titleEl) titleEl.textContent = data.current_task.title || 'Physics - Rotational Motion';
+                    if (titleEl) titleEl.textContent = data.current_task.title;
                     if (subEl) subEl.textContent = data.current_task.subtitle || 'Focus Session • In Progress';
+                    if (dotEl) dotEl.style.opacity = '1';
 
                     const tLower = (data.current_task.title || '').toLowerCase();
                     if (glyphEl) {
@@ -8636,26 +8640,29 @@ window.playSurpriseTrack = function() {
                         else if (tLower.includes('code') || tLower.includes('prog')) glyphEl.textContent = '💻';
                         else glyphEl.textContent = '📚';
                     }
+                } else {
+                    if (statusEl) statusEl.textContent = 'READY';
+                    if (titleEl) titleEl.textContent = 'No Active Task';
+                    if (subEl) subEl.textContent = 'Select a task from below or start the timer';
+                    if (glyphEl) glyphEl.textContent = '📖';
+                    if (dotEl) dotEl.style.opacity = '0.4';
                 }
 
                 // 2. Yellow Box: Cumulative Study Report & Total Hours
                 const totalHoursEl = document.getElementById('sage-total-hours');
-                if (totalHoursEl && (data.total_study_hours || data.project_time_hours)) {
-                    totalHoursEl.textContent = `${data.total_study_hours || data.project_time_hours}h`;
+                if (totalHoursEl) {
+                    totalHoursEl.textContent = `${data.total_study_hours || 0}h`;
                 }
-                if (Array.isArray(data.subjects_report)) {
-                    renderStudyReport(data.subjects_report, data.total_study_hours);
-                }
+                renderStudyReport(data.subjects_report || [], data.total_study_hours || 0);
 
                 // 3. Green Box: To-Do Tasks
-                if (Array.isArray(data.tasks)) {
-                    renderTasksList(data.tasks);
-                }
+                renderTasksList(data.tasks || []);
 
                 // Initial Timer setup if not already running
-                if (!sageTimerState.isRunning && !sageTimerState.isTimeless && sageTimerState.period === 'today' && data.today_seconds) {
-                    sageTimerState.totalSecs = data.today_seconds;
-                    sageTimerState.remainingSecs = data.today_seconds;
+                if (!sageTimerState.isRunning && !sageTimerState.isTimeless && sageTimerState.period === 'today') {
+                    const todaySecs = data.today_seconds || 0;
+                    sageTimerState.totalSecs = todaySecs;
+                    sageTimerState.remainingSecs = todaySecs;
                     updateFocusTimerDisplay();
                 }
             }
@@ -8664,53 +8671,139 @@ window.playSurpriseTrack = function() {
         }
     }
 
-    // ── Yellow Box: Toggle Expand/Collapse Subject Report ──
-    window.toggleReportExpand = function() {
-        const listEl = document.getElementById('sage-report-expanded-list');
-        const btnEl = document.getElementById('sage-report-toggle-btn');
-        if (!listEl) return;
-        const isOpen = listEl.classList.toggle('open');
-        if (btnEl) btnEl.classList.toggle('expanded', isOpen);
+    // ── Yellow Box: Left-Side Animation Expansion Toggle ──
+    window.toggleSubjectsLeftExpand = function(force) {
+        const card = document.getElementById('sage-study-report-card');
+        const btn = document.getElementById('sage-btn-expand-left');
+        if (!card) return;
+        const isExp = force !== undefined ? force : !card.classList.contains('expanded-left');
+        card.classList.toggle('expanded-left', isExp);
+        if (btn) {
+            const label = btn.querySelector('.sage-expand-label');
+            const chevron = btn.querySelector('.sage-expand-chevron');
+            if (label) label.textContent = isExp ? 'Collapse' : 'Expand';
+            if (chevron) chevron.textContent = isExp ? '⟶' : '⟵';
+        }
+    };
+
+    // ── Subject Addition Modal / Form ──
+    window.toggleAddSubjectForm = function(force) {
+        const form = document.getElementById('sage-add-subject-form');
+        if (!form) return;
+        const isShown = force !== undefined ? force : (form.style.display !== 'none');
+        form.style.display = isShown ? 'none' : 'flex';
+        if (!isShown) {
+            const nameInput = document.getElementById('sage-new-subject-name');
+            if (nameInput) nameInput.focus();
+            // Automatically expand left if not already expanded so user sees new subject clearly
+            window.toggleSubjectsLeftExpand(true);
+        }
+    };
+
+    window.selectSubjectColor = function(el, color) {
+        selectedSubjectColor = color;
+        document.querySelectorAll('.sage-color-dot').forEach(d => d.classList.remove('active'));
+        if (el) el.classList.add('active');
+    };
+
+    window.handleCreateSubject = async function(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        const input = document.getElementById('sage-new-subject-name');
+        const name = input ? input.value.trim() : '';
+        if (!name) return;
+
+        try {
+            const res = await fetch('/api/focus/subjects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    color: selectedSubjectColor || '#85A958'
+                })
+            });
+            if (res.ok) {
+                if (input) input.value = '';
+                toggleAddSubjectForm(false);
+                loadSavedSageData();
+                if (typeof showToast === 'function') showToast(`Added subject: "${name}" 🌿`);
+            } else {
+                const err = await res.json();
+                if (typeof showToast === 'function') showToast(err.detail || 'Could not add subject');
+            }
+        } catch(e) {
+            console.warn('Error creating subject:', e);
+        }
+    };
+
+    window.deleteSubject = async function(subjectId) {
+        if (!confirm('Delete this subject from tracker?')) return;
+        try {
+            await fetch(`/api/focus/subjects/${subjectId}`, {
+                method: 'DELETE'
+            });
+            loadSavedSageData();
+            if (typeof showToast === 'function') showToast('Subject deleted 🗑️');
+        } catch(e) {
+            console.warn('Error deleting subject:', e);
+        }
     };
 
     function renderStudyReport(subjects, totalHours) {
-        if (!Array.isArray(subjects) || subjects.length === 0) return;
         sageTimerState.cachedSubjects = subjects;
+        const countBadge = document.getElementById('sage-subjects-count-badge');
+        if (countBadge) countBadge.textContent = subjects.length.toString();
 
         // Top summary breakdown bar & percentages
         const pctContainer = document.getElementById('sage-breakdown-percentages');
         const barContainer = document.getElementById('sage-breakdown-bar');
 
         if (pctContainer) {
-            pctContainer.innerHTML = subjects.slice(0, 3).map((s, idx) => {
-                const cls = idx === 0 ? 'pct-green' : (idx === 1 ? 'pct-dark' : 'pct-light');
-                return `<span class="sage-pct ${cls}">${s.name} ${s.percentage}%</span>`;
-            }).join('');
+            if (subjects.length === 0) {
+                pctContainer.innerHTML = '<span style="font-size:11px; color:#8A9685;">No subjects added yet</span>';
+            } else {
+                pctContainer.innerHTML = subjects.slice(0, 3).map((s, idx) => {
+                    const cls = idx === 0 ? 'pct-green' : (idx === 1 ? 'pct-dark' : 'pct-light');
+                    return `<span class="sage-pct ${cls}">${s.name} ${s.percentage}%</span>`;
+                }).join('');
+            }
         }
 
         if (barContainer) {
-            barContainer.innerHTML = subjects.slice(0, 3).map((s, idx) => {
-                const cls = idx === 0 ? 'seg-green' : (idx === 1 ? 'seg-dark' : 'seg-light');
-                return `<span class="sage-bar-segment ${cls}" style="width: ${s.percentage}%;"></span>`;
-            }).join('');
+            if (subjects.length === 0) {
+                barContainer.innerHTML = '<span class="sage-bar-segment" style="width: 100%; background: rgba(0,0,0,0.06);"></span>';
+            } else {
+                barContainer.innerHTML = subjects.slice(0, 3).map((s, idx) => {
+                    const cls = idx === 0 ? 'seg-green' : (idx === 1 ? 'seg-dark' : 'seg-light');
+                    return `<span class="sage-bar-segment ${cls}" style="width: ${Math.max(5, s.percentage)}%; background-color: ${s.color};"></span>`;
+                }).join('');
+            }
         }
 
-        // Expandable Detailed Subject List
+        // Expanded Subjects Left Wing List
         const innerContainer = document.getElementById('sage-report-subjects-container');
         if (innerContainer) {
-            innerContainer.innerHTML = subjects.map(s => `
-                <div class="sage-subject-item">
-                    <div class="sage-subject-item-left">
-                        <span class="sage-subject-color-dot" style="background-color: ${s.color};"></span>
-                        <span class="sage-subject-name">${s.name}</span>
-                        <span class="sage-subject-sessions-badge">${s.sessions} sessions</span>
+            if (subjects.length === 0) {
+                innerContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px 8px; color: #7A8674; font-size: 12px; line-height: 1.5;">
+                        No subjects yet.<br>Click <strong style="color: #6C9F36; cursor:pointer;" onclick="toggleAddSubjectForm(true)">+</strong> above to add Physics, Chemistry, Maths...
                     </div>
-                    <div class="sage-subject-item-right">
-                        <span class="sage-subject-hours">${s.formatted}</span>
-                        <span class="sage-subject-pct">${s.percentage}%</span>
+                `;
+            } else {
+                innerContainer.innerHTML = subjects.map(s => `
+                    <div class="sage-subject-item">
+                        <div class="sage-subject-item-left">
+                            <span class="sage-subject-color-dot" style="background-color: ${s.color};"></span>
+                            <span class="sage-subject-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>
+                            <span class="sage-subject-sessions-badge">${s.sessions} sessions</span>
+                        </div>
+                        <div class="sage-subject-item-right">
+                            <span class="sage-subject-hours">${s.formatted}</span>
+                            <span class="sage-subject-pct">${s.percentage}%</span>
+                            <button type="button" class="sage-btn-del-subj" onclick="deleteSubject(${s.id})" title="Delete subject">✕</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
     }
 
@@ -8734,13 +8827,25 @@ window.playSurpriseTrack = function() {
         const timeStr = timeInput && timeInput.value.trim() ? timeInput.value.trim() : '25m';
         if (!title) return;
 
-        let subject = 'Physics';
+        // Auto-assign subject from available subjects list or title
+        let subject = 'General';
         const tLower = title.toLowerCase();
-        if (tLower.includes('math')) subject = 'Mathematics';
-        else if (tLower.includes('chem')) subject = 'Chemistry';
-        else if (tLower.includes('code') || tLower.includes('prog')) subject = 'Coding';
-        else if (tLower.includes('physic')) subject = 'Physics';
-        else subject = 'General';
+        if (sageTimerState.cachedSubjects && sageTimerState.cachedSubjects.length > 0) {
+            for (const s of sageTimerState.cachedSubjects) {
+                if (tLower.includes(s.name.toLowerCase())) {
+                    subject = s.name;
+                    break;
+                }
+            }
+            if (subject === 'General' && sageTimerState.cachedSubjects.length > 0) {
+                subject = sageTimerState.cachedSubjects[0].name;
+            }
+        } else {
+            if (tLower.includes('math')) subject = 'Mathematics';
+            else if (tLower.includes('chem')) subject = 'Chemistry';
+            else if (tLower.includes('code') || tLower.includes('prog')) subject = 'Coding';
+            else if (tLower.includes('physic')) subject = 'Physics';
+        }
 
         let durationMins = 25;
         const match = timeStr.match(/(\d+)\s*m/i);
@@ -8772,11 +8877,24 @@ window.playSurpriseTrack = function() {
         const titleInput = document.getElementById('sage-task-input-title');
         const title = titleInput && titleInput.value.trim() ? titleInput.value.trim() : 'Open Focus Session';
 
-        let subject = 'Physics';
+        let subject = 'General';
         const tLower = title.toLowerCase();
-        if (tLower.includes('math')) subject = 'Mathematics';
-        else if (tLower.includes('chem')) subject = 'Chemistry';
-        else if (tLower.includes('code') || tLower.includes('prog')) subject = 'Coding';
+        if (sageTimerState.cachedSubjects && sageTimerState.cachedSubjects.length > 0) {
+            for (const s of sageTimerState.cachedSubjects) {
+                if (tLower.includes(s.name.toLowerCase())) {
+                    subject = s.name;
+                    break;
+                }
+            }
+            if (subject === 'General' && sageTimerState.cachedSubjects.length > 0) {
+                subject = sageTimerState.cachedSubjects[0].name;
+            }
+        } else {
+            if (tLower.includes('math')) subject = 'Mathematics';
+            else if (tLower.includes('chem')) subject = 'Chemistry';
+            else if (tLower.includes('code') || tLower.includes('prog')) subject = 'Coding';
+            else if (tLower.includes('physic')) subject = 'Physics';
+        }
 
         try {
             await fetch('/api/focus/tasks', {
@@ -8828,7 +8946,7 @@ window.playSurpriseTrack = function() {
         sageTimerState.activeTask = {
             id: task.id,
             title: task.title,
-            subject: task.subject || 'Physics',
+            subject: task.subject || 'General',
             isTimeless: !!task.is_timeless
         };
 
@@ -8836,6 +8954,11 @@ window.playSurpriseTrack = function() {
         const titleEl = document.getElementById('sage-current-task-title');
         const subEl = document.getElementById('sage-current-task-sub');
         const glyphEl = document.getElementById('sage-current-task-glyph');
+        const statusEl = document.getElementById('sage-current-task-status');
+        const dotEl = document.getElementById('sage-live-dot');
+
+        if (statusEl) statusEl.textContent = 'ACTIVE';
+        if (dotEl) dotEl.style.opacity = '1';
         if (titleEl) titleEl.textContent = task.title;
         if (subEl) subEl.textContent = `${task.subject} • ${task.time_str || 'Focus'}`;
         if (glyphEl) {

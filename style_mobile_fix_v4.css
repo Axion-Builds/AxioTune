@@ -10118,111 +10118,327 @@ body.focus-screen-active #mini-player {
    YELLOW BOX: COMPREHENSIVE STUDY REPORT & EXPANDABLE BREAKDOWN
    ══════════════════════════════════════════════════════════════════════════ */
 .sage-study-report-card {
-    cursor: default;
+    position: relative;
+    background: #FFFFFF;
+    border-radius: 28px;
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+    width: 100%;
+    margin-left: 0;
+    transition: margin-left 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+                width 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s ease,
+                background 0.3s ease;
+    z-index: 20;
 }
 
-.sage-report-summary-row {
+#focus-screen.dark-theme .sage-study-report-card {
+    background: #171E16;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Smooth Left-Side Animation Expansion (Pink box from user markup) ── */
+@media (min-width: 900px) {
+    .sage-study-report-card.expanded-left {
+        margin-left: -350px !important;
+        width: calc(100% + 350px) !important;
+        box-shadow: 0 16px 45px rgba(0, 0, 0, 0.12) !important;
+        z-index: 1000 !important;
+    }
+}
+
+/* Top Header Bar: SUBJECTS (Sky Blue) & Actions (Skin color + button) */
+.sage-subjects-header-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
-    cursor: pointer;
-    user-select: none;
+    width: 100%;
 }
 
-.sage-report-toggle-btn {
+.sage-subjects-title-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sage-subjects-heading {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #1A2215;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+#focus-screen.dark-theme .sage-subjects-heading {
+    color: #EFF5ED;
+}
+
+.sage-subjects-badge-count {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: #E8F0DF;
+    color: #354724;
+}
+
+#focus-screen.dark-theme .sage-subjects-badge-count {
+    background: #253322;
+    color: #BED4AB;
+}
+
+.sage-subjects-actions-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* + Add Subject Button (Skin-colored box) */
+.sage-btn-add-subject {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #EAF1E3;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #2D3E23;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sage-btn-add-subject:hover {
+    background: #6C9F36;
+    color: #FFFFFF;
+    transform: scale(1.1);
+}
+
+#focus-screen.dark-theme .sage-btn-add-subject {
+    background: #243021;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #D3E6C5;
+}
+
+#focus-screen.dark-theme .sage-btn-add-subject:hover {
+    background: #82AF4E;
+    color: #111710;
+}
+
+/* Expand Left Button */
+.sage-btn-expand-left {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: #F2F6ED;
+    background: #F1F6EC;
     border: 1px solid rgba(0, 0, 0, 0.05);
-    padding: 6px 13px;
-    border-radius: 20px;
+    padding: 5px 12px;
+    border-radius: 16px;
     font-size: 11.5px;
-    font-weight: 600;
-    color: #374631;
+    font-weight: 700;
+    color: #374730;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.sage-report-toggle-btn:hover {
-    background: #E6EFE0;
-    color: #1F281B;
+.sage-btn-expand-left:hover {
+    background: #E2ECE0;
+    color: #192215;
 }
 
-#focus-screen.dark-theme .sage-report-toggle-btn {
+#focus-screen.dark-theme .sage-btn-expand-left {
     background: #232E21;
     border-color: rgba(255, 255, 255, 0.06);
     color: #C7D4C2;
 }
 
-#focus-screen.dark-theme .sage-report-toggle-btn:hover {
+#focus-screen.dark-theme .sage-btn-expand-left:hover {
     background: #2C3A2A;
     color: #FFFFFF;
 }
 
-.sage-report-chevron {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.sage-expand-chevron {
+    font-size: 13px;
+    font-weight: 900;
+    transition: transform 0.3s ease;
 }
 
-.sage-report-toggle-btn.expanded .sage-report-chevron {
+.sage-study-report-card.expanded-left .sage-expand-chevron {
     transform: rotate(180deg);
 }
 
-/* Expandable subject list details */
-.sage-report-expanded-list {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin 0.3s ease;
-    margin-top: 0;
-}
-
-.sage-report-expanded-list.open {
-    max-height: 420px;
-    opacity: 1;
-    margin-top: 16px;
-    overflow-y: auto;
-}
-
-.sage-report-list-inner {
+/* ── Inline Add Subject Form ── */
+.sage-add-subject-form {
+    background: #F5F9F1;
+    border-radius: 18px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    animation: sageFadeIn 0.2s ease;
+}
+
+#focus-screen.dark-theme .sage-add-subject-form {
+    background: #1F281D;
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+.sage-subject-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sage-btn-confirm-subj {
+    background: #1B2314;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    padding: 6px 14px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.sage-btn-confirm-subj:hover {
+    background: #6C9F36;
+}
+
+#focus-screen.dark-theme .sage-btn-confirm-subj {
+    background: #7DA650;
+    color: #11170F;
+}
+
+.sage-btn-cancel-subj {
+    background: transparent;
+    border: none;
+    color: #727D6F;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+}
+
+.sage-color-presets {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px;
+}
+
+.sage-color-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s;
+    border: 2px solid transparent;
+}
+
+.sage-color-dot.active {
+    transform: scale(1.25);
+    border-color: #FFFFFF;
+    box-shadow: 0 0 0 2px #6C9F36;
+}
+
+/* ── Content Layout: Two Wings when Expanded Left ── */
+.sage-subjects-content-wrap {
+    display: flex;
+    gap: 18px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+/* Left Wing: The Expanded Subjects List */
+.sage-subjects-left-wing {
+    display: none;
+    flex-direction: column;
     gap: 10px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    width: 330px;
+    flex-shrink: 0;
+    padding-right: 18px;
+    border-right: 1px solid rgba(0, 0, 0, 0.07);
+    max-height: 320px;
+    overflow-y: auto;
+    animation: sageFadeIn 0.25s ease;
 }
 
-#focus-screen.dark-theme .sage-report-list-inner {
-    border-top-color: rgba(255, 255, 255, 0.08);
+#focus-screen.dark-theme .sage-subjects-left-wing {
+    border-right-color: rgba(255, 255, 255, 0.08);
 }
 
+.sage-study-report-card.expanded-left .sage-subjects-left-wing {
+    display: flex;
+}
+
+.sage-wing-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.sage-wing-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1B2314;
+}
+
+#focus-screen.dark-theme .sage-wing-title {
+    color: #EFF5EC;
+}
+
+.sage-wing-sub {
+    font-size: 10px;
+    font-weight: 500;
+    color: #788574;
+}
+
+.sage-report-subjects-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Subject Row Item */
 .sage-subject-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
     border-radius: 14px;
-    background: #F7FAF4;
-    transition: background 0.2s;
+    background: #F7FAF3;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    transition: all 0.2s;
 }
 
 #focus-screen.dark-theme .sage-subject-item {
     background: #202A1E;
+    border-color: rgba(255, 255, 255, 0.04);
 }
 
 .sage-subject-item:hover {
-    background: #EDF3E8;
+    background: #EDF4E7;
+    transform: translateY(-1px);
 }
 
 #focus-screen.dark-theme .sage-subject-item:hover {
-    background: #283626;
+    background: #273524;
 }
 
 .sage-subject-item-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    min-width: 0;
 }
 
 .sage-subject-color-dot {
@@ -10236,6 +10452,9 @@ body.focus-screen-active #mini-player {
     font-size: 13px;
     font-weight: 700;
     color: #1A2216;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #focus-screen.dark-theme .sage-subject-name {
@@ -10245,10 +10464,11 @@ body.focus-screen-active #mini-player {
 .sage-subject-sessions-badge {
     font-size: 10px;
     font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.06);
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.05);
     color: #55624F;
+    flex-shrink: 0;
 }
 
 #focus-screen.dark-theme .sage-subject-sessions-badge {
@@ -10259,11 +10479,12 @@ body.focus-screen-active #mini-player {
 .sage-subject-item-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .sage-subject-hours {
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 800;
     font-family: 'Plus Jakarta Sans', monospace;
     color: #1B2314;
@@ -10274,11 +10495,36 @@ body.focus-screen-active #mini-player {
 }
 
 .sage-subject-pct {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 600;
     color: #798674;
-    min-width: 32px;
+    min-width: 28px;
     text-align: right;
+}
+
+.sage-btn-del-subj {
+    background: transparent;
+    border: none;
+    color: #A4B0A0;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 4px;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+
+.sage-btn-del-subj:hover {
+    color: #D34343;
+}
+
+/* Right Wing: Summary & Progress Bar */
+.sage-subjects-summary-wing {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 180px;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

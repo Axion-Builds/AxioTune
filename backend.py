@@ -108,32 +108,12 @@ def init_db():
         subtitle TEXT,
         avatar TEXT
     )''')
-
-    # Seed initial tasks if empty
-    c.execute("SELECT COUNT(*) FROM focus_tasks")
-    if c.fetchone()[0] == 0:
-        c.execute("""INSERT INTO focus_tasks (title, subject, time_str, is_timeless, duration_mins, completed) VALUES 
-            ('Physics - Rotational Motion & Torque', 'Physics', '09:20 - 10:30', 0, 70, 0),
-            ('Calculus Integration & Area Under Curve', 'Mathematics', '11:00 - 12:15', 0, 75, 0),
-            ('Organic Chemistry Mechanisms & Practice', 'Chemistry', 'Timeless ∞', 1, 0, 0)
-        """)
-
-    # Seed initial sessions for subjects if empty (Total 68h base)
-    c.execute("SELECT COUNT(*) FROM focus_sessions")
-    if c.fetchone()[0] == 0:
-        c.execute("""INSERT INTO focus_sessions (duration_seconds, project_name, completed) VALUES 
-            (159300, 'Physics', 1),
-            (49200, 'Mathematics', 1),
-            (36300, 'Chemistry', 1)
-        """)
-
-    # Seed initial milestone if empty
-    c.execute("SELECT COUNT(*) FROM focus_milestones")
-    if c.fetchone()[0] == 0:
-        c.execute("""INSERT INTO focus_milestones (date_month, date_day, title, subtitle, avatar) VALUES 
-            ('June', '02', 'PHYSICS ROTATIONAL MOTION', 'Active Target Session', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80')
-        """)
-
+    c.execute('''CREATE TABLE IF NOT EXISTS focus_subjects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        color TEXT DEFAULT '#85A958',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
     conn.commit()
     conn.close()
 
@@ -3105,9 +3085,74 @@ class ActiveTaskUpdate(BaseModel):
     title: str
     time_desc: Optional[str] = "Active Focus Session"
 
+class SubjectCreate(BaseModel):
+    name: str
+    color: Optional[str] = "#85A958"
+
+@app.get("/api/focus/subjects")
+def get_focus_subjects():
+    """List all user-defined subjects with cumulative study hours."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, name, color FROM focus_subjects ORDER BY id ASC")
+    rows = c.fetchall()
+    
+    c.execute("SELECT COALESCE(SUM(duration_seconds), 0) FROM focus_sessions")
+    total_study_secs = c.fetchone()[0]
+
+    subjects = []
+    for r in rows:
+        s_name = r["name"]
+        c.execute("SELECT COALESCE(SUM(duration_seconds), 0), COUNT(*) FROM focus_sessions WHERE project_name = ?", (s_name,))
+        stat = c.fetchone()
+        s_secs = stat[0]
+        s_count = stat[1]
+        s_pct = round((s_secs / total_study_secs) * 100) if total_study_secs > 0 else 0
+        hrs = s_secs // 3600
+        mins = (s_secs % 3600) // 60
+        subjects.append({
+            "id": r["id"],
+            "name": s_name,
+            "color": r["color"] or "#85A958",
+            "seconds": s_secs,
+            "formatted": f"{hrs}h {mins:02d}m",
+            "percentage": s_pct,
+            "sessions": s_count
+        })
+    conn.close()
+    return subjects
+
+@app.post("/api/focus/subjects")
+def add_focus_subject(payload: SubjectCreate):
+    """Add a new subject to track study hours."""
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Subject name cannot be empty")
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO focus_subjects (name, color) VALUES (?, ?)", (name, payload.color or "#85A958"))
+        new_id = c.lastrowid
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Subject already exists")
+    conn.close()
+    return {"id": new_id, "name": name, "color": payload.color or "#85A958"}
+
+@app.delete("/api/focus/subjects/{subject_id}")
+def delete_focus_subject(subject_id: int):
+    """Delete a subject."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM focus_subjects WHERE id = ?", (subject_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "deleted", "id": subject_id}
+
 @app.get("/api/focus/dashboard")
 def get_focus_dashboard():
-    """Retrieve full dashboard data for Sage Time Tracker."""
+    """Retrieve full dashboard data for Sage Time Tracker (100% clean and real)."""
     conn = get_db()
     c = conn.cursor()
     
@@ -3126,59 +3171,51 @@ def get_focus_dashboard():
         })
         
     # 2. Fetch current study task / milestone (Red Box)
-    c.execute("SELECT date_month, date_day, title, subtitle, avatar FROM focus_milestones ORDER BY id ASC LIMIT 1")
+    c.execute("SELECT date_month, date_day, title, subtitle, avatar FROM focus_milestones ORDER BY id DESC LIMIT 1")
     m_row = c.fetchone()
-    current_task = {
-        "badge": m_row["date_month"] if m_row else "NOW",
-        "day": m_row["date_day"] if m_row else "01",
-        "title": m_row["title"] if m_row else "Physics - Rotational Motion",
-        "subtitle": m_row["subtitle"] if m_row else "Active Session • 25m Focus",
-        "avatar": m_row["avatar"] if m_row and m_row["avatar"] else "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-    }
+    if m_row and m_row["title"] and m_row["title"] != "No Active Task":
+        current_task = {
+            "badge": m_row["date_month"] or "ACTIVE",
+            "day": m_row["date_day"] or "",
+            "title": m_row["title"],
+            "subtitle": m_row["subtitle"] or "Focus Session • In Progress",
+            "avatar": m_row["avatar"] or ""
+        }
+    else:
+        current_task = {
+            "badge": "READY",
+            "day": "--",
+            "title": "No Active Task",
+            "subtitle": "Select a task from below or start the timer",
+            "avatar": ""
+        }
     
     # 3. Calculate accumulated study time per subject (Total Study Report - Yellow Box)
-    c.execute("""
-        SELECT project_name, COALESCE(SUM(duration_seconds), 0) as total_secs, COUNT(*) as count 
-        FROM focus_sessions 
-        GROUP BY project_name 
-        ORDER BY total_secs DESC
-    """)
-    subject_rows = c.fetchall()
+    c.execute("SELECT id, name, color FROM focus_subjects ORDER BY id ASC")
+    subj_rows = c.fetchall()
     
-    total_study_secs = sum(r["total_secs"] for r in subject_rows)
-    if total_study_secs == 0:
-        total_study_secs = 68 * 3600
+    c.execute("SELECT COALESCE(SUM(duration_seconds), 0) FROM focus_sessions")
+    total_study_secs = c.fetchone()[0]
         
     subjects_report = []
-    color_map = {
-        "Physics": "#85A958",
-        "Mathematics": "#1B2314",
-        "Chemistry": "#C4CDBF",
-        "Coding": "#4D6836",
-        "General": "#7EA550"
-    }
-    
-    for r in subject_rows:
-        s_name = r["project_name"]
-        s_secs = r["total_secs"]
+    for sr in subj_rows:
+        s_name = sr["name"]
+        c.execute("SELECT COALESCE(SUM(duration_seconds), 0), COUNT(*) FROM focus_sessions WHERE project_name = ?", (s_name,))
+        stat = c.fetchone()
+        s_secs = stat[0]
+        s_count = stat[1]
         s_pct = round((s_secs / total_study_secs) * 100) if total_study_secs > 0 else 0
         hrs = s_secs // 3600
         mins = (s_secs % 3600) // 60
         subjects_report.append({
+            "id": sr["id"],
             "name": s_name,
             "seconds": s_secs,
             "formatted": f"{hrs}h {mins:02d}m",
             "percentage": s_pct,
-            "color": color_map.get(s_name, "#85A958"),
-            "sessions": r["count"]
+            "color": sr["color"] or "#85A958",
+            "sessions": s_count
         })
-        
-    if not subjects_report:
-        subjects_report = [
-            {"name": "Physics", "seconds": 159300, "formatted": "44h 15m", "percentage": 65, "color": "#85A958", "sessions": 5},
-            {"name": "Mathematics", "seconds": 49200, "formatted": "13h 40m", "percentage": 20, "color": "#1B2314", "sessions": 3},
-            {"name": "Chemistry", "seconds": 36300, "formatted": "10h 05m", "percentage": 15, "color": "#C4CDBF", "sessions": 2}
-        ]
 
     # 4. Calculate today and week logged seconds
     c.execute("SELECT COALESCE(SUM(duration_seconds), 0) FROM focus_sessions WHERE date(created_at) = date('now')")
@@ -3189,19 +3226,15 @@ def get_focus_dashboard():
     conn.close()
     
     total_study_hrs = total_study_secs // 3600
-    
-    base_today_secs = 7 * 3600 + 16 * 60 # 07:16
-    total_today_secs = base_today_secs + today_logged_secs
-    today_hrs = total_today_secs // 3600
-    today_mins = (total_today_secs % 3600) // 60
+    today_hrs = today_logged_secs // 3600
+    today_mins = (today_logged_secs % 3600) // 60
     today_hours_str = f"{today_hrs:02d}:{today_mins:02d}"
-    
-    week_total_hours = 56 + (week_logged_secs // 3600)
+    week_total_hours = week_logged_secs // 3600
 
     return {
         "week_total_hours": week_total_hours,
         "today_hours_str": today_hours_str,
-        "today_seconds": total_today_secs,
+        "today_seconds": today_logged_secs,
         "total_study_hours": total_study_hrs,
         "current_task": current_task,
         "subjects_report": subjects_report,
