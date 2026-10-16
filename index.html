@@ -2044,142 +2044,293 @@
 
 
         <!-- ══════════════════════════════════════════════════════════════
-             🍅 POMATO FOCUS SANCTUARY (Exact Video Spec + Cozy Lo-Fi Bunny)
+             🌿 SAGE TIME TRACKER DASHBOARD (Exact Spec 1:1)
         ══════════════════════════════════════════════════════════════ -->
-        <div id="focus-screen" class="screen-view hidden-screen focus-sanctuary-screen">
-            <div class="pomato-master-card" id="pomato-master-card">
-                <!-- ── Left Panel (Task Creation, Today List, Harvest) ── -->
-                <aside class="pomato-left-panel">
-                    <div class="pomato-left-top">
-                        <!-- Logo -->
-                        <div class="pomato-brand-header">
-                            <span class="pomato-brand-emoji">🍅</span>
-                            <span class="pomato-brand-title">Pomato</span>
+        <div id="focus-screen" class="screen-view hidden-screen sage-tracker-screen">
+            <!-- Top Control Bar -->
+            <div class="sage-top-bar">
+                <button type="button" class="sage-back-btn" onclick="window.goBack()" title="Back to Music Player">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    <span>Back to Music</span>
+                </button>
+
+                <div class="sage-top-right">
+                    <button type="button" class="sage-util-btn" id="focus-sound-btn" onclick="toggleFocusSound()" title="Sound Toggle">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="sage-util-btn" id="focus-theme-btn" onclick="toggleFocusTheme()" title="Toggle Dark/Light Mode">
+                        <span id="focus-theme-icon">🌙</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Master Grid -->
+            <div class="sage-dashboard-grid">
+
+                <!-- ── ROW 1: TOP LEFT ── -->
+                <!-- Card 1: TIME TRACKER (Lush Organic Green Gradient Dial Widget) -->
+                <div class="sage-widget sage-tracker-card" id="sage-tracker-card">
+                    <div class="sage-tracker-header">
+                        <div class="sage-tracker-title-wrap">
+                            <h3 class="sage-card-title">TIME TRACKER</h3>
+                            <span class="sage-card-subtitle" id="sage-week-total">Week total: 56h</span>
                         </div>
-
-                        <div class="pomato-section-tag">YOUR FOCUS</div>
-
-                        <!-- State A: Form when entering new focus or clicking "+ add session" -->
-                        <div class="pomato-form-view" id="pomato-form-view">
-                            <h2 class="pomato-form-heading">What are we<br>working on?</h2>
-                            <div class="pomato-input-wrap">
-                                <input type="text" id="focus-task-input" class="pomato-text-input" placeholder="Type your focus..." maxlength="45" onkeydown="if(event.key==='Enter') lockInFocusTask()">
-                            </div>
-
-                            <div class="pomato-duration-tag">HOW LONG?</div>
-                            <div class="pomato-pills-row">
-                                <button type="button" class="pomato-pill-btn" data-min="15" onclick="selectFocusDuration(15)">15</button>
-                                <button type="button" class="pomato-pill-btn active" data-min="25" onclick="selectFocusDuration(25)">25</button>
-                                <button type="button" class="pomato-pill-btn" data-min="45" onclick="selectFocusDuration(45)">45</button>
-                                <button type="button" class="pomato-pill-btn" data-min="60" onclick="selectFocusDuration(60)">60</button>
-                                <span class="pomato-min-label">min</span>
-                            </div>
-
-                            <button type="button" class="pomato-lock-btn" id="focus-lock-btn" onclick="lockInFocusTask()">
-                                LOCK THIS IN
-                            </button>
-                        </div>
-
-                        <!-- State B: Active Task Display with "+ add session" trigger -->
-                        <div class="pomato-active-summary" id="pomato-active-summary" style="display: none;">
-                            <h2 class="pomato-active-task-heading" id="pomato-active-task-title">Organize Files</h2>
-                            <div class="pomato-active-duration-sub" id="pomato-active-duration-sub">25 min session</div>
-                            <button type="button" class="pomato-add-session-link" onclick="togglePomatoForm(true)">+ add session</button>
-                        </div>
-
-                        <!-- Today Sessions List -->
-                        <div class="pomato-today-block">
-                            <div class="pomato-today-header">
-                                <span class="pomato-section-tag">TODAY</span>
-                                <button type="button" class="pomato-clear-btn" onclick="clearCompletedFocusTasks()" title="Clear Finished">Clear</button>
-                            </div>
-                            <div class="pomato-tasks-list" id="focus-tasks-list">
-                                <!-- Populated dynamically by JS -->
-                            </div>
+                        <div class="sage-dropdown-pill" id="sage-period-dropdown" onclick="toggleSagePeriod()">
+                            <span class="sage-pill-icon">📅</span>
+                            <span id="sage-period-text">Today</span>
+                            <svg class="sage-dropdown-arrow" viewBox="0 0 10 6" width="9" height="6"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
                     </div>
 
-                    <!-- Bottom Total Harvest -->
-                    <div class="pomato-harvest-box">
-                        <div class="pomato-section-tag">TOTAL HARVEST</div>
-                        <div class="pomato-harvest-stat">
-                            <span class="pomato-harvest-tomato">🍅</span>
-                            <span class="pomato-harvest-mins"><strong id="focus-harvest-total">0</strong> min focused</span>
-                        </div>
-                        <div class="pomato-harvest-note">Every finished focus adds to your harvest.</div>
-                    </div>
-                </aside>
-
-                <!-- ── Right Panel (Header Bar, Huge Timer, Mascot, CTA, Session Dots) ── -->
-                <main class="pomato-right-panel">
-                    <!-- Top Action Header inside the Card -->
-                    <div class="pomato-card-header">
-                        <!-- Back to App -->
-                        <button type="button" class="pomato-circle-btn pomato-back-btn" title="Back to Music Player" onclick="window.goBack()">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
+                    <!-- Circular Timer Dial -->
+                    <div class="sage-dial-container">
+                        <div class="sage-dial-glass-plate">
+                            <svg class="sage-dial-svg" viewBox="0 0 220 220">
+                                <defs>
+                                    <filter id="dialHeadGlow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+                                        <feMerge>
+                                            <feMergeNode in="blur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <!-- Inner Minute Dotted Ring (60 minute dots) -->
+                                <circle class="sage-dial-ticks" cx="110" cy="110" r="82" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-dasharray="1.5 7.08" fill="none" />
+                                <!-- Outer Track (faint guide) -->
+                                <circle class="sage-dial-track" cx="110" cy="110" r="95" stroke="rgba(255,255,255,0.18)" stroke-width="3.5" fill="none" />
+                                <!-- Active Progress Arc (stroke-dasharray 2*pi*95 = 596.9) -->
+                                <circle class="sage-dial-progress" id="sage-dial-progress-circle" cx="110" cy="110" r="95" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-dasharray="596.9" stroke-dashoffset="180" transform="rotate(-90 110 110)" />
+                                <!-- Progress Indicator Tip Dot -->
+                                <circle class="sage-dial-head-dot" id="sage-dial-head-dot" cx="177" cy="43" r="5" fill="#FFFFFF" filter="url(#dialHeadGlow)" />
                             </svg>
-                        </button>
 
-                        <!-- Centered Segmented Control: POMODORO vs BREAK -->
-                        <div class="pomato-segmented-control">
-                            <button type="button" class="pomato-segment-btn active" id="fmode-pomodoro" onclick="setFocusMode('pomodoro')">POMODORO</button>
-                            <button type="button" class="pomato-segment-btn" id="fmode-short-break" onclick="setFocusMode('shortBreak')">BREAK</button>
-                        </div>
-
-                        <!-- Right Utility Circles: Reset & Theme & Sound -->
-                        <div class="pomato-right-actions">
-                            <button type="button" class="pomato-circle-btn" id="focus-reset-btn" onclick="resetFocusTimer()" title="Reset Timer">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2.5 2v6h6M21.5 22v-6h-6"/>
-                                    <path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8M2 12.5a10 10 0 0 0 18.8 4.3l.7-.8"/>
-                                </svg>
-                            </button>
-                            <button type="button" class="pomato-circle-btn" id="focus-sound-btn" onclick="toggleFocusSound()" title="Sound Toggle">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-                                </svg>
-                            </button>
-                            <button type="button" class="pomato-circle-btn" id="focus-theme-btn" onclick="toggleFocusTheme()" title="Toggle Cozy Night Mode">
-                                <span id="focus-theme-icon">🌙</span>
-                            </button>
+                            <!-- Center Readout -->
+                            <div class="sage-dial-readout">
+                                <div class="sage-dial-time" id="focus-timer-digits">07:16</div>
+                                <div class="sage-dial-unit" id="focus-timer-unit">HOURS</div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Center Stage Content -->
-                    <div class="pomato-hero-stage">
-                        <!-- Huge Digital Clock -->
-                        <div class="pomato-timer-digits" id="focus-timer-digits">25:00</div>
-
-                        <!-- Mascot Character (Exact Video Pomato Animated Doodle) -->
-                        <div class="pomato-mascot-wrapper" id="pomato-mascot-wrapper">
-                            <div class="pomato-mascot-frame">
-                                <img src="pomato_idle.png" alt="Pomato Doodle" class="pomato-mascot-img" id="focus-character-img">
-                            </div>
+                    <!-- Bottom Controls -->
+                    <div class="sage-tracker-footer">
+                        <div class="sage-footer-controls-left">
+                            <!-- Stop Button -->
+                            <button type="button" class="sage-btn-stop" id="sage-stop-btn" onclick="resetFocusTimer()" title="Reset / Stop">
+                                <span class="sage-stop-icon"></span>
+                            </button>
+                            <!-- Pause / Play Button -->
+                            <button type="button" class="sage-btn-pause" id="focus-main-action-btn" onclick="toggleFocusTimer()" title="Play / Pause">
+                                <svg id="sage-play-pause-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <rect x="6" y="5" width="4" height="14" rx="1.5"></rect>
+                                    <rect x="14" y="5" width="4" height="14" rx="1.5"></rect>
+                                </svg>
+                            </button>
                         </div>
 
-                        <!-- Subtitle below character -->
-                        <div class="pomato-task-subtitle" id="focus-active-task-name">Organize Files</div>
-
-                        <!-- Big Tactile CTA Button -->
-                        <button type="button" class="pomato-cta-btn" id="focus-main-action-btn" onclick="toggleFocusTimer()">
-                            <span id="focus-main-btn-label">START FOCUS</span>
-                        </button>
-
-                        <!-- Bottom Session Dots: ○ ○ ○ ○ ○ ○ SESSION 1 OF 6 -->
-                        <div class="pomato-dots-container">
-                            <div class="pomato-dots-row" id="focus-dots-row">
-                                <span class="pdot active"></span>
-                                <span class="pdot"></span>
-                                <span class="pdot"></span>
-                                <span class="pdot"></span>
-                                <span class="pdot"></span>
-                                <span class="pdot"></span>
-                            </div>
-                            <span class="pomato-dots-label" id="focus-session-label">SESSION 1 OF 6</span>
+                        <div class="sage-footer-controls-right">
+                            <span class="sage-add-time-label">Add time</span>
+                            <button type="button" class="sage-btn-add-time" onclick="addFocusMinutes(15)" title="Add 15 min">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                </main>
+                </div>
+
+                <!-- ── ROW 1: TOP RIGHT ── -->
+                <!-- Card 2: PROJECTS TIME (Gantt Timeline Chart Widget) -->
+                <div class="sage-widget sage-projects-card">
+                    <div class="sage-projects-header">
+                        <h3 class="sage-card-title-dark">PROJECTS TIME</h3>
+                        <div class="sage-dropdown-pill-light" id="sage-projects-filter">
+                            <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="opacity: 0.75;">
+                                <rect x="1" y="1" width="6" height="6" rx="1.5"></rect>
+                                <rect x="9" y="1" width="6" height="6" rx="1.5"></rect>
+                                <rect x="1" y="9" width="6" height="6" rx="1.5"></rect>
+                                <rect x="9" y="9" width="6" height="6" rx="1.5"></rect>
+                            </svg>
+                            <span>All Projects</span>
+                            <svg class="sage-dropdown-arrow-dark" viewBox="0 0 10 6" width="9" height="6"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Chart Area -->
+                    <div class="sage-timeline-chart">
+                        <!-- Date 28.06 -->
+                        <div class="sage-timeline-row">
+                            <span class="sage-row-date">28.06</span>
+                            <div class="sage-row-track">
+                                <div class="sage-chart-bar bar-green" style="left: 28%; width: 15%;">
+                                    <span class="sage-bar-node node-left"></span>
+                                    <span class="sage-bar-node node-right"></span>
+                                </div>
+                                <div class="sage-chart-bar bar-lime" style="left: 46%; width: 30%;">
+                                    <span class="sage-bar-node node-left"></span>
+                                    <span class="sage-bar-node node-right"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date 27.06 -->
+                        <div class="sage-timeline-row">
+                            <span class="sage-row-date">27.06</span>
+                            <div class="sage-row-track">
+                                <div class="sage-chart-bar bar-lilac" style="left: 20%; width: 34%;">
+                                    <span class="sage-bar-node node-left"></span>
+                                    <span class="sage-bar-node node-right"></span>
+                                </div>
+                                <div class="sage-chart-bar bar-lilac-light" style="left: 56%; width: 12%;">
+                                    <span class="sage-bar-node node-left"></span>
+                                    <span class="sage-bar-node node-right"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date 26.06 -->
+                        <div class="sage-timeline-row">
+                            <span class="sage-row-date">26.06</span>
+                            <div class="sage-row-track">
+                                <div class="sage-chart-bar bar-forest" style="left: 42%; width: 36%;">
+                                    <span class="sage-bar-node node-left"></span>
+                                    <span class="sage-bar-node node-right"></span>
+                                </div>
+                                <div class="sage-chart-bar bar-dot-only" style="left: 81%;">
+                                    <span class="sage-bar-node node-center"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- X Axis Scale -->
+                        <div class="sage-timeline-x-axis">
+                            <span class="sage-x-label" style="left: 14%;">0</span>
+                            <span class="sage-x-label" style="left: 25%;">10 am</span>
+                            <span class="sage-x-label" style="left: 38%;">11 am</span>
+                            <span class="sage-x-label" style="left: 51%;">12 am</span>
+                            <span class="sage-x-label" style="left: 65%;">01 pm</span>
+                            <span class="sage-x-label" style="left: 78%;">02 pm</span>
+                            <span class="sage-x-label" style="left: 91%;">03 pm</span>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="sage-projects-legend">
+                        <div class="sage-legend-item">
+                            <span class="sage-legend-dot dot-lilac"></span>
+                            <span>Norsic project</span>
+                        </div>
+                        <div class="sage-legend-item">
+                            <span class="sage-legend-dot dot-lime"></span>
+                            <span>TechRise project</span>
+                        </div>
+                        <div class="sage-legend-item">
+                            <span class="sage-legend-dot dot-forest"></span>
+                            <span>SwiftHive project</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── ROW 2: BOTTOM LEFT ── -->
+                <div class="sage-bottom-left-subgrid">
+                    <!-- Sub-Card 1: Future Anniversary Milestone -->
+                    <div class="sage-widget sage-milestone-card">
+                        <div class="sage-milestone-date">
+                            <span class="sage-date-month">June</span>
+                            <span class="sage-date-day">02</span>
+                        </div>
+                        <div class="sage-milestone-divider"></div>
+                        <div class="sage-milestone-avatar-wrap">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Ann Stollen" class="sage-avatar-img" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 40 40\'><circle cx=\'20\' cy=\'20\' r=\'20\' fill=\'%23c7a9d8\'/><text x=\'50%25\' y=\'55%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'white\' font-size=\'14\' font-weight=\'bold\'>AS</text></svg>'">
+                        </div>
+                        <div class="sage-milestone-info">
+                            <h4 class="sage-milestone-title">FUTURE ANNIVERSARY</h4>
+                            <span class="sage-milestone-subtitle">Ann Stollen</span>
+                        </div>
+                    </div>
+
+                    <!-- Sub-Card 2: Project Time & Multi-Segment Progress -->
+                    <div class="sage-widget sage-progress-card">
+                        <div class="sage-progress-total">
+                            <span class="sage-progress-label">Project time</span>
+                            <span class="sage-progress-value" id="sage-total-hours">68h</span>
+                        </div>
+                        <div class="sage-progress-breakdown">
+                            <div class="sage-breakdown-percentages">
+                                <span class="sage-pct pct-green">65%</span>
+                                <span class="sage-pct pct-dark">12%</span>
+                                <span class="sage-pct pct-light">8%</span>
+                            </div>
+                            <div class="sage-breakdown-bar">
+                                <span class="sage-bar-segment seg-green" style="width: 65%;"></span>
+                                <span class="sage-bar-segment seg-dark" style="width: 12%;"></span>
+                                <span class="sage-bar-segment seg-light" style="width: 8%;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── ROW 2: BOTTOM RIGHT ── -->
+                <!-- Card 5: TODAY'S MEETINGS / FOCUS SESSIONS -->
+                <div class="sage-widget sage-meetings-card">
+                    <div class="sage-meetings-header">
+                        <div class="sage-meetings-title-wrap">
+                            <h3 class="sage-card-title-dark">TODAY'S MEETINGS</h3>
+                            <span class="sage-badge-count" id="sage-meetings-count">2</span>
+                        </div>
+                        <span class="sage-add-meet-link" onclick="openAddSessionModal()">+ Add new meet</span>
+                    </div>
+
+                    <!-- Meetings List -->
+                    <div class="sage-meetings-list" id="sage-meetings-list">
+                        <!-- Meeting 1 -->
+                        <div class="sage-meeting-row">
+                            <span class="sage-meeting-time">09:20</span>
+                            <div class="sage-meeting-details">
+                                <h4 class="sage-meeting-name">Daily Project Review</h4>
+                                <span class="sage-meeting-sub">Team organization</span>
+                            </div>
+                            <div class="sage-meeting-avatars">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av1" onerror="this.style.display='none'">
+                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av2" onerror="this.style.display='none'">
+                                <span class="sage-avatar-bubble">+2</span>
+                            </div>
+                            <div class="sage-privacy-control">
+                                <span class="sage-privacy-label">Privacy</span>
+                                <label class="sage-toggle-switch">
+                                    <input type="checkbox" id="privacy-toggle-1" checked onchange="togglePrivacy(1, this.checked)">
+                                    <span class="sage-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Meeting 2 -->
+                        <div class="sage-meeting-row">
+                            <span class="sage-meeting-time">11:00</span>
+                            <div class="sage-meeting-details">
+                                <h4 class="sage-meeting-name">Sprint Surge</h4>
+                                <span class="sage-meeting-sub">Daily Boost for Agile Progress</span>
+                            </div>
+                            <div class="sage-meeting-avatars">
+                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80" alt="Avatar" class="sage-mini-avatar av1" onerror="this.style.display='none'">
+                            </div>
+                            <div class="sage-privacy-control">
+                                <span class="sage-privacy-label">Privacy</span>
+                                <label class="sage-toggle-switch">
+                                    <input type="checkbox" id="privacy-toggle-2" onchange="togglePrivacy(2, this.checked)">
+                                    <span class="sage-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 

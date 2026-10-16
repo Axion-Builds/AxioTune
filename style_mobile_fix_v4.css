@@ -8922,1440 +8922,1059 @@ body.focus-screen-active #side-nav {
 
 
 
-/* ── Fullscreen Isolated Sanctuary Canvas ── */
-
-#focus-screen.focus-sanctuary-screen {
-
+/* ── Fullscreen Isolated Sage Dashboard Canvas ── */
+#focus-screen.sage-tracker-screen {
     position: fixed !important;
-
     top: 0 !important;
-
     left: 0 !important;
-
     right: 0 !important;
-
     bottom: 0 !important;
-
     width: 100vw !important;
-
     height: 100vh !important;
-
     z-index: 999999 !important;
-
     margin: 0 !important;
-
-    padding: 24px !important;
-
+    padding: 16px 20px 24px 20px !important;
     box-sizing: border-box !important;
-
-    background: #F7F1EB !important;
-
+    background: #E2E8DC !important;
     display: flex !important;
-
+    flex-direction: column !important;
     align-items: center !important;
-
-    justify-content: center !important;
-
+    justify-content: flex-start !important;
     overflow-y: auto !important;
-
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-
     transition: background 0.3s ease !important;
-
 }
-
-
 
 #focus-screen.dark-theme {
-
-    background: #121116 !important;
-
+    background: #111611 !important;
 }
 
-
-
-/* ── Pomato Floating Master Card ── */
-
-.pomato-master-card {
-
-    width: 920px;
-
-    max-width: 94vw;
-
-    height: 580px;
-
-    max-height: 92vh;
-
-    background: #FFFFFF;
-
-    border-radius: 32px;
-
-    box-shadow: 0 16px 50px rgba(60, 48, 40, 0.08);
-
-    border: 1px solid rgba(0, 0, 0, 0.04);
-
+/* ── Top Bar (Back to Music, Sound, Theme) ── */
+.sage-top-bar {
+    width: 100%;
+    max-width: 920px;
     display: flex;
-
-    position: relative;
-
-    overflow: hidden;
-
-    box-sizing: border-box;
-
-    color: #26211D;
-
-    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
-
-}
-
-
-
-#focus-screen.dark-theme .pomato-master-card {
-
-    background: #1C1A22;
-
-    border-color: rgba(255, 255, 255, 0.08);
-
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-
-    color: #F5EFEB;
-
-}
-
-
-
-/* ── Left Column (Sidebar) ── */
-
-.pomato-left-panel {
-
-    width: 310px;
-
-    flex-shrink: 0;
-
-    padding: 28px 24px 24px 28px;
-
-    display: flex;
-
-    flex-direction: column;
-
+    align-items: center;
     justify-content: space-between;
-
-    border-right: 1px solid #F1E9E2;
-
+    padding: 6px 4px 14px 4px;
     box-sizing: border-box;
-
-    background: inherit;
-
-    overflow-y: auto;
-
 }
 
-
-
-#focus-screen.dark-theme .pomato-left-panel {
-
-    border-right: 1px solid #2B2936;
-
-}
-
-
-
-.pomato-left-top {
-
-    display: flex;
-
-    flex-direction: column;
-
-    width: 100%;
-
-}
-
-
-
-/* Brand Logo */
-
-.pomato-brand-header {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    margin-bottom: 22px;
-
-}
-
-.pomato-brand-emoji {
-
-    font-size: 22px;
-
-    line-height: 1;
-
-}
-
-.pomato-brand-title {
-
-    font-size: 22px;
-
-    font-weight: 800;
-
-    color: #E52538;
-
-    letter-spacing: -0.3px;
-
-    font-family: 'Outfit', sans-serif;
-
-}
-
-
-
-/* Section Tag (YOUR FOCUS, TODAY, TOTAL HARVEST) */
-
-.pomato-section-tag {
-
-    font-size: 10.5px;
-
-    font-weight: 800;
-
-    color: #A39990;
-
-    letter-spacing: 0.08em;
-
-    text-transform: uppercase;
-
-}
-
-#focus-screen.dark-theme .pomato-section-tag {
-
-    color: #8C8494;
-
-}
-
-
-
-/* State A: Form View */
-
-.pomato-form-view {
-
-    margin-top: 6px;
-
-    display: flex;
-
-    flex-direction: column;
-
-}
-
-
-
-.pomato-form-heading {
-
-    font-size: 21px;
-
-    font-weight: 700;
-
-    color: #26211D;
-
-    line-height: 1.25;
-
-    margin: 6px 0 14px 0;
-
-    font-family: 'Outfit', sans-serif;
-
-}
-
-#focus-screen.dark-theme .pomato-form-heading {
-
-    color: #F5EFEB;
-
-}
-
-
-
-.pomato-input-wrap {
-
-    width: 100%;
-
-    margin-bottom: 4px;
-
-}
-
-
-
-.pomato-text-input {
-
-    width: 100%;
-
-    border: none;
-
-    border-bottom: 1.5px solid #E6DED6;
-
-    background: transparent;
-
-    padding: 6px 0 10px 0;
-
-    font-size: 14px;
-
-    font-weight: 500;
-
-    color: #26211D;
-
-    outline: none;
-
-    font-family: inherit;
-
-    box-sizing: border-box;
-
-    transition: border-color 0.2s;
-
-}
-
-.pomato-text-input:focus {
-
-    border-bottom-color: #E52538;
-
-}
-
-.pomato-text-input::placeholder {
-
-    color: #B5ABA0;
-
-}
-
-#focus-screen.dark-theme .pomato-text-input {
-
-    color: #F5EFEB;
-
-    border-bottom-color: #383444;
-
-}
-
-#focus-screen.dark-theme .pomato-text-input::placeholder {
-
-    color: #6C6677;
-
-}
-
-
-
-.pomato-duration-tag {
-
-    font-size: 10px;
-
-    font-weight: 800;
-
-    color: #A39990;
-
-    letter-spacing: 0.08em;
-
-    margin: 16px 0 8px 0;
-
-    text-transform: uppercase;
-
-}
-
-#focus-screen.dark-theme .pomato-duration-tag {
-
-    color: #8C8494;
-
-}
-
-
-
-.pomato-pills-row {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
-    margin-bottom: 16px;
-
-}
-
-.pomato-pill-btn {
-
-    border: 1.5px solid #E8DFD6;
-
-    background: transparent;
-
+.sage-back-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 7px 16px;
     border-radius: 20px;
-
-    padding: 5px 12px;
-
-    font-size: 12px;
-
-    font-weight: 700;
-
-    color: #5A5149;
-
-    cursor: pointer;
-
-    transition: all 0.2s ease;
-
-    outline: none;
-
-}
-
-.pomato-pill-btn:hover {
-
-    border-color: #D4C8BD;
-
-}
-
-.pomato-pill-btn.active {
-
-    border-color: #E52538;
-
-    color: #E52538;
-
-    background: #FFF5F5;
-
-}
-
-#focus-screen.dark-theme .pomato-pill-btn {
-
-    border-color: #383444;
-
-    color: #B0A9B8;
-
-}
-
-#focus-screen.dark-theme .pomato-pill-btn.active {
-
-    border-color: #FF4D63;
-
-    color: #FF4D63;
-
-    background: rgba(255, 77, 99, 0.12);
-
-}
-
-.pomato-min-label {
-
-    font-size: 12px;
-
-    font-weight: 600;
-
-    color: #A39990;
-
-    margin-left: 2px;
-
-}
-
-
-
-.pomato-lock-btn {
-
-    width: 100%;
-
-    border: 1.5px solid #E52538;
-
-    background: transparent;
-
-    color: #E52538;
-
-    border-radius: 24px;
-
-    padding: 10px 0;
-
-    font-size: 12px;
-
-    font-weight: 800;
-
-    letter-spacing: 0.05em;
-
-    cursor: pointer;
-
-    transition: all 0.2s ease;
-
-    text-align: center;
-
-}
-
-.pomato-lock-btn:hover {
-
-    background: #E52538;
-
-    color: #FFFFFF;
-
-    box-shadow: 0 4px 14px rgba(229, 37, 56, 0.25);
-
-}
-
-#focus-screen.dark-theme .pomato-lock-btn {
-
-    border-color: #FF4D63;
-
-    color: #FF4D63;
-
-}
-
-#focus-screen.dark-theme .pomato-lock-btn:hover {
-
-    background: #FF4D63;
-
-    color: #FFFFFF;
-
-}
-
-
-
-/* State B: Active Task Display */
-
-.pomato-active-summary {
-
-    margin: 6px 0 14px 0;
-
-}
-
-.pomato-active-task-heading {
-
-    font-size: 21px;
-
-    font-weight: 700;
-
-    color: #26211D;
-
-    line-height: 1.25;
-
-    margin: 0;
-
-    font-family: 'Outfit', sans-serif;
-
-}
-
-#focus-screen.dark-theme .pomato-active-task-heading {
-
-    color: #F5EFEB;
-
-}
-
-.pomato-active-duration-sub {
-
-    font-size: 12px;
-
-    font-weight: 500;
-
-    color: #8A8077;
-
-    margin-top: 4px;
-
-}
-
-#focus-screen.dark-theme .pomato-active-duration-sub {
-
-    color: #9E96A6;
-
-}
-
-.pomato-add-session-link {
-
-    background: none;
-
-    border: none;
-
-    padding: 0;
-
-    color: #E52538;
-
-    font-size: 12px;
-
-    font-weight: 700;
-
-    text-decoration: underline;
-
-    cursor: pointer;
-
-    margin-top: 8px;
-
-    display: inline-block;
-
-}
-
-#focus-screen.dark-theme .pomato-add-session-link {
-
-    color: #FF4D63;
-
-}
-
-
-
-/* Today Sessions List */
-
-.pomato-today-block {
-
-    margin-top: 18px;
-
-    flex: 1;
-
-}
-
-.pomato-today-header {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    margin-bottom: 8px;
-
-}
-
-.pomato-clear-btn {
-
-    background: none;
-
-    border: none;
-
-    color: #A39990;
-
-    font-size: 11px;
-
-    font-weight: 600;
-
-    cursor: pointer;
-
-    padding: 0;
-
-}
-
-.pomato-clear-btn:hover {
-
-    color: #E52538;
-
-}
-
-.pomato-tasks-list {
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 6px;
-
-    max-height: 130px;
-
-    overflow-y: auto;
-
-}
-
-.pomato-task-row {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    padding: 8px 10px;
-
-    border-radius: 12px;
-
-    background: transparent;
-
-    cursor: pointer;
-
-    transition: background 0.2s;
-
-}
-
-.pomato-task-row:hover {
-
-    background: #F8F3ED;
-
-}
-
-.pomato-task-row.active {
-
-    background: #FFF2F1;
-
-    border: 1px solid rgba(229, 37, 56, 0.15);
-
-}
-
-#focus-screen.dark-theme .pomato-task-row:hover {
-
-    background: #25232D;
-
-}
-
-#focus-screen.dark-theme .pomato-task-row.active {
-
-    background: #2A1F26;
-
-    border-color: rgba(255, 77, 99, 0.25);
-
-}
-
-.pomato-task-row-left {
-
-    display: flex;
-
-    align-items: flex-start;
-
-    gap: 8px;
-
-}
-
-.pomato-task-sprout {
-
-    font-size: 13px;
-
-    line-height: 1.3;
-
-}
-
-.pomato-task-text-wrap {
-
-    display: flex;
-
-    flex-direction: column;
-
-}
-
-.pomato-task-name {
-
     font-size: 12.5px;
-
     font-weight: 700;
-
-    color: #26211D;
-
-}
-
-#focus-screen.dark-theme .pomato-task-name {
-
-    color: #F5EFEB;
-
-}
-
-.pomato-task-min {
-
-    font-size: 11px;
-
-    color: #8A8077;
-
-    margin-top: 1px;
-
-}
-
-.pomato-task-status-tag {
-
-    font-size: 10px;
-
-    font-weight: 700;
-
-    letter-spacing: 0.05em;
-
-    color: #3B72BA;
-
-    text-transform: uppercase;
-
-}
-
-.pomato-task-status-tag.done {
-
-    color: #2BA055;
-
-}
-
-
-
-/* Total Harvest Footer */
-
-.pomato-harvest-box {
-
-    margin-top: 14px;
-
-    padding-top: 12px;
-
-    border-top: 1px solid #F1E9E2;
-
-}
-
-#focus-screen.dark-theme .pomato-harvest-box {
-
-    border-top-color: #2B2936;
-
-}
-
-.pomato-harvest-stat {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
-    margin: 6px 0 2px 0;
-
-}
-
-.pomato-harvest-tomato {
-
-    font-size: 14px;
-
-}
-
-.pomato-harvest-mins {
-
-    font-size: 12.5px;
-
-    font-weight: 600;
-
-    color: #38312B;
-
-}
-
-#focus-screen.dark-theme .pomato-harvest-mins {
-
-    color: #E2DBE8;
-
-}
-
-.pomato-harvest-note {
-
-    font-size: 10.5px;
-
-    color: #A39990;
-
-}
-
-#focus-screen.dark-theme .pomato-harvest-note {
-
-    color: #7E7688;
-
-}
-
-
-
-/* ── Right Column (Hero Stage) ── */
-
-.pomato-right-panel {
-
-    flex: 1;
-
-    padding: 24px 32px 24px 32px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    position: relative;
-
-    box-sizing: border-box;
-
-    background: inherit;
-
-}
-
-
-
-/* Header inside Card */
-
-.pomato-card-header {
-
-    width: 100%;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-}
-
-
-
-.pomato-circle-btn {
-
-    width: 36px;
-
-    height: 36px;
-
-    border-radius: 50%;
-
-    border: 1.5px solid #EBE3DA;
-
-    background: #FFFFFF;
-
-    color: #4D443D;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    cursor: pointer;
-
-    transition: all 0.2s ease;
-
-    outline: none;
-
-}
-
-.pomato-circle-btn:hover {
-
-    border-color: #D4C8BD;
-
-    transform: scale(1.05);
-
-}
-
-#focus-screen.dark-theme .pomato-circle-btn {
-
-    background: #25232D;
-
-    border-color: #363342;
-
-    color: #D0CAD8;
-
-}
-
-#focus-screen.dark-theme .pomato-circle-btn:hover {
-
-    border-color: #4E4A5C;
-
-}
-
-
-
-.pomato-right-actions {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-}
-
-
-
-/* Segmented Control (POMODORO / BREAK) */
-
-.pomato-segmented-control {
-
-    background: #F1E9E1;
-
-    border-radius: 24px;
-
-    padding: 3px;
-
+    color: #2D342A;
     display: inline-flex;
-
-    gap: 3px;
-
-}
-
-#focus-screen.dark-theme .pomato-segmented-control {
-
-    background: #25232D;
-
-}
-
-.pomato-segment-btn {
-
-    background: transparent;
-
-    border: none;
-
-    border-radius: 20px;
-
-    padding: 6px 16px;
-
-    font-size: 11px;
-
-    font-weight: 700;
-
-    letter-spacing: 0.05em;
-
-    color: #7A7067;
-
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
-
     transition: all 0.2s ease;
-
+    outline: none;
 }
 
-.pomato-segment-btn.active {
+.sage-back-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    transform: translateX(-2px);
+}
 
+#focus-screen.dark-theme .sage-back-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #E6EDE3;
+}
+
+#focus-screen.dark-theme .sage-back-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.sage-top-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sage-util-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    color: #2D342A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.sage-util-btn:hover {
+    transform: scale(1.06);
     background: #FFFFFF;
-
-    color: #E52538;
-
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
 }
 
-#focus-screen.dark-theme .pomato-segment-btn {
-
-    color: #928B9C;
-
+#focus-screen.dark-theme .sage-util-btn {
+    background: #1B231A;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #E6EDE3;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-#focus-screen.dark-theme .pomato-segment-btn.active {
-
-    background: #363242;
-
-    color: #FF4D63;
-
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-
-}
-
-
-
-/* Hero Center Stage */
-
-.pomato-hero-stage {
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    text-align: center;
-
+/* ── Main Master Dashboard Grid ── */
+.sage-dashboard-grid {
     width: 100%;
-
+    max-width: 920px;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px;
+    box-sizing: border-box;
+    padding-bottom: 24px;
 }
 
-
-
-.pomato-timer-digits {
-
-    font-size: 66px;
-
-    font-weight: 800;
-
-    letter-spacing: -1.5px;
-
-    color: #231E1B;
-
-    line-height: 1;
-
-    margin-bottom: 8px;
-
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-
+/* Base Widget Card */
+.sage-widget {
+    box-sizing: border-box;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-#focus-screen.dark-theme .pomato-timer-digits {
-
-    color: #F8F3EE;
-
-}
-
-
-
-/* Mascot Wrapper */
-
-.pomato-mascot-wrapper {
+/* ── CARD 1: TIME TRACKER (Lush Organic Green Gradient Dial) ── */
+.sage-tracker-card {
+    background: radial-gradient(130% 130% at 75% 20%, #BBD892 0%, #87A95D 35%, #517038 75%, #344A23 100%);
+    border-radius: 32px;
+    padding: 24px 26px 20px 26px;
+    color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 380px;
+    box-shadow: 0 20px 45px -10px rgba(52, 74, 35, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.4);
     position: relative;
-    width: 175px;
-    height: 175px;
-    margin: 4px 0 10px 0;
+    overflow: hidden;
+}
+
+#focus-screen.dark-theme .sage-tracker-card {
+    background: radial-gradient(130% 130% at 75% 20%, #84A759 0%, #537538 40%, #2A401B 78%, #16240E 100%);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+.sage-tracker-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.sage-tracker-title-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.sage-card-title {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.sage-card-subtitle {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 3px;
+}
+
+.sage-dropdown-pill {
+    background: rgba(30, 48, 20, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(8px);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #FFFFFF;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.sage-dropdown-pill:hover {
+    background: rgba(30, 48, 20, 0.6);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.sage-pill-icon {
+    font-size: 11px;
+    line-height: 1;
+}
+
+.sage-dropdown-arrow {
+    opacity: 0.85;
+}
+
+/* ── Circular Timer Dial Gauge ── */
+.sage-dial-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 12px 0 14px 0;
+}
+
+.sage-dial-glass-plate {
+    width: 220px;
+    height: 220px;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.pomato-mascot-frame {
-    position: relative;
+.sage-dial-svg {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+    overflow: visible;
+}
+
+.sage-dial-ticks {
+    opacity: 0.85;
+}
+
+.sage-dial-track {
+    opacity: 0.4;
+}
+
+.sage-dial-progress {
+    transition: stroke-dashoffset 0.5s ease-out;
+}
+
+.sage-dial-head-dot {
+    transition: cx 0.5s ease-out, cy 0.5s ease-out;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.9));
+}
+
+.sage-dial-readout {
+    position: relative;
+    z-index: 2;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-}
-
-#focus-screen.dark-theme .pomato-mascot-frame {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-}
-
-.pomato-mascot-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain !important;
-    display: block;
-    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.04));
-    transition: transform 0.25s ease;
-}
-
-#focus-screen.dark-theme .pomato-mascot-img {
-    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
-}
-
-
-
-/* Steam animation loop rising from teacup */
-
-.pomato-steam-layer {
-
-    position: absolute;
-
-    bottom: 38px;
-
-    left: 44px;
-
-    width: 28px;
-
-    height: 38px;
-
-    pointer-events: none;
-
-}
-
-.pomato-steam-wisp {
-
-    position: absolute;
-
-    bottom: 0;
-
-    width: 3px;
-
-    height: 12px;
-
-    background: rgba(255, 255, 255, 0.85);
-
-    filter: blur(1.2px);
-
-    border-radius: 3px;
-
-    animation: pomatoSteamFloat 2.6s infinite ease-in-out;
-
-}
-
-.pomato-steam-wisp.w1 {
-
-    left: 4px;
-
-    animation-delay: 0s;
-
-}
-
-.pomato-steam-wisp.w2 {
-
-    left: 12px;
-
-    animation-delay: 0.85s;
-
-    height: 15px;
-
-}
-
-.pomato-steam-wisp.w3 {
-
-    left: 20px;
-
-    animation-delay: 1.7s;
-
-}
-
-@keyframes pomatoSteamFloat {
-
-    0% {
-
-        transform: translateY(0) scaleX(1);
-
-        opacity: 0;
-
-    }
-
-    40% {
-
-        opacity: 0.75;
-
-    }
-
-    100% {
-
-        transform: translateY(-22px) scaleX(1.8);
-
-        opacity: 0;
-
-    }
-
-}
-
-
-
-/* Subtle hand micro-writing pulse */
-
-.pomato-hand-sparkle {
-
-    position: absolute;
-
-    bottom: 32px;
-
-    left: 78px;
-
-    width: 24px;
-
-    height: 24px;
-
-    pointer-events: none;
-
+    width: 164px;
+    height: 164px;
     border-radius: 50%;
-
-    background: radial-gradient(circle, rgba(255, 220, 160, 0.25) 0%, transparent 70%);
-
-    animation: pomatoHandPulse 1.8s infinite ease-in-out;
-
+    background: radial-gradient(circle, rgba(46, 68, 30, 0.65) 0%, rgba(26, 42, 16, 0.8) 100%);
+    box-shadow: inset 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 
-@keyframes pomatoHandPulse {
-
-    0%, 100% { transform: scale(0.95); opacity: 0.3; }
-
-    50% { transform: scale(1.1); opacity: 0.7; }
-
-}
-
-
-
-.pomato-task-subtitle {
-
-    font-size: 13px;
-
-    font-weight: 600;
-
-    color: #7A7067;
-
-    margin-bottom: 14px;
-
-}
-
-#focus-screen.dark-theme .pomato-task-subtitle {
-
-    color: #A69EAE;
-
-}
-
-
-
-/* Big Tactile CTA Button */
-
-.pomato-cta-btn {
-
-    width: 270px;
-
-    padding: 13px 0;
-
-    border-radius: 28px;
-
-    background: #E52538;
-
-    color: #FFFFFF;
-
-    font-size: 13px;
-
-    font-weight: 800;
-
-    letter-spacing: 0.08em;
-
-    border: none;
-
-    cursor: pointer;
-
-    box-shadow: 0 8px 24px rgba(229, 37, 56, 0.28);
-
-    transition: all 0.2s ease;
-
-    text-align: center;
-
-    outline: none;
-
-}
-
-.pomato-cta-btn:hover {
-
-    transform: translateY(-1px);
-
-    box-shadow: 0 10px 28px rgba(229, 37, 56, 0.36);
-
-}
-
-.pomato-cta-btn:active {
-
-    transform: translateY(1px);
-
-}
-
-
-
-/* Break Mode Button Variant */
-
-.pomato-break-mode .pomato-cta-btn {
-
-    background: #FFFFFF !important;
-
-    color: #E52538 !important;
-
-    border: 2px solid #E52538 !important;
-
-    box-shadow: none !important;
-
-}
-
-#focus-screen.dark-theme .pomato-cta-btn {
-
-    background: #FF4D63;
-
-    box-shadow: 0 8px 24px rgba(255, 77, 99, 0.32);
-
-}
-
-#focus-screen.dark-theme .pomato-break-mode .pomato-cta-btn {
-
-    background: #1C1A22 !important;
-
-    color: #FF4D63 !important;
-
-    border-color: #FF4D63 !important;
-
-    box-shadow: none !important;
-
-}
-
-
-
-/* Dots: ○ ○ ○ ○ ○ ○ SESSION 1 OF 6 */
-
-.pomato-dots-container {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 10px;
-
-    margin-top: 14px;
-
-}
-
-.pomato-dots-row {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
-}
-
-.pdot {
-
-    width: 7px;
-
-    height: 7px;
-
-    border-radius: 50%;
-
-    border: 1.5px solid #A89F96;
-
-    background: transparent;
-
-    transition: all 0.2s;
-
-}
-
-.pdot.active {
-
-    background: #E52538;
-
-    border-color: #E52538;
-
-}
-
-.pomato-dots-label {
-
-    font-size: 11px;
-
+.sage-dial-time {
+    font-size: 40px;
     font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #FFFFFF;
+    line-height: 1;
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+}
 
+.sage-dial-unit {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 6px;
+}
+
+/* ── Bottom Controls in Tracker Card ── */
+.sage-tracker-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.sage-footer-controls-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sage-btn-stop {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.sage-btn-stop:hover {
+    background: #FFFFFF;
+    transform: scale(1.05);
+}
+
+.sage-btn-stop:active {
+    transform: scale(0.97);
+}
+
+.sage-stop-icon {
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    background: #182410;
+}
+
+.sage-btn-pause {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.24);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.sage-btn-pause:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.05);
+}
+
+.sage-btn-pause:active {
+    transform: scale(0.97);
+}
+
+.sage-footer-controls-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.sage-add-time-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.sage-btn-add-time {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #14200E;
+    color: #FFFFFF;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.sage-btn-add-time:hover {
+    background: #0E170A;
+    transform: scale(1.05);
+}
+
+.sage-btn-add-time:active {
+    transform: scale(0.97);
+}
+
+/* ── CARD 2: PROJECTS TIME (Gantt Chart Widget) ── */
+.sage-projects-card {
+    background: #FFFFFF;
+    border-radius: 32px;
+    padding: 24px 28px 20px 28px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 380px;
+}
+
+#focus-screen.dark-theme .sage-projects-card {
+    background: #192118;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+}
+
+.sage-projects-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.sage-card-title-dark {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1F251C;
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+#focus-screen.dark-theme .sage-card-title-dark {
+    color: #EEF4EC;
+}
+
+.sage-dropdown-pill-light {
+    background: #F4F6F1;
+    border: 1px solid #E5EBE0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #384033;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.sage-dropdown-pill-light:hover {
+    background: #EAEFE6;
+}
+
+#focus-screen.dark-theme .sage-dropdown-pill-light {
+    background: #232D21;
+    border-color: #2D392B;
+    color: #DDE6D9;
+}
+
+.sage-dropdown-arrow-dark {
+    opacity: 0.7;
+}
+
+/* Timeline Chart */
+.sage-timeline-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin: 28px 0 20px 0;
+    position: relative;
+    width: 100%;
+}
+
+.sage-timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+}
+
+.sage-row-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8E968A;
+    width: 38px;
+    flex-shrink: 0;
+}
+
+#focus-screen.dark-theme .sage-row-date {
+    color: #798375;
+}
+
+.sage-row-track {
+    flex: 1;
+    height: 18px;
+    position: relative;
+    background: repeating-linear-gradient(90deg, transparent, transparent 13%, rgba(0, 0, 0, 0.02) 13.5%, transparent 14%);
+}
+
+#focus-screen.dark-theme .sage-row-track {
+    background: repeating-linear-gradient(90deg, transparent, transparent 13%, rgba(255, 255, 255, 0.03) 13.5%, transparent 14%);
+}
+
+/* Pill Timeline Bars */
+.sage-chart-bar {
+    position: absolute;
+    top: 2px;
+    height: 14px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 3px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.bar-green {
+    background: linear-gradient(90deg, #99BE6F 0%, #769C4B 100%);
+}
+
+.bar-lime {
+    background: linear-gradient(90deg, #A8C97B 0%, #87AB56 100%);
+}
+
+.bar-lilac {
+    background: linear-gradient(90deg, #D4B9DE 0%, #BA94C7 100%);
+}
+
+.bar-lilac-light {
+    background: linear-gradient(90deg, #DEC5E8 0%, #C9A4D6 100%);
+}
+
+.bar-forest {
+    background: linear-gradient(90deg, #7EA550 0%, #517531 100%);
+}
+
+.bar-dot-only {
+    width: 14px;
+    height: 14px;
+    background: #84A853;
+    border-radius: 50%;
+    padding: 0;
+    justify-content: center;
+}
+
+.sage-bar-node {
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.bar-lilac .sage-bar-node, .bar-lilac-light .sage-bar-node {
+    background: rgba(120, 70, 140, 0.45);
+}
+
+.bar-dot-only .sage-bar-node {
+    background: #476624;
+}
+
+/* X Axis */
+.sage-timeline-x-axis {
+    position: relative;
+    height: 18px;
+    width: 100%;
+    margin-top: 4px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.06);
+    padding-top: 6px;
+}
+
+#focus-screen.dark-theme .sage-timeline-x-axis {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.sage-x-label {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 500;
+    color: #9EA698;
+}
+
+#focus-screen.dark-theme .sage-x-label {
+    color: #727C6E;
+}
+
+/* Legend */
+.sage-projects-legend {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-top: 8px;
+}
+
+.sage-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #6C7467;
+}
+
+#focus-screen.dark-theme .sage-legend-item {
+    color: #9AA495;
+}
+
+.sage-legend-dot {
+    width: 7.5px;
+    height: 7.5px;
+    border-radius: 50%;
+}
+
+.dot-lilac { background: #C7A9D8; }
+.dot-lime { background: #88AB5B; }
+.dot-forest { background: #4D6836; }
+
+/* ── ROW 2: BOTTOM LEFT SUBGRID ── */
+.sage-bottom-left-subgrid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Sub-Card 1: Future Anniversary Milestone */
+.sage-milestone-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+#focus-screen.dark-theme .sage-milestone-card {
+    background: #192118;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.sage-milestone-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 32px;
+}
+
+.sage-date-month {
+    font-size: 10px;
+    font-weight: 600;
+    color: #8C9487;
+    line-height: 1;
+}
+
+.sage-date-day {
+    font-size: 21px;
+    font-weight: 800;
+    color: #1F251C;
+    line-height: 1.1;
+    margin-top: 2px;
+    font-family: 'Outfit', sans-serif;
+}
+
+#focus-screen.dark-theme .sage-date-day {
+    color: #EEF4EC;
+}
+
+.sage-milestone-divider {
+    width: 1px;
+    height: 32px;
+    background: #E8EEE4;
+}
+
+#focus-screen.dark-theme .sage-milestone-divider {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.sage-milestone-avatar-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.sage-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.sage-milestone-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sage-milestone-title {
+    font-size: 11.5px;
+    font-weight: 800;
     letter-spacing: 0.06em;
-
-    color: #A89F96;
-
+    color: #1F251C;
+    margin: 0;
+    text-transform: uppercase;
 }
 
-#focus-screen.dark-theme .pdot {
-
-    border-color: #6C6677;
-
+#focus-screen.dark-theme .sage-milestone-title {
+    color: #EEF4EC;
 }
 
-#focus-screen.dark-theme .pdot.active {
-
-    background: #FF4D63;
-
-    border-color: #FF4D63;
-
+.sage-milestone-subtitle {
+    font-size: 11px;
+    font-weight: 500;
+    color: #798274;
+    margin-top: 2px;
 }
 
-#focus-screen.dark-theme .pomato-dots-label {
-
-    color: #8E8697;
-
+#focus-screen.dark-theme .sage-milestone-subtitle {
+    color: #929B8E;
 }
 
+/* Sub-Card 2: Project Time & Progress Breakdown */
+.sage-progress-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
 
+#focus-screen.dark-theme .sage-progress-card {
+    background: #192118;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
 
-@media (max-width: 820px) {
+.sage-progress-total {
+    display: flex;
+    flex-direction: column;
+}
 
-    .pomato-master-card {
+.sage-progress-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #8C9487;
+}
 
-        flex-direction: column;
+.sage-progress-value {
+    font-size: 21px;
+    font-weight: 800;
+    color: #1F251C;
+    line-height: 1.1;
+    margin-top: 2px;
+    font-family: 'Outfit', sans-serif;
+}
 
-        height: auto;
+#focus-screen.dark-theme .sage-progress-value {
+    color: #EEF4EC;
+}
 
-        max-height: 96vh;
+.sage-progress-breakdown {
+    display: flex;
+    flex-direction: column;
+    width: 170px;
+}
 
-        width: 95vw;
+.sage-breakdown-percentages {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+    margin-bottom: 5px;
+}
 
-        overflow-y: auto;
+.sage-pct {
+    font-size: 10px;
+    font-weight: 700;
+}
 
+.pct-green { color: #83A854; }
+.pct-dark { color: #1E2519; }
+.pct-light { color: #9AA495; }
+
+#focus-screen.dark-theme .pct-dark { color: #D5DED2; }
+
+.sage-breakdown-bar {
+    width: 100%;
+    height: 6px;
+    background: #EDF2E9;
+    border-radius: 4px;
+    display: flex;
+    gap: 3px;
+    overflow: hidden;
+}
+
+#focus-screen.dark-theme .sage-breakdown-bar {
+    background: #232C22;
+}
+
+.sage-bar-segment {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.seg-green { background: #85A958; }
+.seg-dark { background: #1B2314; }
+.seg-light { background: #C4CDBF; }
+
+#focus-screen.dark-theme .seg-dark { background: #3B4B36; }
+
+/* ── ROW 2: BOTTOM RIGHT (TODAY'S MEETINGS) ── */
+.sage-meetings-card {
+    background: #FFFFFF;
+    border-radius: 32px;
+    padding: 22px 28px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#focus-screen.dark-theme .sage-meetings-card {
+    background: #192118;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.sage-meetings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.sage-meetings-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sage-badge-count {
+    background: #F1F5ED;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #555D50;
+}
+
+#focus-screen.dark-theme .sage-badge-count {
+    background: #232D21;
+    color: #C0CCC0;
+}
+
+.sage-add-meet-link {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #636A5E;
+    cursor: pointer;
+    transition: color 0.2s;
+    user-select: none;
+}
+
+.sage-add-meet-link:hover {
+    color: #1F251C;
+    text-decoration: underline;
+}
+
+#focus-screen.dark-theme .sage-add-meet-link {
+    color: #929B8E;
+}
+
+#focus-screen.dark-theme .sage-add-meet-link:hover {
+    color: #EEF4EC;
+}
+
+/* Meeting Row Item */
+.sage-meetings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sage-meeting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 4px 0;
+}
+
+.sage-meeting-time {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1F251C;
+    width: 55px;
+    flex-shrink: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+#focus-screen.dark-theme .sage-meeting-time {
+    color: #EEF4EC;
+}
+
+.sage-meeting-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding-left: 6px;
+}
+
+.sage-meeting-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1F251C;
+    margin: 0;
+}
+
+#focus-screen.dark-theme .sage-meeting-name {
+    color: #EEF4EC;
+}
+
+.sage-meeting-sub {
+    font-size: 11px;
+    font-weight: 500;
+    color: #7A8375;
+    margin-top: 2px;
+}
+
+#focus-screen.dark-theme .sage-meeting-sub {
+    color: #8C9687;
+}
+
+/* Meeting Avatars */
+.sage-meeting-avatars {
+    display: flex;
+    align-items: center;
+    margin-right: 18px;
+}
+
+.sage-mini-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #FFFFFF;
+    margin-left: -7px;
+}
+
+.sage-mini-avatar:first-child {
+    margin-left: 0;
+}
+
+#focus-screen.dark-theme .sage-mini-avatar {
+    border-color: #192118;
+}
+
+.sage-avatar-bubble {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #EBF1E6;
+    border: 2px solid #FFFFFF;
+    margin-left: -7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #555E50;
+}
+
+#focus-screen.dark-theme .sage-avatar-bubble {
+    background: #253123;
+    border-color: #192118;
+    color: #C0CCC0;
+}
+
+/* Privacy Toggle Switch (iOS Style) */
+.sage-privacy-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sage-privacy-label {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #6A7264;
+}
+
+#focus-screen.dark-theme .sage-privacy-label {
+    color: #929C8E;
+}
+
+.sage-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    cursor: pointer;
+}
+
+.sage-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.sage-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #E2E7DE;
+    transition: 0.25s;
+    border-radius: 22px;
+}
+
+.sage-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #FFFFFF;
+    transition: 0.25s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.sage-toggle-switch input:checked + .sage-toggle-slider {
+    background-color: #1C2415;
+}
+
+#focus-screen.dark-theme .sage-toggle-switch input:checked + .sage-toggle-slider {
+    background-color: #79A34D;
+}
+
+.sage-toggle-switch input:checked + .sage-toggle-slider:before {
+    transform: translateX(16px);
+    background-color: #E2C7EB;
+}
+
+#focus-screen.dark-theme .sage-toggle-switch input:checked + .sage-toggle-slider:before {
+    background-color: #FFFFFF;
+}
+
+/* Responsive layout for smaller laptop / tablets / mobile */
+@media (max-width: 890px) {
+    .sage-dashboard-grid {
+        grid-template-columns: 1fr;
+        max-width: 520px;
     }
-
-    .pomato-left-panel {
-
-        width: 100%;
-
-        border-right: none;
-
-        border-bottom: 1px solid #F1E9E2;
-
-        padding: 20px;
-
-    }
-
-    .pomato-right-panel {
-
-        width: 100%;
-
-        padding: 20px;
-
-    }
-
 }
 

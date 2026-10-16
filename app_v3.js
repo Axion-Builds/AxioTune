@@ -8527,898 +8527,295 @@ window.playSurpriseTrack = function() {
 
 // ══════════════════════════════════════════════════════════════════════════
 
-// 🍅 POMATO FOCUS SANCTUARY ENGINE (Exact Video Spec 1:1 + Cozy Lo-Fi Bunny)
-
+// ══════════════════════════════════════════════════════════════════════════
+// 🌿 SAGE TIME TRACKER DASHBOARD ENGINE (Exact Spec 1:1)
 // ══════════════════════════════════════════════════════════════════════════
 
 (function() {
-
-    let focusTimerState = {
-
-        mode: 'pomodoro', // 'pomodoro' | 'shortBreak'
-
-        durationMins: 25,
-
-        remainingSecs: 25 * 60,
-
+    let sageTimerState = {
+        period: 'today',
+        unit: 'HOURS',
+        totalSecs: 7 * 3600 + 16 * 60, // 07:16 matching exact user image
+        remainingSecs: 7 * 3600 + 16 * 60,
         isRunning: false,
-
         timerInterval: null,
-
-        activeTaskName: 'Organize Files',
-
-        currentSession: 1,
-
-        totalSessions: 6,
-
         soundEnabled: true,
-
         isDarkTheme: false
-
     };
 
-
-
-    // Load saved tasks & harvest from localStorage
-
-    function loadSavedFocusData() {
-
-        try {
-
-            const savedHarvest = parseInt(localStorage.getItem('axio_focus_harvest') || '0', 10);
-
-            const totalEl = document.getElementById('focus-harvest-total');
-
-            if (totalEl) totalEl.textContent = isNaN(savedHarvest) ? '0' : savedHarvest;
-
-
-
-            const savedTheme = localStorage.getItem('axio_focus_theme') || 'light';
-
-            const screen = document.getElementById('focus-screen');
-
-            if (screen) {
-
-                const isDark = savedTheme === 'dark';
-
-                screen.classList.toggle('dark-theme', isDark);
-
-                focusTimerState.isDarkTheme = isDark;
-
-                const icon = document.getElementById('focus-theme-icon');
-
-                if (icon) icon.textContent = isDark ? '☀️' : '🌙';
-
-            }
-
-
-
-            const tasks = getFocusTasks();
-
-            if (tasks.length > 0 && tasks[0].name) {
-
-                focusTimerState.activeTaskName = tasks[0].name;
-
-                focusTimerState.durationMins = tasks[0].duration || 25;
-
-            }
-
-
-
-            updateActiveTaskLabels();
-
-            renderFocusTasks();
-
-            renderSessionDots();
-
-        } catch(e) {
-
-            console.warn('loadSavedFocusData error:', e);
-
-        }
-
-    }
-
-
-
-    function getFocusTasks() {
-
-        try {
-
-            const t = JSON.parse(localStorage.getItem('axio_focus_tasks') || '[]');
-
-            if (!Array.isArray(t) || t.length === 0) {
-
-                return [
-
-                    { id: 'task_default_1', name: 'Add Animations', duration: 15, completed: false },
-
-                    { id: 'task_default_2', name: 'Organize Files', duration: 25, completed: false }
-
-                ];
-
-            }
-
-            return t;
-
-        } catch(e) {
-
-            return [];
-
-        }
-
-    }
-
-
-
-    function saveFocusTasks(tasks) {
-
-        try {
-
-            localStorage.setItem('axio_focus_tasks', JSON.stringify(tasks));
-
-        } catch(e) {}
-
-    }
-
-
-
-    // ── Synthesized Audiophile Bell Chime (Web Audio API) ──
-
+    // ── Synthesized Zen Chime (Web Audio API) ──
     function playChimeBell() {
-
-        if (!focusTimerState.soundEnabled) return;
-
+        if (!sageTimerState.soundEnabled) return;
         try {
-
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
-
             if (!AudioCtx) return;
-
             const ctx = new AudioCtx();
-
             const now = ctx.currentTime;
-
-
-
-            // Frequencies for Zen Temple Bowl (528Hz Solfeggio)
-
             const freqs = [528, 1056, 1584];
-
             freqs.forEach((freq, idx) => {
-
                 const osc = ctx.createOscillator();
-
                 const gain = ctx.createGain();
-
-
-
                 osc.type = idx === 0 ? 'sine' : 'triangle';
-
                 osc.frequency.setValueAtTime(freq, now);
-
-
-
                 gain.gain.setValueAtTime(0.001, now);
-
                 gain.gain.exponentialRampToValueAtTime(0.2 / (idx + 1), now + 0.05);
-
                 gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
-
-
-
                 osc.connect(gain);
-
                 gain.connect(ctx.destination);
-
-
-
                 osc.start(now);
-
                 osc.stop(now + 3.0);
-
             });
-
         } catch(e) {
-
             console.warn('playChimeBell error:', e);
-
         }
-
     }
-
-
 
     // ── Screen Activator ──
-
     window.showFocus = function() {
-
         if (typeof showScreenExcept === 'function') {
-
             showScreenExcept('focus-screen');
-
         }
-
         document.body.classList.add('focus-screen-active');
 
-
-
-        // Update dock item active state
-
+        // Update nav dock item active state
         document.querySelectorAll('.bezel-nav-item').forEach(b => {
-
             const action = b.getAttribute('data-action');
-
             b.classList.toggle('active', action === 'focus' || action === 'history');
-
         });
-
-        loadSavedFocusData();
-
+        loadSavedSageData();
         updateFocusTimerDisplay();
-
     };
 
-
-
-    // ── Toggle Pomato Form (State A: Form vs State B: Summary) ──
-
-    window.togglePomatoForm = function(showForm) {
-
-        const formView = document.getElementById('pomato-form-view');
-
-        const summaryView = document.getElementById('pomato-active-summary');
-
-        if (formView && summaryView) {
-
-            if (showForm) {
-
-                formView.style.display = 'flex';
-
-                summaryView.style.display = 'none';
-
-                const input = document.getElementById('focus-task-input');
-
-                if (input) input.focus();
-
-            } else {
-
-                formView.style.display = 'none';
-
-                summaryView.style.display = 'block';
-
+    function loadSavedSageData() {
+        try {
+            const savedTheme = localStorage.getItem('axio_focus_theme') || 'light';
+            const screen = document.getElementById('focus-screen');
+            if (screen) {
+                const isDark = savedTheme === 'dark';
+                screen.classList.toggle('dark-theme', isDark);
+                sageTimerState.isDarkTheme = isDark;
+                const icon = document.getElementById('focus-theme-icon');
+                if (icon) icon.textContent = isDark ? '☀️' : '🌙';
             }
-
-        }
-
-    };
-
-
-
-    function updateActiveTaskLabels() {
-
-        const heading = document.getElementById('pomato-active-task-title');
-
-        const sub = document.getElementById('pomato-active-duration-sub');
-
-        const stageSub = document.getElementById('focus-active-task-name');
-
-
-
-        if (heading) heading.textContent = focusTimerState.activeTaskName;
-
-        if (sub) sub.textContent = `${focusTimerState.durationMins} min session`;
-
-
-
-        if (stageSub) {
-
-            if (focusTimerState.mode === 'shortBreak') {
-
-                stageSub.textContent = 'take a little stretch';
-
-            } else {
-
-                stageSub.textContent = focusTimerState.activeTaskName;
-
-            }
-
-        }
-
-    }
-
-
-
-
-    // ── Update Mascot Animation (Exact Pomato Doodle from Video) ──
-    function updatePomatoMascot() {
-        const img = document.getElementById('focus-character-img');
-        if (!img) return;
-
-        if (focusTimerState.mode === 'shortBreak') {
-            // Break mode: doodle sitting on blue cushion drinking coffee/tea
-            if (img.src.indexOf('pomato_break_animated.gif') === -1) {
-                img.src = 'pomato_break_animated.gif';
-            }
-            img.alt = 'Pomato Break Relaxing';
-        } else if (focusTimerState.isRunning) {
-            // Pomodoro running: doodle doing its cute focused motion loop
-            if (img.src.indexOf('pomato_focus_animated.gif') === -1) {
-                img.src = 'pomato_focus_animated.gif';
-            }
-            img.alt = 'Pomato Focusing';
-        } else {
-            // Idle/Stopped: doodle standing with cute smile
-            if (img.src.indexOf('pomato_idle.png') === -1) {
-                img.src = 'pomato_idle.png';
-            }
-            img.alt = 'Pomato Mascot';
+        } catch(e) {
+            console.warn('loadSavedSageData error:', e);
         }
     }
 
-    // ── Mode Switcher (Pomodoro vs Break) ──
-
-    window.setFocusMode = function(mode) {
-
-        if (focusTimerState.isRunning) {
-
-            clearInterval(focusTimerState.timerInterval);
-
-            focusTimerState.isRunning = false;
-
-        }
-
-
-
-        focusTimerState.mode = mode;
-
-        const cardEl = document.getElementById('pomato-master-card');
-
-        if (cardEl) {
-
-            cardEl.classList.toggle('pomato-break-mode', mode !== 'pomodoro');
-
-        }
-
-
-
-        // Update segment control buttons
-
-        const pomoBtn = document.getElementById('fmode-pomodoro');
-
-        const breakBtn = document.getElementById('fmode-short-break');
-
-        if (pomoBtn) pomoBtn.classList.toggle('active', mode === 'pomodoro');
-
-        if (breakBtn) breakBtn.classList.toggle('active', mode !== 'pomodoro');
-
-
-
-        // Set duration & labels
-
-        const btnLabel = document.getElementById('focus-main-btn-label');
-
-        if (mode === 'pomodoro') {
-
-            focusTimerState.remainingSecs = focusTimerState.durationMins * 60;
-
-            if (btnLabel) btnLabel.textContent = 'START FOCUS';
-
-        } else {
-
-            focusTimerState.remainingSecs = 5 * 60; // 5 min break
-
-            if (btnLabel) btnLabel.textContent = 'START BREAK';
-
-        }
-
-
-
-        updateActiveTaskLabels();
-
-        updateFocusTimerDisplay();
-
-    };
-
-
-
-    // ── Select Duration Pills (15, 25, 45, 60 min) ──
-
-    window.selectFocusDuration = function(mins) {
-
-        focusTimerState.durationMins = mins;
-
-
-
-        document.querySelectorAll('.pomato-pill-btn').forEach(pill => {
-
-            const pMin = parseInt(pill.getAttribute('data-min'), 10);
-
-            pill.classList.toggle('active', pMin === mins);
-
-        });
-
-
-
-        if (focusTimerState.mode === 'pomodoro' && !focusTimerState.isRunning) {
-
-            focusTimerState.remainingSecs = mins * 60;
-
-            updateFocusTimerDisplay();
-
-        }
-
-        updateActiveTaskLabels();
-
-    };
-
-
-
-    // ── Lock In Task ──
-
-    window.lockInFocusTask = function() {
-
-        const input = document.getElementById('focus-task-input');
-
-        const taskText = (input ? input.value : '').trim() || 'Focus Session';
-
-
-
-        const newTask = {
-
-            id: 'task_' + Date.now(),
-
-            name: taskText,
-
-            duration: focusTimerState.durationMins,
-
-            completed: false,
-
-            createdAt: new Date().toISOString()
-
-        };
-
-
-
-        const tasks = getFocusTasks();
-
-        tasks.unshift(newTask);
-
-        saveFocusTasks(tasks);
-
-
-
-        focusTimerState.activeTaskName = taskText;
-
-        updateActiveTaskLabels();
-
-
-
-        if (input) input.value = '';
-
-        window.togglePomatoForm(false);
-
-        renderFocusTasks();
-
-        if (focusTimerState.mode === 'pomodoro' && !focusTimerState.isRunning) {
-
-            focusTimerState.remainingSecs = focusTimerState.durationMins * 60;
-
-            updateFocusTimerDisplay();
-
-        }
-
-        if (typeof showToast === 'function') showToast(`Locked in: "${taskText}" (${newTask.duration}m) 🍅`);
-
-    };
-
-
-
-    // ── Render Tasks (Today list) ──
-
-    function renderFocusTasks() {
-
-        const container = document.getElementById('focus-tasks-list');
-
-        if (!container) return;
-
-        const tasks = getFocusTasks();
-
-
-
-        if (tasks.length === 0) {
-
-            container.innerHTML = '<div style="font-size:11px; color:#A89F96; text-align:center; padding:12px 0;">No sessions today. Add one above!</div>';
-
-            return;
-
-        }
-
-
-
-        container.innerHTML = '';
-
-        tasks.forEach(t => {
-
-            const isActive = t.name === focusTimerState.activeTaskName && !t.completed;
-
-            const item = document.createElement('div');
-
-            item.className = `pomato-task-row ${isActive ? 'active' : ''}`;
-
-            item.onclick = () => selectFocusTask(t.id);
-
-
-
-            const safeName = typeof escapeHtml === 'function' ? escapeHtml(t.name) : t.name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-            const statusTag = t.completed ? '<span class="pomato-task-status-tag done">DONE</span>' : (isActive ? '<span class="pomato-task-status-tag">ACTIVE</span>' : '<span class="pomato-task-status-tag">PAUSED</span>');
-
-
-
-            item.innerHTML = `
-
-                <div class="pomato-task-row-left">
-
-                    <span class="pomato-task-sprout">🌱</span>
-
-                    <div class="pomato-task-text-wrap">
-
-                        <span class="pomato-task-name">${safeName}</span>
-
-                        <span class="pomato-task-min">${t.duration} min</span>
-
-                    </div>
-
-                </div>
-
-                ${statusTag}
-
-            `;
-
-            container.appendChild(item);
-
-        });
-
-    }
-
-
-
-    window.selectFocusTask = function(taskId) {
-
-        const tasks = getFocusTasks();
-
-        const found = tasks.find(t => t.id === taskId);
-
-        if (!found) return;
-
-
-
-        focusTimerState.activeTaskName = found.name;
-
-        selectFocusDuration(found.duration);
-
-        updateActiveTaskLabels();
-
-        window.togglePomatoForm(false);
-
-        renderFocusTasks();
-
-    };
-
-
-
-    window.clearCompletedFocusTasks = function() {
-
-        const tasks = getFocusTasks().filter(t => !t.completed);
-
-        saveFocusTasks(tasks);
-
-        renderFocusTasks();
-
-        if (typeof showToast === 'function') showToast('Cleared finished tasks 🧹');
-
-    };
-
-
-
-    // ── Timer Toggle (Start / Pause) ──
-
-    window.toggleFocusTimer = function() {
-
-        const btnLabel = document.getElementById('focus-main-btn-label');
-
-
-
-        if (focusTimerState.isRunning) {
-
-            // PAUSE
-
-            clearInterval(focusTimerState.timerInterval);
-
-            focusTimerState.isRunning = false;
-
-            if (btnLabel) btnLabel.textContent = focusTimerState.mode === 'pomodoro' ? 'START FOCUS' : 'START BREAK';
-            updatePomatoMascot();
-
-        } else {
-
-            // START / RESUME
-
-            focusTimerState.isRunning = true;
-
-            if (btnLabel) btnLabel.textContent = 'PAUSE';
-            updatePomatoMascot();
-
-
-
-            focusTimerState.timerInterval = setInterval(() => {
-
-                if (focusTimerState.remainingSecs > 0) {
-
-                    focusTimerState.remainingSecs--;
-
-                    updateFocusTimerDisplay();
-
-                } else {
-
-                    onFocusTimerFinish();
-
-                }
-
-            }, 1000);
-
-        }
-
-    };
-
-
-
-    // ── Timer Reset ──
-
-    window.resetFocusTimer = function() {
-
-        if (focusTimerState.isRunning) {
-
-            clearInterval(focusTimerState.timerInterval);
-
-            focusTimerState.isRunning = false;
-
-        }
-
-
-
-        const btnLabel = document.getElementById('focus-main-btn-label');
-
-        if (focusTimerState.mode === 'pomodoro') {
-
-            focusTimerState.remainingSecs = focusTimerState.durationMins * 60;
-
-            if (btnLabel) btnLabel.textContent = 'START FOCUS';
-
-        } else {
-
-            focusTimerState.remainingSecs = 5 * 60;
-
-            if (btnLabel) btnLabel.textContent = 'START BREAK';
-
-        }
-
-
-
-        updateFocusTimerDisplay();
-
-        if (typeof showToast === 'function') showToast('Timer reset ⏱️');
-
-    };
-
-
-
-    // ── Update Display (MM:SS) ──
-
+    // ── Update Display & Circular Gauge Dial ──
     function updateFocusTimerDisplay() {
+        const total = Math.max(0, sageTimerState.remainingSecs);
+        let formatted = '';
 
-        const total = Math.max(0, focusTimerState.remainingSecs);
-
-        const mins = Math.floor(total / 60);
-
-        const secs = total % 60;
-
-        const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
-
-
-        const displayEl = document.getElementById('focus-timer-digits');
-
-        if (displayEl) displayEl.textContent = formatted;
-
-
-
-        // Sync browser tab title when on focus screen
-
-        const focusScreen = document.getElementById('focus-screen');
-
-        if (focusScreen && focusScreen.classList.contains('active-screen') && focusTimerState.isRunning) {
-
-            document.title = `(${formatted}) ${focusTimerState.activeTaskName} • Pomato Focus`;
-
+        if (sageTimerState.unit === 'HOURS') {
+            const hrs = Math.floor(total / 3600);
+            const mins = Math.floor((total % 3600) / 60);
+            formatted = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+        } else {
+            const mins = Math.floor(total / 60);
+            const secs = total % 60;
+            formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
+        const digitsEl = document.getElementById('focus-timer-digits');
+        const unitEl = document.getElementById('focus-timer-unit');
+        if (digitsEl) digitsEl.textContent = formatted;
+        if (unitEl) unitEl.textContent = sageTimerState.unit;
+
+        // Update SVG Progress Arc & Glowing Head Dot
+        const circle = document.getElementById('sage-dial-progress-circle');
+        const headDot = document.getElementById('sage-dial-head-dot');
+        const circumference = 596.9; // 2 * pi * 95
+
+        const ratio = sageTimerState.totalSecs > 0 ? (total / sageTimerState.totalSecs) : 0;
+        const offset = circumference * (1 - ratio);
+
+        if (circle) {
+            circle.setAttribute('stroke-dashoffset', offset.toFixed(1));
+        }
+
+        if (headDot) {
+            // angle from -90 deg (top center) clockwise
+            const angleDeg = (ratio * 360) - 90;
+            const angleRad = (angleDeg * Math.PI) / 180;
+            const cx = 110 + 95 * Math.cos(angleRad);
+            const cy = 110 + 95 * Math.sin(angleRad);
+            headDot.setAttribute('cx', cx.toFixed(1));
+            headDot.setAttribute('cy', cy.toFixed(1));
+        }
+
+        // Browser title update when active
+        const focusScreen = document.getElementById('focus-screen');
+        if (focusScreen && focusScreen.classList.contains('active-screen') && sageTimerState.isRunning) {
+            document.title = `(${formatted}) Time Tracker • AxioTune`;
+        }
     }
 
+    // ── Play / Pause Button ──
+    window.toggleFocusTimer = function() {
+        const iconContainer = document.getElementById('sage-play-pause-icon');
 
-
-    // ── Timer Finish Event ──
-
-    function onFocusTimerFinish() {
-
-        clearInterval(focusTimerState.timerInterval);
-
-        focusTimerState.isRunning = false;
-
-
-
-        playChimeBell();
-
-
-
-        if (focusTimerState.mode === 'pomodoro') {
-
-            // Harvest addition
-
-            const completedMins = focusTimerState.durationMins;
-
-            const currentHarvest = parseInt(localStorage.getItem('axio_focus_harvest') || '0', 10);
-
-            const newHarvest = currentHarvest + completedMins;
-
-            localStorage.setItem('axio_focus_harvest', newHarvest.toString());
-
-            const harvestTotalEl = document.getElementById('focus-harvest-total');
-
-            if (harvestTotalEl) harvestTotalEl.textContent = newHarvest.toString();
-
-
-
-            // Check off active task
-
-            const tasks = getFocusTasks();
-
-            const activeIdx = tasks.findIndex(t => t.name === focusTimerState.activeTaskName && !t.completed);
-
-            if (activeIdx !== -1) {
-
-                tasks[activeIdx].completed = true;
-
-                saveFocusTasks(tasks);
-
-                renderFocusTasks();
-
+        if (sageTimerState.isRunning) {
+            // Pause
+            clearInterval(sageTimerState.timerInterval);
+            sageTimerState.isRunning = false;
+            if (iconContainer) {
+                iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
+            }
+        } else {
+            // Play / Resume
+            sageTimerState.isRunning = true;
+            if (iconContainer) {
+                iconContainer.innerHTML = '<rect x="6" y="5" width="4" height="14" rx="1.5"></rect><rect x="14" y="5" width="4" height="14" rx="1.5"></rect>';
             }
 
+            sageTimerState.timerInterval = setInterval(() => {
+                if (sageTimerState.remainingSecs > 0) {
+                    sageTimerState.remainingSecs--;
+                    updateFocusTimerDisplay();
+                } else {
+                    clearInterval(sageTimerState.timerInterval);
+                    sageTimerState.isRunning = false;
+                    playChimeBell();
+                    if (iconContainer) {
+                        iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
+                    }
+                    if (typeof showToast === 'function') showToast('Time Tracker session completed! 🌿');
+                }
+            }, 1000);
+        }
+    };
 
+    // ── Reset / Stop Button ──
+    window.resetFocusTimer = function() {
+        if (sageTimerState.isRunning) {
+            clearInterval(sageTimerState.timerInterval);
+            sageTimerState.isRunning = false;
+        }
+        sageTimerState.remainingSecs = sageTimerState.totalSecs;
+        const iconContainer = document.getElementById('sage-play-pause-icon');
+        if (iconContainer) {
+            iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
+        }
+        updateFocusTimerDisplay();
+        if (typeof showToast === 'function') showToast('Timer reset ⏱️');
+    };
 
-            // Session dot advance
+    // ── Add Time (+15 min) ──
+    window.addFocusMinutes = function(mins) {
+        const addSecs = (mins || 15) * 60;
+        sageTimerState.remainingSecs += addSecs;
+        sageTimerState.totalSecs += addSecs;
+        updateFocusTimerDisplay();
+        if (typeof showToast === 'function') showToast(`+${mins} min added to tracker 🌿`);
+    };
 
-            focusTimerState.currentSession = (focusTimerState.currentSession % focusTimerState.totalSessions) + 1;
-
-            renderSessionDots();
-
-            if (typeof showToast === 'function') showToast('Focus Session Complete! Take a little stretch 🍵');
-
-            setFocusMode('shortBreak');
-
+    // ── Toggle Period (Today 07:16 vs Focus 25m vs Deep Work 45m) ──
+    window.toggleSagePeriod = function() {
+        const periodText = document.getElementById('sage-period-text');
+        if (sageTimerState.period === 'today') {
+            sageTimerState.period = 'focus25';
+            sageTimerState.unit = 'MINUTES';
+            sageTimerState.totalSecs = 25 * 60;
+            sageTimerState.remainingSecs = 25 * 60;
+            if (periodText) periodText.textContent = 'Focus 25m';
+        } else if (sageTimerState.period === 'focus25') {
+            sageTimerState.period = 'deep45';
+            sageTimerState.unit = 'MINUTES';
+            sageTimerState.totalSecs = 45 * 60;
+            sageTimerState.remainingSecs = 45 * 60;
+            if (periodText) periodText.textContent = 'Deep 45m';
         } else {
-
-            // Break finished -> back to Pomodoro
-
-            if (typeof showToast === 'function') showToast('Break complete! Ready to focus? ⚡');
-
-            setFocusMode('pomodoro');
-
+            sageTimerState.period = 'today';
+            sageTimerState.unit = 'HOURS';
+            sageTimerState.totalSecs = 7 * 3600 + 16 * 60;
+            sageTimerState.remainingSecs = 7 * 3600 + 16 * 60;
+            if (periodText) periodText.textContent = 'Today';
         }
 
-    }
-
-
-
-    // ── Session Dots: ○ ○ ○ ○ ○ ○ SESSION 1 OF 6 ──
-
-    function renderSessionDots() {
-
-        const row = document.getElementById('focus-dots-row');
-
-        const label = document.getElementById('focus-session-label');
-
-        if (!row) return;
-
-
-
-        row.innerHTML = '';
-
-        for (let i = 1; i <= focusTimerState.totalSessions; i++) {
-
-            const dot = document.createElement('span');
-
-            dot.className = 'pdot' + (i <= focusTimerState.currentSession ? ' active' : '');
-
-            row.appendChild(dot);
-
+        if (sageTimerState.isRunning) {
+            clearInterval(sageTimerState.timerInterval);
+            sageTimerState.isRunning = false;
+            const iconContainer = document.getElementById('sage-play-pause-icon');
+            if (iconContainer) {
+                iconContainer.innerHTML = '<polygon points="7,5 19,12 7,19"></polygon>';
+            }
         }
+        updateFocusTimerDisplay();
+    };
 
-
-
-        if (label) {
-
-            label.textContent = `SESSION ${focusTimerState.currentSession} OF ${focusTimerState.totalSessions}`;
-
+    // ── Privacy Toggle ──
+    window.togglePrivacy = function(id, isChecked) {
+        if (typeof showToast === 'function') {
+            showToast(isChecked ? `Meeting ${id}: Privacy active (DND) 🔒` : `Meeting ${id}: Privacy off 🔓`);
         }
+    };
 
-    }
-
-
+    // ── Add New Meeting / Focus Block ──
+    window.openAddSessionModal = function() {
+        const title = prompt('Enter Focus Block / Meeting title:', 'Deep Work Sprint');
+        if (!title) return;
+        const list = document.getElementById('sage-meetings-list');
+        const countBadge = document.getElementById('sage-meetings-count');
+        if (list) {
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const newRow = document.createElement('div');
+            newRow.className = 'sage-meeting-row';
+            newRow.innerHTML = `
+                <span class="sage-meeting-time">${timeStr}</span>
+                <div class="sage-meeting-details">
+                    <h4 class="sage-meeting-name">${title}</h4>
+                    <span class="sage-meeting-sub">Custom session</span>
+                </div>
+                <div class="sage-meeting-avatars">
+                    <span class="sage-avatar-bubble">+1</span>
+                </div>
+                <div class="sage-privacy-control">
+                    <span class="sage-privacy-label">Privacy</span>
+                    <label class="sage-toggle-switch">
+                        <input type="checkbox" checked onchange="togglePrivacy(3, this.checked)">
+                        <span class="sage-toggle-slider"></span>
+                    </label>
+                </div>
+            `;
+            list.appendChild(newRow);
+            if (countBadge) {
+                const cur = parseInt(countBadge.textContent, 10) || 2;
+                countBadge.textContent = (cur + 1).toString();
+            }
+            if (typeof showToast === 'function') showToast(`Added: "${title}" ✨`);
+        }
+    };
 
     // ── Sound Notification Toggle ──
-
     window.toggleFocusSound = function() {
-
-        focusTimerState.soundEnabled = !focusTimerState.soundEnabled;
-
+        sageTimerState.soundEnabled = !sageTimerState.soundEnabled;
         const btn = document.getElementById('focus-sound-btn');
-
-        if (btn) {
-
-            btn.style.opacity = focusTimerState.soundEnabled ? '1' : '0.4';
-
-        }
-
+        if (btn) btn.style.opacity = sageTimerState.soundEnabled ? '1' : '0.4';
         if (typeof showToast === 'function') {
-
-            showToast(focusTimerState.soundEnabled ? 'Chime sound enabled 🔔' : 'Chime sound muted 🔕');
-
+            showToast(sageTimerState.soundEnabled ? 'Chime sound enabled 🔔' : 'Chime sound muted 🔕');
         }
-
     };
-
-
 
     // ── Theme Toggle (Cozy Light vs Night Dark) ──
-
     window.toggleFocusTheme = function() {
-
         const screenEl = document.getElementById('focus-screen');
-
         if (!screenEl) return;
-
         const isDark = screenEl.classList.toggle('dark-theme');
-
-        focusTimerState.isDarkTheme = isDark;
-
+        sageTimerState.isDarkTheme = isDark;
         const icon = document.getElementById('focus-theme-icon');
-
         if (icon) icon.textContent = isDark ? '☀️' : '🌙';
-
         localStorage.setItem('axio_focus_theme', isDark ? 'dark' : 'light');
-
         if (typeof showToast === 'function') {
-
-            showToast(isDark ? 'Cozy Night Mode activated 🌙' : 'Clean Warm Day Mode ☀️');
-
+            showToast(isDark ? 'Cozy Dark Mode activated 🌙' : 'Serene Sage Day Mode ☀️');
         }
-
     };
 
-
-
     // Initialize on load
-
     document.addEventListener('DOMContentLoaded', () => {
-
-        loadSavedFocusData();
-
+        loadSavedSageData();
         updateFocusTimerDisplay();
-
     });
-
 })();
 
