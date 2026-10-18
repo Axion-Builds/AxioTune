@@ -10843,22 +10843,32 @@ body.focus-screen-active #mini-player {
 .cover-flow-container.flow,
 #home-quick-picks-container {
     position: relative !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
     width: 100% !important;
     height: 310px !important;
     min-height: 310px !important;
-    overflow: hidden !important;
-    perspective: 1200px !important;
-    -webkit-perspective: 1200px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-x: contain !important;
+    overscroll-behavior: contain !important;
+    perspective: 1000px !important;
+    -webkit-perspective: 1000px !important;
     transform-style: preserve-3d !important;
     -webkit-transform-style: preserve-3d !important;
     user-select: none !important;
     -webkit-user-select: none !important;
-    touch-action: pan-y !important;
+    touch-action: pan-x pan-y !important;
     cursor: grab;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
     box-sizing: border-box !important;
-    padding: 0 !important;
+    padding: 20px calc(50% - 95px) 25px !important;
     margin: 10px 0 20px 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .cover-flow-container::-webkit-scrollbar,
@@ -10871,22 +10881,21 @@ body.focus-screen-active #mini-player {
 .cover-flow-container.is-dragging,
 #home-quick-picks-container.is-dragging {
     cursor: grabbing !important;
+    scroll-behavior: auto !important;
 }
 
-/* Individual Cover Flow Card (Slightly larger, closer together, pure white/ambient glass) */
+/* Individual Cover Flow Card (Clean subtle shadow, zero muddy smear) */
 .cover-flow-card,
 .cover-flow-container .t {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    margin-left: -95px !important;
-    margin-top: -130px !important;
+    flex: 0 0 190px !important;
     width: 190px !important;
     height: 260px !important;
+    margin: 0 -22px !important;
     border-radius: 18px !important;
+    position: relative !important;
     overflow: hidden !important;
     background: #12141a;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22) !important; /* Clean subtle shadow */
     cursor: pointer !important;
     transform-origin: center center !important;
     transform-style: preserve-3d !important;
@@ -10900,14 +10909,14 @@ body.focus-screen-active #mini-player {
 }
 
 .cover-flow-card:hover {
-    box-shadow: 0 24px 55px rgba(0, 0, 0, 0.85), 0 0 28px rgba(255, 255, 255, 0.22) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
 }
 
-/* Center Active Card: Extra prominent 3D pop-out with crisp white halo */
+/* Center Active Card: Crisp white halo without heavy dark mud */
 .cover-flow-card.is-center {
-    border-color: rgba(255, 255, 255, 0.78) !important;
-    box-shadow: 0 28px 65px rgba(0, 0, 0, 0.92), 0 0 35px rgba(255, 255, 255, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.85) !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35), 0 0 20px rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Real Album Artwork Cover */
@@ -10945,14 +10954,14 @@ body.focus-screen-active #mini-player {
     display: none !important;
 }
 
-/* Song Title & Artist Bottom Card Panel */
+/* Song Title & Artist Bottom Card Panel - Clean subtle gradient, no opaque black block */
 .cover-flow-card .cf-meta-panel {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 26px 14px 14px;
-    background: linear-gradient(to top, rgba(9, 11, 16, 0.96) 0%, rgba(9, 11, 16, 0.8) 58%, transparent 100%);
+    padding: 18px 12px 10px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.25) 55%, transparent 100%);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -11053,14 +11062,15 @@ body.focus-screen-active #mini-player {
     #home-quick-picks-container {
         height: 265px !important;
         min-height: 265px !important;
+        padding: 16px calc(50% - 79px) 20px !important;
         margin: 6px 0 16px 0 !important;
     }
     .cover-flow-card,
     .cover-flow-container .t {
+        flex: 0 0 158px !important;
         width: 158px !important;
         height: 218px !important;
-        margin-left: -79px !important;
-        margin-top: -109px !important;
+        margin: 0 -18px !important;
     }
 }
 
