@@ -10829,4 +10829,255 @@ body.focus-screen-active #mini-player {
     color: #D34343;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   🎵 3D COVER FLOW ENGINE (Quick Picks)
+   Based on Apple Cover Flow reference with refined spacing & glass aesthetics
+   ══════════════════════════════════════════════════════════════════════════ */
+
+#home-quick-picks-section {
+    position: relative;
+    width: 100%;
+}
+
+.cover-flow-container,
+.cover-flow-container.flow,
+#home-quick-picks-container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    perspective: 1000px !important;
+    -webkit-perspective: 1000px !important;
+    transform-style: preserve-3d !important;
+    -webkit-transform-style: preserve-3d !important;
+    padding: 24px calc(50% - 85px) 38px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth;
+    user-select: none;
+    cursor: grab;
+    min-height: 275px;
+    box-sizing: border-box !important;
+}
+
+.cover-flow-container::-webkit-scrollbar,
+#home-quick-picks-container::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.cover-flow-container.is-dragging,
+#home-quick-picks-container.is-dragging {
+    cursor: grabbing !important;
+    scroll-behavior: auto !important;
+}
+
+/* Individual Cover Flow Card */
+/* Requirement: "bas ek kaam krna just a little just a little cards ko door rakhna ,ek dam thoda sa" */
+.cover-flow-card,
+.cover-flow-container .t {
+    flex: 0 0 168px !important;
+    width: 168px !important;
+    height: 232px !important;
+    margin: 0 8px !important; /* Gentle card separation per user requirement */
+    border-radius: 16px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: #14171f;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    cursor: pointer !important;
+    transform-origin: center center !important;
+    transition: box-shadow 0.25s ease, filter 0.25s ease, border-color 0.25s ease !important;
+    will-change: transform, z-index, filter !important;
+    transform-style: preserve-3d !important;
+    -webkit-transform-style: preserve-3d !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cover-flow-card:hover {
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 45, 85, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Real Album Artwork Cover */
+.cover-flow-card .cf-cover-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    transition: transform 0.4s ease;
+}
+
+.cover-flow-card:hover .cf-cover-img {
+    transform: scale(1.05);
+}
+
+/* Subtle Specular Sheen / Reflection */
+.cover-flow-card .cf-glass-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 60%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Floating Center Play Button Pill */
+.cover-flow-card .cf-play-pill {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 45, 85, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    box-shadow: 0 6px 18px rgba(255, 45, 85, 0.55);
+    opacity: 0;
+    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    z-index: 4;
+}
+
+.cover-flow-card:hover .cf-play-pill,
+.cover-flow-card.is-center .cf-play-pill {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Song Title & Artist Bottom Card Panel */
+.cover-flow-card .cf-meta-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px 12px 12px;
+    background: linear-gradient(to top, rgba(9, 11, 16, 0.96) 0%, rgba(9, 11, 16, 0.8) 55%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.cover-flow-card .cf-meta-panel b {
+    font-size: 13px;
+    font-weight: 700;
+    color: #FFFFFF;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.cover-flow-card .cf-meta-panel i {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.72);
+    font-style: normal;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Quick Context Menu Button (3-dots) */
+.cover-flow-card .cf-more-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s, transform 0.2s;
+    z-index: 5;
+}
+
+.cover-flow-card:hover .cf-more-btn,
+.cover-flow-card.is-center .cf-more-btn {
+    opacity: 1;
+}
+
+.cover-flow-card .cf-more-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+    transform: scale(1.1);
+}
+
+/* Header Navigation Controls for Quick Picks */
+.qp-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qp-nav-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.75);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.qp-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+    transform: scale(1.08);
+}
+
+.qp-nav-btn:active {
+    transform: scale(0.94);
+}
+
+@media (max-width: 600px) {
+    .cover-flow-container,
+    .cover-flow-container.flow,
+    #home-quick-picks-container {
+        padding: 20px calc(50% - 73px) 30px !important;
+        min-height: 240px;
+    }
+    .cover-flow-card,
+    .cover-flow-container .t {
+        flex: 0 0 145px !important;
+        width: 145px !important;
+        height: 202px !important;
+        margin: 0 6px !important;
+    }
+}
+
+
 

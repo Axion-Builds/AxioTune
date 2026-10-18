@@ -4962,12 +4962,16 @@ function onPlayerStateChange(event) {
             if (!container) return;
             try {
                 const seeds = getTasteSeeds();
-                const url = `/api/quick_picks?refresh=true${seeds.length > 0 ? '&seeds=' + encodeURIComponent(seeds.join(',')) : ''}`;
+                const historyList = (typeof getHistoryList === 'function' ? getHistoryList() : []);
+                const historyVids = historyList.map(h => h.videoId || h.id).filter(Boolean).slice(0, 40);
+                let url = `/api/quick_picks?refresh=true`;
+                if (seeds.length > 0) url += `&seeds=${encodeURIComponent(seeds.join(','))}`;
+                if (historyVids.length > 0) url += `&history=${encodeURIComponent(historyVids.join(','))}`;
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.status === 'success' && data.section && data.section.contents && data.section.contents.length > 0) {
-                        populateDenseGrid('home-quick-picks-container', data.section.contents);
+                        populateCoverFlow('home-quick-picks-container', data.section.contents);
                         if (typeof showToast === 'function') showToast('Refreshed Smart Quick Picks ⚡');
                     }
                 }
@@ -4990,7 +4994,12 @@ function onPlayerStateChange(event) {
                 
                 // Smart Hybrid Seeds: extract user's top played/liked songs for personalized Quick Picks
                 const seeds = getTasteSeeds();
-                const homeUrl = seeds.length > 0 ? `/api/home?seeds=${encodeURIComponent(seeds.join(','))}` : '/api/home';
+                const historyList = (typeof getHistoryList === 'function' ? getHistoryList() : []);
+                const historyVids = historyList.map(h => h.videoId || h.id).filter(Boolean).slice(0, 40);
+                const params = [];
+                if (seeds.length > 0) params.push(`seeds=${encodeURIComponent(seeds.join(','))}`);
+                if (historyVids.length > 0) params.push(`history=${encodeURIComponent(historyVids.join(','))}`);
+                const homeUrl = params.length > 0 ? `/api/home?${params.join('&')}` : '/api/home';
                 const res = await fetch(homeUrl);
                 const data = await res.json();
                 
@@ -5004,11 +5013,11 @@ function onPlayerStateChange(event) {
                     data.feed.forEach((section, idx) => {
                         if (!section.contents || section.contents.length === 0) return;
 
-                        // Check if this is Quick Picks (must be placed first at top of Home screen)
+                        // Check if this is Quick Picks (must be placed first at top of Home screen with Cover Flow)
                         const isQuickPicks = section.title && section.title.toLowerCase().includes('quick pick');
                         if (isQuickPicks && !quickPicksHandled && quickSec && quickCont) {
                             if (quickTitle) quickTitle.textContent = section.title.includes('⚡') ? section.title : `⚡ ${section.title}`;
-                            populateDenseGrid('home-quick-picks-container', section.contents);
+                            populateCoverFlow('home-quick-picks-container', section.contents);
                             quickSec.style.display = 'block';
                             quickPicksHandled = true;
                             return; // Do not duplicate in lower dynamic sections
@@ -5069,6 +5078,220 @@ function onPlayerStateChange(event) {
                     dyn.innerHTML = '<div class="empty-state">Network error fetching feeds. Ensure backend is running.</div>';
                 }
             }
+        }
+
+        // ══════════════════════════════════════════════════════════════════════════
+        // 🎵 3D COVER FLOW ENGINE (Quick Picks)
+        // Adapted from Apple Cover Flow with refined spacing & glass aesthetics
+        // ══════════════════════════════════════════════════════════════════════════
+
+        function centerCoverFlowCard(container, card) {
+            if (!container || !card) return;
+            const targetLeft = (card.offsetLeft + card.offsetWidth / 2) - (container.clientWidth / 2);
+            container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+        }
+
+        function updateCoverFlow(container) {
+            if (!container) return;
+            const c = container.scrollLeft + container.clientWidth / 2;
+            const cards = container.querySelectorAll('.cover-flow-card');
+            if (!cards || cards.length === 0) return;
+
+            // Spacing divisor tuned for card width (168px) with gentle margin
+            const divisor = 150;
+
+            cards.forEach(t => {
+                const mid = t.offsetLeft + t.offsetWidth / 2;
+                const d = (mid - c) / divisor;
+                const a = Math.max(-1, Math.min(1, d)); // clamped [-1, 1]
+
+                // Rotate inward, scale down sides, pop active center card in 3D
+                const rotateY = -a * 46;
+                const scale = 1 - Math.abs(a) * 0.14;
+                const translateZ = Math.max(0, (1 - Math.abs(a)) * 24);
+
+                t.style.transform = `rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
+                t.style.zIndex = Math.max(1, 50 - Math.round(Math.abs(d) * 4));
+
+                const isCenter = Math.abs(d) < 0.35;
+                t.classList.toggle('is-center', isCenter);
+
+                const brightness = 1 - Math.min(0.35, Math.abs(a) * 0.35);
+                t.style.filter = `brightness(${brightness.toFixed(3)})`;
+            });
+        }
+
+        window.scrollQuickPicks = function(direction) {
+            const container = document.getElementById('home-quick-picks-container');
+            if (!container) return;
+            const cards = Array.from(container.querySelectorAll('.cover-flow-card'));
+            if (cards.length === 0) return;
+
+            const c = container.scrollLeft + container.clientWidth / 2;
+            let closestIdx = 0;
+            let minDiff = Infinity;
+            cards.forEach((card, idx) => {
+                const mid = card.offsetLeft + card.offsetWidth / 2;
+                const diff = Math.abs(mid - c);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestIdx = idx;
+                }
+            });
+
+            const targetIdx = Math.max(0, Math.min(cards.length - 1, closestIdx + direction));
+            centerCoverFlowCard(container, cards[targetIdx]);
+        };
+
+        function populateCoverFlow(containerId, entries) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            container.className = 'cover-flow-container flow';
+
+            // Filter history: keep already-heard history songs minimal (max 2) in Quick Picks
+            const historyList = (typeof getHistoryList === 'function' ? getHistoryList() : []);
+            const historySet = new Set(historyList.map(h => (h.videoId || h.id || '').trim()).filter(Boolean));
+            const historyTitles = new Set(historyList.map(h => (h.title || '').trim().toLowerCase()).filter(Boolean));
+
+            let historyCount = 0;
+            const MAX_HISTORY = 2;
+            const filteredEntries = [];
+            const deferredHistory = [];
+
+            (entries || []).forEach(item => {
+                const vid = item.videoId || item.id || '';
+                const titleNorm = (item.title || '').trim().toLowerCase();
+                const isHistory = (vid && historySet.has(vid)) || (titleNorm && historyTitles.has(titleNorm));
+                if (isHistory) {
+                    if (historyCount < MAX_HISTORY) {
+                        historyCount++;
+                        filteredEntries.push(item);
+                    } else {
+                        deferredHistory.push(item);
+                    }
+                } else {
+                    filteredEntries.push(item);
+                }
+            });
+
+            // Backfill if list is too small
+            while (filteredEntries.length < 14 && deferredHistory.length > 0) {
+                filteredEntries.push(deferredHistory.shift());
+            }
+
+            filteredEntries.forEach((item, idx) => {
+                const title = item.title || item.name || 'Unknown Title';
+                const subtitle = item.artist || item.uploader || 'Unknown Artist';
+                const videoId = item.videoId || item.id;
+                let rawThumb = item.cover || item.thumbnail || item.thumb || '';
+                if (!rawThumb && videoId) {
+                    rawThumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                }
+                const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
+                const query = `${title} ${subtitle}`;
+                const fallbackThumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'default_cover.jpg';
+                const escapedQuery = query.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                const card = document.createElement('div');
+                card.className = 'cover-flow-card t';
+                card.dataset.index = idx;
+                card.dataset.videoId = videoId || '';
+                card.setAttribute('data-query', query);
+                card.innerHTML = `
+                    <img src="${thumb}" alt="" class="cf-cover-img" loading="lazy" decoding="async" onerror="if(this.src!=='${fallbackThumb}'){this.src='${fallbackThumb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
+                    <div class="cf-glass-overlay"></div>
+                    <div class="cf-play-pill">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                    <div class="cf-meta-panel">
+                        <b title="${escapeHtml(title)}">${escapeHtml(title)}</b>
+                        <i title="${escapeHtml(subtitle)}">${escapeHtml(subtitle)}</i>
+                    </div>
+                    <button type="button" class="cf-more-btn" onclick="event.stopPropagation(); openSongContextMenu(event, '${escapedQuery}')" title="More options" aria-label="More options">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    </button>
+                `;
+
+                // Immediate playback on click + center in Cover Flow
+                card.onclick = () => {
+                    centerCoverFlowCard(container, card);
+                    if (item.playlistId || item.type === 'playlist') {
+                        showRemotePlaylistPage(item.playlistId);
+                    } else if (item.browseId || item.type === 'album') {
+                        showAlbumPage(item.browseId);
+                    } else if (item.type === 'artist') {
+                        showArtistPage(item.browseId || item.name || item.title);
+                    } else if (videoId) {
+                        window.playSong(videoId, { title, artist: subtitle, cover: thumb, videoId }, card);
+                    } else {
+                        songSearchInput.value = query; searchBtn.click();
+                    }
+                };
+
+                container.appendChild(card);
+            });
+
+            // Attach scroll physics listener
+            if (!container._cfInitialized) {
+                container._cfInitialized = true;
+                let ticking = false;
+                container.addEventListener('scroll', () => {
+                    if (!ticking) {
+                        requestAnimationFrame(() => {
+                            updateCoverFlow(container);
+                            ticking = false;
+                        });
+                        ticking = true;
+                    }
+                }, { passive: true });
+
+                // Horizontal mouse wheel scrolling
+                container.addEventListener('wheel', (e) => {
+                    if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+                        e.preventDefault();
+                        container.scrollLeft += e.deltaY * 0.9;
+                    }
+                }, { passive: false });
+
+                // Drag to flick/scroll with mouse
+                let isDown = false;
+                let startX = 0;
+                let scrollStart = 0;
+
+                container.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0 || e.target.closest('.cf-more-btn')) return;
+                    isDown = true;
+                    startX = e.pageX - container.offsetLeft;
+                    scrollStart = container.scrollLeft;
+                    container.classList.add('is-dragging');
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    const x = e.pageX - container.offsetLeft;
+                    const walk = (x - startX) * 1.25;
+                    container.scrollLeft = scrollStart - walk;
+                });
+
+                window.addEventListener('mouseup', () => {
+                    if (!isDown) return;
+                    isDown = false;
+                    container.classList.remove('is-dragging');
+                });
+            }
+
+            // Center initial card with pleasant 3D fan-out
+            setTimeout(() => {
+                const cards = container.querySelectorAll('.cover-flow-card');
+                if (cards.length > 0) {
+                    const centerIdx = Math.min(3, Math.floor(cards.length / 2));
+                    centerCoverFlowCard(container, cards[centerIdx]);
+                    updateCoverFlow(container);
+                }
+            }, 60);
+
+            setupLazyCovers(container);
         }
 
         function populateDenseGrid(containerId, entries) {

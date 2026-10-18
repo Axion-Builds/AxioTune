@@ -1263,20 +1263,26 @@ def debug_recs(videoId: str = "d349wN8Z81M"):
     return report
 
 
-async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None, all_home_songs: list = None, limit: int = 32):
+async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None, all_home_songs: list = None, limit: int = 32, history_vids: list = None):
     """
     Smart Hybrid Quick Picks:
     1. Runs parallel radio queues for top user seeds via YouTube Music Up-Next.
     2. Interleaves seed radios so vibes alternate nicely (round-robin).
     3. Merges with user's top favorite seeds & YouTube Music server Quick Picks.
-    4. Deduplicates against duplicates and audio/video duplicates.
-    5. Returns a rich, 32-song collection matching the user's authentic taste.
+    4. Limits previously heard history tracks (max 2-3) to ensure fresh discoveries.
+    5. Deduplicates against duplicates and audio/video duplicates.
+    6. Returns a rich collection matching the user's authentic taste.
     """
     combined_tracks = []
     seen_ids = set()
     seen_titles = set()
+    history_set = set(history_vids) if history_vids else set()
+    history_count = 0
+    MAX_HISTORY_ITEMS = 3  # Cap already-heard history songs to keep Quick Picks fresh
+    deferred_history = []
 
-    def add_item(item):
+    def add_item(item, allow_history: bool = False):
+        nonlocal history_count
         if not item or not isinstance(item, dict):
             return False
         vid = item.get('videoId') or item.get('id') or ''
@@ -1286,6 +1292,15 @@ async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None
         norm = re.sub(r'[^\w\s]', '', title.lower()).strip()
         if (vid and vid in seen_ids) or (norm and norm in seen_titles):
             return False
+
+        # Reduce already heard songs from history
+        is_history_song = (vid and vid in history_set)
+        if is_history_song and not allow_history:
+            if history_count >= MAX_HISTORY_ITEMS:
+                deferred_history.append(item)
+                return False
+            history_count += 1
+
         if vid:
             seen_ids.add(vid)
         if norm:
@@ -1337,6 +1352,13 @@ async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None
                 break
             add_item(item)
 
+    # 5. If under 16 songs, gently backfill with deferred history tracks
+    if len(combined_tracks) < 16 and deferred_history:
+        for item in deferred_history:
+            if len(combined_tracks) >= limit:
+                break
+            add_item(item, allow_history=True)
+
     return {
         "title": "⚡ Quick Picks",
         "contents": combined_tracks[:limit]
@@ -1344,10 +1366,11 @@ async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None
 
 
 @app.get("/api/quick_picks")
-async def get_quick_picks(seeds: str = "", refresh: bool = False):
+async def get_quick_picks(seeds: str = "", history: str = "", refresh: bool = False):
     try:
         seed_list = [s.strip() for s in seeds.split(",") if s.strip()] if seeds else []
-        cache_key = f"smart_qp_{'_'.join(sorted(seed_list))}" if seed_list else "smart_qp_guest"
+        history_list = [h.strip() for h in history.split(",") if h.strip()] if history else []
+        cache_key = f"smart_qp_{'_'.join(sorted(seed_list))}_{len(history_list)}" if seed_list else "smart_qp_guest"
         now = time.time()
         if not refresh and cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < 180:
             return API_CACHE[cache_key]['data']
@@ -1377,7 +1400,7 @@ async def get_quick_picks(seeds: str = "", refresh: bool = False):
                     if is_qp:
                         ytm_qp["contents"].append(parsed)
 
-        qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=ytm_qp, all_home_songs=all_home_songs, limit=32)
+        qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=ytm_qp, all_home_songs=all_home_songs, limit=32, history_vids=history_list)
         res = {"status": "success", "section": qp}
         API_CACHE[cache_key] = {"time": time.time(), "data": res}
         return res
@@ -1387,7 +1410,7 @@ async def get_quick_picks(seeds: str = "", refresh: bool = False):
 
 
 @app.get("/api/home")
-async def get_home(seeds: str = ""):
+async def get_home(seeds: str = "", history: str = ""):
     try:
         def fetch_home():
             return ytmusic.get_home(limit=25)
@@ -1451,10 +1474,11 @@ async def get_home(seeds: str = ""):
             else:
                 clean_feed.append(clean_section)
 
-        # Smart Hybrid Quick Picks if user provided seeds
+        # Smart Hybrid Quick Picks if user provided seeds or history
         seed_list = [s.strip() for s in seeds.split(",") if s.strip()] if seeds else []
-        if seed_list:
-            smart_qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=quick_picks_section, all_home_songs=all_songs_pool, limit=32)
+        history_list = [h.strip() for h in history.split(",") if h.strip()] if history else []
+        if seed_list or history_list:
+            smart_qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=quick_picks_section, all_home_songs=all_songs_pool, limit=32, history_vids=history_list)
             clean_feed.insert(0, smart_qp)
         else:
             # Fallback to standard Quick Picks if no seeds
