@@ -2,7 +2,7 @@
 
   <img src="logo.png?v=4" alt="AxioTune Logo" width="110" height="110" style="border-radius: 50%; box-shadow: 0 12px 35px rgba(255, 255, 255, 0.35);" />
 
-  # ✦ A X I Ø T U N E ✦ axiotune.onrender.com/
+  # ✦ A X I Ø T U N E ✦ <axiotune.onrender.com/>
   ### *The Next-Generation Audiophile Web Streaming Platform*
 
   <p align="center">
