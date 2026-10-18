@@ -5096,23 +5096,6 @@ function onPlayerStateChange(event) {
             const cards = container.querySelectorAll('.cover-flow-card');
             if (!cards || cards.length === 0) return;
 
-            const n = container._cfItemCount || Math.floor(cards.length / 3);
-            if (n > 0 && cards.length >= n * 3) {
-                const card0 = cards[0];
-                const cardN = cards[n];
-                if (card0 && cardN) {
-                    const singleSetWidth = cardN.offsetLeft - card0.offsetLeft;
-                    if (singleSetWidth > 100) {
-                        // Infinite seamless loop repositioning
-                        if (container.scrollLeft >= 2 * singleSetWidth - 20) {
-                            container.scrollLeft -= singleSetWidth;
-                        } else if (container.scrollLeft <= singleSetWidth * 0.3) {
-                            container.scrollLeft += singleSetWidth;
-                        }
-                    }
-                }
-            }
-
             const c = container.scrollLeft + container.clientWidth / 2;
             const divisor = 160;
 
@@ -5145,7 +5128,6 @@ function onPlayerStateChange(event) {
             const cards = Array.from(container.querySelectorAll('.cover-flow-card'));
             if (cards.length === 0) return;
 
-            const n = container._cfItemCount || Math.floor(cards.length / 3);
             const c = container.scrollLeft + container.clientWidth / 2;
             let closestIdx = 0;
             let minDiff = Infinity;
@@ -5159,25 +5141,14 @@ function onPlayerStateChange(event) {
             });
 
             let targetIdx = closestIdx + direction;
-
-            // Infinite boundary wrap normalization for smooth click progression
-            if (n > 0 && cards.length >= n * 3) {
-                const card0 = cards[0];
-                const cardN = cards[n];
-                if (card0 && cardN) {
-                    const singleSetWidth = cardN.offsetLeft - card0.offsetLeft;
-                    if (targetIdx >= 2 * n) {
-                        targetIdx -= n;
-                        container.scrollLeft -= singleSetWidth;
-                    } else if (targetIdx < n * 0.5) {
-                        targetIdx += n;
-                        container.scrollLeft += singleSetWidth;
-                    }
-                }
+            // Infinite loop wrapping: when reaching end, seamlessly loop back to start!
+            if (targetIdx >= cards.length) {
+                targetIdx = 0;
+            } else if (targetIdx < 0) {
+                targetIdx = cards.length - 1;
             }
 
-            targetIdx = Math.max(0, Math.min(cards.length - 1, targetIdx));
-            centerCoverFlowCard(container, cards[targetIdx]);
+            centerCoverFlowCard(container, cards[targetIdx], true);
         };
 
         function populateCoverFlow(containerId, entries) {
@@ -5333,14 +5304,14 @@ function onPlayerStateChange(event) {
                 });
             }
 
-            // Position initial view at middle set [Main Real]
-            setTimeout(() => {
+            // Position initial view at middle set [Main Real] instantly
+            requestAnimationFrame(() => {
                 const cards = container.querySelectorAll('.cover-flow-card');
                 if (cards.length > baseCount) {
                     centerCoverFlowCard(container, cards[baseCount], false);
-                    updateCoverFlow(container);
                 }
-            }, 60);
+                updateCoverFlow(container);
+            });
 
             setupLazyCovers(container);
         }

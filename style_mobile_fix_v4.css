@@ -10855,7 +10855,6 @@ body.focus-screen-active #mini-player {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
     -webkit-overflow-scrolling: touch !important;
-    scroll-behavior: smooth;
     user-select: none;
     cursor: grab;
     min-height: 315px;
