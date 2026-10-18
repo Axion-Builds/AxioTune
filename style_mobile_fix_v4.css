@@ -10847,18 +10847,18 @@ body.focus-screen-active #mini-player {
     align-items: center !important;
     overflow-x: auto !important;
     overflow-y: visible !important;
-    perspective: 1000px !important;
-    -webkit-perspective: 1000px !important;
+    perspective: 1100px !important;
+    -webkit-perspective: 1100px !important;
     transform-style: preserve-3d !important;
     -webkit-transform-style: preserve-3d !important;
-    padding: 24px calc(50% - 85px) 38px !important;
+    padding: 32px calc(50% - 94px) 48px !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
     -webkit-overflow-scrolling: touch !important;
     scroll-behavior: smooth;
     user-select: none;
     cursor: grab;
-    min-height: 275px;
+    min-height: 315px;
     box-sizing: border-box !important;
 }
 
@@ -10875,33 +10875,38 @@ body.focus-screen-active #mini-player {
     scroll-behavior: auto !important;
 }
 
-/* Individual Cover Flow Card */
-/* Requirement: "bas ek kaam krna just a little just a little cards ko door rakhna ,ek dam thoda sa" */
+/* Individual Cover Flow Card (Slightly larger, closer together, pure white/ambient glass) */
 .cover-flow-card,
 .cover-flow-container .t {
-    flex: 0 0 168px !important;
-    width: 168px !important;
-    height: 232px !important;
-    margin: 0 8px !important; /* Gentle card separation per user requirement */
-    border-radius: 16px !important;
+    flex: 0 0 188px !important;
+    width: 188px !important;
+    height: 258px !important;
+    margin: 0 -3px !important; /* Closer together as requested */
+    border-radius: 18px !important;
     position: relative !important;
     overflow: hidden !important;
-    background: #14171f;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    background: #12141a;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
     cursor: pointer !important;
     transform-origin: center center !important;
-    transition: box-shadow 0.25s ease, filter 0.25s ease, border-color 0.25s ease !important;
+    transition: box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s ease, border-color 0.28s ease !important;
     will-change: transform, z-index, filter !important;
     transform-style: preserve-3d !important;
     -webkit-transform-style: preserve-3d !important;
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12) !important; /* Clean white glass outline */
 }
 
 .cover-flow-card:hover {
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 45, 85, 0.3) !important;
-    border-color: rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.8), 0 0 26px rgba(255, 255, 255, 0.22) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Center Active Card: Extra prominent 3D pop-out with crisp white halo */
+.cover-flow-card.is-center {
+    border-color: rgba(255, 255, 255, 0.72) !important;
+    box-shadow: 0 28px 65px rgba(0, 0, 0, 0.9), 0 0 35px rgba(255, 255, 255, 0.28) !important;
 }
 
 /* Real Album Artwork Cover */
@@ -10914,11 +10919,12 @@ body.focus-screen-active #mini-player {
     object-fit: cover;
     display: block;
     pointer-events: none;
-    transition: transform 0.4s ease;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.cover-flow-card:hover .cf-cover-img {
-    transform: scale(1.05);
+.cover-flow-card:hover .cf-cover-img,
+.cover-flow-card.is-center .cf-cover-img {
+    transform: scale(1.04);
 }
 
 /* Subtle Specular Sheen / Reflection */
@@ -10928,38 +10934,14 @@ body.focus-screen-active #mini-player {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 60%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.02) 42%, transparent 60%);
     pointer-events: none;
     z-index: 2;
 }
 
-/* Floating Center Play Button Pill */
+/* Play button explicitly hidden per user request: "and play krne ka button crads me nhi dikhao" */
 .cover-flow-card .cf-play-pill {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255, 45, 85, 0.94);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #FFFFFF;
-    box-shadow: 0 6px 18px rgba(255, 45, 85, 0.55);
-    opacity: 0;
-    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: none;
-    z-index: 4;
-}
-
-.cover-flow-card:hover .cf-play-pill,
-.cover-flow-card.is-center .cf-play-pill {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    display: none !important;
 }
 
 /* Song Title & Artist Bottom Card Panel */
@@ -10968,8 +10950,8 @@ body.focus-screen-active #mini-player {
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 24px 12px 12px;
-    background: linear-gradient(to top, rgba(9, 11, 16, 0.96) 0%, rgba(9, 11, 16, 0.8) 55%, transparent 100%);
+    padding: 26px 14px 14px;
+    background: linear-gradient(to top, rgba(9, 11, 16, 0.96) 0%, rgba(9, 11, 16, 0.8) 58%, transparent 100%);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -10978,18 +10960,18 @@ body.focus-screen-active #mini-player {
 }
 
 .cover-flow-card .cf-meta-panel b {
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 700;
     color: #FFFFFF;
     line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
 }
 
 .cover-flow-card .cf-meta-panel i {
-    font-size: 11px;
+    font-size: 11.5px;
     color: rgba(255, 255, 255, 0.72);
     font-style: normal;
     margin-top: 3px;
@@ -11001,15 +10983,15 @@ body.focus-screen-active #mini-player {
 /* Quick Context Menu Button (3-dots) */
 .cover-flow-card .cf-more-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 9px;
+    right: 9px;
     width: 28px;
     height: 28px;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.16);
     color: rgba(255, 255, 255, 0.85);
     display: flex;
     align-items: center;
@@ -11040,22 +11022,23 @@ body.focus-screen-active #mini-player {
 
 .qp-nav-btn {
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 50%;
     width: 34px;
     height: 34px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     transition: all 0.2s ease;
     outline: none;
 }
 
 .qp-nav-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.16);
     color: #FFFFFF;
+    border-color: rgba(255, 255, 255, 0.3);
     transform: scale(1.08);
 }
 
@@ -11067,15 +11050,15 @@ body.focus-screen-active #mini-player {
     .cover-flow-container,
     .cover-flow-container.flow,
     #home-quick-picks-container {
-        padding: 20px calc(50% - 73px) 30px !important;
-        min-height: 240px;
+        padding: 22px calc(50% - 79px) 32px !important;
+        min-height: 260px;
     }
     .cover-flow-card,
     .cover-flow-container .t {
-        flex: 0 0 145px !important;
-        width: 145px !important;
-        height: 202px !important;
-        margin: 0 6px !important;
+        flex: 0 0 158px !important;
+        width: 158px !important;
+        height: 218px !important;
+        margin: 0 -2px !important;
     }
 }
 

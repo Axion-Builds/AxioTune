@@ -5082,41 +5082,59 @@ function onPlayerStateChange(event) {
 
         // ══════════════════════════════════════════════════════════════════════════
         // 🎵 3D COVER FLOW ENGINE (Quick Picks)
-        // Adapted from Apple Cover Flow with refined spacing & glass aesthetics
+        // Infinite Loop + Extra 3D Pop-Out + Clean White Glass Theme
         // ══════════════════════════════════════════════════════════════════════════
 
-        function centerCoverFlowCard(container, card) {
+        function centerCoverFlowCard(container, card, smooth = true) {
             if (!container || !card) return;
             const targetLeft = (card.offsetLeft + card.offsetWidth / 2) - (container.clientWidth / 2);
-            container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+            container.scrollTo({ left: Math.max(0, targetLeft), behavior: smooth ? 'smooth' : 'auto' });
         }
 
         function updateCoverFlow(container) {
             if (!container) return;
-            const c = container.scrollLeft + container.clientWidth / 2;
             const cards = container.querySelectorAll('.cover-flow-card');
             if (!cards || cards.length === 0) return;
 
-            // Spacing divisor tuned for card width (168px) with gentle margin
-            const divisor = 150;
+            const n = container._cfItemCount || Math.floor(cards.length / 3);
+            if (n > 0 && cards.length >= n * 3) {
+                const card0 = cards[0];
+                const cardN = cards[n];
+                if (card0 && cardN) {
+                    const singleSetWidth = cardN.offsetLeft - card0.offsetLeft;
+                    if (singleSetWidth > 100) {
+                        // Infinite seamless loop repositioning
+                        if (container.scrollLeft >= 2 * singleSetWidth - 20) {
+                            container.scrollLeft -= singleSetWidth;
+                        } else if (container.scrollLeft <= singleSetWidth * 0.3) {
+                            container.scrollLeft += singleSetWidth;
+                        }
+                    }
+                }
+            }
+
+            const c = container.scrollLeft + container.clientWidth / 2;
+            const divisor = 160;
 
             cards.forEach(t => {
                 const mid = t.offsetLeft + t.offsetWidth / 2;
                 const d = (mid - c) / divisor;
                 const a = Math.max(-1, Math.min(1, d)); // clamped [-1, 1]
 
-                // Rotate inward, scale down sides, pop active center card in 3D
-                const rotateY = -a * 46;
-                const scale = 1 - Math.abs(a) * 0.14;
-                const translateZ = Math.max(0, (1 - Math.abs(a)) * 24);
+                // "jo card front me aye vo thoda aur ubhar ke aye halksa sa thoda sa pop out ho aur"
+                // Center scale: 1.08, side scale: 0.86
+                const scale = 1.08 - Math.abs(a) * 0.22;
+                // Center card pop-out: 55px forward in 3D perspective
+                const translateZ = Math.max(0, (1 - Math.abs(a)) * 55);
+                const rotateY = -a * 44;
 
                 t.style.transform = `rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
-                t.style.zIndex = Math.max(1, 50 - Math.round(Math.abs(d) * 4));
+                t.style.zIndex = Math.max(1, 60 - Math.round(Math.abs(d) * 5));
 
-                const isCenter = Math.abs(d) < 0.35;
+                const isCenter = Math.abs(d) < 0.32;
                 t.classList.toggle('is-center', isCenter);
 
-                const brightness = 1 - Math.min(0.35, Math.abs(a) * 0.35);
+                const brightness = 1 - Math.min(0.38, Math.abs(a) * 0.38);
                 t.style.filter = `brightness(${brightness.toFixed(3)})`;
             });
         }
@@ -5127,6 +5145,7 @@ function onPlayerStateChange(event) {
             const cards = Array.from(container.querySelectorAll('.cover-flow-card'));
             if (cards.length === 0) return;
 
+            const n = container._cfItemCount || Math.floor(cards.length / 3);
             const c = container.scrollLeft + container.clientWidth / 2;
             let closestIdx = 0;
             let minDiff = Infinity;
@@ -5139,7 +5158,25 @@ function onPlayerStateChange(event) {
                 }
             });
 
-            const targetIdx = Math.max(0, Math.min(cards.length - 1, closestIdx + direction));
+            let targetIdx = closestIdx + direction;
+
+            // Infinite boundary wrap normalization for smooth click progression
+            if (n > 0 && cards.length >= n * 3) {
+                const card0 = cards[0];
+                const cardN = cards[n];
+                if (card0 && cardN) {
+                    const singleSetWidth = cardN.offsetLeft - card0.offsetLeft;
+                    if (targetIdx >= 2 * n) {
+                        targetIdx -= n;
+                        container.scrollLeft -= singleSetWidth;
+                    } else if (targetIdx < n * 0.5) {
+                        targetIdx += n;
+                        container.scrollLeft += singleSetWidth;
+                    }
+                }
+            }
+
+            targetIdx = Math.max(0, Math.min(cards.length - 1, targetIdx));
             centerCoverFlowCard(container, cards[targetIdx]);
         };
 
@@ -5180,7 +5217,20 @@ function onPlayerStateChange(event) {
                 filteredEntries.push(deferredHistory.shift());
             }
 
-            filteredEntries.forEach((item, idx) => {
+            if (filteredEntries.length === 0) return;
+
+            // Ensure base list is at least 10 items for a rich infinite loop
+            let baseList = [...filteredEntries];
+            while (baseList.length < 10) {
+                baseList = baseList.concat(filteredEntries);
+            }
+
+            // Triple Buffer for infinite wrapping: [Clone Before] + [Main Real] + [Clone After]
+            const loopList = [...baseList, ...baseList, ...baseList];
+            const baseCount = baseList.length;
+            container._cfItemCount = baseCount;
+
+            function renderCard(item, overallIdx) {
                 const title = item.title || item.name || 'Unknown Title';
                 const subtitle = item.artist || item.uploader || 'Unknown Artist';
                 const videoId = item.videoId || item.id;
@@ -5195,15 +5245,13 @@ function onPlayerStateChange(event) {
 
                 const card = document.createElement('div');
                 card.className = 'cover-flow-card t';
-                card.dataset.index = idx;
+                card.dataset.index = overallIdx;
                 card.dataset.videoId = videoId || '';
                 card.setAttribute('data-query', query);
+                // No play pill! Clean album art + specular sheen + text metadata panel
                 card.innerHTML = `
                     <img src="${thumb}" alt="" class="cf-cover-img" loading="lazy" decoding="async" onerror="if(this.src!=='${fallbackThumb}'){this.src='${fallbackThumb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
                     <div class="cf-glass-overlay"></div>
-                    <div class="cf-play-pill">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    </div>
                     <div class="cf-meta-panel">
                         <b title="${escapeHtml(title)}">${escapeHtml(title)}</b>
                         <i title="${escapeHtml(subtitle)}">${escapeHtml(subtitle)}</i>
@@ -5229,7 +5277,11 @@ function onPlayerStateChange(event) {
                     }
                 };
 
-                container.appendChild(card);
+                return card;
+            }
+
+            loopList.forEach((item, idx) => {
+                container.appendChild(renderCard(item, idx));
             });
 
             // Attach scroll physics listener
@@ -5281,12 +5333,11 @@ function onPlayerStateChange(event) {
                 });
             }
 
-            // Center initial card with pleasant 3D fan-out
+            // Position initial view at middle set [Main Real]
             setTimeout(() => {
                 const cards = container.querySelectorAll('.cover-flow-card');
-                if (cards.length > 0) {
-                    const centerIdx = Math.min(3, Math.floor(cards.length / 2));
-                    centerCoverFlowCard(container, cards[centerIdx]);
+                if (cards.length > baseCount) {
+                    centerCoverFlowCard(container, cards[baseCount], false);
                     updateCoverFlow(container);
                 }
             }, 60);
