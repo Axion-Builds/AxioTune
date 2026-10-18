@@ -5085,70 +5085,106 @@ function onPlayerStateChange(event) {
         // Infinite Loop + Extra 3D Pop-Out + Clean White Glass Theme
         // ══════════════════════════════════════════════════════════════════════════
 
-        function centerCoverFlowCard(container, card, smooth = true) {
-            if (!container || !card) return;
-            const targetLeft = (card.offsetLeft + card.offsetWidth / 2) - (container.clientWidth / 2);
-            container.scrollTo({ left: Math.max(0, targetLeft), behavior: smooth ? 'smooth' : 'auto' });
+        const cfState = {
+            cards: [],
+            items: [],
+            currentIndex: 0,
+            dragFraction: 0,
+            isDragging: false,
+            isSwiping: false,
+            startX: 0,
+            startY: 0,
+            startTime: 0,
+            lastX: 0,
+            justDragged: false,
+            listenersAttached: false
+        };
+
+        function renderCoverFlow(withTransition = true) {
+            const cards = cfState.cards;
+            if (!cards || cards.length === 0) return;
+            const N = cards.length;
+            const isMobile = window.innerWidth <= 600;
+            const step1 = isMobile ? 116 : 138;
+            const stepRest = isMobile ? 82 : 100;
+            const center = cfState.currentIndex + cfState.dragFraction;
+
+            cards.forEach((card, i) => {
+                let d = (i - center) % N;
+                while (d > N / 2) d -= N;
+                while (d <= -N / 2) d += N;
+
+                const absD = Math.abs(d);
+                const sign = d === 0 ? 0 : (d > 0 ? 1 : -1);
+
+                if (absD > 4.2) {
+                    card.style.transition = 'none';
+                    card.style.opacity = '0';
+                    card.style.visibility = 'hidden';
+                    card.style.pointerEvents = 'none';
+                    card.style.transform = `translateX(${sign * 700}px) scale(0.5) translateZ(-100px)`;
+                    card.classList.remove('is-center');
+                    return;
+                }
+
+                card.style.visibility = 'visible';
+                card.style.pointerEvents = 'auto';
+
+                if (!withTransition || cfState.isDragging) {
+                    card.style.transition = 'none';
+                } else {
+                    card.style.transition = 'transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, filter 0.35s ease, border-color 0.3s ease, box-shadow 0.3s ease';
+                }
+
+                let translateX = 0;
+                if (absD > 0) {
+                    if (absD <= 1) {
+                        translateX = sign * (absD * step1);
+                    } else {
+                        translateX = sign * (step1 + (absD - 1) * stepRest);
+                    }
+                }
+
+                const clampedD = Math.max(-1, Math.min(1, d));
+                const rotateY = -clampedD * 42;
+                const scale = Math.max(0.66, 1.08 - Math.min(1, absD) * 0.20 - Math.max(0, absD - 1) * 0.05);
+                const translateZ = Math.max(0, (1 - Math.min(1, absD)) * 55);
+                const zIndex = Math.max(1, 60 - Math.round(absD * 8));
+
+                card.style.zIndex = zIndex;
+
+                let opacity = 1;
+                if (absD > 2.8) {
+                    opacity = Math.max(0, 1 - (absD - 2.8) / 1.4);
+                }
+                card.style.opacity = opacity.toFixed(3);
+
+                const brightness = Math.max(0.55, 1 - Math.min(1, absD) * 0.35);
+                card.style.filter = `brightness(${brightness.toFixed(3)})`;
+
+                const isCenter = absD < 0.35;
+                card.classList.toggle('is-center', isCenter);
+
+                card.style.transform = `translateX(${translateX.toFixed(1)}px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
+            });
         }
 
-        function updateCoverFlow(container) {
-            if (!container) return;
-            const cards = container.querySelectorAll('.cover-flow-card');
-            if (!cards || cards.length === 0) return;
-
-            const c = container.scrollLeft + container.clientWidth / 2;
-            const divisor = 160;
-
-            cards.forEach(t => {
-                const mid = t.offsetLeft + t.offsetWidth / 2;
-                const d = (mid - c) / divisor;
-                const a = Math.max(-1, Math.min(1, d)); // clamped [-1, 1]
-
-                // "jo card front me aye vo thoda aur ubhar ke aye halksa sa thoda sa pop out ho aur"
-                // Center scale: 1.08, side scale: 0.86
-                const scale = 1.08 - Math.abs(a) * 0.22;
-                // Center card pop-out: 55px forward in 3D perspective
-                const translateZ = Math.max(0, (1 - Math.abs(a)) * 55);
-                const rotateY = -a * 44;
-
-                t.style.transform = `rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
-                t.style.zIndex = Math.max(1, 60 - Math.round(Math.abs(d) * 5));
-
-                const isCenter = Math.abs(d) < 0.32;
-                t.classList.toggle('is-center', isCenter);
-
-                const brightness = 1 - Math.min(0.38, Math.abs(a) * 0.38);
-                t.style.filter = `brightness(${brightness.toFixed(3)})`;
-            });
+        function centerCoverFlowCard(container, card, smooth = true) {
+            if (!card || !cfState.cards) return;
+            const idx = cfState.cards.indexOf(card);
+            if (idx !== -1) {
+                cfState.currentIndex = idx;
+                cfState.dragFraction = 0;
+                renderCoverFlow(smooth);
+            }
         }
 
         window.scrollQuickPicks = function(direction) {
-            const container = document.getElementById('home-quick-picks-container');
-            if (!container) return;
-            const cards = Array.from(container.querySelectorAll('.cover-flow-card'));
-            if (cards.length === 0) return;
-
-            const c = container.scrollLeft + container.clientWidth / 2;
-            let closestIdx = 0;
-            let minDiff = Infinity;
-            cards.forEach((card, idx) => {
-                const mid = card.offsetLeft + card.offsetWidth / 2;
-                const diff = Math.abs(mid - c);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    closestIdx = idx;
-                }
-            });
-
-            let targetIdx = closestIdx + direction;
-            // Infinite loop wrapping: when reaching end, seamlessly loop back to start!
-            if (targetIdx >= cards.length) {
-                targetIdx = 0;
-            } else if (targetIdx < 0) {
-                targetIdx = cards.length - 1;
-            }
-
-            centerCoverFlowCard(container, cards[targetIdx], true);
+            if (!cfState.cards || cfState.cards.length === 0) return;
+            const N = cfState.cards.length;
+            cfState.currentIndex = (cfState.currentIndex + direction + N) % N;
+            cfState.dragFraction = 0;
+            renderCoverFlow(true);
         };
 
         function populateCoverFlow(containerId, entries) {
@@ -5190,16 +5226,16 @@ function onPlayerStateChange(event) {
 
             if (filteredEntries.length === 0) return;
 
-            // Ensure base list is at least 10 items for a rich infinite loop
+            // Ensure base list is at least 12 items for seamless circular off-screen wrapping
             let baseList = [...filteredEntries];
-            while (baseList.length < 10) {
+            while (baseList.length < 12) {
                 baseList = baseList.concat(filteredEntries);
             }
 
-            // Triple Buffer for infinite wrapping: [Clone Before] + [Main Real] + [Clone After]
-            const loopList = [...baseList, ...baseList, ...baseList];
-            const baseCount = baseList.length;
-            container._cfItemCount = baseCount;
+            cfState.items = baseList;
+            cfState.cards = [];
+            cfState.currentIndex = 0;
+            cfState.dragFraction = 0;
 
             function renderCard(item, overallIdx) {
                 const title = item.title || item.name || 'Unknown Title';
@@ -5234,7 +5270,8 @@ function onPlayerStateChange(event) {
 
                 // Immediate playback on click + center in Cover Flow
                 card.onclick = () => {
-                    centerCoverFlowCard(container, card);
+                    if (cfState.justDragged) return;
+                    centerCoverFlowCard(container, card, true);
                     if (item.playlistId || item.type === 'playlist') {
                         showRemotePlaylistPage(item.playlistId);
                     } else if (item.browseId || item.type === 'album') {
@@ -5251,67 +5288,150 @@ function onPlayerStateChange(event) {
                 return card;
             }
 
-            loopList.forEach((item, idx) => {
-                container.appendChild(renderCard(item, idx));
+            baseList.forEach((item, idx) => {
+                const cardEl = renderCard(item, idx);
+                container.appendChild(cardEl);
+                cfState.cards.push(cardEl);
             });
 
-            // Attach scroll physics listener
-            if (!container._cfInitialized) {
-                container._cfInitialized = true;
-                let ticking = false;
-                container.addEventListener('scroll', () => {
-                    if (!ticking) {
-                        requestAnimationFrame(() => {
-                            updateCoverFlow(container);
-                            ticking = false;
-                        });
-                        ticking = true;
+            // Initial render
+            renderCoverFlow(false);
+
+            // Attach touch, pointer, mouse wheel and resize listeners once
+            if (!cfState.listenersAttached) {
+                cfState.listenersAttached = true;
+
+                const onPointerStart = (clientX, clientY, target) => {
+                    if (target && target.closest && target.closest('.cf-more-btn')) return;
+                    cfState.startX = clientX;
+                    cfState.startY = clientY;
+                    cfState.lastX = clientX;
+                    cfState.startTime = performance.now();
+                    cfState.isDragging = false;
+                    cfState.isSwiping = false;
+                    cfState.dragFraction = 0;
+                };
+
+                const onPointerMove = (clientX, clientY, e) => {
+                    if (cfState.startX === 0 && cfState.startY === 0) return;
+                    const deltaX = clientX - cfState.startX;
+                    const deltaY = clientY - cfState.startY;
+
+                    if (!cfState.isSwiping) {
+                        if (Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY) * 1.1) {
+                            cfState.isSwiping = true;
+                            cfState.isDragging = true;
+                            container.classList.add('is-dragging');
+                        } else if (Math.abs(deltaY) > 10) {
+                            // Vertical scroll, let browser handle
+                            return;
+                        }
                     }
+
+                    if (cfState.isSwiping) {
+                        if (e && e.cancelable) e.preventDefault();
+                        const isMobile = window.innerWidth <= 600;
+                        const step = isMobile ? 116 : 138;
+                        cfState.lastX = clientX;
+                        // Dragging left (deltaX < 0) pulls forward
+                        cfState.dragFraction = -deltaX / step;
+                        renderCoverFlow(false);
+                    }
+                };
+
+                const onPointerEnd = () => {
+                    if (!cfState.isSwiping && !cfState.isDragging) {
+                        cfState.startX = 0;
+                        cfState.startY = 0;
+                        return;
+                    }
+                    container.classList.remove('is-dragging');
+                    cfState.isDragging = false;
+
+                    const elapsed = Math.max(1, performance.now() - cfState.startTime);
+                    const totalDelta = cfState.lastX - cfState.startX;
+                    const velocity = totalDelta / elapsed; // px per ms
+                    const N = cfState.cards.length;
+
+                    let stepAdvance = 0;
+                    if (Math.abs(velocity) > 0.35) {
+                        stepAdvance = velocity > 0 ? -1 : 1;
+                    } else {
+                        stepAdvance = Math.round(cfState.dragFraction);
+                    }
+
+                    cfState.currentIndex = (cfState.currentIndex + stepAdvance + N * 10) % N;
+                    cfState.dragFraction = 0;
+                    cfState.startX = 0;
+                    cfState.startY = 0;
+                    cfState.isSwiping = false;
+
+                    cfState.justDragged = true;
+                    setTimeout(() => { cfState.justDragged = false; }, 150);
+
+                    renderCoverFlow(true);
+                };
+
+                // Mouse events on container
+                container.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    onPointerStart(e.clientX, e.clientY, e.target);
+                    const onMouseMove = (ev) => onPointerMove(ev.clientX, ev.clientY, ev);
+                    const onMouseUp = () => {
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                        onPointerEnd();
+                    };
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+                });
+
+                // Touch events
+                container.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return;
+                    onPointerStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
                 }, { passive: true });
 
-                // Horizontal mouse wheel scrolling
+                container.addEventListener('touchmove', (e) => {
+                    if (e.touches.length !== 1) return;
+                    onPointerMove(e.touches[0].clientX, e.touches[0].clientY, e);
+                }, { passive: false });
+
+                container.addEventListener('touchend', () => {
+                    onPointerEnd();
+                }, { passive: true });
+
+                container.addEventListener('touchcancel', () => {
+                    onPointerEnd();
+                }, { passive: true });
+
+                // Mouse wheel horizontal navigation
+                let wheelTimeout = null;
+                let wheelAccum = 0;
                 container.addEventListener('wheel', (e) => {
-                    if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+                    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+                    if (Math.abs(delta) > 10) {
                         e.preventDefault();
-                        container.scrollLeft += e.deltaY * 0.9;
+                        wheelAccum += delta;
+                        if (Math.abs(wheelAccum) > 40) {
+                            const dir = wheelAccum > 0 ? 1 : -1;
+                            wheelAccum = 0;
+                            window.scrollQuickPicks(dir);
+                        }
+                        clearTimeout(wheelTimeout);
+                        wheelTimeout = setTimeout(() => { wheelAccum = 0; }, 200);
                     }
                 }, { passive: false });
 
-                // Drag to flick/scroll with mouse
-                let isDown = false;
-                let startX = 0;
-                let scrollStart = 0;
-
-                container.addEventListener('mousedown', (e) => {
-                    if (e.button !== 0 || e.target.closest('.cf-more-btn')) return;
-                    isDown = true;
-                    startX = e.pageX - container.offsetLeft;
-                    scrollStart = container.scrollLeft;
-                    container.classList.add('is-dragging');
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    if (!isDown) return;
-                    const x = e.pageX - container.offsetLeft;
-                    const walk = (x - startX) * 1.25;
-                    container.scrollLeft = scrollStart - walk;
-                });
-
-                window.addEventListener('mouseup', () => {
-                    if (!isDown) return;
-                    isDown = false;
-                    container.classList.remove('is-dragging');
+                // Window resize handler
+                let resizeTimeout = null;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => {
+                        renderCoverFlow(false);
+                    }, 100);
                 });
             }
-
-            // Position initial view at middle set [Main Real] instantly
-            requestAnimationFrame(() => {
-                const cards = container.querySelectorAll('.cover-flow-card');
-                if (cards.length > baseCount) {
-                    centerCoverFlowCard(container, cards[baseCount], false);
-                }
-                updateCoverFlow(container);
-            });
 
             setupLazyCovers(container);
         }

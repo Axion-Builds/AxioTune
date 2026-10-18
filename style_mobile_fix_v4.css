@@ -10842,23 +10842,23 @@ body.focus-screen-active #mini-player {
 .cover-flow-container,
 .cover-flow-container.flow,
 #home-quick-picks-container {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-    perspective: 1100px !important;
-    -webkit-perspective: 1100px !important;
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    height: 310px !important;
+    min-height: 310px !important;
+    overflow: hidden !important;
+    perspective: 1200px !important;
+    -webkit-perspective: 1200px !important;
     transform-style: preserve-3d !important;
     -webkit-transform-style: preserve-3d !important;
-    padding: 32px calc(50% - 94px) 48px !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-    -webkit-overflow-scrolling: touch !important;
-    user-select: none;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    touch-action: pan-y !important;
     cursor: grab;
-    min-height: 315px;
     box-sizing: border-box !important;
+    padding: 0 !important;
+    margin: 10px 0 20px 0 !important;
 }
 
 .cover-flow-container::-webkit-scrollbar,
@@ -10871,41 +10871,47 @@ body.focus-screen-active #mini-player {
 .cover-flow-container.is-dragging,
 #home-quick-picks-container.is-dragging {
     cursor: grabbing !important;
-    scroll-behavior: auto !important;
 }
 
 /* Individual Cover Flow Card (Slightly larger, closer together, pure white/ambient glass) */
 .cover-flow-card,
 .cover-flow-container .t {
-    flex: 0 0 188px !important;
-    width: 188px !important;
-    height: 258px !important;
-    margin: 0 -3px !important; /* Closer together as requested */
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    margin-left: -95px !important;
+    margin-top: -130px !important;
+    width: 190px !important;
+    height: 260px !important;
     border-radius: 18px !important;
-    position: relative !important;
     overflow: hidden !important;
     background: #12141a;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
     cursor: pointer !important;
     transform-origin: center center !important;
-    transition: box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s ease, border-color 0.28s ease !important;
-    will-change: transform, z-index, filter !important;
     transform-style: preserve-3d !important;
     -webkit-transform-style: preserve-3d !important;
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important; /* Clean white glass outline */
+    will-change: transform, opacity, filter, z-index !important;
+    transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, filter 0.35s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important; /* Clean white glass outline */
+}
+
+.cover-flow-container.is-dragging .cover-flow-card,
+#home-quick-picks-container.is-dragging .cover-flow-card {
+    transition: none !important;
 }
 
 .cover-flow-card:hover {
-    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.8), 0 0 26px rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 24px 55px rgba(0, 0, 0, 0.85), 0 0 28px rgba(255, 255, 255, 0.22) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Center Active Card: Extra prominent 3D pop-out with crisp white halo */
 .cover-flow-card.is-center {
-    border-color: rgba(255, 255, 255, 0.72) !important;
-    box-shadow: 0 28px 65px rgba(0, 0, 0, 0.9), 0 0 35px rgba(255, 255, 255, 0.28) !important;
+    border-color: rgba(255, 255, 255, 0.78) !important;
+    box-shadow: 0 28px 65px rgba(0, 0, 0, 0.92), 0 0 35px rgba(255, 255, 255, 0.3) !important;
 }
 
 /* Real Album Artwork Cover */
@@ -11049,15 +11055,16 @@ body.focus-screen-active #mini-player {
     .cover-flow-container,
     .cover-flow-container.flow,
     #home-quick-picks-container {
-        padding: 22px calc(50% - 79px) 32px !important;
-        min-height: 260px;
+        height: 265px !important;
+        min-height: 265px !important;
+        margin: 6px 0 16px 0 !important;
     }
     .cover-flow-card,
     .cover-flow-container .t {
-        flex: 0 0 158px !important;
         width: 158px !important;
         height: 218px !important;
-        margin: 0 -2px !important;
+        margin-left: -79px !important;
+        margin-top: -109px !important;
     }
 }
 
