@@ -10893,14 +10893,10 @@ body.focus-screen-active #mini-player {
     -webkit-transform-style: preserve-3d !important;
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
-    will-change: transform, opacity, filter, z-index !important;
-    transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, filter 0.35s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+    will-change: transform !important;
+    opacity: 1 !important;
     border: 1px solid rgba(255, 255, 255, 0.14) !important; /* Clean white glass outline */
-}
-
-.cover-flow-container.is-dragging .cover-flow-card,
-#home-quick-picks-container.is-dragging .cover-flow-card {
-    transition: none !important;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
 }
 
 .cover-flow-card:hover {

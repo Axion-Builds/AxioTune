@@ -5088,53 +5088,48 @@ function onPlayerStateChange(event) {
         const cfState = {
             cards: [],
             items: [],
-            currentIndex: 0,
-            dragFraction: 0,
+            currentPos: 0,
+            targetPos: 0,
+            animFrameId: null,
             isDragging: false,
             isSwiping: false,
             startX: 0,
             startY: 0,
             startTime: 0,
             lastX: 0,
+            dragStartPos: 0,
             justDragged: false,
             listenersAttached: false
         };
 
-        function renderCoverFlow(withTransition = true) {
+        function renderCoverFlowFrame(pos) {
             const cards = cfState.cards;
             if (!cards || cards.length === 0) return;
             const N = cards.length;
             const isMobile = window.innerWidth <= 600;
             const step1 = isMobile ? 116 : 138;
-            const stepRest = isMobile ? 82 : 100;
-            const center = cfState.currentIndex + cfState.dragFraction;
+            const stepRest = isMobile ? 80 : 96;
 
             cards.forEach((card, i) => {
-                let d = (i - center) % N;
+                let d = (i - (pos % N)) % N;
                 while (d > N / 2) d -= N;
                 while (d <= -N / 2) d += N;
 
                 const absD = Math.abs(d);
                 const sign = d === 0 ? 0 : (d > 0 ? 1 : -1);
 
-                if (absD > 4.2) {
-                    card.style.transition = 'none';
-                    card.style.opacity = '0';
+                // Only hide cards at the very back wrap-around boundary so they don't clip through
+                if (absD > Math.min(13, N / 2 - 0.5)) {
                     card.style.visibility = 'hidden';
                     card.style.pointerEvents = 'none';
-                    card.style.transform = `translateX(${sign * 700}px) scale(0.5) translateZ(-100px)`;
-                    card.classList.remove('is-center');
                     return;
                 }
 
                 card.style.visibility = 'visible';
                 card.style.pointerEvents = 'auto';
-
-                if (!withTransition || cfState.isDragging) {
-                    card.style.transition = 'none';
-                } else {
-                    card.style.transition = 'transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, filter 0.35s ease, border-color 0.3s ease, box-shadow 0.3s ease';
-                }
+                // 100% full opacity across all visible cards: zero side fade per user mandate
+                card.style.opacity = '1';
+                card.style.filter = 'none';
 
                 let translateX = 0;
                 if (absD > 0) {
@@ -5145,46 +5140,65 @@ function onPlayerStateChange(event) {
                     }
                 }
 
-                const clampedD = Math.max(-1, Math.min(1, d));
-                const rotateY = -clampedD * 42;
-                const scale = Math.max(0.66, 1.08 - Math.min(1, absD) * 0.20 - Math.max(0, absD - 1) * 0.05);
-                const translateZ = Math.max(0, (1 - Math.min(1, absD)) * 55);
-                const zIndex = Math.max(1, 60 - Math.round(absD * 8));
+                const a = Math.max(-1, Math.min(1, d));
+                const rotateY = -a * 46;
+                const scale = Math.max(0.72, 1.08 - Math.abs(a) * 0.18 - Math.max(0, absD - 1) * 0.03);
+                const translateZ = Math.max(0, (1 - Math.abs(a)) * 55);
+                const zIndex = Math.max(1, 100 - Math.round(absD * 5));
 
                 card.style.zIndex = zIndex;
-
-                let opacity = 1;
-                if (absD > 2.8) {
-                    opacity = Math.max(0, 1 - (absD - 2.8) / 1.4);
-                }
-                card.style.opacity = opacity.toFixed(3);
-
-                const brightness = Math.max(0.55, 1 - Math.min(1, absD) * 0.35);
-                card.style.filter = `brightness(${brightness.toFixed(3)})`;
-
                 const isCenter = absD < 0.35;
                 card.classList.toggle('is-center', isCenter);
 
-                card.style.transform = `translateX(${translateX.toFixed(1)}px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
+                card.style.transform = `translateX(${translateX.toFixed(2)}px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
             });
         }
 
+        function animateCoverFlow() {
+            if (cfState.animFrameId) cancelAnimationFrame(cfState.animFrameId);
+
+            function loop() {
+                const diff = cfState.targetPos - cfState.currentPos;
+                if (Math.abs(diff) > 0.001) {
+                    cfState.currentPos += diff * 0.14;
+                    renderCoverFlowFrame(cfState.currentPos);
+                    cfState.animFrameId = requestAnimationFrame(loop);
+                } else {
+                    cfState.currentPos = cfState.targetPos;
+                    const N = cfState.cards.length;
+                    if (N > 0) {
+                        cfState.currentPos = ((cfState.currentPos % N) + N) % N;
+                        cfState.targetPos = cfState.currentPos;
+                    }
+                    renderCoverFlowFrame(cfState.currentPos);
+                    cfState.animFrameId = null;
+                }
+            }
+            cfState.animFrameId = requestAnimationFrame(loop);
+        }
+
         function centerCoverFlowCard(container, card, smooth = true) {
-            if (!card || !cfState.cards) return;
+            if (!card || !cfState.cards || cfState.cards.length === 0) return;
             const idx = cfState.cards.indexOf(card);
-            if (idx !== -1) {
-                cfState.currentIndex = idx;
-                cfState.dragFraction = 0;
-                renderCoverFlow(smooth);
+            if (idx === -1) return;
+            const N = cfState.cards.length;
+            let diff = (idx - (cfState.currentPos % N)) % N;
+            while (diff > N / 2) diff -= N;
+            while (diff <= -N / 2) diff += N;
+            cfState.targetPos = cfState.currentPos + diff;
+            if (smooth) {
+                animateCoverFlow();
+            } else {
+                if (cfState.animFrameId) cancelAnimationFrame(cfState.animFrameId);
+                cfState.currentPos = cfState.targetPos;
+                renderCoverFlowFrame(cfState.currentPos);
             }
         }
 
         window.scrollQuickPicks = function(direction) {
             if (!cfState.cards || cfState.cards.length === 0) return;
-            const N = cfState.cards.length;
-            cfState.currentIndex = (cfState.currentIndex + direction + N) % N;
-            cfState.dragFraction = 0;
-            renderCoverFlow(true);
+            cfState.targetPos += direction;
+            animateCoverFlow();
         };
 
         function populateCoverFlow(containerId, entries) {
@@ -5226,16 +5240,17 @@ function onPlayerStateChange(event) {
 
             if (filteredEntries.length === 0) return;
 
-            // Ensure base list is at least 12 items for seamless circular off-screen wrapping
+            // Ensure base list is at least 14 items for rich circular panoramic layout
             let baseList = [...filteredEntries];
-            while (baseList.length < 12) {
+            while (baseList.length < 14) {
                 baseList = baseList.concat(filteredEntries);
             }
 
             cfState.items = baseList;
             cfState.cards = [];
-            cfState.currentIndex = 0;
-            cfState.dragFraction = 0;
+            cfState.currentPos = 0;
+            cfState.targetPos = 0;
+            if (cfState.animFrameId) cancelAnimationFrame(cfState.animFrameId);
 
             function renderCard(item, overallIdx) {
                 const title = item.title || item.name || 'Unknown Title';
@@ -5255,7 +5270,6 @@ function onPlayerStateChange(event) {
                 card.dataset.index = overallIdx;
                 card.dataset.videoId = videoId || '';
                 card.setAttribute('data-query', query);
-                // No play pill! Clean album art + specular sheen + text metadata panel
                 card.innerHTML = `
                     <img src="${thumb}" alt="" class="cf-cover-img" loading="lazy" decoding="async" onerror="if(this.src!=='${fallbackThumb}'){this.src='${fallbackThumb}';}else{this.onerror=null;this.src='default_cover.jpg';}">
                     <div class="cf-glass-overlay"></div>
@@ -5294,8 +5308,8 @@ function onPlayerStateChange(event) {
                 cfState.cards.push(cardEl);
             });
 
-            // Initial render
-            renderCoverFlow(false);
+            // Initial frame render
+            renderCoverFlowFrame(0);
 
             // Attach touch, pointer, mouse wheel and resize listeners once
             if (!cfState.listenersAttached) {
@@ -5303,13 +5317,14 @@ function onPlayerStateChange(event) {
 
                 const onPointerStart = (clientX, clientY, target) => {
                     if (target && target.closest && target.closest('.cf-more-btn')) return;
+                    if (cfState.animFrameId) cancelAnimationFrame(cfState.animFrameId);
                     cfState.startX = clientX;
                     cfState.startY = clientY;
                     cfState.lastX = clientX;
                     cfState.startTime = performance.now();
+                    cfState.dragStartPos = cfState.currentPos;
                     cfState.isDragging = false;
                     cfState.isSwiping = false;
-                    cfState.dragFraction = 0;
                 };
 
                 const onPointerMove = (clientX, clientY, e) => {
@@ -5323,19 +5338,18 @@ function onPlayerStateChange(event) {
                             cfState.isDragging = true;
                             container.classList.add('is-dragging');
                         } else if (Math.abs(deltaY) > 10) {
-                            // Vertical scroll, let browser handle
-                            return;
+                            return; // Allow vertical scroll
                         }
                     }
 
                     if (cfState.isSwiping) {
                         if (e && e.cancelable) e.preventDefault();
                         const isMobile = window.innerWidth <= 600;
-                        const step = isMobile ? 116 : 138;
+                        const dragStep = isMobile ? 116 : 138;
                         cfState.lastX = clientX;
-                        // Dragging left (deltaX < 0) pulls forward
-                        cfState.dragFraction = -deltaX / step;
-                        renderCoverFlow(false);
+                        cfState.currentPos = cfState.dragStartPos - (deltaX / dragStep);
+                        cfState.targetPos = cfState.currentPos;
+                        renderCoverFlowFrame(cfState.currentPos);
                     }
                 };
 
@@ -5351,17 +5365,13 @@ function onPlayerStateChange(event) {
                     const elapsed = Math.max(1, performance.now() - cfState.startTime);
                     const totalDelta = cfState.lastX - cfState.startX;
                     const velocity = totalDelta / elapsed; // px per ms
-                    const N = cfState.cards.length;
 
-                    let stepAdvance = 0;
-                    if (Math.abs(velocity) > 0.35) {
-                        stepAdvance = velocity > 0 ? -1 : 1;
-                    } else {
-                        stepAdvance = Math.round(cfState.dragFraction);
+                    let flickOffset = 0;
+                    if (Math.abs(velocity) > 0.3) {
+                        flickOffset = -Math.sign(velocity) * Math.min(2, Math.round(Math.abs(velocity) * 1.6));
                     }
+                    cfState.targetPos = Math.round(cfState.currentPos + flickOffset);
 
-                    cfState.currentIndex = (cfState.currentIndex + stepAdvance + N * 10) % N;
-                    cfState.dragFraction = 0;
                     cfState.startX = 0;
                     cfState.startY = 0;
                     cfState.isSwiping = false;
@@ -5369,7 +5379,7 @@ function onPlayerStateChange(event) {
                     cfState.justDragged = true;
                     setTimeout(() => { cfState.justDragged = false; }, 150);
 
-                    renderCoverFlow(true);
+                    animateCoverFlow();
                 };
 
                 // Mouse events on container
@@ -5428,7 +5438,7 @@ function onPlayerStateChange(event) {
                 window.addEventListener('resize', () => {
                     clearTimeout(resizeTimeout);
                     resizeTimeout = setTimeout(() => {
-                        renderCoverFlow(false);
+                        renderCoverFlowFrame(cfState.currentPos);
                     }, 100);
                 });
             }
