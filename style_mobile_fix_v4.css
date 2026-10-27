@@ -1965,86 +1965,170 @@
         /* ══════════════════════════════════════════════════════════════════
            🎤 BETTER-LYRICS COMPACT GLASS FLOATING DOCK (VisionOS Style)
            ══════════════════════════════════════════════════════════════════ */
+        /* ══════════════════════════════════════════════════════════════════
+           🍎 APPLE UI LIQUID GLASS FLOATING DOCK (VISIONOS / SONOMA SPEC)
+           Fluid Expand & Contract + Specular Refraction Optics
+           ══════════════════════════════════════════════════════════════════ */
         .lyrics-floating-dock {
             position: absolute;
-            bottom: 28px;
-            right: 40px;
+            bottom: 26px;
+            right: 36px;
             z-index: 120;
             display: inline-flex;
             align-items: center;
             gap: 5px;
             padding: 5px 8px;
-            background: rgba(18, 18, 26, 0.78);
-            backdrop-filter: blur(28px) saturate(200%) contrast(110%);
-            -webkit-backdrop-filter: blur(28px) saturate(200%) contrast(110%);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-top: 1px solid rgba(255, 255, 255, 0.35);
-            border-radius: 30px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.04) 42%, rgba(14, 16, 26, 0.78) 100%);
+            backdrop-filter: blur(42px) saturate(215%) contrast(110%);
+            -webkit-backdrop-filter: blur(42px) saturate(215%) contrast(110%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-top: 1.2px solid rgba(255, 255, 255, 0.52);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 9999px;
             box-shadow:
-                0 14px 34px -6px rgba(0, 0, 0, 0.65),
-                0 4px 12px rgba(0, 0, 0, 0.4),
-                inset 0 1px 1px rgba(255, 255, 255, 0.35);
-            transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+                0 18px 42px -6px rgba(0, 0, 0, 0.65),
+                0 6px 18px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1.5px rgba(255, 255, 255, 0.55),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.25);
+            transition: all 0.38s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
             overflow: visible;
+        }
+
+        /* Ambient liquid specular reflection line */
+        .lyrics-floating-dock::before {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 14px;
+            right: 14px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.75) 45%, rgba(255, 255, 255, 0.75) 55%, transparent 100%);
+            border-radius: 9999px;
+            pointer-events: none;
+            opacity: 0.85;
         }
 
         .lyrics-floating-dock.hidden {
             opacity: 0 !important;
             pointer-events: none !important;
-            transform: translateY(12px) scale(0.95);
+            transform: translateY(14px) scale(0.92);
         }
 
-        .lyrics-floating-dock:hover,
-        .lyrics-floating-dock.expanded {
+        .lyrics-floating-dock:hover {
             border-color: rgba(255, 255, 255, 0.28);
+            border-top-color: rgba(255, 255, 255, 0.65);
             box-shadow:
-                0 20px 45px -8px rgba(0, 0, 0, 0.8),
-                inset 0 1px 1.5px rgba(255, 255, 255, 0.5);
+                0 22px 50px -8px rgba(0, 0, 0, 0.75),
+                0 8px 24px rgba(0, 0, 0, 0.45),
+                inset 0 1px 2px rgba(255, 255, 255, 0.65);
         }
 
-        /* Source Selector Group — Always visible and prominent in floating dock */
+        /* ── CONTRACTED / COMPACT CAPSULE STATE (Apple Minimal) ── */
+        .lyrics-floating-dock.is-contracted {
+            padding: 4px 6px 4px 6px;
+            gap: 3px;
+            box-shadow:
+                0 12px 30px -6px rgba(0, 0, 0, 0.55),
+                0 4px 12px rgba(0, 0, 0, 0.35),
+                inset 0 1px 1.2px rgba(255, 255, 255, 0.5);
+        }
+
+        .lyrics-floating-dock.is-contracted .lyrics-dock-collapsible {
+            max-width: 0 !important;
+            opacity: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            pointer-events: none !important;
+            overflow: hidden !important;
+            transform: scale(0.85) !important;
+            border-width: 0 !important;
+        }
+
+        /* Collapsible items smooth liquid spring */
+        .lyrics-dock-collapsible {
+            transition: max-width 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.25s ease,
+                        transform 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+                        margin 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+                        padding 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* ── EXPANDED STATE (Full Feature Richness) ── */
+        .lyrics-floating-dock.is-expanded {
+            padding: 5px 8px;
+            gap: 5px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.17) 0%, rgba(255, 255, 255, 0.05) 40%, rgba(14, 16, 26, 0.82) 100%);
+            border-color: rgba(255, 255, 255, 0.28);
+            border-top-color: rgba(255, 255, 255, 0.7);
+            box-shadow:
+                0 24px 54px -8px rgba(0, 0, 0, 0.8),
+                0 8px 24px rgba(0, 0, 0, 0.48),
+                inset 0 1px 2px rgba(255, 255, 255, 0.7);
+        }
+
+        .lyrics-floating-dock.is-expanded .lyrics-dock-arrow-btn.lyrics-dock-collapsible {
+            max-width: 24px;
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        .lyrics-floating-dock.is-expanded #lyrics-dock-extra-group.lyrics-dock-collapsible {
+            max-width: 300px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        /* Source Selector Group (Inner Liquid Glass Pill) */
         .lyrics-dock-source-group {
             position: relative;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 2px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 2px 5px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            max-width: 240px;
-            opacity: 1;
-            overflow: visible;
-            pointer-events: auto;
-            margin-right: 3px;
-            transition: all 0.25s ease;
+            background: rgba(255, 255, 255, 0.09);
+            border-radius: 9999px;
+            padding: 2px 4px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-top: 1px solid rgba(255, 255, 255, 0.34);
+            box-shadow: inset 0 1px 0.8px rgba(255, 255, 255, 0.25);
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .lyrics-dock-source-group:hover {
-            background: rgba(255, 255, 255, 0.14);
-            border-color: rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.32);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
         }
 
         .lyrics-dock-arrow-btn {
             background: transparent;
             border: none;
-            color: rgba(255, 255, 255, 0.65);
-            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 1.12rem;
             line-height: 1;
-            padding: 2px 6px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
-            border-radius: 12px;
-            transition: color 0.15s, transform 0.15s, background 0.15s;
+            border-radius: 50%;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 0;
+            flex-shrink: 0;
         }
+
         .lyrics-dock-arrow-btn:hover {
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.15);
-            transform: scale(1.15);
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.12);
         }
+
         .lyrics-dock-arrow-btn:active {
             transform: scale(0.9);
         }
@@ -2052,69 +2136,131 @@
         .lyrics-dock-source-badge {
             background: transparent;
             border: none;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.95);
             font-size: 0.78rem;
             font-weight: 600;
-            padding: 3px 8px;
+            letter-spacing: -0.01em;
+            padding: 4px 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             white-space: nowrap;
-            max-width: 160px;
+            max-width: 170px;
             overflow: hidden;
             text-overflow: ellipsis;
-            border-radius: 14px;
-            transition: color 0.2s, background 0.2s;
-        }
-        .lyrics-dock-source-badge:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.12);
-        }
-        .lyrics-dock-source-badge .dock-source-icon {
-            opacity: 0.8;
-            flex-shrink: 0;
-        }
-        .source-count-tag {
-            font-size: 0.72rem;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.55);
-            margin-left: 2px;
+            border-radius: 9999px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Source Popup Dropdown */
+        .lyrics-dock-source-badge:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.14);
+            box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.3);
+        }
+
+        .lyrics-dock-source-badge:active {
+            transform: scale(0.94);
+        }
+
+        .lyrics-dock-source-badge .dock-source-icon {
+            opacity: 0.9;
+            flex-shrink: 0;
+            color: #ffffff;
+        }
+
+        .source-count-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.12);
+            padding: 1px 5px;
+            border-radius: 8px;
+            margin-left: 2px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Liquid Glass Expand/Contract Toggle Pill Button */
+        .lyrics-dock-toggle-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.42);
+            color: rgba(255, 255, 255, 0.82);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 2px;
+            flex-shrink: 0;
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.25);
+            padding: 0;
+        }
+
+        .lyrics-dock-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.45);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            transform: scale(1.08);
+        }
+
+        .lyrics-dock-toggle-btn:active {
+            transform: scale(0.9);
+        }
+
+        .dock-toggle-icon {
+            transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .lyrics-floating-dock.is-expanded .dock-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .lyrics-floating-dock.is-contracted .dock-toggle-icon {
+            transform: rotate(0deg);
+        }
+
+        /* Source Popup Dropdown (Pure VisionOS Frosted Glass) */
         .lyrics-sources-popup {
             position: absolute;
             bottom: calc(100% + 12px);
             left: 0;
-            min-width: 230px;
-            max-width: 320px;
-            background: rgba(22, 22, 32, 0.95);
-            backdrop-filter: blur(28px) saturate(210%);
-            -webkit-backdrop-filter: blur(28px) saturate(210%);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            border-radius: 18px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.05);
+            min-width: 240px;
+            max-width: 330px;
+            background: linear-gradient(135deg, rgba(25, 26, 38, 0.94) 0%, rgba(14, 15, 24, 0.96) 100%);
+            backdrop-filter: blur(42px) saturate(215%);
+            -webkit-backdrop-filter: blur(42px) saturate(215%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-top: 1.2px solid rgba(255, 255, 255, 0.45);
+            border-radius: 20px;
+            box-shadow: 0 24px 55px -6px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px rgba(255, 255, 255, 0.35);
             padding: 8px;
             z-index: 200;
             transform-origin: bottom left;
-            transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
         .lyrics-sources-popup.hidden {
             opacity: 0 !important;
             pointer-events: none !important;
-            transform: translateY(8px) scale(0.95);
+            transform: translateY(8px) scale(0.94);
         }
+
         .sources-popup-header {
             font-size: 0.72rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.55);
             padding: 6px 10px 8px 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             margin-bottom: 4px;
         }
+
         .sources-list {
             max-height: 220px;
             overflow-y: auto;
@@ -2122,6 +2268,7 @@
             flex-direction: column;
             gap: 3px;
         }
+
         .source-item {
             display: flex;
             align-items: center;
@@ -2129,23 +2276,26 @@
             padding: 8px 10px;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.18s ease;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
             font-size: 0.82rem;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.82);
             font-weight: 500;
             gap: 8px;
         }
+
         .source-item:hover {
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.14);
             color: #ffffff;
             transform: translateX(2px);
         }
+
         .source-item.active {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.1) 100%);
             color: #ffffff;
             font-weight: 700;
-            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
         }
+
         .source-item-tag {
             font-size: 0.68rem;
             padding: 2px 7px;
@@ -2155,108 +2305,118 @@
             white-space: nowrap;
             font-weight: 600;
         }
+
         .source-item-tag.word_synced {
-            background: rgba(196, 75, 255, 0.22);
-            color: #e2a8ff;
-            border: 1px solid rgba(196, 75, 255, 0.4);
+            background: rgba(196, 75, 255, 0.25);
+            color: #e5afff;
+            border: 1px solid rgba(196, 75, 255, 0.45);
         }
+
         .source-item-tag.line_synced {
-            background: rgba(75, 159, 255, 0.22);
-            color: #9eccff;
-            border: 1px solid rgba(75, 159, 255, 0.4);
+            background: rgba(75, 159, 255, 0.25);
+            color: #a4d0ff;
+            border: 1px solid rgba(75, 159, 255, 0.45);
         }
+
         .source-item-tag.plain_text {
-            background: rgba(255, 214, 10, 0.18);
-            color: #ffe066;
-            border: 1px solid rgba(255, 214, 10, 0.35);
+            background: rgba(255, 214, 10, 0.2);
+            color: #ffe37a;
+            border: 1px solid rgba(255, 214, 10, 0.4);
         }
+
         .source-item.active .source-item-tag {
-            background: rgba(255, 255, 255, 0.22) !important;
+            background: rgba(255, 255, 255, 0.24) !important;
             color: #ffffff !important;
-            border-color: rgba(255, 255, 255, 0.45) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
         }
+
         .source-item.active .source-item-tag.word_synced {
-            background: rgba(196, 75, 255, 0.35) !important;
-            color: #f3d4ff !important;
-            border-color: rgba(196, 75, 255, 0.6) !important;
+            background: rgba(196, 75, 255, 0.4) !important;
+            color: #f7dfff !important;
+            border-color: rgba(196, 75, 255, 0.65) !important;
         }
+
         .source-item.active .source-item-tag.line_synced {
-            background: rgba(75, 159, 255, 0.35) !important;
-            color: #cce4ff !important;
-            border-color: rgba(75, 159, 255, 0.6) !important;
+            background: rgba(75, 159, 255, 0.4) !important;
+            color: #d8ebff !important;
+            border-color: rgba(75, 159, 255, 0.65) !important;
         }
+
         .source-item.active .source-item-tag.plain_text {
-            background: rgba(255, 214, 10, 0.3) !important;
-            color: #fff3a8 !important;
-            border-color: rgba(255, 214, 10, 0.5) !important;
+            background: rgba(255, 214, 10, 0.35) !important;
+            color: #fff6be !important;
+            border-color: rgba(255, 214, 10, 0.55) !important;
         }
 
         /* Separator */
         .lyrics-dock-sep {
             width: 1px;
-            height: 18px;
-            background: rgba(255, 255, 255, 0.14);
-            margin: 0 3px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.16);
+            margin: 0 2px;
             max-width: 1px;
             opacity: 1;
             overflow: hidden;
-            transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
-        .lyrics-floating-dock:hover .lyrics-dock-sep,
-        .lyrics-floating-dock.expanded .lyrics-dock-sep {
-            max-width: 1px;
-            opacity: 1;
-            margin: 0 3px;
-        }
-
-        /* Translation / Romanize Action Buttons */
+        /* Extra Action Buttons (Translation / Romanize) */
         .lyrics-dock-btn {
-            background: transparent;
-            border: 1px solid transparent;
-            color: rgba(255, 255, 255, 0.65);
-            width: 30px;
-            height: 30px;
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.75);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
             flex-shrink: 0;
+            box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.2);
+            padding: 0;
         }
+
         .lyrics-dock-btn:hover {
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.35);
             transform: scale(1.08);
         }
+
         .lyrics-dock-btn:active {
             transform: scale(0.92);
         }
+
         .lyrics-dock-btn.active {
             color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.28) !important;
-            border-color: rgba(255, 255, 255, 0.5) !important;
-            box-shadow:
-                0 0 14px rgba(255, 255, 255, 0.35),
-                inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+            background: rgba(255, 255, 255, 0.32) !important;
+            border-color: rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 0 14px rgba(255, 255, 255, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
         }
 
         /* Timing Offset Controls */
         .lyrics-dock-offset-group {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 2px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 9999px;
             padding: 2px 6px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-top: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
         }
+
         .dock-clock-icon {
-            color: rgba(255, 255, 255, 0.55);
+            color: rgba(255, 255, 255, 0.6);
             margin-right: 2px;
             flex-shrink: 0;
         }
+
         .lyrics-offset-btn {
             background: transparent;
             border: none;
@@ -2264,39 +2424,36 @@
             font-size: 0.95rem;
             font-weight: 700;
             width: 18px;
-            max-width: 18px;
-            opacity: 1;
-            overflow: hidden;
             height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             border-radius: 6px;
-            transition: all 0.25s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             padding: 0;
             margin: 0;
         }
-        .lyrics-floating-dock:hover .lyrics-offset-btn,
-        .lyrics-floating-dock.expanded .lyrics-offset-btn {
-            width: 18px;
-            max-width: 18px;
-            opacity: 1;
-        }
+
         .lyrics-offset-btn:hover {
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.2);
             transform: scale(1.15);
         }
+
+        .lyrics-offset-btn:active {
+            transform: scale(0.9);
+        }
+
         .lyrics-offset-val {
             font-size: 0.76rem;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.92);
             font-variant-numeric: tabular-nums;
             min-width: 28px;
             text-align: center;
         }
-
+        
         /* ── Subtitle Translation & Romanization line ── */
         .lyric-sub-translation {
             display: block;
@@ -6367,8 +6524,12 @@ body:not(.performance-mode) * {
 body:not(.performance-mode) #progress-bar,
 body:not(.performance-mode) #progress-bar *,
 body:not(.performance-mode) .lrc-word,
-body:not(.performance-mode) .now-playing-active {
-    transition-duration: 0.1s !important;
+body:not(.performance-mode) .now-playing-active,
+body:not(.performance-mode) .cover-flow-container,
+body:not(.performance-mode) .cover-flow-container *,
+body:not(.performance-mode) .cover-flow-card,
+body:not(.performance-mode) .cover-flow-card * {
+    transition: none !important;
 }
 
 /* Apple-like Spring Button Presses */
@@ -10855,8 +11016,7 @@ body.focus-screen-active #mini-player {
     overscroll-behavior: contain !important;
     perspective: 1000px !important;
     -webkit-perspective: 1000px !important;
-    transform-style: preserve-3d !important;
-    -webkit-transform-style: preserve-3d !important;
+    contain: layout style !important;
     user-select: none !important;
     -webkit-user-select: none !important;
     touch-action: pan-x pan-y !important;
@@ -10898,14 +11058,25 @@ body.focus-screen-active #mini-player {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22) !important; /* Clean subtle shadow */
     cursor: pointer !important;
     transform-origin: center center !important;
-    transform-style: preserve-3d !important;
-    -webkit-transform-style: preserve-3d !important;
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
     will-change: transform !important;
+    contain: layout paint style !important;
+    content-visibility: auto !important;
+    contain-intrinsic-size: 190px 260px !important;
     opacity: 1 !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important; /* Clean white glass outline */
-    transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    transition: none !important;
+}
+
+
+.cover-flow-container:not(.is-scrolling):not(.is-dragging) .cover-flow-card {
+    transition: border-color 0.18s ease, box-shadow 0.18s ease !important;
+}
+.cover-flow-container.is-scrolling .cover-flow-card,
+.cover-flow-container.is-dragging .cover-flow-card {
+    transition: none !important;
+    pointer-events: none !important;
 }
 
 .cover-flow-card:hover {
@@ -10998,17 +11169,15 @@ body.focus-screen-active #mini-player {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(18, 20, 26, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     color: rgba(255, 255, 255, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     opacity: 0;
-    transition: opacity 0.2s, background 0.2s, transform 0.2s;
+    transition: opacity 0.15s ease;
     z-index: 5;
 }
 

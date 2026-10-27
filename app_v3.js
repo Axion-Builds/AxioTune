@@ -3474,10 +3474,56 @@ function onPlayerStateChange(event) {
             }
         };
 
+        window.isLyricsDockExpanded = false;
+
+        window.toggleLyricsDockExpansion = function(e, forceState) {
+            if (e) {
+                if (e.preventDefault) e.preventDefault();
+                if (e.stopPropagation) e.stopPropagation();
+            }
+            const dock = document.getElementById('lyrics-floating-dock');
+            if (!dock) return;
+
+            if (typeof forceState === 'boolean') {
+                window.isLyricsDockExpanded = forceState;
+            } else {
+                window.isLyricsDockExpanded = !window.isLyricsDockExpanded;
+            }
+
+            dock.classList.toggle('is-expanded', window.isLyricsDockExpanded);
+            dock.classList.toggle('is-contracted', !window.isLyricsDockExpanded);
+
+            const toggleBtn = document.getElementById('lyrics-dock-toggle-btn');
+            if (toggleBtn) {
+                toggleBtn.title = window.isLyricsDockExpanded ? 'Contract Controls' : 'Expand Controls';
+            }
+
+            if (!window.isLyricsDockExpanded) {
+                const popup = document.getElementById('lyrics-sources-popup');
+                if (popup) popup.classList.add('hidden');
+            }
+        };
+
+        window.handleLyricsBadgeClick = function(e) {
+            if (e) {
+                if (e.preventDefault) e.preventDefault();
+                if (e.stopPropagation) e.stopPropagation();
+            }
+            const dock = document.getElementById('lyrics-floating-dock');
+            // If currently contracted, clicking the badge expands the dock
+            if (dock && !window.isLyricsDockExpanded) {
+                window.toggleLyricsDockExpansion(e, true);
+            } else {
+                // If already expanded, clicking the badge toggles the sources popup list
+                window.toggleLyricsSourcesPopup(e);
+            }
+        };
+
         window.initBetterLyricsDock = function() {
             const prevBtn = document.getElementById('lyrics-source-prev-btn');
             const nextBtn = document.getElementById('lyrics-source-next-btn');
             const badgeBtn = document.getElementById('lyrics-source-badge-btn');
+            const toggleBtn = document.getElementById('lyrics-dock-toggle-btn');
             const popup = document.getElementById('lyrics-sources-popup');
             const translateBtn = document.getElementById('lyrics-translate-btn');
             const romanizeBtn = document.getElementById('lyrics-romanize-btn');
@@ -3486,14 +3532,20 @@ function onPlayerStateChange(event) {
 
             if (prevBtn) prevBtn.onclick = (e) => window.switchLyricsSource((window._currentLyricsSourceIndex || 0) - 1, e);
             if (nextBtn) nextBtn.onclick = (e) => window.switchLyricsSource((window._currentLyricsSourceIndex || 0) + 1, e);
-            if (badgeBtn) badgeBtn.onclick = (e) => window.toggleLyricsSourcesPopup(e);
+            if (badgeBtn) badgeBtn.onclick = (e) => window.handleLyricsBadgeClick(e);
+            if (toggleBtn) toggleBtn.onclick = (e) => window.toggleLyricsDockExpansion(e);
             if (translateBtn) translateBtn.onclick = (e) => window.toggleLyricsTranslation(e);
             if (romanizeBtn) romanizeBtn.onclick = (e) => window.toggleLyricsRomanization(e);
             if (minusBtn) minusBtn.onclick = (e) => window.adjustLyricsOffset(-0.1, e);
             if (plusBtn) plusBtn.onclick = (e) => window.adjustLyricsOffset(0.1, e);
 
+            // Auto-contract when clicking outside the dock
             document.addEventListener('click', (e) => {
-                if (popup && !popup.contains(e.target) && badgeBtn && !badgeBtn.contains(e.target)) {
+                const dock = document.getElementById('lyrics-floating-dock');
+                if (dock && window.isLyricsDockExpanded && !dock.contains(e.target)) {
+                    window.toggleLyricsDockExpansion(null, false);
+                }
+                if (popup && !popup.classList.contains('hidden') && !e.target.closest('#lyrics-dock-source-group')) {
                     popup.classList.add('hidden');
                 }
             });
@@ -5087,38 +5139,98 @@ function onPlayerStateChange(event) {
 
         // ══════════════════════════════════════════════════════════════════════════
         // 🎵 3D COVER FLOW ENGINE (Quick Picks)
-        // Native 1:1 Gesture Physics + Silent Infinite Loop + Zero Muddy Shadows
         // ══════════════════════════════════════════════════════════════════════════
+        // ⚡ HYPER-OPTIMIZED 60FPS/120FPS HARDWARE-ACCELERATED COVER FLOW ENGINE
+        // Zero Layout Thrashing + 3-Buffer Loop + Instant 1:1 Gesture Response
+        // ══════════════════════════════════════════════════════════════════════════
+
+        let _cfCards = null;
+        let _cfCardMids = null;
+        let _cfContainerWidth = 0;
+        let _cfActiveCenterIdx = -1;
+        let _cfLastScrollLeft = -99999;
+
+        function refreshCoverFlowCache(container) {
+            if (!container) return;
+            _cfCards = Array.from(container.querySelectorAll('.cover-flow-card'));
+            if (!_cfCards.length) return;
+            _cfContainerWidth = container.clientWidth || 800;
+            _cfCardMids = new Float32Array(_cfCards.length);
+            for (let i = 0; i < _cfCards.length; i++) {
+                _cfCardMids[i] = _cfCards[i].offsetLeft + _cfCards[i].offsetWidth / 2;
+            }
+        }
 
         function updateCoverFlow(container) {
             if (!container) return;
-            const cards = container.querySelectorAll('.cover-flow-card');
-            if (!cards || cards.length === 0) return;
+            const sl = container.scrollLeft;
+            if (Math.abs(sl - _cfLastScrollLeft) < 0.4) return;
+            _cfLastScrollLeft = sl;
 
-            const c = container.scrollLeft + container.clientWidth / 2;
+            if (!_cfCards || !_cfCardMids || _cfCards.length !== _cfCardMids.length) {
+                refreshCoverFlowCache(container);
+            }
+            const cards = _cfCards;
+            const mids = _cfCardMids;
+            if (!cards || !cards.length) return;
+
+            const c = sl + _cfContainerWidth / 2;
             const divisor = 135;
+            const cullRadius = _cfContainerWidth / 2 + 180;
 
-            cards.forEach(t => {
-                const mid = t.offsetLeft + t.offsetWidth / 2;
-                const d = (mid - c) / divisor;
+            let closestIdx = -1;
+            let closestDist = Infinity;
+
+            for (let i = 0; i < cards.length; i++) {
+                const mid = mids[i];
+                const deltaX = mid - c;
+                const absDeltaX = Math.abs(deltaX);
+
+                const card = cards[i];
+
+                // Viewport Culling: Skip expensive 3D calculation for off-screen cards
+                if (absDeltaX > cullRadius) {
+                    if (!card._isCulled) {
+                        card._isCulled = true;
+                        card.style.transform = deltaX < 0 ? 'rotateY(46deg) scale(0.9) translateZ(0)' : 'rotateY(-46deg) scale(0.9) translateZ(0)';
+                        card.style.zIndex = '1';
+                    }
+                    continue;
+                }
+
+                card._isCulled = false;
+                const d = deltaX / divisor;
                 const a = Math.max(-1, Math.min(1, d)); // clamped [-1, 1]
+                const absA = Math.abs(a);
 
-                // Pop out center card: 1.08 scale, 55px forward
-                const scale = 1.08 - Math.abs(a) * 0.18;
-                const translateZ = Math.max(0, (1 - Math.abs(a)) * 55);
+                const scale = 1.08 - absA * 0.18;
+                const translateZ = Math.max(0, (1 - absA) * 55);
                 const rotateY = -a * 46;
 
-                t.style.transform = `rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
-                t.style.zIndex = Math.max(1, 100 - Math.round(Math.abs(d) * 5));
+                card.style.transform = `rotateY(${rotateY.toFixed(1)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
+                card.style.zIndex = Math.max(1, 100 - Math.round(absDeltaX / 18));
 
-                const isCenter = Math.abs(d) < 0.35;
-                t.classList.toggle('is-center', isCenter);
-                t.style.opacity = '1';
-                t.style.filter = 'none';
-            });
+                if (absDeltaX < closestDist) {
+                    closestDist = absDeltaX;
+                    closestIdx = i;
+                }
+            }
+
+            // Only update is-center class on the single active card (Zero class-toggle churn)
+            if (closestIdx !== _cfActiveCenterIdx) {
+                if (_cfActiveCenterIdx >= 0 && cards[_cfActiveCenterIdx]) {
+                    cards[_cfActiveCenterIdx].classList.remove('is-center');
+                }
+                if (closestIdx >= 0 && cards[closestIdx] && closestDist < divisor * 0.45) {
+                    cards[closestIdx].classList.add('is-center');
+                    _cfActiveCenterIdx = closestIdx;
+                } else {
+                    _cfActiveCenterIdx = -1;
+                }
+            }
         }
 
-        function smoothScrollTo(container, targetLeft, duration = 300) {
+        function smoothScrollTo(container, targetLeft, duration = 280) {
             if (!container) return;
             if (container._scrollAnim) cancelAnimationFrame(container._scrollAnim);
             const startLeft = container.scrollLeft;
@@ -5147,7 +5259,7 @@ function onPlayerStateChange(event) {
             if (!container || !card) return;
             const targetLeft = (card.offsetLeft + card.offsetWidth / 2) - (container.clientWidth / 2);
             if (smooth) {
-                smoothScrollTo(container, Math.max(0, targetLeft), 300);
+                smoothScrollTo(container, Math.max(0, targetLeft), 280);
             } else {
                 container.scrollLeft = Math.max(0, targetLeft);
             }
@@ -5156,20 +5268,20 @@ function onPlayerStateChange(event) {
         window.scrollQuickPicks = function(direction) {
             const container = document.getElementById('home-quick-picks-container');
             if (!container) return;
-            const cards = Array.from(container.querySelectorAll('.cover-flow-card'));
-            if (cards.length === 0) return;
+            const cards = _cfCards || Array.from(container.querySelectorAll('.cover-flow-card'));
+            if (!cards || cards.length === 0) return;
 
             const c = container.scrollLeft + container.clientWidth / 2;
             let closestIdx = 0;
             let minDiff = Infinity;
-            cards.forEach((card, idx) => {
-                const mid = card.offsetLeft + card.offsetWidth / 2;
+            for (let idx = 0; idx < cards.length; idx++) {
+                const mid = (_cfCardMids && _cfCardMids[idx]) || (cards[idx].offsetLeft + cards[idx].offsetWidth / 2);
                 const diff = Math.abs(mid - c);
                 if (diff < minDiff) {
                     minDiff = diff;
                     closestIdx = idx;
                 }
-            });
+            }
 
             const targetIdx = closestIdx + direction;
             if (targetIdx >= 0 && targetIdx < cards.length) {
@@ -5210,19 +5322,22 @@ function onPlayerStateChange(event) {
             });
 
             // Backfill if list is too small
-            while (filteredEntries.length < 14 && deferredHistory.length > 0) {
+            while (filteredEntries.length < 12 && deferredHistory.length > 0) {
                 filteredEntries.push(deferredHistory.shift());
             }
 
             if (filteredEntries.length === 0) return;
 
-            let baseList = [...filteredEntries];
-            while (baseList.length < 12) {
+            // Cap base list to at most 16 unique tracks (optimal for memory and performance)
+            const maxBase = Math.min(16, filteredEntries.length);
+            let baseList = filteredEntries.slice(0, maxBase);
+            while (baseList.length < 8 && filteredEntries.length > 0) {
                 baseList = baseList.concat(filteredEntries);
             }
+            baseList = baseList.slice(0, 16);
 
-            // 5 Buffer Sets: [Set 0, Set 1, Set 2 (center), Set 3, Set 4] for seamless infinite looping
-            const loopList = [...baseList, ...baseList, ...baseList, ...baseList, ...baseList];
+            // 3 Buffer Sets: [Set 0 (left), Set 1 (active center), Set 2 (right)] — 70% fewer DOM elements!
+            const loopList = [...baseList, ...baseList, ...baseList];
             const baseCount = baseList.length;
 
             function renderCard(item, overallIdx) {
@@ -5236,7 +5351,7 @@ function onPlayerStateChange(event) {
                 const thumb = getCoverUrl(`${title} ${subtitle}`, rawThumb, videoId);
                 const query = `${title} ${subtitle}`;
                 const fallbackThumb = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'default_cover.jpg';
-                const escapedQuery = query.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const escapedQuery = query.replace(/'/g, "\'").replace(/"/g, '&quot;');
 
                 const card = document.createElement('div');
                 card.className = 'cover-flow-card t';
@@ -5282,22 +5397,33 @@ function onPlayerStateChange(event) {
             let ticking = false;
             let setWidth = 0;
             let isNormalizing = false;
+            let scrollEndTimer = null;
 
             const checkSilentWrap = () => {
                 if (isNormalizing || !setWidth) return;
                 const sl = container.scrollLeft;
-                if (sl >= 3.2 * setWidth) {
+                if (sl >= 1.85 * setWidth) {
                     isNormalizing = true;
                     container.scrollLeft -= setWidth;
+                    _cfLastScrollLeft = container.scrollLeft;
                     isNormalizing = false;
-                } else if (sl <= 0.8 * setWidth) {
+                } else if (sl <= 0.15 * setWidth) {
                     isNormalizing = true;
                     container.scrollLeft += setWidth;
+                    _cfLastScrollLeft = container.scrollLeft;
                     isNormalizing = false;
                 }
             };
 
             container.addEventListener('scroll', () => {
+                if (!container.classList.contains('is-scrolling')) {
+                    container.classList.add('is-scrolling');
+                }
+                clearTimeout(scrollEndTimer);
+                scrollEndTimer = setTimeout(() => {
+                    container.classList.remove('is-scrolling');
+                }, 120);
+
                 if (!ticking) {
                     requestAnimationFrame(() => {
                         updateCoverFlow(container);
@@ -5308,11 +5434,12 @@ function onPlayerStateChange(event) {
                 }
             }, { passive: true });
 
-            // Mouse click-and-drag for desktop users
+            // Mouse click-and-drag for desktop users with rAF batching
             let isDown = false;
             let startX = 0;
             let startScroll = 0;
             let hasMoved = false;
+            let dragRaf = null;
 
             container.addEventListener('mousedown', (e) => {
                 if (e.button !== 0 || e.target.closest('.cf-more-btn')) return;
@@ -5331,32 +5458,41 @@ function onPlayerStateChange(event) {
                     hasMoved = true;
                     container._justDragged = true;
                 }
-                container.scrollLeft = startScroll - walk;
-            });
+                if (!dragRaf) {
+                    dragRaf = requestAnimationFrame(() => {
+                        container.scrollLeft = startScroll - walk;
+                        dragRaf = null;
+                    });
+                }
+            }, { passive: true });
 
             window.addEventListener('mouseup', () => {
                 if (!isDown) return;
                 isDown = false;
+                if (dragRaf) {
+                    cancelAnimationFrame(dragRaf);
+                    dragRaf = null;
+                }
                 container.classList.remove('is-dragging');
                 if (hasMoved) {
-                    setTimeout(() => { container._justDragged = false; }, 100);
+                    setTimeout(() => { container._justDragged = false; }, 80);
                 }
             });
 
-            // Wheel / trackpad gesture listener: allow horizontal trackpad swipe without triggering Chrome history back
+            // Wheel / trackpad gesture listener
             container.addEventListener('wheel', (e) => {
-                // If primarily horizontal gesture, stop propagation to prevent Chrome history navigation
                 if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
                     e.stopPropagation();
                 }
             }, { passive: true });
 
-            // Initial positioning at the middle set (Set 2)
+            // Initial positioning at the middle set (Set 1)
             requestAnimationFrame(() => {
-                const cards = container.querySelectorAll('.cover-flow-card');
-                if (cards.length > 2 * baseCount && cards[1]) {
-                    setWidth = (cards[baseCount].offsetLeft - cards[0].offsetLeft) || (cards.length * 146 / 5);
-                    const centerCard = cards[2 * baseCount];
+                refreshCoverFlowCache(container);
+                const cards = _cfCards;
+                if (cards && cards.length > baseCount && cards[1]) {
+                    setWidth = (cards[baseCount].offsetLeft - cards[0].offsetLeft) || (cards.length * 146 / 3);
+                    const centerCard = cards[baseCount];
                     centerCoverFlowCard(container, centerCard, false);
                 }
                 updateCoverFlow(container);

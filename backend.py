@@ -1263,12 +1263,42 @@ def debug_recs(videoId: str = "d349wN8Z81M"):
     return report
 
 
+UNWANTED_GENRE_KEYWORDS = {
+    'bhojpuri', 'bhajan', 'aarti', 'chalisa', 'bhakti', 'devotional',
+    'mata rani', 'navratri', 'chhati maiya', 'jagrata', 'katha', 'devi geet',
+    'shiv bhajan', 'hanuman chalisa', 'krishna bhajan', 'ram bhajan', 'shri ram',
+    'shyam bhajan', 'kanwar', 'kawad', 'bol bam', 'har har shambhu', 'mai ki chunari',
+    'devi bhakti', 'kirtan', 'sundarkand', 'stotra', 'amritwani', 'mantra', 'stuti',
+    'geetanjali', 'chath', 'chhath'
+}
+UNWANTED_GENRE_ARTISTS = {
+    'pawan singh', 'khesari lal yadav', 'shilpi raj', 'pramod premi', 'arvind akela',
+    'gunjan singh', 'ankush raja', 'narendra chanchal', 'anuradha paudwal', 'lakhan singh lakkha',
+    'lakhbir singh lakkha', 'anup jalota', 'maithili thakur', 'khesari', 'pramod premi yadav',
+    't-series bhakti sagar', 'bhakti sagar', 'wave music', 'neha raj', 'shilpi dehat',
+    'ritesh pandey', 'kallu ji', 'samar singh', 'chandan chanchal', 'bhojpuri hits',
+    'bhojpuri wave', 't-series regional'
+}
+
+def _is_unwanted_track(title: str, artist: str) -> bool:
+    t = (title or '').lower()
+    a = (artist or '').lower()
+    for kw in UNWANTED_GENRE_KEYWORDS:
+        if kw in t or kw in a:
+            return True
+    for art in UNWANTED_GENRE_ARTISTS:
+        if art in a or art in t:
+            return True
+    return False
+
+DEFAULT_CURATED_SEEDS = ['PeN-V-wTxOs', 'TSLfG53JUpc', '1gcG6j_RD1k', 'kquPJC4cq7o', 'SBOwcGnwuKM', '4AK30HvoIRk']
+
 async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None, all_home_songs: list = None, limit: int = 32, history_vids: list = None):
     """
     Smart Hybrid Quick Picks:
     1. Runs parallel radio queues for top user seeds via YouTube Music Up-Next.
     2. Interleaves seed radios so vibes alternate nicely (round-robin).
-    3. Merges with user's top favorite seeds & YouTube Music server Quick Picks.
+    3. Strictly filters out Bhojpuri, Devotional/Aarti, and unwanted regional spam.
     4. Limits previously heard history tracks (max 2-3) to ensure fresh discoveries.
     5. Deduplicates against duplicates and audio/video duplicates.
     6. Returns a rich collection matching the user's authentic taste.
@@ -1287,8 +1317,14 @@ async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None
             return False
         vid = item.get('videoId') or item.get('id') or ''
         title = (item.get('title') or '').strip()
+        artist = item.get('artist') or item.get('uploader') or 'Unknown'
         if not title:
             return False
+
+        # Strictly block Bhojpuri, Devotional, and unwanted regional spam
+        if _is_unwanted_track(title, artist):
+            return False
+
         norm = re.sub(r'[^\w\s]', '', title.lower()).strip()
         if (vid and vid in seen_ids) or (norm and norm in seen_titles):
             return False
@@ -1306,7 +1342,6 @@ async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None
         if norm:
             seen_titles.add(norm)
         
-        artist = item.get('artist') or item.get('uploader') or 'Unknown'
         cover = item.get('cover') or item.get('thumbnail') or (f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg" if vid else "")
         combined_tracks.append({
             "title": title,
@@ -1320,16 +1355,20 @@ async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None
 
     # 1. Fetch radios for seed tracks concurrently
     radio_results = []
-    clean_seeds = [v.strip() for v in seed_vids if v and len(v.strip()) > 5][:4] if seed_vids else []
-    if clean_seeds:
-        async def get_radio_safe(v):
-            try:
-                tracks, _ = await asyncio.wait_for(_fetch_radio(v), timeout=5.0)
-                return tracks or []
-            except Exception:
-                return []
-        gathered = await asyncio.gather(*[get_radio_safe(v) for v in clean_seeds], return_exceptions=True)
-        radio_results = [r for r in gathered if isinstance(r, list) and r]
+    clean_seeds = [v.strip() for v in seed_vids if v and len(v.strip()) > 5][:5] if seed_vids else []
+    
+    # Fallback to curated seeds if user has no listening history yet
+    effective_seeds = clean_seeds if clean_seeds else DEFAULT_CURATED_SEEDS[:3]
+
+    async def get_radio_safe(v):
+        try:
+            tracks, _ = await asyncio.wait_for(_fetch_radio(v), timeout=8.0)
+            return tracks or []
+        except Exception:
+            return []
+
+    gathered = await asyncio.gather(*[get_radio_safe(v) for v in effective_seeds], return_exceptions=True)
+    radio_results = [r for r in gathered if isinstance(r, list) and r]
 
     # 2. Interleave radio tracks from each seed (round-robin mixing)
     if radio_results:
@@ -1338,21 +1377,21 @@ async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None
                 if t and len(combined_tracks) < limit:
                     add_item(t)
 
-    # 3. If ytm_quick_picks provided from home feed, blend in
+    # 3. If ytm_quick_picks provided from home feed, blend in (filtered through add_item)
     if ytm_quick_picks and ytm_quick_picks.get("contents"):
         for item in ytm_quick_picks["contents"]:
             if len(combined_tracks) >= limit:
                 break
             add_item(item)
 
-    # 4. If still under limit, backfill from other home songs
+    # 4. If still under limit, backfill from other clean home songs
     if all_home_songs:
         for item in all_home_songs:
             if len(combined_tracks) >= limit:
                 break
             add_item(item)
 
-    # 5. If under 16 songs, gently backfill with deferred history tracks
+    # 5. If under 16 songs, backfill with curated seed radio or deferred history
     if len(combined_tracks) < 16 and deferred_history:
         for item in deferred_history:
             if len(combined_tracks) >= limit:
