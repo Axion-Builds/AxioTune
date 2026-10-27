@@ -69,14 +69,18 @@ The application leverages:
   <tbody>
     <tr>
       <td align="center">
-        <video src="assets/recordings/axiotune-navigation-demo.mp4" width="100%" controls></video>
+        <a href="https://raw.githubusercontent.com/Axion-Builds/AxioTune/main/assets/recordings/axiotune-navigation-demo.mp4">
+          <img src="assets/recordings/axiotune-navigation-demo.gif" alt="Interface Navigation & Quick Picks Demo" width="100%" style="border-radius: 8px;" />
+        </a>
         <br />
-        <sub><em>Demonstrating search, carousel navigation, responsive layout switching, and track loading.</em></sub>
+        <sub><em>Browsing carousels, responsive layout, and track playback. (<a href="https://raw.githubusercontent.com/Axion-Builds/AxioTune/main/assets/recordings/axiotune-navigation-demo.mp4">View Full MP4</a>)</em></sub>
       </td>
       <td align="center">
-        <video src="assets/recordings/axiotune-lyrics-sync-demo.mp4" width="100%" controls></video>
+        <a href="https://raw.githubusercontent.com/Axion-Builds/AxioTune/main/assets/recordings/axiotune-lyrics-sync-demo.mp4">
+          <img src="assets/recordings/axiotune-lyrics-sync-demo.gif" alt="Syllable-Level Lyrics & Hover Dock Demo" width="100%" style="border-radius: 8px;" />
+        </a>
         <br />
-        <sub><em>Demonstrating real-time syllable-by-syllable lyric wipes and the auto-expanding liquid glass control pill.</em></sub>
+        <sub><em>Real-time syllable karaoke vocal wipe and liquid glass dock. (<a href="https://raw.githubusercontent.com/Axion-Builds/AxioTune/main/assets/recordings/axiotune-lyrics-sync-demo.mp4">View Full MP4</a>)</em></sub>
       </td>
     </tr>
   </tbody>
