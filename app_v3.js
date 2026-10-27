@@ -3474,7 +3474,7 @@ function onPlayerStateChange(event) {
             }
         };
 
-        window.isLyricsDockExpanded = false;
+                window.isLyricsDockExpanded = false;
 
         window.toggleLyricsDockExpansion = function(e, forceState) {
             if (e) {
@@ -3491,12 +3491,6 @@ function onPlayerStateChange(event) {
             }
 
             dock.classList.toggle('is-expanded', window.isLyricsDockExpanded);
-            dock.classList.toggle('is-contracted', !window.isLyricsDockExpanded);
-
-            const toggleBtn = document.getElementById('lyrics-dock-toggle-btn');
-            if (toggleBtn) {
-                toggleBtn.title = window.isLyricsDockExpanded ? 'Contract Controls' : 'Expand Controls';
-            }
 
             if (!window.isLyricsDockExpanded) {
                 const popup = document.getElementById('lyrics-sources-popup');
@@ -3509,21 +3503,14 @@ function onPlayerStateChange(event) {
                 if (e.preventDefault) e.preventDefault();
                 if (e.stopPropagation) e.stopPropagation();
             }
-            const dock = document.getElementById('lyrics-floating-dock');
-            // If currently contracted, clicking the badge expands the dock
-            if (dock && !window.isLyricsDockExpanded) {
-                window.toggleLyricsDockExpansion(e, true);
-            } else {
-                // If already expanded, clicking the badge toggles the sources popup list
-                window.toggleLyricsSourcesPopup(e);
-            }
+            // Clicking the badge opens the available lyric sources popup
+            window.toggleLyricsSourcesPopup(e);
         };
 
         window.initBetterLyricsDock = function() {
             const prevBtn = document.getElementById('lyrics-source-prev-btn');
             const nextBtn = document.getElementById('lyrics-source-next-btn');
             const badgeBtn = document.getElementById('lyrics-source-badge-btn');
-            const toggleBtn = document.getElementById('lyrics-dock-toggle-btn');
             const popup = document.getElementById('lyrics-sources-popup');
             const translateBtn = document.getElementById('lyrics-translate-btn');
             const romanizeBtn = document.getElementById('lyrics-romanize-btn');
@@ -3533,20 +3520,18 @@ function onPlayerStateChange(event) {
             if (prevBtn) prevBtn.onclick = (e) => window.switchLyricsSource((window._currentLyricsSourceIndex || 0) - 1, e);
             if (nextBtn) nextBtn.onclick = (e) => window.switchLyricsSource((window._currentLyricsSourceIndex || 0) + 1, e);
             if (badgeBtn) badgeBtn.onclick = (e) => window.handleLyricsBadgeClick(e);
-            if (toggleBtn) toggleBtn.onclick = (e) => window.toggleLyricsDockExpansion(e);
             if (translateBtn) translateBtn.onclick = (e) => window.toggleLyricsTranslation(e);
             if (romanizeBtn) romanizeBtn.onclick = (e) => window.toggleLyricsRomanization(e);
             if (minusBtn) minusBtn.onclick = (e) => window.adjustLyricsOffset(-0.1, e);
             if (plusBtn) plusBtn.onclick = (e) => window.adjustLyricsOffset(0.1, e);
 
-            // Auto-contract when clicking outside the dock
+            // Auto-close popup when clicking outside the dock
             document.addEventListener('click', (e) => {
                 const dock = document.getElementById('lyrics-floating-dock');
-                if (dock && window.isLyricsDockExpanded && !dock.contains(e.target)) {
-                    window.toggleLyricsDockExpansion(null, false);
-                }
-                if (popup && !popup.classList.contains('hidden') && !e.target.closest('#lyrics-dock-source-group')) {
-                    popup.classList.add('hidden');
+                if (popup && !popup.classList.contains('hidden')) {
+                    if (!dock || !dock.contains(e.target)) {
+                        popup.classList.add('hidden');
+                    }
                 }
             });
         };
