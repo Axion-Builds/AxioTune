@@ -1,12 +1,12 @@
 <div align="center">
 
-  <img src="logo.png?v=4" alt="AxioTune Logo" width="100" height="100" style="border-radius: 22px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);" />
+  <img src="logo.png?v=4" alt="AxioTune Logo" width="104" height="104" style="border-radius: 24px; box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);" />
 
   # A X I O T U N E
-  **A Modern Web Audio Player with Liquid Glass Interface, Synced Lyrics & Audio DSP**
+  ### The Audiophile Web Streaming Platform Engineered for Aesthetic & Performance
 
   <p align="center">
-    <b>Liquid Glass Design &middot; Syllable-Level Synced Lyrics &middot; 3D Vinyl Turntable &middot; Web Audio DSP Soundstage</b>
+    <b>Apple Liquid Glass Architecture &middot; Syllable-Level Karaoke Sync &middot; 3D Vinyl Engine &middot; Web Audio DSP Studio</b>
   </p>
 
   <p align="center">
@@ -18,7 +18,7 @@
   </p>
 
   <p align="center">
-    <a href="#overview">Overview</a> &bull;
+    <a href="#about-axiotune">About</a> &bull;
     <a href="#screen-recordings--media">Screen Recordings</a> &bull;
     <a href="#core-features">Features</a> &bull;
     <a href="#audio-dsp-pipeline">Audio DSP</a> &bull;
@@ -32,16 +32,23 @@
 
 ---
 
-## Overview
+## About AxioTune
 
-AxioTune is an open-source web application designed for streaming music with a desktop-grade, hardware-accelerated user interface. Built without heavy frontend JavaScript frameworks, it pairs a high-performance **FastAPI (Python)** backend with a clean **Vanilla JavaScript & Modern CSS** frontend.
+Most modern web music players are either sluggish Electron wrappers bundled with tracker telemetry, or minimal clones limited to basic playback.
 
-The application leverages:
-- **FastAPI, ytmusicapi & yt-dlp**: For catalog search, album and artist metadata, and audio stream extraction.
-- **Apple Liquid Glass Aesthetic**: Translucent frosted glass layers, dynamic backdrop filters, and ambient color palettes extracted in real time from album artwork.
-- **Syllable-Level Karaoke Sync**: Real-time progressive text-fill highlighting powered by multi-provider lyrics endpoints (LRCLIB and synced lyrics caches).
-- **Web Audio API DSP**: In-browser real-time stereo processing including Haas spatial widening, 8D orbital panning, replay normalization, and variable pitch/tempo controls.
-- **IndexedDB Caching & PWA**: Offline track playback, client-side session persistence, and installable progressive web app support.
+**AxioTune** is built on a fundamentally different standard: delivering an audiophile-grade web streaming experience that unifies studio sound processing, real-time syllable-synchronized karaoke lyrics, and an authentic Apple "Liquid Glass" interface into a single, blazing-fast client.
+
+Built with **pure Vanilla JavaScript and Modern CSS** on the frontend and an asynchronous **FastAPI (Python)** backend, AxioTune achieves sub-second cold starts, 60 to 120 FPS hardware-accelerated animations, and zero framework bundle overhead.
+
+Zero audio ad interruptions. Zero subscription barriers. 100% free and open-source.
+
+> **Core Capabilities at a Glance:**
+>
+> - **Syllable-Level Vocal Karaoke**: Progressive left-to-right text-fill wipes parsed from Apple Music TTML and word-synced LRC files, complete with a floating hover-expandable glass dock for instant provider switching, Romanization, translation, and millisecond sync tuning.
+> - **Client-Side Audio DSP Studio**: Real-time Haas 3D stereo widening, 360-degree 8D orbital binaural panning, ReplayGain volume normalization, and variable pitch/tempo controls running natively in the browser via the Web Audio API.
+> - **Interactive 3D Vinyl Turntable**: High-precision vinyl physics, realistic grooved light reflections, and animated stylus needle tracking.
+> - **Liquid Glass Design System**: Multi-layer frosted glass, dynamic specular highlights, and real-time GPU mesh backgrounds colored by the current album artwork.
+> - **Offline PWA Persistence**: Automatic IndexedDB audio caching allows previously played tracks to load and play offline without re-streaming.
 
 ---
 
