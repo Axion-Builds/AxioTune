@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=296">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=297">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet">
@@ -995,10 +995,6 @@
                         <p class="lede">Sync your playlists, liked tracks, and personalized YouTube Music feed on every device.</p>
 
                         <div class="btns">
-                            <button class="btn google" type="button" id="btn-login-google" data-auth="google">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                                Continue with Google
-                            </button>
                             <button class="btn ytm" type="button" id="btn-login-ytm" data-auth="ytmusic">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="none" stroke="#FFFFFF" stroke-width="1.8"/><circle cx="12" cy="12" r="7" fill="none" stroke="#FFFFFF" stroke-width="1.4"/><path d="M10 8.6v6.8l5.6-3.4z" fill="#FFFFFF"/></svg>
                                 Connect YouTube Music
@@ -1658,10 +1654,7 @@
             <button id="home-settings-btn" title="Settings" onclick="if(typeof showSettings === 'function') showSettings(); else if(window.showSettings) window.showSettings();" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='white'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
                 <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
             </button>
-            <button id="profile-btn" title="Profile" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='white'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
-                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            </button>
-        </div>
+            </div>
 
 
 
@@ -2518,471 +2511,500 @@
             </div>
         </div>
 
-        <!-- Settings Screen -->
+                <!-- Settings Screen -->
         <div id="settings-screen" class="screen-view hidden-screen">
-            <div class="screen-header-row">
-                <button class="screen-back-btn" title="Back" onclick="window.goBack()">
-                    <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-                </button>
-                <h1 style="margin-bottom:0;">⚙️ Settings</h1>
-            </div>
-
-            <!-- LYRICS ANIMATION STYLE -->
-            <div class="settings-section">
-                <div class="settings-section-title">🎤 Lyrics Animation Style</div>
-                <div class="settings-card" style="padding: 20px;">
-                    <div class="settings-row" style="margin-bottom: 20px;">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label" style="font-size:1.05rem; font-weight:700;">Line Bounce Effect</div>
-                            <div class="settings-row-desc" style="color:rgba(255,255,255,0.5); font-size:0.85rem; margin-top:2px;">Enable bounce animation for line-synced (LRC) lyrics</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="lrc-bounce-toggle" checked>
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-
-                    <div class="settings-row-slider-group" style="margin-bottom: 22px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
-                            <div class="settings-row-label" style="font-size:1rem; font-weight:700;">Bounce Amplitude</div>
-                            <span id="lrc-bounce-amp-val" style="color:var(--accent); font-weight:700; font-size:0.9rem;">100%</span>
-                        </div>
-                        <div style="color:rgba(255,255,255,0.5); font-size:0.82rem; margin-bottom: 8px;">Adjust the bounce effect when a word is sung</div>
-                        <input type="range" id="lrc-bounce-amp" min="0" max="200" value="100" class="am-setting-range-slider" style="width:100%;">
-                    </div>
-
-                    <div class="settings-row-slider-group" style="margin-bottom: 22px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
-                            <div class="settings-row-label" style="font-size:1rem; font-weight:700;">Glow Intensity</div>
-                            <span id="lrc-glow-intensity-val" style="color:var(--accent); font-weight:700; font-size:0.9rem;">100%</span>
-                        </div>
-                        <div style="color:rgba(255,255,255,0.5); font-size:0.82rem; margin-bottom: 8px;">Adjust the glow brightness of the sung word</div>
-                        <input type="range" id="lrc-glow-intensity" min="0" max="200" value="100" class="am-setting-range-slider" style="width:100%;">
-                    </div>
-
-                    <div class="settings-row-slider-group">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
-                            <div class="settings-row-label" style="font-size:1rem; font-weight:700;">Fill Transition Smoothness</div>
-                            <span id="lrc-fill-smoothness-val" style="color:var(--accent); font-weight:700; font-size:0.9rem;">8 dp</span>
-                        </div>
-                        <div style="color:rgba(255,255,255,0.5); font-size:0.82rem; margin-bottom: 8px;">Adjust the gradient edge width of the liquid fill effect</div>
-                        <input type="range" id="lrc-fill-smoothness" min="0" max="20" value="8" class="am-setting-range-slider" style="width:100%;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- PARTY MODE -->
-            <div class="settings-section">
-                <div class="settings-section-title">🎧 Listen Together (Party Mode)</div>
-                <div class="settings-card" style="padding: 20px;">
-                    <div style="font-size:0.95rem; font-weight:500; margin-bottom:15px;">
-                        Host a party to listen to music with friends in perfectly synced real-time. Only you can control the music.
-                    </div>
-                    <button id="start-party-btn" class="apple-btn" style="width:100%; justify-content:center;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-                        Start Listening Party
+            <div class="settings-content-wrap">
+                <!-- Header -->
+                <div class="settings-header">
+                    <button class="screen-back-btn" title="Back" onclick="window.goBack()">
+                        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
                     </button>
-                    <div id="party-link-container" style="display:none; margin-top:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
-                        <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:8px;">Share this link with your friends:</div>
-                        <input type="text" id="party-link-input" readonly style="width:100%; padding:8px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; font-size:0.85rem; text-align:center; outline:none; margin-bottom:8px;">
-                        <button id="copy-party-link-btn" class="apple-btn" style="width:100%; justify-content:center; background:rgba(255,255,255,0.1);">Copy Link</button>
+                    <div class="settings-header-text">
+                        <h1>Settings</h1>
+                        <p class="settings-subtitle">Manage audio engine, aesthetics, karaoke & cloud synchronization</p>
                     </div>
                 </div>
-            </div>
 
+                <!-- Category Segmented Filter Tabs -->
+                <div class="settings-nav-tabs" id="settings-category-tabs">
+                    <button type="button" class="settings-tab-btn active" onclick="window.switchSettingsCategory('all', this)">All</button>
+                    <button type="button" class="settings-tab-btn" onclick="window.switchSettingsCategory('playback', this)">Playback</button>
+                    <button type="button" class="settings-tab-btn" onclick="window.switchSettingsCategory('appearance', this)">Appearance</button>
+                    <button type="button" class="settings-tab-btn" onclick="window.switchSettingsCategory('lyrics', this)">Lyrics</button>
+                    <button type="button" class="settings-tab-btn" onclick="window.switchSettingsCategory('cloud', this)">Account & Sync</button>
+                    <button type="button" class="settings-tab-btn" onclick="window.switchSettingsCategory('system', this)">Data & System</button>
+                </div>
 
-            <!-- YOUTUBE MUSIC SYNC -->
-            <div class="settings-section" id="ytm-sync-section">
-                <div class="settings-section-title">☁️ YouTube Music Cloud Sync</div>
-                <div class="settings-card" style="padding: 20px;">
-                    <div style="display:flex; flex-direction:column; gap: 15px;">
-                        <div style="font-size:0.95rem; font-weight:500;">
-                            Connect your real YouTube Music account to load your personalized feed, playlists, and liked songs directly!
+                <!-- 1. AUDIO & PLAYBACK -->
+                <div class="settings-section" data-category="playback">
+                    <div class="settings-section-title">
+                        <svg class="settings-section-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        Audio & Playback
+                    </div>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Audio Quality</div>
+                                <div class="settings-row-desc">Higher bitrate yields richer audio fidelity</div>
+                            </div>
+                            <select class="settings-select" id="audio-quality-select">
+                                <option value="auto">Auto</option>
+                                <option value="hq" selected>HQ (160kbps)</option>
+                                <option value="ultra">Ultra (320kbps)</option>
+                            </select>
                         </div>
-                        <div id="sync-status-indicator" style="display:flex; align-items:center; gap: 10px; font-size:0.85rem; background:rgba(255,255,255,0.06); padding:10px 14px; border-radius:12px; border: 1px solid rgba(255,255,255,0.08)">
-                            <div style="width:10px; height:10px; border-radius:50%; background:#ff476d;" id="sync-status-dot"></div>
-                            <span id="sync-status-text">Checking connection status...</span>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Playback Speed</div>
+                                <div class="settings-row-desc">Current speed: <span id="speed-label" style="color:var(--accent); font-weight:600;">1x</span></div>
+                            </div>
+                            <input type="range" class="settings-slider" id="speed-slider" min="50" max="200" value="100" step="25">
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Crossfade</div>
+                                <div class="settings-row-desc">Seamless blend between tracks: <span id="crossfade-label" style="color:var(--accent); font-weight:600;">3s</span></div>
+                            </div>
+                            <input type="range" class="settings-slider" id="crossfade-slider" min="0" max="10" value="3">
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Auto-play Queue</div>
+                                <div class="settings-row-desc">Automatically stream next recommendations</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoplay-toggle" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Sleep Timer</div>
+                                <div class="settings-row-desc" id="sleep-timer-display">Off</div>
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <select class="settings-select" id="sleep-timer-select">
+                                    <option value="0">Off</option>
+                                    <option value="15">15 min</option>
+                                    <option value="30">30 min</option>
+                                    <option value="45">45 min</option>
+                                    <option value="60">60 min</option>
+                                </select>
+                                <button class="settings-btn" id="sleep-timer-start-btn">Set</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. APPEARANCE & INTERFACE -->
+                <div class="settings-section" data-category="appearance">
+                    <div class="settings-section-title">
+                        <svg class="settings-section-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.23 19.57 10.57 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+                        Appearance & Theme
+                    </div>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Accent Color</div>
+                                <div class="settings-row-desc">Controls, highlights & active lyric tint</div>
+                            </div>
+                            <div class="color-swatches" id="accent-swatches">
+                                <div class="color-swatch active" style="background:#ffffff" data-color="#ffffff" data-rgb="255,255,255" title="Pure White"></div>
+                                <div class="color-swatch" style="background:#e2e8f0" data-color="#e2e8f0" data-rgb="226,232,240" title="Platinum Silver"></div>
+                                <div class="color-swatch" style="background:#cbd5e1" data-color="#cbd5e1" data-rgb="203,213,225" title="Titanium Frost"></div>
+                                <div class="color-swatch" style="background:#f5f5f4" data-color="#f5f5f4" data-rgb="245,245,244" title="Alabaster"></div>
+                                <div class="color-swatch" style="background:#94a3b8" data-color="#94a3b8" data-rgb="148,163,184" title="Steel Slate"></div>
+                                <div class="color-swatch" style="background:#64748b" data-color="#64748b" data-rgb="100,116,139" title="Muted Graphite"></div>
+                                <div class="color-swatch" style="background:#475569" data-color="#475569" data-rgb="71,85,105" title="Smoked Chrome"></div>
+                                <div class="color-swatch custom-color-swatch" id="custom-accent-swatch" title="Custom Color Picker">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                                    <input type="color" id="custom-accent-picker" value="#ffffff" title="Pick custom color">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Ambient Brightness</div>
+                                <div class="settings-row-desc">Adjust the background canvas glow</div>
+                            </div>
+                            <input type="range" class="settings-slider" id="bg-brightness-slider" min="20" max="80" value="50">
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Glass Blur Intensity</div>
+                                <div class="settings-row-desc">Liquid glass frosted backdrop strength</div>
+                            </div>
+                            <select class="settings-select" id="glass-blur-select">
+                                <option value="10px">Subtle (10px)</option>
+                                <option value="30px" selected>Balanced (30px)</option>
+                                <option value="60px">Deep (60px)</option>
+                                <option value="0px">None (Off)</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Card Layout</div>
+                                <div class="settings-row-desc">Home screen music collection display</div>
+                            </div>
+                            <select class="settings-select" id="card-layout-select">
+                                <option value="vinyl">Vinyl Cards</option>
+                                <option value="grid">Grid</option>
+                                <option value="list">List</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Headings Typography</div>
+                                <div class="settings-row-desc">Font family for editorial headers</div>
+                            </div>
+                            <select class="settings-select" id="heading-font-select">
+                                <option value="Newsreader">Newsreader (Classic Editorial Serif)</option>
+                                <option value="IBM Plex Serif">IBM Plex Serif (Superfamily Monograph)</option>
+                                <option value="Lora">Lora (Warm Modern Editorial)</option>
+                                <option value="IBM Plex Sans">IBM Plex Sans (Architectural Sans)</option>
+                                <option value="Plus Jakarta Sans">Plus Jakarta Sans (Geometric)</option>
+                                <option value="Manrope">Manrope (Modern Grotesque)</option>
+                                <option value="Clash Display">Clash Display (Contemporary Display)</option>
+                                <option value="Inter">Inter (Swiss Neo-Grotesque)</option>
+                                <option value="Outfit">Outfit (Contemporary Warmth)</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Mini Player Style</div>
+                                <div class="settings-row-desc">Bottom compact dock presentation</div>
+                            </div>
+                            <select class="settings-select" id="mini-player-style-select">
+                                <option value="pill">Floating Pill (Apple Style)</option>
+                                <option value="card">Docked Card</option>
+                                <option value="bar">Full-Width Bar</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Fluid Animations</div>
+                                <div class="settings-row-desc">Ambient mesh and canvas fluid movement</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="animations-toggle" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Double-Tap to Seek</div>
+                                <div class="settings-row-desc">Tap left/right edge to jump ±10 seconds</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="doubletap-toggle" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Haptic Feedback</div>
+                                <div class="settings-row-desc">Vibrate slightly on tap interactions (mobile)</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="haptic-toggle" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Performance Mode</div>
+                                <div class="settings-row-desc">Reduce GPU blur passes for low-power devices</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="performance-mode-toggle">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. LYRICS & KARAOKE ENGINE -->
+                <div class="settings-section" data-category="lyrics">
+                    <div class="settings-section-title">
+                        <svg class="settings-section-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                        Lyrics & Karaoke
+                    </div>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Lyrics Font Size</div>
+                                <div class="settings-row-desc">Text scale in lyrics immersion view</div>
+                            </div>
+                            <select class="settings-select" id="lyrics-size-select">
+                                <option value="clamp(0.9rem,1.8vw,1.6rem)">Small</option>
+                                <option value="clamp(1.2rem,2.5vw,2.2rem)" selected>Medium</option>
+                                <option value="clamp(1.5rem,3.2vw,2.8rem)">Large</option>
+                                <option value="clamp(1.8rem,4vw,3.5rem)">XL</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Lyrics Typeface</div>
+                                <div class="settings-row-desc">Typography family for sung lyrics</div>
+                            </div>
+                            <select class="settings-select" id="lyrics-font-select">
+                                <option value="default" selected>Apple Music (SF Pro / Inter)</option>
+                                <option value="outfit">Outfit (Geometric)</option>
+                                <option value="playfair">Playfair Display (Serif)</option>
+                                <option value="'Courier New', monospace">Monospace</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Active Line Style</div>
+                                <div class="settings-row-desc">Highlight treatment for currently playing line</div>
+                            </div>
+                            <select class="settings-select" id="lyrics-style-select">
+                                <option value="bold">Bold Focus (Apple)</option>
+                                <option value="glow">Neon Glow</option>
+                                <option value="underline">Minimal Underline</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Translation Language</div>
+                                <div class="settings-row-desc">Real-time subtitle translation</div>
+                            </div>
+                            <select class="settings-select" id="lyrics-translate-lang-select">
+                                <option value="en" selected>English</option>
+                                <option value="hi">Hindi (हिंदी)</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="ja">Japanese</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Primary Lyrics Source</div>
+                                <div class="settings-row-desc">Preferred provider priority</div>
+                            </div>
+                            <select class="settings-select" id="lyrics-default-provider-select">
+                                <option value="all" selected>Auto Multi-Provider (Best)</option>
+                                <option value="lrclib">LRCLib (Syllable-Synced)</option>
+                                <option value="youtube">YouTube Official</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Line Bounce Animation</div>
+                                <div class="settings-row-desc">Subtle elastic motion when each word is sung</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="lrc-bounce-toggle" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Bounce Amplitude</div>
+                                <div class="settings-row-desc">Intensity of bounce motion: <span id="lrc-bounce-amp-val" style="color:var(--accent); font-weight:600;">100%</span></div>
+                            </div>
+                            <input type="range" id="lrc-bounce-amp" min="0" max="200" value="100" class="settings-slider">
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Sung Word Glow</div>
+                                <div class="settings-row-desc">Luminance of active syllable: <span id="lrc-glow-intensity-val" style="color:var(--accent); font-weight:600;">100%</span></div>
+                            </div>
+                            <input type="range" id="lrc-glow-intensity" min="0" max="200" value="100" class="settings-slider">
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Liquid Fill Smoothness</div>
+                                <div class="settings-row-desc">Gradient edge width of lyric wipe: <span id="lrc-fill-smoothness-val" style="color:var(--accent); font-weight:600;">8 dp</span></div>
+                            </div>
+                            <input type="range" id="lrc-fill-smoothness" min="0" max="20" value="8" class="settings-slider">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. ACCOUNT & CLOUD SYNC -->
+                <div class="settings-section" id="ytm-sync-section" data-category="cloud">
+                    <div class="settings-section-title">
+                        <svg class="settings-section-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-1.41-1.41L12.17 15H8v-2h4.17l-1.58-1.59L12 10l5 5z"/></svg>
+                        YouTube Music Cloud Sync
+                    </div>
+                    <div class="settings-card" style="padding: 18px 20px;">
+                        <div style="font-size:0.88rem; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:14px;">
+                            Connect your YouTube Music account to stream personal playlists, liked songs, and customized algorithmic recommendations.
                         </div>
                         
-                        <!-- TABS FOR SYNC METHODS -->
+                        <div id="sync-status-indicator" style="display:flex; align-items:center; gap: 10px; font-size:0.84rem; background:rgba(255,255,255,0.04); padding:10px 14px; border-radius:12px; border: 1px solid rgba(255,255,255,0.07); margin-bottom:16px;">
+                            <div style="width:9px; height:9px; border-radius:50%; background:#ff476d;" id="sync-status-dot"></div>
+                            <span id="sync-status-text">Checking connection status...</span>
+                        </div>
+
                         <div id="sync-form-container" style="display:flex; flex-direction:column; gap: 12px;">
-                            <div style="display:flex; gap:8px; background:rgba(0,0,0,0.2); padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
-                                <button class="sync-method-tab active" id="tab-btn-bookmark" style="flex:1; padding:8px 12px; background:rgba(255,255,255,0.08); border:none; border-radius:8px; color:white; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s;">⚡ 1-Click Sync (Easiest)</button>
-                                <button class="sync-method-tab" id="tab-btn-popup" style="flex:1; padding:8px 12px; background:transparent; border:none; border-radius:8px; color:rgba(255,255,255,0.6); font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s;">🔒 Desktop Browser Sign-in</button>
+                            <!-- Segmented Switcher for sync methods -->
+                            <div style="display:flex; gap:6px; background:rgba(0,0,0,0.25); padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
+                                <button class="sync-method-tab active" id="tab-btn-bookmark" style="flex:1; padding:7px 12px; background:rgba(255,255,255,0.08); border:none; border-radius:7px; color:white; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s;">⚡ 1-Click Sync (Recommended)</button>
+                                <button class="sync-method-tab" id="tab-btn-popup" style="flex:1; padding:7px 12px; background:transparent; border:none; border-radius:7px; color:rgba(255,255,255,0.55); font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s;">🔒 Desktop Sign-in</button>
                             </div>
-                            
+
                             <!-- Method 1: Bookmarklet -->
                             <div id="sync-method-bookmark-panel" style="display:flex; flex-direction:column; gap: 10px;">
-                                <div class="settings-row-desc" style="font-size: 0.85rem; line-height: 1.6; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.25); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 5px;">
-                                    <strong style="font-size: 0.95rem; color: #fff; display: block; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;">👉 1-Click Sync Setup (No Extensions, No DevTools):</strong>
-                                    <span style="display:block; margin-bottom:6px;"><strong>Step 1:</strong> Drag the green button below up to your browser's <strong>Bookmarks Bar</strong> (Press <code>Ctrl+Shift+B</code> if Bookmarks bar is hidden).</span>
-                                    <div style="text-align:center; margin: 12px 0;">
+                                <div style="font-size: 0.83rem; line-height: 1.6; color: rgba(255,255,255,0.65); background: rgba(0,0,0,0.18); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <span style="display:block; margin-bottom:6px;"><strong style="color:#fff;">Step 1:</strong> Drag button below to your Bookmarks Bar (<kbd style="background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:4px; font-size:0.75rem;">Ctrl+Shift+B</kbd> to show).</span>
+                                    <div style="text-align:center; margin: 10px 0;">
                                         <a id="sync-bookmarklet-link" class="sync-bookmarklet-link" href="#"
-                                           style="display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, #28cd41, #1fb538); color: white; font-weight: 700; border-radius: 18px; text-decoration: none; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 15px rgba(40, 205, 65, 0.3); font-size:0.85rem;" 
-                                           onclick="alert('👉 Please drag this button to your Bookmarks Bar (Ctrl+Shift+B to show)! Do not just click it here.'); return false;">
+                                           style="display: inline-block; padding: 9px 18px; background: linear-gradient(135deg, #28cd41, #1fb538); color: white; font-weight: 700; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 14px rgba(40, 205, 65, 0.25); font-size:0.82rem;" 
+                                           onclick="alert('👉 Please drag this button up to your Bookmarks Bar (Ctrl+Shift+B)! Then open music.youtube.com and click it.'); return false;">
                                            🟢 Drag to Bookmarks Bar: Sync YTM
                                         </a>
                                     </div>
-                                    <span style="display:block; margin-bottom:6px;"><strong>Step 2:</strong> Now open <a href="https://music.youtube.com" target="_blank" style="color:var(--accent); font-weight:600; text-decoration:underline;">music.youtube.com</a> and sign in.</span>
-                                    <span style="display:block;"><strong>Step 3:</strong> Click that <strong>Sync YTM</strong> bookmark from your bar. <strong>Done! 🎉</strong> It will sync automatically in 1-click!</span>
+                                    <span style="display:block; margin-bottom:4px;"><strong style="color:#fff;">Step 2:</strong> Open <a href="https://music.youtube.com" target="_blank" style="color:var(--accent); font-weight:600; text-decoration:underline;">music.youtube.com</a> and log in.</span>
+                                    <span style="display:block;"><strong style="color:#fff;">Step 3:</strong> Click the bookmark on YouTube Music. You are instantly connected!</span>
                                 </div>
                             </div>
-                            
-                            <!-- Method 2: Interactive Desktop Google Login -->
+
+                            <!-- Method 2: Desktop Login -->
                             <div id="sync-method-popup-panel" style="display:none; flex-direction:column; gap: 10px;">
-                                <div class="settings-row-desc" style="font-size: 0.85rem; line-height: 1.6; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.25); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 5px;">
-                                    <strong style="font-size: 0.95rem; color: #fff; display: block; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;">🔒 Desktop Browser Authentication:</strong>
-                                    <span style="display:block; margin-bottom:12px;">Opens an automated Google sign-in window (desktop app only).</span>
-                                    <div style="text-align:center; margin: 8px 0;">
+                                <div style="font-size: 0.83rem; line-height: 1.6; color: rgba(255,255,255,0.65); background: rgba(0,0,0,0.18); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <span style="display:block; margin-bottom:10px;">Launches a direct desktop browser authentication window.</span>
+                                    <div style="text-align:center; margin: 6px 0;">
                                         <button id="start-google-login-btn"
-                                            style="display: inline-flex; align-items:center; justify-content:center; gap:10px; padding: 12px 24px; background: linear-gradient(135deg, #ff0033, #cc0000); color: white; font-weight: 700; border-radius: 14px; border:none; cursor:pointer; text-decoration: none; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 15px rgba(255, 0, 51, 0.3); font-size:0.9rem; transition: all 0.2s;">
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
-                                            Sign in with Google / YouTube Music
+                                            style="display: inline-flex; align-items:center; justify-content:center; gap:8px; padding: 10px 20px; background: #ff0033; color: white; font-weight: 600; border-radius: 12px; border:none; cursor:pointer; font-size:0.85rem; box-shadow: 0 4px 12px rgba(255, 0, 51, 0.25); transition: opacity 0.2s;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+                                            Sign in with YouTube Music
                                         </button>
                                     </div>
-                                    <div id="login-popup-status" style="display:none; text-align:center; font-size:0.85rem; color:rgba(255,255,255,0.8); margin-top:8px;"></div>
+                                    <div id="login-popup-status" style="display:none; text-align:center; font-size:0.82rem; color:rgba(255,255,255,0.8); margin-top:8px;"></div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div id="unsync-container" style="display:none; gap:10px;">
-                            <button class="settings-btn danger" id="unsync-btn" style="flex:1; padding: 12px; font-weight: 700;">Disconnect My Account</button>
+
+                        <div id="unsync-container" style="display:none; margin-top:12px;">
+                            <button class="settings-btn danger" id="unsync-btn" style="width:100%; padding: 10px; font-weight: 600;">Disconnect My Account</button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- APPEARANCE -->
-            <div class="settings-section">
-                <div class="settings-section-title">🎨 Appearance & Theme</div>
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Accent Color</div>
-                            <div class="settings-row-desc">Player controls & highlights</div>
+                <!-- 5. LISTEN TOGETHER (PARTY MODE) -->
+                <div class="settings-section" data-category="cloud">
+                    <div class="settings-section-title">
+                        <svg class="settings-section-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 2.21 1.79 4 4 4h3v-8H5v-3c0-3.87 3.13-7 7-7s7 3.13 7 7v3h-5v8h3c2.21 0 4-1.79 4-4v-7c0-4.97-4.03-9-9-9z"/></svg>
+                        Listen Together (Party Mode)
+                    </div>
+                    <div class="settings-card" style="padding: 18px 20px;">
+                        <div style="font-size:0.88rem; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:14px;">
+                            Host an interactive listening session to stream synced audio in real-time with friends worldwide.
                         </div>
-                        <div class="color-swatches" id="accent-swatches">
-                            <div class="color-swatch active" style="background:#ffffff" data-color="#ffffff" data-rgb="255,255,255" title="Pure White"></div>
-                            <div class="color-swatch" style="background:#e2e8f0" data-color="#e2e8f0" data-rgb="226,232,240" title="Platinum Silver"></div>
-                            <div class="color-swatch" style="background:#cbd5e1" data-color="#cbd5e1" data-rgb="203,213,225" title="Titanium Frost"></div>
-                            <div class="color-swatch" style="background:#f5f5f4" data-color="#f5f5f4" data-rgb="245,245,244" title="Alabaster"></div>
-                            <div class="color-swatch" style="background:#94a3b8" data-color="#94a3b8" data-rgb="148,163,184" title="Steel Slate"></div>
-                            <div class="color-swatch" style="background:#64748b" data-color="#64748b" data-rgb="100,116,139" title="Muted Graphite"></div>
-                            <div class="color-swatch" style="background:#475569" data-color="#475569" data-rgb="71,85,105" title="Smoked Chrome"></div>
-                            <div class="color-swatch custom-color-swatch" id="custom-accent-swatch" title="Custom Color Picker">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                                <input type="color" id="custom-accent-picker" value="#ffffff" title="Pick custom color">
+                        <button id="start-party-btn" class="settings-btn" style="width:100%; justify-content:center; display:flex; align-items:center; gap:8px; padding:10px 16px; font-weight:600;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                            Start Listening Party
+                        </button>
+                        <div id="party-link-container" style="display:none; margin-top:12px; background:rgba(0,0,0,0.25); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); text-align:center;">
+                            <div style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-bottom:8px;">Share this invite link:</div>
+                            <input type="text" id="party-link-input" readonly style="width:100%; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.82rem; text-align:center; outline:none; margin-bottom:8px;">
+                            <button id="copy-party-link-btn" class="settings-btn" style="width:100%; justify-content:center;">Copy Invite Link</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. KEYBOARD SHORTCUTS -->
+                <div class="settings-section" data-category="system">
+                    <div class="settings-section-title">
+                        <svg class="settings-section-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/></svg>
+                        Keyboard Shortcuts
+                    </div>
+                    <div class="settings-card" style="padding: 10px 18px;">
+                        <div class="settings-shortcuts-grid">
+                            <div class="settings-shortcut-item">
+                                <span>Play / Pause</span>
+                                <kbd>Space</kbd>
+                            </div>
+                            <div class="settings-shortcut-item">
+                                <span>Previous / Next Song</span>
+                                <kbd>&larr; / &rarr;</kbd>
+                            </div>
+                            <div class="settings-shortcut-item">
+                                <span>Volume Control</span>
+                                <kbd>&uarr; / &darr;</kbd>
+                            </div>
+                            <div class="settings-shortcut-item">
+                                <span>Toggle Lyrics View</span>
+                                <kbd>L</kbd>
+                            </div>
+                            <div class="settings-shortcut-item">
+                                <span>Toggle Queue Panel</span>
+                                <kbd>Q</kbd>
                             </div>
                         </div>
                     </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Background Brightness</div>
-                            <div class="settings-row-desc">How bright the ambient blur is</div>
-                        </div>
-                        <input type="range" class="settings-slider" id="bg-brightness-slider" min="20" max="80" value="50">
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Glass Blur Intensity</div>
-                            <div class="settings-row-desc">Frosted glass effect strength</div>
-                        </div>
-                        <select class="settings-select" id="glass-blur-select">
-                            <option value="10px">Low</option>
-                            <option value="30px" selected>Medium</option>
-                            <option value="60px">High</option>
-                            <option value="0px">None</option>
-                        </select>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Card Layout</div>
-                            <div class="settings-row-desc">Home screen music card style</div>
-                        </div>
-                        <select class="settings-select" id="card-layout-select">
-                            <option value="vinyl">Vinyl Cards</option>
-                            <option value="grid">Grid</option>
-                            <option value="list">List</option>
-                        </select>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Section Headings Font</div>
-                            <div class="settings-row-desc">Typography for mix & home headers (Web Typography)</div>
-                        </div>
-                        <select class="settings-select" id="heading-font-select">
-                            <option value="Newsreader">Newsreader (Classic Editorial Serif)</option>
-                            <option value="IBM Plex Serif">IBM Plex Serif (Superfamily Monograph)</option>
-                            <option value="Lora">Lora (Warm Modern Editorial)</option>
-                            <option value="IBM Plex Sans">IBM Plex Sans (Architectural Sans)</option>
-                            <option value="Plus Jakarta Sans">Plus Jakarta Sans (Geometric)</option>
-                            <option value="Manrope">Manrope (Modern Grotesque)</option>
-                            <option value="Clash Display">Clash Display (Contemporary Display)</option>
-                            <option value="Inter">Inter (Swiss Neo-Grotesque)</option>
-                            <option value="Outfit">Outfit (Contemporary Warmth)</option>
-                        </select>
-                    </div>
                 </div>
-            </div>
 
-            <!-- AUDIO -->
-            <div class="settings-section">
-                <div class="settings-section-title">🔊 Audio & Playback</div>
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Audio Quality</div>
-                            <div class="settings-row-desc">Higher = better sound, slower load</div>
-                        </div>
-                        <select class="settings-select" id="audio-quality-select">
-                            <option value="auto">Auto</option>
-                            <option value="hq" selected>HQ (160kbps)</option>
-                            <option value="ultra">Ultra (320kbps)</option>
-                        </select>
+                <!-- 7. DATA & PRIVACY -->
+                <div class="settings-section" data-category="system">
+                    <div class="settings-section-title">
+                        <svg class="settings-section-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+                        Data & Privacy
                     </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Playback Speed</div>
-                            <div class="settings-row-desc">Current: <span id="speed-label">1x</span></div>
+                    <div class="settings-card">
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Private Session (Incognito)</div>
+                                <div class="settings-row-desc">Do not record history or modify recommendations</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="incognito-toggle">
+                                <span class="toggle-track"></span>
+                            </label>
                         </div>
-                        <input type="range" class="settings-slider" id="speed-slider" min="50" max="200" value="100" step="25">
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Crossfade</div>
-                            <div class="settings-row-desc">Smooth transition between songs: <span id="crossfade-label">3s</span></div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Export Playback History</div>
+                                <div class="settings-row-desc">Save your listening history as JSON file</div>
+                            </div>
+                            <button class="settings-btn success" id="export-history-btn">Export</button>
                         </div>
-                        <input type="range" class="settings-slider" id="crossfade-slider" min="0" max="10" value="3">
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Auto-play Queue</div>
-                            <div class="settings-row-desc">Automatically play next song</div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Clear Current Queue</div>
+                                <div class="settings-row-desc">Flush all pending queued songs</div>
+                            </div>
+                            <button class="settings-btn danger" id="clear-queue-btn">Clear Queue</button>
                         </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="autoplay-toggle" checked>
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Sleep Timer</div>
-                            <div class="settings-row-desc" id="sleep-timer-display">Off</div>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Clear All History</div>
+                                <div class="settings-row-desc">Permanently remove local playback cache</div>
+                            </div>
+                            <button class="settings-btn danger" id="clear-history-btn">Clear History</button>
                         </div>
-                        <div style="display:flex;gap:8px;align-items:center;">
-                            <select class="settings-select" id="sleep-timer-select">
-                                <option value="0">Off</option>
-                                <option value="15">15 min</option>
-                                <option value="30">30 min</option>
-                                <option value="45">45 min</option>
-                                <option value="60">60 min</option>
-                            </select>
-                            <button class="settings-btn" id="sleep-timer-start-btn">Set</button>
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-row-label">Reset All Settings</div>
+                                <div class="settings-row-desc">Revert all preferences to factory defaults</div>
+                            </div>
+                            <button class="settings-btn danger" id="reset-settings-btn">Reset Defaults</button>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- LYRICS -->
-            <div class="settings-section">
-                <div class="settings-section-title">🎵 Lyrics</div>
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Font Size</div>
-                            <div class="settings-row-desc">Lyrics text size</div>
-                        </div>
-                        <select class="settings-select" id="lyrics-size-select">
-                            <option value="clamp(0.9rem,1.8vw,1.6rem)">Small</option>
-                            <option value="clamp(1.2rem,2.5vw,2.2rem)" selected>Medium</option>
-                            <option value="clamp(1.5rem,3.2vw,2.8rem)">Large</option>
-                            <option value="clamp(1.8rem,4vw,3.5rem)">XL</option>
-                        </select>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Lyrics Font</div>
-                            <div class="settings-row-desc">Typeface style</div>
-                        </div>
-                        <select class="settings-select" id="lyrics-font-select">
-                            <option value="default" selected>Apple Music (SF Pro / Inter)</option>
-                            <option value="outfit">Outfit (Geometric)</option>
-                            <option value="playfair">Playfair Display (Serif)</option>
-                            <option value="'Courier New', monospace">Monospace</option>
-                        </select>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Karaoke Glow Style</div>
-                            <div class="settings-row-desc">Active line highlight effect</div>
-                        </div>
-                        <select class="settings-select" id="lyrics-style-select">
-                            <option value="bold">Bold (Apple)</option>
-                            <option value="glow">Glow</option>
-                            <option value="underline">Underline</option>
-                        </select>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Translation Language</div>
-                            <div class="settings-row-desc">Real-time subtitle translation</div>
-                        </div>
-                        <select class="settings-select" id="lyrics-translate-lang-select">
-                            <option value="en" selected>English</option>
-                            <option value="hi">Hindi (हिंदी)</option>
-                            <option value="es">Spanish</option>
-                            <option value="fr">French</option>
-                            <option value="ja">Japanese</option>
-                        </select>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Default Lyrics Source</div>
-                            <div class="settings-row-desc">Preferred lyrics provider</div>
-                        </div>
-                        <select class="settings-select" id="lyrics-default-provider-select">
-                            <option value="all" selected>Auto Multi-Provider (Best)</option>
-                            <option value="lrclib">LRCLib (Word-Synced)</option>
-                            <option value="youtube">YouTube Official</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- INTERFACE -->
-            <div class="settings-section">
-                <div class="settings-section-title">📱 Interface & Behavior</div>
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Mini Player Style</div>
-                            <div class="settings-row-desc">Bottom player appearance</div>
-                        </div>
-                        <select class="settings-select" id="mini-player-style-select">
-                            <option value="pill">Pill (Current)</option>
-                            <option value="card">Floating Card</option>
-                            <option value="bar">Minimal Bar</option>
-                        </select>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Double-tap Seek</div>
-                            <div class="settings-row-desc">Tap sides of screen to seek ±10s</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="doubletap-toggle" checked>
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Performance Mode</div>
-                            <div class="settings-row-desc">Disable glass blur for low-end devices</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="performance-mode-toggle">
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Background Animations</div>
-                            <div class="settings-row-desc">Liquid blob movement</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="animations-toggle" checked>
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Haptic Feedback</div>
-                            <div class="settings-row-desc">Vibration on tap (mobile)</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="haptic-toggle" checked>
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KEYBOARD SHORTCUTS -->
-            <div class="settings-section">
-                <div class="settings-section-title">⌨️ Keyboard Shortcuts</div>
-                <div class="settings-card" style="padding: 15px 20px;">
-                    <ul style="list-style: none; padding: 0; margin: 0; color: rgba(255,255,255,0.8); font-size: 0.95rem; line-height: 1.8;">
-                        <li style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;">
-                            <span>Play / Pause</span>
-                            <kbd style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace;">Space</kbd>
-                        </li>
-                        <li style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;">
-                            <span>Change Song</span>
-                            <kbd style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace;">&larr; / &rarr;</kbd>
-                        </li>
-                        <li style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;">
-                            <span>Volume Control</span>
-                            <kbd style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace;">&uarr; / &darr;</kbd>
-                        </li>
-                        <li style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;">
-                            <span>Toggle Lyrics</span>
-                            <kbd style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace;">L</kbd>
-                        </li>
-                        <li style="display: flex; justify-content: space-between;">
-                            <span>Toggle Queue</span>
-                            <kbd style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace;">Q</kbd>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- DATA & PRIVACY -->
-            <div class="settings-section">
-                <div class="settings-section-title">🗂️ Data & Privacy</div>
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Incognito Mode</div>
-                            <div class="settings-row-desc">Don't save history while on</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="incognito-toggle">
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Export History</div>
-                            <div class="settings-row-desc">Download as JSON file</div>
-                        </div>
-                        <button class="settings-btn success" id="export-history-btn">Export</button>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Clear Queue</div>
-                            <div class="settings-row-desc">Remove all songs from queue</div>
-                        </div>
-                        <button class="settings-btn danger" id="clear-queue-btn">Clear</button>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Clear All History</div>
-                            <div class="settings-row-desc">Permanently delete listening history</div>
-                        </div>
-                        <button class="settings-btn danger" id="clear-history-btn">Clear</button>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-row-left">
-                            <div class="settings-row-label">Reset All Settings</div>
-                            <div class="settings-row-desc">Restore everything to defaults</div>
-                        </div>
-                        <button class="settings-btn danger" id="reset-settings-btn">Reset</button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <script>
+        window.switchSettingsCategory = function(cat, btn) {
+            const tabs = document.querySelectorAll('.settings-tab-btn');
+            tabs.forEach(t => t.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            
+            const sections = document.querySelectorAll('#settings-screen .settings-section');
+            sections.forEach(sec => {
+                if (cat === 'all' || sec.getAttribute('data-category') === cat) {
+                    sec.style.display = '';
+                } else {
+                    sec.style.display = 'none';
+                }
+            });
+        };
+        </script>
+
 
         <div id="player-container">
             <!-- Official YouTube IFrame Player -->
