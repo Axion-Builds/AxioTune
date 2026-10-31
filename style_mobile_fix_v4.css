@@ -12193,3 +12193,160 @@ body.focus-screen-active #mini-player {
 
 
 
+
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP PC VIEWPORT OPTIMIZATIONS (min-width: 769px)
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+    /* 1. Hide mobile-only edge bezel notch & left trigger column on desktop */
+    .bezel-trigger-edge,
+    #bezel-trigger-edge,
+    .bezel-idle-notch,
+    #bezel-idle-notch,
+    .bezel-bulge-stage,
+    .bezel-nav-container,
+    #radial-nav-container {
+        display: none !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* 2. PC Playlist Page Desktop Geometry (Centered, Unobstructed, Elite Alignment) */
+    .playlist-content-scroll {
+        padding-top: 64px !important;
+        overflow-y: auto !important;
+    }
+
+    .playlist-nav {
+        top: 62px !important;
+        max-width: 1360px !important;
+        margin: 0 auto !important;
+        padding: 14px 48px !important;
+        background: rgba(10, 14, 22, 0.75) !important;
+        backdrop-filter: blur(28px) !important;
+        -webkit-backdrop-filter: blur(28px) !important;
+        border-radius: 0 0 16px 16px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .playlist-header-modern {
+        max-width: 1360px !important;
+        margin: 0 auto !important;
+        padding: 36px 48px 30px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-end !important;
+        text-align: left !important;
+    }
+
+    .playlist-art-container {
+        width: 230px !important;
+        height: 230px !important;
+        min-width: 230px !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+        box-shadow: 0 20px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.12) !important;
+    }
+
+    .playlist-modern-art {
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 20px !important;
+    }
+
+    .playlist-meta-modern {
+        margin-left: 36px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+    }
+
+    .playlist-title-modern {
+        font-size: clamp(2.4rem, 4.2vw, 3.8rem) !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.03em !important;
+        margin: 0 0 8px 0 !important;
+        color: #ffffff !important;
+    }
+
+    .playlist-actions-modern {
+        display: flex !important;
+        align-items: center !important;
+        gap: 14px !important;
+        margin-top: 22px !important;
+        justify-content: flex-start !important;
+    }
+
+    .playlist-tracks-section {
+        max-width: 1360px !important;
+        margin: 0 auto !important;
+        padding: 0 48px 120px !important;
+    }
+
+    .playlist-tracks-header {
+        display: grid !important;
+        grid-template-columns: 50px minmax(320px, 2fr) minmax(180px, 1fr) 110px !important;
+        padding: 12px 20px !important;
+        font-size: 0.78rem !important;
+        letter-spacing: 1.2px !important;
+        border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    }
+
+    .playlist-track-row {
+        display: grid !important;
+        grid-template-columns: 50px minmax(320px, 2fr) minmax(180px, 1fr) 110px !important;
+        padding: 10px 20px !important;
+        border-radius: 12px !important;
+        align-items: center !important;
+        transition: background 0.18s ease, transform 0.18s ease !important;
+    }
+
+    .playlist-track-row:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .ptr-title {
+        font-size: 0.98rem !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+    }
+
+    .ptr-artist {
+        font-size: 0.88rem !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+}
+
+/* Fullscreen Player Collapse / Minimize Button */
+.player-collapse-btn {
+    position: absolute;
+    top: 24px;
+    left: 28px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 22px;
+    padding: 8px 18px;
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.player-collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+.player-collapse-btn:active {
+    transform: scale(0.96);
+}

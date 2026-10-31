@@ -554,9 +554,81 @@ function onPlayerStateChange(event) {
                 const resP = await fetch('/api/library/playlists');
                 if (resP.ok) {
                     const data = await resP.json();
-                    if (data.playlists && data.playlists.length > 0) {
-                        backendPlaylists = data.playlists;
-                        savePlaylists(data.playlists);
+                    if (data.playlists) {
+                        const localPlaylists = getPlaylists();
+                        const merged = [];
+
+                        // 1. Process backend playlists
+                        data.playlists.forEach(bp => {
+                            const localMatch = localPlaylists.find(lp => lp.id == bp.id || (lp.name && bp.name && lp.name.trim().toLowerCase() === bp.name.trim().toLowerCase()));
+                            const localSongs = (localMatch && Array.isArray(localMatch.songs)) ? localMatch.songs : [];
+                            const backendSongs = Array.isArray(bp.songs) ? bp.songs : [];
+
+                            const songMap = new Map();
+                            backendSongs.forEach(s => {
+                                const k = s.id || s.videoId || s.title;
+                                if (k) songMap.set(k, s);
+                            });
+
+                            // Preserve any songs saved locally that backend missed
+                            localSongs.forEach(s => {
+                                const k = s.id || s.videoId || s.title;
+                                if (k && !songMap.has(k)) {
+                                    songMap.set(k, s);
+                                    if (bp.id) {
+                                        fetch(`/api/library/playlists/${bp.id}/tracks`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                video_id: s.id || s.videoId || '',
+                                                title: s.title || '',
+                                                artist: s.artist || '',
+                                                cover: s.cover || s.thumbnail || ''
+                                            })
+                                        }).catch(() => {});
+                                    }
+                                }
+                            });
+
+                            bp.songs = Array.from(songMap.values());
+                            if (localMatch && localMatch.customCover && !bp.customCover) {
+                                bp.customCover = localMatch.customCover;
+                            }
+                            merged.push(bp);
+                        });
+
+                        // 2. Keep local-only playlists and sync them
+                        localPlaylists.forEach(lp => {
+                            const inMerged = merged.some(m => m.id == lp.id || (m.name && lp.name && m.name.trim().toLowerCase() === lp.name.trim().toLowerCase()));
+                            if (!inMerged) {
+                                merged.push(lp);
+                                fetch('/api/library/playlists', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ name: lp.name })
+                                }).then(r => r.json()).then(d => {
+                                    if (d.id) {
+                                        lp.id = d.id;
+                                        (lp.songs || []).forEach(s => {
+                                            fetch(`/api/library/playlists/${d.id}/tracks`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    video_id: s.id || s.videoId || '',
+                                                    title: s.title || '',
+                                                    artist: s.artist || '',
+                                                    cover: s.cover || s.thumbnail || ''
+                                                })
+                                            }).catch(() => {});
+                                        });
+                                        savePlaylists(merged);
+                                    }
+                                }).catch(() => {});
+                            }
+                        });
+
+                        backendPlaylists = merged;
+                        savePlaylists(merged);
                     }
                 }
                 try {
@@ -916,6 +988,99 @@ function onPlayerStateChange(event) {
             }
         };
 
+        
+        // ── DYNAMIC DETERMINISTIC PLAYLIST ARTWORK & GRADIENT ENGINE ──
+        const PLAYLIST_GRADIENTS = [
+            { bg: 'linear-gradient(135deg, #FF416C, #FF4B2B)' }, // Coral Flame
+            { bg: 'linear-gradient(135deg, #8A2387, #E94057, #F27121)' }, // Berry Sunset
+            { bg: 'linear-gradient(135deg, #00c6ff, #0072ff)' }, // Azure Wave
+            { bg: 'linear-gradient(135deg, #11998e, #38ef7d)' }, // Emerald Forest
+            { bg: 'linear-gradient(135deg, #FC466B, #3F5EFB)' }, // Neon Violet
+            { bg: 'linear-gradient(135deg, #f12711, #f5af19)' }, // Solar Flare
+            { bg: 'linear-gradient(135deg, #654ea3, #eaafc8)' }, // Lavender Mist
+            { bg: 'linear-gradient(135deg, #00b09b, #96c93d)' }  // Fresh Mint
+        ];
+
+        function getPlaylistDeterministicGradient(seedStr) {
+            let hash = 0;
+            const str = String(seedStr || 'Playlist');
+            for (let i = 0; i < str.length; i++) {
+                hash = (hash << 5) - hash + str.charCodeAt(i);
+                hash |= 0;
+            }
+            const idx = Math.abs(hash) % PLAYLIST_GRADIENTS.length;
+            return PLAYLIST_GRADIENTS[idx];
+        }
+        window.getPlaylistDeterministicGradient = getPlaylistDeterministicGradient;
+
+        function isValidSongCover(cover, id) {
+            if (!cover || typeof cover !== 'string') return false;
+            if (cover.includes('default_cover.jpg') || cover.includes('example.com')) return false;
+            if (cover.startsWith('data:image/') || cover.startsWith('http://') || cover.startsWith('https://')) {
+                return true;
+            }
+            return false;
+        }
+
+        function getPlaylistFallbackHTML(seed, initial) {
+            const grad = getPlaylistDeterministicGradient(seed);
+            const letter = initial || String(seed).trim().charAt(0).toUpperCase() || '♪';
+            return `<div style="width:100%;height:100%;background:${grad.bg};display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;border-radius:inherit;overflow:hidden;box-shadow:inset 0 0 40px rgba(0,0,0,0.25);"><div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3) 0%, transparent 60%);"></div><svg viewBox="0 0 24 24" style="width:38%;height:38%;fill:#ffffff;opacity:0.92;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3));margin-bottom:4px;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><span style="font-size:1.15rem;font-weight:800;color:#ffffff;letter-spacing:1px;text-transform:uppercase;opacity:0.95;text-shadow:0 2px 6px rgba(0,0,0,0.4);">${letter}</span></div>`;
+        }
+        window.getPlaylistFallbackHTML = getPlaylistFallbackHTML;
+
+        function buildPlaylistArtHTML(pl) {
+            const seed = pl.id || pl.name || 'Playlist';
+            const grad = getPlaylistDeterministicGradient(seed);
+            const initial = (pl.name || 'P').trim().charAt(0).toUpperCase();
+
+            if (pl.customCover && !pl.customCover.includes('default_cover.jpg')) {
+                return `<img src="${pl.customCover}" class="lib-pl-cover-img" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML=window.getPlaylistFallbackHTML('${escapeHtml(seed)}')" alt="">`;
+            }
+
+            if (pl.isYt && pl.cover && !pl.cover.includes('default_cover.jpg')) {
+                return `<img src="${pl.cover}" class="lib-pl-cover-img" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML=window.getPlaylistFallbackHTML('${escapeHtml(seed)}')" alt="">`;
+            }
+
+            const songs = (pl.songs || []);
+            const validCovers = [];
+            for (const s of songs) {
+                if (isValidSongCover(s.cover, s.id || s.videoId)) {
+                    validCovers.push(s.cover);
+                } else if (s.id && /^[a-zA-Z0-9_-]{11}$/.test(s.id)) {
+                    validCovers.push(`https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`);
+                } else if (s.videoId && /^[a-zA-Z0-9_-]{11}$/.test(s.videoId)) {
+                    validCovers.push(`https://i.ytimg.com/vi/${s.videoId}/hqdefault.jpg`);
+                }
+            }
+
+            if (validCovers.length >= 4) {
+                const c = validCovers.slice(0, 4);
+                return `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%;overflow:hidden;border-radius:inherit;">${c.map(src => `<img src="${src}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.background='${grad.bg}';this.style.opacity='0.6';">`).join('')}</div>`;
+            }
+
+            if (validCovers.length > 0) {
+                return `<img src="${validCovers[0]}" class="lib-pl-cover-img" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML=window.getPlaylistFallbackHTML('${escapeHtml(seed)}')" alt="">`;
+            }
+
+            return getPlaylistFallbackHTML(seed, initial);
+        }
+        window.buildPlaylistArtHTML = buildPlaylistArtHTML;
+
+        // ── COLLAPSE PLAYER VIEW HELPER ──
+        window.collapsePlayerView = function() {
+            const prev = (typeof screenHistory !== 'undefined' && screenHistory.length > 0) ? screenHistory.pop() : 'home-screen';
+            if (prev === 'home-screen' && typeof showHome === 'function') { showHome(); return; }
+            if (prev === 'library-screen' && typeof showLibrary === 'function') { showLibrary(); return; }
+            if (prev === 'playlist-full-screen' && window._currentOpenPlaylist && typeof openPlaylistPage === 'function') {
+                openPlaylistPage(window._currentOpenPlaylist.id || window._currentOpenPlaylist.name);
+                return;
+            }
+            if (typeof showScreenExcept === 'function') {
+                showScreenExcept(prev || 'home-screen', true);
+            }
+        };
+
         function renderPlaylists() {
             const listEl = document.getElementById('playlists-list');
             const overviewEl = document.getElementById('playlists-overview-grid');
@@ -948,23 +1113,7 @@ function onPlayerStateChange(event) {
                 const card = document.createElement('div');
                 card.className = 'lib-playlist-card';
 
-                let coverHtml = '';
-                if (pl.isYt) {
-                    coverHtml = `<img src="${pl.cover || 'default_cover.jpg'}" class="lib-pl-cover-img" onerror="this.src='default_cover.jpg'" alt="">`;
-                } else {
-                    const songs = pl.songs || [];
-                    if (pl.customCover) {
-                        coverHtml = `<img src="${pl.customCover}" class="lib-pl-cover-img" onerror="this.src='default_cover.jpg'" alt="">`;
-                    } else if (songs.length >= 4) {
-                        const c = songs.slice(0, 4).map(s => s.cover || `https://i.ytimg.com/vi/${s.id || s.videoId}/hqdefault.jpg`);
-                        coverHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%;">${c.map(src => `<img src="${src}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='default_cover.jpg'">`).join('')}</div>`;
-                    } else if (songs.length > 0) {
-                        const src = songs[0].cover || `https://i.ytimg.com/vi/${songs[0].id || songs[0].videoId}/hqdefault.jpg`;
-                        coverHtml = `<img src="${src}" class="lib-pl-cover-img" onerror="this.src='default_cover.jpg'" alt="">`;
-                    } else {
-                        coverHtml = `<div style="width:100%;height:100%;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:36px;height:36px;fill:rgba(255,255,255,0.3)"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>`;
-                    }
-                }
+                let coverHtml = buildPlaylistArtHTML(pl);
 
                 const countText = pl.isYt ? `${pl.trackCount || 0} tracks` : `${(pl.songs || []).length} song${(pl.songs || []).length !== 1 ? 's' : ''}`;
                 const badgeHtml = pl.isYt ? `<span class="lib-badge-ytm">YTM</span>` : '';
@@ -1198,11 +1347,8 @@ function onPlayerStateChange(event) {
                 return;
             }
 
-            const newPl = { id: Date.now(), name, songs: [], createdAt: new Date().toISOString() };
-            playlists.unshift(newPl);
-            savePlaylists(playlists);
-
-            // Sync with backend
+            let backendId = null;
+            // Sync with backend FIRST so we have the real SQLite playlist_id
             try {
                 const res = await fetch('/api/library/playlists', {
                     method: 'POST',
@@ -1211,10 +1357,20 @@ function onPlayerStateChange(event) {
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.id) newPl.id = data.id;
+                    if (data.id) backendId = data.id;
                 }
             } catch(e) { console.error('Playlist backend create error', e); }
 
+            const newPl = { 
+                id: backendId || Date.now(), 
+                name, 
+                songs: [], 
+                createdAt: new Date().toISOString() 
+            };
+            playlists.unshift(newPl);
+            savePlaylists(playlists);
+
+            if (input) input.value = '';
             window.closeCreatePlaylistModal();
             renderPlaylists();
             updateLibraryStats();
@@ -1236,7 +1392,6 @@ function onPlayerStateChange(event) {
             
             playQueueIndex(currentQueueIndex);
             setPlayPauseUI(true);
-            showPlayer();
         };
 
         // ── PLAYLIST FULL PAGE & BACKEND SYNC ──
@@ -1259,12 +1414,20 @@ function onPlayerStateChange(event) {
             let pl = null;
             let plIdx = -1;
 
-            if (typeof plIdentifier === 'number' && plIdentifier < playlists.length && plIdentifier >= 0 && playlists[plIdentifier]) {
-                pl = playlists[plIdentifier];
-                plIdx = plIdentifier;
+            // 1. Strict priority: match by id (number or string)
+            plIdx = playlists.findIndex(p => p.id == plIdentifier);
+            if (plIdx !== -1) {
+                pl = playlists[plIdx];
             } else {
-                plIdx = playlists.findIndex(p => p.id == plIdentifier || p.name === plIdentifier);
-                if (plIdx !== -1) pl = playlists[plIdx];
+                // 2. Priority: match by name
+                plIdx = playlists.findIndex(p => p.name === plIdentifier);
+                if (plIdx !== -1) {
+                    pl = playlists[plIdx];
+                } else if (typeof plIdentifier === 'number' && plIdentifier >= 0 && plIdentifier < playlists.length && playlists[plIdentifier]) {
+                    // 3. Fallback: array index
+                    pl = playlists[plIdentifier];
+                    plIdx = plIdentifier;
+                }
             }
 
             if (!pl) return;
@@ -1282,25 +1445,23 @@ function onPlayerStateChange(event) {
                 countEl.textContent = `${songCount} song${songCount !== 1 ? 's' : ''} • Axio Cloud Sync`;
             }
 
-            // Build cover artwork (4-item mosaic or single image or custom)
-            const covers = (pl.songs || []).slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId));
-            let mainCover = '';
-            
-            if (pl.customCover) {
-                artEl.innerHTML = `<img src="${pl.customCover}" onerror="this.src='default_cover.jpg'" alt="">`;
-                mainCover = pl.customCover;
-            } else if (covers.length >= 4) {
-                artEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%;">${covers.map(c => `<img src="${c}" onerror="this.src='default_cover.jpg'" style="width:100%;height:100%;object-fit:cover;">`).join('')}</div>`;
-                mainCover = covers[0];
-            } else if (covers.length > 0) {
-                artEl.innerHTML = `<img src="${covers[0]}" onerror="this.src='default_cover.jpg'" style="width:100%;height:100%;object-fit:cover;" alt="">`;
-                mainCover = covers[0];
-            } else {
-                artEl.innerHTML = `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0071e3,#42d392);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:64px;fill:white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>`;
+            // Build distinctive cover artwork & atmospheric background
+            const seed = pl.id || pl.name || 'Playlist';
+            const grad = getPlaylistDeterministicGradient(seed);
+            if (artEl) {
+                artEl.innerHTML = buildPlaylistArtHTML(pl);
             }
-
             if (bgEl) {
-                bgEl.style.backgroundImage = mainCover ? `url(${mainCover})` : 'none';
+                const songs = pl.songs || [];
+                const firstValid = songs.find(s => isValidSongCover(s.cover, s.id || s.videoId));
+                if (pl.customCover && !pl.customCover.includes('default_cover.jpg')) {
+                    bgEl.style.backgroundImage = `url(${pl.customCover})`;
+                } else if (firstValid) {
+                    bgEl.style.backgroundImage = `url(${firstValid.cover})`;
+                } else {
+                    bgEl.style.backgroundImage = 'none';
+                    bgEl.style.background = grad.bg;
+                }
             }
 
             // Cover upload handler
@@ -1381,9 +1542,10 @@ function onPlayerStateChange(event) {
                             songs.forEach(s => queueList.push({ title: s.title, artist: s.artist, cover: s.cover || '', videoId: s.id || s.videoId || '' }));
                             currentQueueIndex = sIdx;
                             window._forceQueueSong = { videoId: song.id || song.videoId, title: song.title, artist: song.artist, cover: song.cover };
+                            window._preserveQueue = true; // Preserve playlist tracks in queue!
                             songSearchInput.value = `${song.title} ${song.artist}`;
                             searchBtn.click();
-                            showToast(`▶ Playing from ${pl.name}`);
+                            showToast(`▶ Playing: ${song.title}`);
                         });
 
                         tracksEl.appendChild(row);
@@ -1401,6 +1563,14 @@ function onPlayerStateChange(event) {
                     songs.forEach(s => queueList.push({ title: s.title, artist: s.artist, cover: s.cover || '', videoId: s.id || s.videoId || '' }));
                     currentQueueIndex = 0;
                     const first = songs[0];
+                    window._forceQueueSong = { videoId: first.id || first.videoId, title: first.title, artist: first.artist, cover: first.cover };
+                    window._preserveQueue = true;
+                    songSearchInput.value = `${first.title} ${first.artist}`;
+                    searchBtn.click();
+                    showToast(`▶ Playing all from ${pl.name}`);
+                    return;
+                };
+                const _oldPlayAllDisabled = () => {
                     window._forceQueueSong = { videoId: first.id || first.videoId, title: first.title, artist: first.artist, cover: first.cover };
                     songSearchInput.value = `${first.title} ${first.artist}`;
                     searchBtn.click();
@@ -1564,7 +1734,7 @@ function onPlayerStateChange(event) {
                                     videoId: t.videoId || t.id,
                                     title: t.title,
                                     artist: t.artist,
-                                    cover: t.thumbnail
+                                    cover: t.cover || t.thumbnail || ''
                                 });
                                 addBtn.textContent = '✓ Added';
                                 addBtn.style.background = '#238636';
@@ -1580,18 +1750,32 @@ function onPlayerStateChange(event) {
         };
 
         window.addSongToCurrentPlaylist = async function(songMeta) {
-            const pl = window._currentOpenPlaylist;
-            if (!pl) return;
+            const cur = window._currentOpenPlaylist;
+            if (!cur) return;
+            const playlists = getPlaylists();
+            const pl = playlists.find(p => p.id == cur.id || p.name === cur.name) || cur;
             pl.songs = pl.songs || [];
             
-            const alreadyIn = pl.songs.some(s => (s.id || s.videoId) === (songMeta.id || songMeta.videoId) || s.title === songMeta.title);
+            const songId = songMeta.id || songMeta.videoId || '';
+            const songTitle = songMeta.title || '';
+            const alreadyIn = pl.songs.some(s => (songId && (s.id === songId || s.videoId === songId)) || (s.title && s.title.toLowerCase() === songTitle.toLowerCase()));
             if (alreadyIn) {
                 showToast(`Already in ${pl.name}`);
                 return;
             }
 
-            pl.songs.push(songMeta);
-            savePlaylists(getPlaylists());
+            const cleanSong = {
+                id: songId,
+                videoId: songId,
+                title: songTitle,
+                artist: songMeta.artist || 'Unknown Artist',
+                cover: songMeta.cover || songMeta.thumbnail || '',
+                query: `${songTitle} ${songMeta.artist || ''}`.trim()
+            };
+
+            pl.songs.push(cleanSong);
+            window._currentOpenPlaylist = pl;
+            savePlaylists(playlists);
 
             // Add to SQLite backend
             if (pl.id) {
@@ -1600,17 +1784,17 @@ function onPlayerStateChange(event) {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            video_id: songMeta.id || songMeta.videoId || '',
-                            title: songMeta.title || '',
-                            artist: songMeta.artist || '',
-                            cover: songMeta.cover || songMeta.thumbnail || ''
+                            video_id: cleanSong.videoId,
+                            title: cleanSong.title,
+                            artist: cleanSong.artist,
+                            cover: cleanSong.cover
                         })
                     });
                 } catch(e) { console.warn('Backend add track error', e); }
             }
 
             showToast(`Added to "${pl.name}"`);
-            openPlaylistPage(pl.id || pl.name);
+            openPlaylistPage(pl.id);
         };
 
         // ── New Playlist creation button triggers ──
@@ -1641,8 +1825,8 @@ function onPlayerStateChange(event) {
                         return;
                     }
 
-                    // Create in SQLite backend
-                    let newId = Date.now();
+                    // Create in SQLite backend FIRST
+                    let newId = null;
                     try {
                         const res = await fetch('/api/library/playlists', {
                             method: 'POST',
@@ -1655,23 +1839,35 @@ function onPlayerStateChange(event) {
                         }
                     } catch(e) { console.warn('Playlist create backend err', e); }
 
-                    const newPl = { id: newId, name, songs: [songMeta], createdAt: new Date().toISOString() };
+                    const finalId = newId || Date.now();
+                    const cleanSong = {
+                        id: songMeta.id || songMeta.videoId || '',
+                        videoId: songMeta.id || songMeta.videoId || '',
+                        title: songMeta.title || '',
+                        artist: songMeta.artist || '',
+                        cover: songMeta.cover || songMeta.thumbnail || '',
+                        query: songMeta.query || `${songMeta.title || ''} ${songMeta.artist || ''}`.trim()
+                    };
+
+                    const newPl = { id: finalId, name, songs: [cleanSong], createdAt: new Date().toISOString() };
                     pls.unshift(newPl);
                     savePlaylists(pls);
 
                     // Add track to SQLite backend
-                    try {
-                        await fetch(`/api/library/playlists/${newId}/tracks`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                video_id: songMeta.id || songMeta.videoId || '',
-                                title: songMeta.title || '',
-                                artist: songMeta.artist || '',
-                                cover: songMeta.cover || ''
-                            })
-                        });
-                    } catch(e) {}
+                    if (finalId) {
+                        try {
+                            await fetch(`/api/library/playlists/${finalId}/tracks`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    video_id: cleanSong.videoId,
+                                    title: cleanSong.title,
+                                    artist: cleanSong.artist,
+                                    cover: cleanSong.cover
+                                })
+                            });
+                        } catch(e) {}
+                    }
 
                     if (createInput) createInput.value = '';
                     showToast(`Created & Added to "${name}"`);
@@ -1695,31 +1891,45 @@ function onPlayerStateChange(event) {
                             <span>${escapeHtml(pl.name)}</span>
                         `;
                         item.addEventListener('click', async () => {
-                            pl.songs = pl.songs || [];
-                            const alreadyIn = pl.songs.some(s => (s.id || s.videoId) === (songMeta.id || songMeta.videoId) || s.title === songMeta.title);
+                            const masterPlaylists = getPlaylists();
+                            const targetPl = masterPlaylists.find(p => p.id == pl.id || p.name === pl.name) || pl;
+                            targetPl.songs = targetPl.songs || [];
+                            
+                            const songId = songMeta.id || songMeta.videoId || '';
+                            const songTitle = songMeta.title || '';
+                            const alreadyIn = targetPl.songs.some(s => (songId && (s.id === songId || s.videoId === songId)) || (s.title && s.title.toLowerCase() === songTitle.toLowerCase()));
+                            
                             if (!alreadyIn) {
-                                pl.songs.push(songMeta);
-                                savePlaylists(getPlaylists());
+                                const cleanSong = {
+                                    id: songId,
+                                    videoId: songId,
+                                    title: songTitle,
+                                    artist: songMeta.artist || 'Unknown Artist',
+                                    cover: songMeta.cover || songMeta.thumbnail || '',
+                                    query: songMeta.query || `${songTitle} ${songMeta.artist || ''}`.trim()
+                                };
+                                targetPl.songs.push(cleanSong);
+                                savePlaylists(masterPlaylists);
                                 
                                 // Sync to backend SQLite
-                                if (pl.id) {
+                                if (targetPl.id) {
                                     try {
-                                        await fetch(`/api/library/playlists/${pl.id}/tracks`, {
+                                        await fetch(`/api/library/playlists/${targetPl.id}/tracks`, {
                                             method: 'POST',
                                             headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({
-                                                video_id: songMeta.id || songMeta.videoId || '',
-                                                title: songMeta.title || '',
-                                                artist: songMeta.artist || '',
-                                                cover: songMeta.cover || ''
+                                                video_id: cleanSong.videoId,
+                                                title: cleanSong.title,
+                                                artist: cleanSong.artist,
+                                                cover: cleanSong.cover
                                             })
                                         });
                                     } catch(e) { console.warn('Add track to backend failed', e); }
                                 }
-                                showToast(`Added to "${pl.name}"`);
+                                showToast(`Added to "${targetPl.name}"`);
                                 if (typeof renderPlaylists === 'function') renderPlaylists();
                             } else {
-                                showToast(`Already in "${pl.name}"`);
+                                showToast(`Already in "${targetPl.name}"`);
                             }
                             if (addToPlaylistPopup) addToPlaylistPopup.classList.remove('open');
                         });
@@ -4335,12 +4545,8 @@ function onPlayerStateChange(event) {
             renderQueue();
             const song = queueList[idx];
 
-            // Auto-open player screen ONLY for the first song played in the session
-            if (!window.hasPlayedFirstSong) {
-                window.hasPlayedFirstSong = true;
-                if (typeof showPlayer === 'function') showPlayer();
-                else if (window.showPlayer) window.showPlayer();
-            }
+            // Playing updates mini player bar on PC without stealing screen
+            window.hasPlayedFirstSong = true;
             
             if (song.localUrl) {
                 // Local File Pipeline Bypass
@@ -4474,11 +4680,7 @@ function onPlayerStateChange(event) {
             if (!query) return;
 
             // Auto-open player screen ONLY for the first song played in the session
-            if (!window.hasPlayedFirstSong) {
-                window.hasPlayedFirstSong = true;
-                if (typeof showPlayer === 'function') showPlayer();
-                else if (window.showPlayer) window.showPlayer();
-            }
+            window.hasPlayedFirstSong = true;
 
             currentPlaybackToken++;
             const myToken = currentPlaybackToken;
@@ -4718,15 +4920,7 @@ function onPlayerStateChange(event) {
             coverArtContainer.classList.add('playing');
             document.getElementById('cover-wrapper').classList.add('playing');
             
-            // Auto-open player screen ONLY for the first song played in the session
-            if (!window.hasPlayedFirstSong) {
-                window.hasPlayedFirstSong = true;
-                if (typeof window.showPlayer === 'function') {
-                    window.showPlayer();
-                } else if (typeof showPlayer === 'function') {
-                    showPlayer();
-                }
-            }
+            window.hasPlayedFirstSong = true;
         });
 
         audioPlayer.addEventListener('pause', () => {

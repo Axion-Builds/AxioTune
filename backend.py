@@ -2794,10 +2794,10 @@ async def download_song(id: str, title: str):
     return StreamingResponse(fetch_and_stream(), headers=headers)
 
 class DBSong(BaseModel):
-    video_id: str
-    title: str
-    artist: str
-    cover: str
+    video_id: Optional[str] = ""
+    title: Optional[str] = ""
+    artist: Optional[str] = ""
+    cover: Optional[str] = ""
 
 class DBPlaylist(BaseModel):
     name: str
@@ -2832,20 +2832,27 @@ def get_playlists():
     for row in pl_rows:
         pl = dict(row)
         tracks = conn.execute("SELECT * FROM playlist_tracks WHERE playlist_id = ? ORDER BY position ASC", (pl['id'],)).fetchall()
-        pl['songs'] = [{"id": t['video_id'], "title": t['title'], "artist": t['artist'], "cover": t['cover'], "query": f"{t['title']} {t['artist']}"} for t in tracks]
+        pl['songs'] = [{"id": t['video_id'], "videoId": t['video_id'], "title": t['title'], "artist": t['artist'], "cover": t['cover'], "query": f"{t['title']} {t['artist']}"} for t in tracks]
         playlists.append(pl)
     conn.close()
     return {"status": "success", "playlists": playlists}
 
 @app.post("/api/library/playlists")
 def create_playlist(pl: DBPlaylist):
+    name = (pl.name or "").strip()
+    if not name:
+        return {"status": "error", "message": "Playlist name is required"}
     conn = get_db()
+    existing = conn.execute("SELECT id, name FROM playlists WHERE LOWER(name) = LOWER(?)", (name,)).fetchone()
+    if existing:
+        conn.close()
+        return {"status": "success", "id": existing['id'], "name": existing['name']}
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO playlists (name) VALUES (?)", (pl.name,))
+    cursor.execute("INSERT INTO playlists (name) VALUES (?)", (name,))
     conn.commit()
     pl_id = cursor.lastrowid
     conn.close()
-    return {"status": "success", "id": pl_id, "name": pl.name}
+    return {"status": "success", "id": pl_id, "name": name}
 
 @app.put("/api/library/playlists/{pl_id}")
 def update_playlist(pl_id: int, pl: DBPlaylist):
@@ -2867,18 +2874,34 @@ def delete_playlist(pl_id: int):
 @app.post("/api/library/playlists/{pl_id}/tracks")
 def add_playlist_track(pl_id: int, song: DBSong):
     conn = get_db()
-    exists = conn.execute("SELECT video_id FROM playlist_tracks WHERE playlist_id = ? AND video_id = ?", (pl_id, song.video_id)).fetchone()
+    pl = conn.execute("SELECT id FROM playlists WHERE id = ?", (pl_id,)).fetchone()
+    if not pl:
+        existing = conn.execute("SELECT id FROM playlists ORDER BY id DESC LIMIT 1").fetchone()
+        if existing:
+            pl_id = existing['id']
+        else:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO playlists (name) VALUES (?)", ("My Playlist",))
+            conn.commit()
+            pl_id = cursor.lastrowid
+
+    vid = song.video_id or ""
+    title = song.title or "Unknown Title"
+    artist = song.artist or "Unknown Artist"
+    cover = song.cover or ""
+
+    exists = conn.execute("SELECT video_id FROM playlist_tracks WHERE playlist_id = ? AND video_id = ?", (pl_id, vid)).fetchone()
     if exists:
         conn.close()
-        return {"status": "exists"}
+        return {"status": "exists", "playlist_id": pl_id}
         
-    pos = conn.execute("SELECT MAX(position) as m FROM playlist_tracks WHERE playlist_id = ?", (pl_id,)).fetchone()['m']
-    pos = 0 if pos is None else pos + 1
+    pos_row = conn.execute("SELECT MAX(position) as m FROM playlist_tracks WHERE playlist_id = ?", (pl_id,)).fetchone()
+    pos = 0 if (pos_row is None or pos_row['m'] is None) else pos_row['m'] + 1
     conn.execute("INSERT INTO playlist_tracks (playlist_id, video_id, title, artist, cover, position) VALUES (?, ?, ?, ?, ?, ?)",
-                 (pl_id, song.video_id, song.title, song.artist, song.cover, pos))
+                 (pl_id, vid, title, artist, cover, pos))
     conn.commit()
     conn.close()
-    return {"status": "success"}
+    return {"status": "success", "playlist_id": pl_id}
 
 @app.delete("/api/library/playlists/{pl_id}/tracks/{video_id}")
 def remove_playlist_track(pl_id: int, video_id: str):
