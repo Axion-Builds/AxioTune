@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=297">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=299">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet">
@@ -2378,60 +2378,166 @@
             <div id="history-container" class="history-list"></div>
         </div>
 
-        <!-- Library Screen -->
+                <!-- Library Screen (Modernized BitChord / Apple Music caliber) -->
         <div id="library-screen" class="screen-view hidden-screen">
-            <div class="screen-header-row">
-                <button class="screen-back-btn" title="Back" onclick="window.goBack()">
-                    <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-                </button>
-                <h1 class="home-greeting" style="margin-bottom:0;">Your Library</h1>
-            </div>
-
-            <!-- Tabs -->
-            <div class="lib-tabs">
-                <button class="lib-tab active" data-tab="liked">Liked Songs</button>
-                <button class="lib-tab" data-tab="artists">Artists</button>
-                <button class="lib-tab" data-tab="playlists">Playlists</button>
-                <button class="lib-tab" data-tab="downloads">Downloads</button>
-            </div>
-
-            <!-- Liked Songs Tab -->
-            <div id="lib-liked-panel" class="lib-panel">
-                <div id="liked-songs-list">
-                    <div class="empty-state lib-empty">No liked songs yet.<br><span>Tap ♥ while a song plays to save it here.</span></div>
-                </div>
-            </div>
-
-            <!-- Followed Artists Tab -->
-            <div id="lib-artists-panel" class="lib-panel" style="display:none;">
-                <div id="artists-list" class="grid-layout">
-                    <div class="empty-state lib-empty" style="grid-column: 1/-1;">No artists yet.<br><span>Like songs to automatically save artists.</span></div>
-                </div>
-            </div>
-
-            <!-- Playlists Tab -->
-            <div id="lib-playlists-panel" class="lib-panel" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-                    <div style="display:flex; align-items:center; background: rgba(255,255,255,0.05); border-radius: 20px; padding: 4px 12px; border: 1px solid rgba(255,255,255,0.1);">
-                        <input type="text" id="new-playlist-input" placeholder="New Playlist..." style="background:transparent;border:none;color:white;outline:none;font-size:0.95rem;width:140px;">
-                        <button id="create-playlist-btn" style="background:transparent;border:none;color:var(--accent);cursor:pointer;padding:4px;display:flex;">
-                            <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <div class="library-container">
+                <!-- Header with Title, Search, and New Playlist -->
+                <div class="lib-header">
+                    <div class="lib-header-left">
+                        <button class="screen-back-btn lib-back-btn" title="Back" onclick="window.goBack()">
+                            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                        </button>
+                        <div class="lib-header-titles">
+                            <h1 class="lib-title">Your Library</h1>
+                            <p class="lib-subtitle" id="lib-meta-subtitle">Your collection, playlists & artists</p>
+                        </div>
+                    </div>
+                    <div class="lib-header-actions">
+                        <div class="lib-search-box">
+                            <svg viewBox="0 0 24 24" class="lib-search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                            <input type="text" id="lib-filter-input" placeholder="Find in library..." oninput="window.filterLibraryContent(this.value)">
+                        </div>
+                        <button class="lib-create-btn" id="open-create-playlist-modal-btn" title="New Playlist" onclick="window.openCreatePlaylistModal()">
+                            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            <span>New Playlist</span>
                         </button>
                     </div>
                 </div>
-                <div id="playlists-list" class="grid-layout">
-                    <div class="empty-state lib-empty" style="grid-column: 1/-1;">No playlists yet.<br><span>Create one above and add songs!</span></div>
-                </div>
-            </div>
 
-            <!-- Downloads Tab -->
-            <div id="lib-downloads-panel" class="lib-panel" style="display:none;">
-                <div id="downloaded-songs-list">
-                    <div class="empty-state lib-empty">No downloaded songs.<br><span>Like or add songs to a playlist to auto-download them.</span></div>
+                <!-- Segmented Filter Pills -->
+                <div class="lib-filter-bar">
+                    <button class="lib-filter-pill active" data-tab="all" onclick="window.switchLibTab('all', this)">All</button>
+                    <button class="lib-filter-pill" data-tab="playlists" onclick="window.switchLibTab('playlists', this)">Playlists</button>
+                    <button class="lib-filter-pill" data-tab="liked" onclick="window.switchLibTab('liked', this)">Liked Songs</button>
+                    <button class="lib-filter-pill" data-tab="artists" onclick="window.switchLibTab('artists', this)">Artists</button>
+                                    </div>
+
+                <!-- Hero Quick-Cards -->
+                <div class="lib-hero-grid" id="lib-hero-grid">
+                    <!-- Liked Songs Hero -->
+                    <div class="lib-hero-card lib-hero-liked" onclick="window.switchLibTab('liked')">
+                        <div class="lib-hero-gradient-liked">
+                            <svg viewBox="0 0 24 24" class="lib-hero-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </div>
+                        <div class="lib-hero-details">
+                            <div class="lib-hero-title">Liked Songs</div>
+                            <div class="lib-hero-sub" id="lib-hero-liked-count">0 songs</div>
+                        </div>
+                        <button class="lib-hero-play-btn" title="Shuffle Liked Songs" onclick="event.stopPropagation(); window.shuffleLikedSongs()">
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- New Playlist Quick Card -->
+                    <div class="lib-hero-card lib-hero-playlist-card" onclick="window.openCreatePlaylistModal()">
+                        <div class="lib-hero-gradient-playlist">
+                            <svg viewBox="0 0 24 24" class="lib-hero-icon"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        </div>
+                        <div class="lib-hero-details">
+                            <div class="lib-hero-title">New Playlist</div>
+                            <div class="lib-hero-sub">Create & curate music</div>
+                        </div>
+                        <button class="lib-hero-play-btn" title="Create Playlist" onclick="event.stopPropagation(); window.openCreatePlaylistModal()">
+                            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panels Container -->
+                <div class="lib-panels-container">
+                    <!-- Tab: ALL Overview -->
+                    <div id="lib-panel-all" class="lib-panel active">
+                        <div class="lib-section-block" id="lib-overview-playlists-block">
+                            <div class="lib-section-hdr">
+                                <div class="lib-section-heading">Playlists</div>
+                                <button class="lib-see-all-btn" onclick="window.switchLibTab('playlists')">See all</button>
+                            </div>
+                            <div id="playlists-overview-grid" class="lib-grid-playlists"></div>
+                        </div>
+
+                        <div class="lib-section-block" id="lib-overview-artists-block">
+                            <div class="lib-section-hdr">
+                                <div class="lib-section-heading">Artists</div>
+                                <button class="lib-see-all-btn" onclick="window.switchLibTab('artists')">See all</button>
+                            </div>
+                            <div id="artists-overview-row" class="lib-artists-row"></div>
+                        </div>
+
+                        <div class="lib-section-block" id="lib-overview-liked-block">
+                            <div class="lib-section-hdr">
+                                <div class="lib-section-heading">Liked Tracks</div>
+                                <button class="lib-see-all-btn" onclick="window.switchLibTab('liked')">See all</button>
+                            </div>
+                            <div id="liked-overview-list" class="lib-songs-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: PLAYLISTS -->
+                    <div id="lib-panel-playlists" class="lib-panel" style="display:none;">
+                        <div class="lib-panel-subhdr">
+                            <span id="playlists-count-label" class="lib-count-label">0 Playlists</span>
+                            <button class="lib-btn-primary" onclick="window.openCreatePlaylistModal()">+ Create Playlist</button>
+                        </div>
+                        <div id="playlists-list" class="lib-grid-playlists"></div>
+                    </div>
+
+                    <!-- Tab: LIKED SONGS -->
+                    <div id="lib-panel-liked" class="lib-panel" style="display:none;">
+                        <div class="lib-panel-subhdr">
+                            <div class="lib-liked-controls">
+                                <button class="lib-btn-primary" onclick="window.playAllLikedSongs()">
+                                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Play All
+                                </button>
+                                <button class="lib-btn-glass" onclick="window.shuffleLikedSongs()">
+                                    <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg> Shuffle
+                                </button>
+                            </div>
+                            <span id="liked-count-label" class="lib-count-label">0 Songs</span>
+                        </div>
+                        <div id="liked-songs-list" class="lib-songs-list"></div>
+                    </div>
+
+                    <!-- Tab: ARTISTS -->
+                    <div id="lib-panel-artists" class="lib-panel" style="display:none;">
+                        <div class="lib-panel-subhdr">
+                            <span id="artists-count-label" class="lib-count-label">0 Artists</span>
+                        </div>
+                        <div id="artists-list" class="lib-grid-artists"></div>
+                    </div>
+
+                    <!-- Tab: DOWNLOADS -->
+                    <div id="lib-panel-downloads" class="lib-panel" style="display:none;">
+                        <div class="lib-panel-subhdr">
+                            <div class="lib-liked-controls">
+                                <button class="lib-btn-primary" onclick="window.playAllDownloads()">
+                                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Play All
+                                </button>
+                            </div>
+                            <span id="downloads-count-label" class="lib-count-label">0 Offline Songs</span>
+                        </div>
+                        <div id="downloaded-songs-list" class="lib-songs-list"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Sleek Apple Glass Modal for Creating Playlist -->
+        <div id="create-playlist-modal" class="lib-modal-backdrop" style="display:none;" onclick="if(event.target===this) window.closeCreatePlaylistModal()">
+            <div class="lib-modal-card">
+                <div class="lib-modal-header">
+                    <h3>New Playlist</h3>
+                    <button class="lib-modal-close" onclick="window.closeCreatePlaylistModal()">✕</button>
+                </div>
+                <div class="lib-modal-body">
+                    <label class="lib-modal-label" for="modal-playlist-name">Playlist Title</label>
+                    <input type="text" id="modal-playlist-name" class="lib-modal-input" placeholder="e.g. Midnight Drive" maxlength="60" onkeydown="if(event.key==='Enter') window.submitCreatePlaylist()">
+                </div>
+                <div class="lib-modal-actions">
+                    <button class="lib-btn-glass" onclick="window.closeCreatePlaylistModal()">Cancel</button>
+                    <button class="lib-btn-primary" id="modal-confirm-create-pl-btn" onclick="window.submitCreatePlaylist()">Create</button>
+                </div>
+            </div>
+        </div>
 
     <!-- Full Playlist Screen -->
     <div id="playlist-full-screen" class="screen-view hidden-screen">
@@ -3066,10 +3172,7 @@
             <svg viewBox="0 0 24 24"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg>
             Add to Playlist
         </button>
-        <button class="context-btn" data-action="download">
-            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            Download
-        </button>
+
         <button class="context-btn" data-action="like">
             <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
             <span class="like-text">Like</span>
@@ -3210,7 +3313,7 @@
     </div>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=302"></script>
+    <script src="app_v3.js?v=304"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -2306,63 +2306,78 @@ async def get_lyrics(
 
 @app.post("/api/translate-lyrics")
 async def translate_lyrics_endpoint(request: Request):
-    """Batch-translates lyric text lines into target language with fast in-memory caching."""
+    """Batch-translates lyric text lines into target language with fast in-memory caching and romanization support."""
     try:
         body = await request.json()
         lines = body.get("lines", [])
         target_lang = body.get("target_lang", "en")
 
         if not lines:
-            return {"status": "success", "translations": []}
+            return {"status": "success", "translations": [], "romanizations": []}
 
-        cache_id = f"{target_lang}_{hash(tuple(lines[:25]))}"
+        cache_id = f"{target_lang}_{hash(tuple(lines[:30]))}"
         if cache_id in TRANSLATION_CACHE:
-            return {"status": "success", "translations": TRANSLATION_CACHE[cache_id]}
+            cached = TRANSLATION_CACHE[cache_id]
+            if isinstance(cached, dict):
+                return {"status": "success", "translations": cached.get("translations", []), "romanizations": cached.get("romanizations", [])}
 
         translations = [""] * len(lines)
+        romanizations = [""] * len(lines)
         valid_indices = []
         valid_texts = []
 
         for idx, l in enumerate(lines):
             text = (l or "").strip()
-            if text and text != "• • •" and len(text) > 1:
+            if text and text not in ("• • •", "...", "---", "♪", "� � �") and len(text) > 1:
                 valid_indices.append(idx)
                 valid_texts.append(text)
 
         if not valid_texts:
-            return {"status": "success", "translations": translations}
+            return {"status": "success", "translations": translations, "romanizations": romanizations}
 
-        # Translate in batches of 30 lines with delimiter
-        delim = " __NL__ "
-        batch_size = 30
-        async with httpx.AsyncClient(timeout=6.0) as client:
-            for b_start in range(0, len(valid_texts), batch_size):
-                b_end = min(b_start + batch_size, len(valid_texts))
-                chunk_texts = valid_texts[b_start:b_end]
-                chunk_indices = valid_indices[b_start:b_end]
-                
-                payload = delim.join(chunk_texts)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+        }
+        sem = asyncio.Semaphore(15)
+
+        async def fetch_line(client: httpx.AsyncClient, text: str):
+            async with sem:
                 try:
-                    r = await client.get("https://translate.googleapis.com/translate_a/single", params={
-                        "client": "gtx", "sl": "auto", "tl": target_lang, "dt": "t", "q": payload
+                    r = await client.get("https://clients5.google.com/translate_a/single", params={
+                        "client": "dict-chrome-ex", "sl": "auto", "tl": target_lang, "dt": ["t", "rm"], "q": text
                     })
                     if r.status_code == 200:
                         data = r.json()
-                        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
-                            joined = "".join([item[0] for item in data[0] if item and item[0]])
-                            # Split by delimiter (handling case variations)
-                            parts = re.split(r'\s*__\s*nl\s*__\s*', joined, flags=re.IGNORECASE)
-                            for p_idx, part in enumerate(parts):
-                                if p_idx < len(chunk_indices):
-                                    real_idx = chunk_indices[p_idx]
-                                    translations[real_idx] = part.strip()
-                except Exception as b_err:
-                    print("Batch translation error:", b_err)
+                        tr, rm = "", ""
+                        if data and len(data) > 0 and isinstance(data[0], list):
+                            for elem in data[0]:
+                                if elem and len(elem) > 0 and elem[0] and not tr:
+                                    tr = elem[0].strip()
+                                if elem and len(elem) > 3 and elem[3] and not rm:
+                                    rm = elem[3].strip()
+                        if tr.lower() == text.lower() and target_lang == "en":
+                            tr = ""
+                        if rm.lower() == text.lower():
+                            rm = ""
+                        return tr, rm
+                except Exception:
+                    pass
+                return "", ""
 
-        TRANSLATION_CACHE[cache_id] = translations
-        return {"status": "success", "translations": translations}
+        async with httpx.AsyncClient(timeout=6.0, headers=headers) as client:
+            tasks = [fetch_line(client, txt) for txt in valid_texts]
+            line_results = await asyncio.gather(*tasks)
+
+        for i, (tr, rm) in enumerate(line_results):
+            real_idx = valid_indices[i]
+            translations[real_idx] = tr
+            romanizations[real_idx] = rm
+
+        result_payload = {"translations": translations, "romanizations": romanizations}
+        TRANSLATION_CACHE[cache_id] = result_payload
+        return {"status": "success", "translations": translations, "romanizations": romanizations}
     except Exception as e:
-        return {"status": "error", "message": str(e), "translations": []}
+        return {"status": "error", "message": str(e), "translations": [], "romanizations": []}
 
 def format_headers(raw_input: str) -> str:
     raw_input = raw_input.strip()
