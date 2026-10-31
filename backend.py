@@ -2847,6 +2847,14 @@ def create_playlist(pl: DBPlaylist):
     conn.close()
     return {"status": "success", "id": pl_id, "name": pl.name}
 
+@app.put("/api/library/playlists/{pl_id}")
+def update_playlist(pl_id: int, pl: DBPlaylist):
+    conn = get_db()
+    conn.execute("UPDATE playlists SET name = ? WHERE id = ?", (pl.name, pl_id))
+    conn.commit()
+    conn.close()
+    return {"status": "success", "id": pl_id, "name": pl.name}
+
 @app.delete("/api/library/playlists/{pl_id}")
 def delete_playlist(pl_id: int):
     conn = get_db()

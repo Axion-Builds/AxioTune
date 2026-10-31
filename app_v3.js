@@ -1239,212 +1239,489 @@ function onPlayerStateChange(event) {
             showPlayer();
         };
 
-        // ── PLAYLIST FULL PAGE ──
-        function openPlaylistPage(plIdx) {
-            const pl = getPlaylists()[plIdx];
-            if (!pl) return;
+        // ── PLAYLIST FULL PAGE & BACKEND SYNC ──
+        window._currentOpenPlaylist = null;
+        window._playlistSearchTimer = null;
 
-            const screen = document.getElementById('playlist-full-screen');
+        // Exit playlist view back to library
+        window.exitPlaylistView = function() {
+            window._currentOpenPlaylist = null;
+            if (typeof window.showLibrary === 'function') {
+                window.showLibrary();
+            } else if (typeof showScreenExcept === 'function') {
+                showScreenExcept('library-screen');
+            }
+        };
+
+        // Open full playlist screen
+        function openPlaylistPage(plIdentifier) {
+            const playlists = getPlaylists();
+            let pl = null;
+            let plIdx = -1;
+
+            if (typeof plIdentifier === 'number' && plIdentifier < playlists.length && plIdentifier >= 0 && playlists[plIdentifier]) {
+                pl = playlists[plIdentifier];
+                plIdx = plIdentifier;
+            } else {
+                plIdx = playlists.findIndex(p => p.id == plIdentifier || p.name === plIdentifier);
+                if (plIdx !== -1) pl = playlists[plIdx];
+            }
+
+            if (!pl) return;
+            window._currentOpenPlaylist = pl;
+
             const bgEl = document.getElementById('playlist-hero-bg');
             const artEl = document.getElementById('playlist-screen-art');
             const nameEl = document.getElementById('playlist-screen-name');
             const countEl = document.getElementById('playlist-screen-count');
             const tracksEl = document.getElementById('playlist-screen-tracks');
 
-            nameEl.textContent = pl.name;
-            countEl.textContent = `${pl.songs.length} song${pl.songs.length !== 1 ? 's' : ''}  •  Your Playlist`;
+            if (nameEl) nameEl.textContent = pl.name || 'Untitled Playlist';
+            if (countEl) {
+                const songCount = (pl.songs || []).length;
+                countEl.textContent = `${songCount} song${songCount !== 1 ? 's' : ''} • Axio Cloud Sync`;
+            }
 
-            // Build mosaic art or use custom cover
-            const covers = pl.songs.slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId));
+            // Build cover artwork (4-item mosaic or single image or custom)
+            const covers = (pl.songs || []).slice(0, 4).map(s => getCoverUrl(`${s.title} ${s.artist}`, s.cover || '', s.id || s.videoId));
             let mainCover = '';
             
             if (pl.customCover) {
-                artEl.innerHTML = `<img src="${pl.customCover}" onerror="this.src='default_cover.jpg'">`;
+                artEl.innerHTML = `<img src="${pl.customCover}" onerror="this.src='default_cover.jpg'" alt="">`;
                 mainCover = pl.customCover;
+            } else if (covers.length >= 4) {
+                artEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%;">${covers.map(c => `<img src="${c}" onerror="this.src='default_cover.jpg'" style="width:100%;height:100%;object-fit:cover;">`).join('')}</div>`;
+                mainCover = covers[0];
+            } else if (covers.length > 0) {
+                artEl.innerHTML = `<img src="${covers[0]}" onerror="this.src='default_cover.jpg'" style="width:100%;height:100%;object-fit:cover;" alt="">`;
+                mainCover = covers[0];
             } else {
-                if (covers.length >= 4) {
-                    artEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%;">${covers.map(c => `<img src="${c}" onerror="this.src='default_cover.jpg'">`).join('')}</div>`;
-                    mainCover = covers[0];
-                } else if (covers.length > 0) {
-                    artEl.innerHTML = `<img src="${covers[0]}" onerror="this.src='default_cover.jpg'">`;
-                    mainCover = covers[0];
-                } else {
-                    artEl.innerHTML = `<div style="width:100%;height:100%;background:linear-gradient(135deg,#ff2d55,#af52de);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:64px;fill:white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>`;
-                }
+                artEl.innerHTML = `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0071e3,#42d392);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:64px;fill:white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>`;
             }
 
-            // Set background blur
-            if (mainCover) {
-                bgEl.style.backgroundImage = `url(${mainCover})`;
-            } else {
-                bgEl.style.backgroundImage = 'none';
+            if (bgEl) {
+                bgEl.style.backgroundImage = mainCover ? `url(${mainCover})` : 'none';
             }
 
-            // Add upload overlay
+            // Cover upload handler
             const artContainer = artEl.parentElement;
-            const oldOverlay = artContainer.querySelector('.playlist-art-overlay');
-            if (oldOverlay) oldOverlay.remove();
-            
-            const overlay = document.createElement('div');
-            overlay.className = 'playlist-art-overlay';
-            overlay.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM5 19V5h14v14H5zm6.43-6.53l-3.07 3.83-3.83-4.8L2 17h16l-5.32-6.72z"/></svg>Upload Photo`;
-            artContainer.appendChild(overlay);
-            
-            artContainer.onclick = () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (re) => {
-                        const pls = getPlaylists();
-                        pls[plIdx].customCover = re.target.result;
-                        savePlaylists(pls);
-                        openPlaylistPage(plIdx); // re-render to update
-                    };
-                    reader.readAsDataURL(file);
-                };
-                input.click();
-            };
+            if (artContainer) {
+                const oldOverlay = artContainer.querySelector('.playlist-art-overlay');
+                if (oldOverlay) oldOverlay.remove();
+                
+                const overlay = document.createElement('div');
+                overlay.className = 'playlist-art-overlay';
+                overlay.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM5 19V5h14v14H5zm6.43-6.53l-3.07 3.83-3.83-4.8L2 17h16l-5.32-6.72z"/></svg>Upload Photo`;
+                artContainer.appendChild(overlay);
 
-            // Build tracklist
-            tracksEl.innerHTML = '';
-            if (pl.songs.length === 0) {
-                tracksEl.innerHTML = '<div class="empty-state" style="margin-top:30px;">No songs yet.<br><span>Add songs from the 3-dot menu on any track.</span></div>';
-            } else {
-                pl.songs.forEach((song, sIdx) => {
-                    const coverUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
-                    const row = document.createElement('div');
-                    row.className = 'playlist-track-row';
-                    row.innerHTML = `
-                        <div class="pt-num">${sIdx + 1}</div>
-                        <img class="pt-cover" src="${coverUrl}" onerror="this.src='default_cover.jpg'" alt="">
-                        <div class="pt-info">
-                            <div class="pt-title">${song.title}</div>
-                            <div class="pt-artist">${song.artist}</div>
+                artContainer.onclick = () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = (re) => {
+                            pl.customCover = re.target.result;
+                            savePlaylists(getPlaylists());
+                            openPlaylistPage(pl.id || plIdx);
+                        };
+                        reader.readAsDataURL(file);
+                    };
+                    input.click();
+                };
+            }
+
+            // Render track list
+            if (tracksEl) {
+                tracksEl.innerHTML = '';
+                const songs = pl.songs || [];
+                if (songs.length === 0) {
+                    tracksEl.innerHTML = `
+                        <div class="lib-empty-state" style="margin-top:40px;">
+                            <div class="lib-empty-icon">🎵</div>
+                            <div class="lib-empty-title">This playlist is empty</div>
+                            <div class="lib-empty-sub">Add songs using the 'Add Songs' button above or from any song's 3-dot menu.</div>
+                            <button class="lib-btn-primary" style="margin-top:16px;" onclick="window.openPlaylistAddModal()">
+                                ➕ Add Songs Now
+                            </button>
                         </div>
-                        <button class="pt-remove" title="Remove" onclick="event.stopPropagation(); removeSongFromPlaylist(${plIdx}, ${sIdx})">
-                            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                        </button>
                     `;
-                    row.addEventListener('click', () => {
-                        // Load this playlist into queue and play from this index
-                        queueList.length = 0;
-                        pl.songs.forEach(s => queueList.push({ title: s.title, artist: s.artist, cover: s.cover || '', videoId: s.videoId || '' }));
-                        currentQueueIndex = sIdx;
-                        window._forceQueueSong = { videoId: song.videoId, title: song.title, artist: song.artist, cover: song.cover };
-                        songSearchInput.value = `${song.title} ${song.artist}`;
-                        searchBtn.click();
-                        showToast(`▶ Playing from ${pl.name}`);
+                } else {
+                    songs.forEach((song, sIdx) => {
+                        const coverUrl = getCoverUrl(`${song.title} ${song.artist}`, song.cover || '', song.id || song.videoId);
+                        const row = document.createElement('div');
+                        row.className = 'playlist-track-row';
+                        row.innerHTML = `
+                            <div class="ptr-num-col">
+                                <span class="ptr-num">${sIdx + 1}</span>
+                                <svg class="ptr-play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                            <div class="ptr-title-col">
+                                <img class="ptr-cover" src="${coverUrl}" onerror="this.src='default_cover.jpg'" alt="" loading="lazy">
+                                <div class="ptr-meta">
+                                    <div class="ptr-title">${escapeHtml(song.title)}</div>
+                                    <div class="ptr-sub">${escapeHtml(song.artist || 'Unknown')}</div>
+                                </div>
+                            </div>
+                            <div class="ptr-artist">${escapeHtml(song.artist || 'Unknown')}</div>
+                            <div class="ptr-actions">
+                                <button class="ptr-action-btn ptr-more-btn" title="More Options" onclick="event.stopPropagation(); window.openSongContextMenu(event, '${escapeHtml(song.title)} ${escapeHtml(song.artist)}')">
+                                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                                </button>
+                                <button class="ptr-action-btn ptr-remove-btn" title="Remove from playlist" onclick="event.stopPropagation(); window.removeSongFromPlaylist('${pl.id}', '${song.id || song.videoId}', ${sIdx})">
+                                    <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                                </button>
+                            </div>
+                        `;
+
+                        row.addEventListener('click', () => {
+                            queueList.length = 0;
+                            songs.forEach(s => queueList.push({ title: s.title, artist: s.artist, cover: s.cover || '', videoId: s.id || s.videoId || '' }));
+                            currentQueueIndex = sIdx;
+                            window._forceQueueSong = { videoId: song.id || song.videoId, title: song.title, artist: song.artist, cover: song.cover };
+                            songSearchInput.value = `${song.title} ${song.artist}`;
+                            searchBtn.click();
+                            showToast(`▶ Playing from ${pl.name}`);
+                        });
+
+                        tracksEl.appendChild(row);
                     });
-                    tracksEl.appendChild(row);
-                });
+                }
             }
 
             // Play All button
             const playAllBtn = document.getElementById('pl-screen-play-all-btn');
             if (playAllBtn) {
                 playAllBtn.onclick = () => {
-                    if (pl.songs.length === 0) return showToast('No songs in playlist');
+                    const songs = pl.songs || [];
+                    if (songs.length === 0) return showToast('No songs in playlist');
                     queueList.length = 0;
-                    pl.songs.forEach(s => queueList.push({ title: s.title, artist: s.artist, cover: s.cover || '', videoId: s.videoId || '' }));
+                    songs.forEach(s => queueList.push({ title: s.title, artist: s.artist, cover: s.cover || '', videoId: s.id || s.videoId || '' }));
                     currentQueueIndex = 0;
-                    const first = pl.songs[0];
-                    window._forceQueueSong = { videoId: first.videoId, title: first.title, artist: first.artist, cover: first.cover };
+                    const first = songs[0];
+                    window._forceQueueSong = { videoId: first.id || first.videoId, title: first.title, artist: first.artist, cover: first.cover };
                     songSearchInput.value = `${first.title} ${first.artist}`;
                     searchBtn.click();
                     showToast(`▶ Playing ${pl.name}`);
                 };
             }
 
-            showScreen('playlist-full-screen');
+            if (typeof showScreenExcept === 'function') {
+                showScreenExcept('playlist-full-screen');
+            } else if (typeof window.showScreen === 'function') {
+                window.showScreen('playlist-full-screen');
+            }
         }
+        window.openPlaylistPage = openPlaylistPage;
 
-        window.removeSongFromPlaylist = function(plIdx, sIdx) {
-            const pls = getPlaylists();
-            if (!pls[plIdx]) return;
-            pls[plIdx].songs.splice(sIdx, 1);
-            savePlaylists(pls);
-            openPlaylistPage(plIdx); // re-render
+        // Shuffle Current Playlist
+        window.shuffleCurrentPlaylist = function() {
+            const pl = window._currentOpenPlaylist;
+            if (!pl || !pl.songs || pl.songs.length === 0) return showToast('No songs to shuffle');
+            const shuffled = [...pl.songs].sort(() => Math.random() - 0.5);
+            queueList.length = 0;
+            shuffled.forEach(s => queueList.push({ title: s.title, artist: s.artist, cover: s.cover || '', videoId: s.id || s.videoId || '' }));
+            currentQueueIndex = 0;
+            const first = shuffled[0];
+            window._forceQueueSong = { videoId: first.id || first.videoId, title: first.title, artist: first.artist, cover: first.cover };
+            songSearchInput.value = `${first.title} ${first.artist}`;
+            searchBtn.click();
+            showToast(`🔀 Shuffling ${pl.name}`);
+        };
+
+        // Rename Current Playlist
+        window.promptRenameCurrentPlaylist = async function() {
+            const pl = window._currentOpenPlaylist;
+            if (!pl) return;
+            const newName = prompt(`Rename playlist "${pl.name}":`, pl.name);
+            if (!newName || !newName.trim() || newName.trim() === pl.name) return;
+            
+            const cleanName = newName.trim();
+            pl.name = cleanName;
+            
+            // Sync with backend SQLite
+            if (pl.id) {
+                try {
+                    await fetch(`/api/library/playlists/${pl.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: cleanName })
+                    });
+                } catch(e) { console.warn('Backend playlist rename failed', e); }
+            }
+
+            savePlaylists(getPlaylists());
+            const nameEl = document.getElementById('playlist-screen-name');
+            if (nameEl) nameEl.textContent = cleanName;
+            if (typeof renderPlaylists === 'function') renderPlaylists();
+            showToast(`Playlist renamed to "${cleanName}"`);
+        };
+
+        // Delete Current Playlist
+        window.confirmDeleteCurrentPlaylist = async function() {
+            const pl = window._currentOpenPlaylist;
+            if (!pl) return;
+            if (!confirm(`Are you sure you want to delete the playlist "${pl.name}"?`)) return;
+
+            // Delete from SQLite backend
+            if (pl.id) {
+                try {
+                    await fetch(`/api/library/playlists/${pl.id}`, { method: 'DELETE' });
+                } catch(e) { console.warn('Backend playlist delete failed', e); }
+            }
+
+            const playlists = getPlaylists().filter(p => p.id != pl.id && p.name !== pl.name);
+            savePlaylists(playlists);
+            showToast(`Playlist "${pl.name}" deleted`);
+            window.exitPlaylistView();
+        };
+
+        // Remove single track from playlist
+        window.removeSongFromPlaylist = async function(plId, videoId, sIdx) {
+            const playlists = getPlaylists();
+            const pl = playlists.find(p => p.id == plId) || window._currentOpenPlaylist;
+            if (!pl) return;
+
+            // Remove from backend SQLite
+            if (pl.id && videoId) {
+                try {
+                    await fetch(`/api/library/playlists/${pl.id}/tracks/${encodeURIComponent(videoId)}`, { method: 'DELETE' });
+                } catch(e) { console.warn('Backend track delete failed', e); }
+            }
+
+            if (typeof sIdx === 'number' && pl.songs[sIdx]) {
+                pl.songs.splice(sIdx, 1);
+            } else if (videoId) {
+                pl.songs = pl.songs.filter(s => (s.id || s.videoId) !== videoId);
+            }
+
+            savePlaylists(playlists);
+            openPlaylistPage(pl.id || pl.name);
             showToast('Song removed from playlist');
         };
 
+        // Quick Add Songs Modal Logic
+        window.openPlaylistAddModal = function() {
+            const pl = window._currentOpenPlaylist;
+            if (!pl) return showToast('Open a playlist first');
+            const modal = document.getElementById('playlist-add-songs-modal');
+            const sub = document.getElementById('add-modal-pl-name');
+            const input = document.getElementById('playlist-add-search-input');
+            const results = document.getElementById('playlist-add-results');
 
-        // New Playlist button
+            if (sub) sub.textContent = `Adding to "${pl.name}"`;
+            if (input) { input.value = ''; input.focus(); }
+            if (results) results.innerHTML = '<div class="pl-add-empty">Type song title or artist above to search...</div>';
+            if (modal) modal.classList.remove('hidden-modal');
+        };
+
+        window.closePlaylistAddModal = function() {
+            const modal = document.getElementById('playlist-add-songs-modal');
+            if (modal) modal.classList.add('hidden-modal');
+        };
+
+        window.debouncedPlaylistSearch = function(query) {
+            clearTimeout(window._playlistSearchTimer);
+            const trimmed = (query || '').trim();
+            const resultsEl = document.getElementById('playlist-add-results');
+            if (!trimmed || trimmed.length < 2) {
+                if (resultsEl) resultsEl.innerHTML = '<div class="pl-add-empty">Type song title or artist above to search...</div>';
+                return;
+            }
+
+            if (resultsEl) resultsEl.innerHTML = '<div class="pl-add-empty"><span class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:8px;"></span>Searching tracks...</div>';
+
+            window._playlistSearchTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/search_category?q=${encodeURIComponent(trimmed)}&type=songs`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const tracks = data.results || [];
+                        if (tracks.length === 0) {
+                            resultsEl.innerHTML = '<div class="pl-add-empty">No matching songs found.</div>';
+                            return;
+                        }
+                        resultsEl.innerHTML = '';
+                        tracks.forEach(t => {
+                            const row = document.createElement('div');
+                            row.className = 'pl-search-row';
+                            row.innerHTML = `
+                                <img class="pl-search-cover" src="${t.thumbnail || 'default_cover.jpg'}" onerror="this.src='default_cover.jpg'" alt="">
+                                <div class="pl-search-info">
+                                    <div class="pl-search-title">${escapeHtml(t.title || 'Unknown Title')}</div>
+                                    <div class="pl-search-artist">${escapeHtml(t.artist || 'Unknown Artist')}</div>
+                                </div>
+                                <button class="pl-search-add-btn">
+                                    ➕ Add
+                                </button>
+                            `;
+                            const addBtn = row.querySelector('.pl-search-add-btn');
+                            addBtn.onclick = () => {
+                                window.addSongToCurrentPlaylist({
+                                    id: t.videoId || t.id,
+                                    videoId: t.videoId || t.id,
+                                    title: t.title,
+                                    artist: t.artist,
+                                    cover: t.thumbnail
+                                });
+                                addBtn.textContent = '✓ Added';
+                                addBtn.style.background = '#238636';
+                            };
+                            resultsEl.appendChild(row);
+                        });
+                    }
+                } catch(err) {
+                    console.error('Playlist search error', err);
+                    if (resultsEl) resultsEl.innerHTML = '<div class="pl-add-empty">Search failed. Try another keyword.</div>';
+                }
+            }, 260);
+        };
+
+        window.addSongToCurrentPlaylist = async function(songMeta) {
+            const pl = window._currentOpenPlaylist;
+            if (!pl) return;
+            pl.songs = pl.songs || [];
+            
+            const alreadyIn = pl.songs.some(s => (s.id || s.videoId) === (songMeta.id || songMeta.videoId) || s.title === songMeta.title);
+            if (alreadyIn) {
+                showToast(`Already in ${pl.name}`);
+                return;
+            }
+
+            pl.songs.push(songMeta);
+            savePlaylists(getPlaylists());
+
+            // Add to SQLite backend
+            if (pl.id) {
+                try {
+                    await fetch(`/api/library/playlists/${pl.id}/tracks`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            video_id: songMeta.id || songMeta.videoId || '',
+                            title: songMeta.title || '',
+                            artist: songMeta.artist || '',
+                            cover: songMeta.cover || songMeta.thumbnail || ''
+                        })
+                    });
+                } catch(e) { console.warn('Backend add track error', e); }
+            }
+
+            showToast(`Added to "${pl.name}"`);
+            openPlaylistPage(pl.id || pl.name);
+        };
+
+        // ── New Playlist creation button triggers ──
         document.getElementById('new-playlist-btn')?.addEventListener('click', () => window.openCreatePlaylistModal());
         document.getElementById('create-playlist-btn')?.addEventListener('click', () => window.openCreatePlaylistModal());
-        document.getElementById('_old_new_pl_disabled')?.addEventListener('click', () => {
-            const name = prompt('Playlist name:');
-            if (!name || !name.trim()) return;
-            const playlists = getPlaylists();
-            playlists.push({ name: name.trim(), songs: [], id: Date.now() });
-            savePlaylists(playlists);
-            renderPlaylists();
-            showToast(`Playlist "${name.trim()}" created!`);
-        });
 
-        // Add to playlist popup
+        // ── Add to Playlist popup from Song Context Menu ──
         const addToPlaylistPopup = document.getElementById('add-to-playlist-popup');
         document.getElementById('close-playlist-popup')?.addEventListener('click', () => {
-            addToPlaylistPopup.classList.remove('open');
+            if (addToPlaylistPopup) addToPlaylistPopup.classList.remove('open');
         });
 
         function openAddToPlaylistPopup(songMeta) {
             const popupList = document.getElementById('popup-playlists-list');
-            
-            // Setup inline create playlist logic
             const createInput = document.getElementById('popup-new-playlist-input');
             const createBtn = document.getElementById('popup-create-playlist-btn');
             
-            // Clean up old listeners
-            const newCreateBtn = createBtn.cloneNode(true);
-            createBtn.parentNode.replaceChild(newCreateBtn, createBtn);
-            
-            newCreateBtn.addEventListener('click', () => {
-                const name = createInput.value.trim();
-                if (!name) return;
-                const pls = getPlaylists();
-                if (pls.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-                    showToast('Playlist already exists');
-                    return;
-                }
-                pls.push({ id: Date.now().toString(), name, songs: [songMeta], createdAt: new Date().toISOString() });
-                savePlaylists(pls);
-                createInput.value = '';
-                showToast(`Created & Added to ${name}`);
-                downloadAndSaveSong(songMeta);
-                renderLibraryPlaylists(); // Refresh lib in background
-                addToPlaylistPopup.classList.remove('open');
-            });
+            if (createBtn) {
+                const newCreateBtn = createBtn.cloneNode(true);
+                createBtn.parentNode.replaceChild(newCreateBtn, createBtn);
+                
+                newCreateBtn.addEventListener('click', async () => {
+                    const name = createInput ? createInput.value.trim() : '';
+                    if (!name) return;
+                    const pls = getPlaylists();
+                    if (pls.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                        showToast('Playlist already exists');
+                        return;
+                    }
+
+                    // Create in SQLite backend
+                    let newId = Date.now();
+                    try {
+                        const res = await fetch('/api/library/playlists', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name })
+                        });
+                        if (res.ok) {
+                            const d = await res.json();
+                            if (d.id) newId = d.id;
+                        }
+                    } catch(e) { console.warn('Playlist create backend err', e); }
+
+                    const newPl = { id: newId, name, songs: [songMeta], createdAt: new Date().toISOString() };
+                    pls.unshift(newPl);
+                    savePlaylists(pls);
+
+                    // Add track to SQLite backend
+                    try {
+                        await fetch(`/api/library/playlists/${newId}/tracks`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                video_id: songMeta.id || songMeta.videoId || '',
+                                title: songMeta.title || '',
+                                artist: songMeta.artist || '',
+                                cover: songMeta.cover || ''
+                            })
+                        });
+                    } catch(e) {}
+
+                    if (createInput) createInput.value = '';
+                    showToast(`Created & Added to "${name}"`);
+                    if (typeof renderPlaylists === 'function') renderPlaylists();
+                    if (addToPlaylistPopup) addToPlaylistPopup.classList.remove('open');
+                });
+            }
             
             const renderPopupList = () => {
                 const playlists = getPlaylists();
+                if (!popupList) return;
                 if (playlists.length === 0) {
                     popupList.innerHTML = '<div class="empty-state lib-empty" style="font-size:0.95rem;">No playlists yet! Create one above.</div>';
                 } else {
                     popupList.innerHTML = '';
-                    playlists.forEach((pl, plIdx) => {
+                    playlists.forEach((pl) => {
                         const item = document.createElement('div');
                         item.className = 'popup-playlist-item';
                         item.innerHTML = `
                             <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:rgba(255,255,255,0.5);flex-shrink:0;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-                            <span>${pl.name}</span>
+                            <span>${escapeHtml(pl.name)}</span>
                         `;
-                        item.addEventListener('click', () => {
-                            const pls = getPlaylists();
-                            const alreadyIn = pls[plIdx].songs.some(s => s.title === songMeta.title);
+                        item.addEventListener('click', async () => {
+                            pl.songs = pl.songs || [];
+                            const alreadyIn = pl.songs.some(s => (s.id || s.videoId) === (songMeta.id || songMeta.videoId) || s.title === songMeta.title);
                             if (!alreadyIn) {
-                                pls[plIdx].songs.push(songMeta);
-                                savePlaylists(pls);
-                                showToast(`Added to ${pl.name}`);
-                                // Auto-download disabled
-                                renderLibraryPlaylists(); // Update main library view
+                                pl.songs.push(songMeta);
+                                savePlaylists(getPlaylists());
+                                
+                                // Sync to backend SQLite
+                                if (pl.id) {
+                                    try {
+                                        await fetch(`/api/library/playlists/${pl.id}/tracks`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                video_id: songMeta.id || songMeta.videoId || '',
+                                                title: songMeta.title || '',
+                                                artist: songMeta.artist || '',
+                                                cover: songMeta.cover || ''
+                                            })
+                                        });
+                                    } catch(e) { console.warn('Add track to backend failed', e); }
+                                }
+                                showToast(`Added to "${pl.name}"`);
+                                if (typeof renderPlaylists === 'function') renderPlaylists();
                             } else {
-                                showToast(`Already in ${pl.name}`);
+                                showToast(`Already in "${pl.name}"`);
                             }
-                            addToPlaylistPopup.classList.remove('open');
+                            if (addToPlaylistPopup) addToPlaylistPopup.classList.remove('open');
                         });
                         popupList.appendChild(item);
                     });
@@ -1452,10 +1729,9 @@ function onPlayerStateChange(event) {
             };
             
             renderPopupList();
-            addToPlaylistPopup.classList.add('open');
+            if (addToPlaylistPopup) addToPlaylistPopup.classList.add('open');
         }
-
-
+        window.openAddToPlaylistPopup = openAddToPlaylistPopup;
 
         currentY = targetY = rightPanel.offsetHeight / 2;
         lyricsContainer.style.transform = `translateY(${currentY}px)`;
@@ -7858,42 +8134,82 @@ function onPlayerStateChange(event) {
             }
         });
 
-        // ── Song Context Menu Logic ──
+        // ── Song Context Menu Logic (Uiverse HetPatel69 nervous-treefrog-70) ──
         const contextMenu = document.getElementById('song-context-menu');
         let currentContextQuery = null;
 
         window.openSongContextMenu = function(e, query) {
-            e.preventDefault();
-            e.stopPropagation();
+            if (e) {
+                if (e.preventDefault) e.preventDefault();
+                if (e.stopPropagation) e.stopPropagation();
+            }
             currentContextQuery = query;
+            if (!contextMenu) return;
             
-            // Positioning the menu
-            const rect = e.currentTarget.getBoundingClientRect();
-            let x = rect.left + window.scrollX;
-            let y = rect.bottom + window.scrollY;
+            // Positioning the menu fixed within viewport
+            const triggerEl = e ? e.currentTarget : null;
+            let targetRect;
+            if (triggerEl && triggerEl.getBoundingClientRect) {
+                targetRect = triggerEl.getBoundingClientRect();
+            } else if (e && typeof e.clientX === 'number') {
+                targetRect = { left: e.clientX, right: e.clientX, top: e.clientY, bottom: e.clientY };
+            } else {
+                targetRect = { left: window.innerWidth / 2 - 100, right: window.innerWidth / 2 + 100, top: 120, bottom: 120 };
+            }
+
+            const menuWidth = 215;
+            const menuHeight = 270;
             
-            // Prevent overflowing off-screen
-            if (x + 220 > window.innerWidth) x = window.innerWidth - 230;
-            if (y + 250 > window.innerHeight) y = rect.top + window.scrollY - 260; // Show above if too low
+            let left = targetRect.left;
+            let top = targetRect.bottom + 6;
             
-            contextMenu.style.left = `${x}px`;
-            contextMenu.style.top = `${y}px`;
+            // Collision detection with viewport edges
+            if (left + menuWidth > window.innerWidth - 12) {
+                left = window.innerWidth - menuWidth - 12;
+            }
+            if (left < 10) left = 10;
             
-            contextMenu.classList.remove('hidden-context-menu');
+            if (top + menuHeight > window.innerHeight - 12) {
+                top = Math.max(10, targetRect.top - menuHeight - 6);
+            }
+            
+            contextMenu.style.left = `${Math.round(left)}px`;
+            contextMenu.style.top = `${Math.round(top)}px`;
+            
+            contextMenu.classList.remove('hidden-context-menu', 'is-closing');
+        };
+
+        window.closeSongContextMenu = function() {
+            if (!contextMenu || contextMenu.classList.contains('hidden-context-menu')) return;
+            contextMenu.classList.add('is-closing');
+            setTimeout(() => {
+                contextMenu.classList.add('hidden-context-menu');
+                contextMenu.classList.remove('is-closing');
+            }, 140);
         };
 
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
-            if (contextMenu && !contextMenu.contains(e.target) && !e.target.closest('.song-options-btn')) {
-                contextMenu.classList.add('hidden-context-menu');
+            if (contextMenu && !contextMenu.classList.contains('hidden-context-menu') && 
+                !contextMenu.contains(e.target) && !e.target.closest('.ptr-more-btn, .song-options-btn, .lib-track-btn')) {
+                window.closeSongContextMenu();
+            }
+        });
+
+        // Close menu on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.closeSongContextMenu();
+                window.closePlaylistAddModal();
             }
         });
 
         // Open context menu from the full-screen player cover
         window.openSongContextMenuFromPlayer = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // Get the current playing song info from track title and artist
+            if (e) {
+                if (e.preventDefault) e.preventDefault();
+                if (e.stopPropagation) e.stopPropagation();
+            }
             const title = document.getElementById('track-title')?.textContent || '';
             const artist = document.getElementById('track-artist')?.textContent || '';
             const query = `${title} ${artist}`.trim();
@@ -7904,7 +8220,7 @@ function onPlayerStateChange(event) {
         document.querySelectorAll('#song-context-menu .context-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const action = btn.getAttribute('data-action');
-                contextMenu.classList.add('hidden-context-menu');
+                window.closeSongContextMenu();
                 
                 if (!currentContextQuery) return;
                 
