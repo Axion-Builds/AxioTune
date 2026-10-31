@@ -1545,6 +1545,7 @@ function onPlayerStateChange(event) {
                             window._preserveQueue = true; // Preserve playlist tracks in queue!
                             songSearchInput.value = `${song.title} ${song.artist}`;
                             searchBtn.click();
+                            if (typeof showPlayer === 'function') showPlayer();
                             showToast(`▶ Playing: ${song.title}`);
                         });
 
@@ -1567,6 +1568,7 @@ function onPlayerStateChange(event) {
                     window._preserveQueue = true;
                     songSearchInput.value = `${first.title} ${first.artist}`;
                     searchBtn.click();
+                    if (typeof showPlayer === 'function') showPlayer();
                     showToast(`▶ Playing all from ${pl.name}`);
                     return;
                 };
@@ -3172,18 +3174,8 @@ function onPlayerStateChange(event) {
             if (playerScr && playerScr.classList.contains('active-screen')) return;
 
             const miniPlayerEl = document.getElementById('mini-player');
-            const canMorph = typeof isSongLoaded !== 'undefined' && isSongLoaded && 
-                             miniPlayerEl && !miniPlayerEl.classList.contains('hidden-mini');
-
-            if (canMorph) {
-                triggerPosterMorph('expand', () => {
-                    miniPlayerEl.classList.add('hidden-mini');
-                    showScreenExcept('player-screen');
-                });
-            } else {
-                if (miniPlayerEl) miniPlayerEl.classList.add('hidden-mini');
-                showScreenExcept('player-screen');
-            }
+            if (miniPlayerEl) miniPlayerEl.classList.add('hidden-mini');
+            showScreenExcept('player-screen');
         }
         window.showPlayer = showPlayer;
 
@@ -4545,8 +4537,9 @@ function onPlayerStateChange(event) {
             renderQueue();
             const song = queueList[idx];
 
-            // Playing updates mini player bar on PC without stealing screen
             window.hasPlayedFirstSong = true;
+            if (typeof showPlayer === 'function') showPlayer();
+            else if (window.showPlayer) window.showPlayer();
             
             if (song.localUrl) {
                 // Local File Pipeline Bypass
@@ -4679,8 +4672,9 @@ function onPlayerStateChange(event) {
             const query = songSearchInput.value.trim();
             if (!query) return;
 
-            // Auto-open player screen ONLY for the first song played in the session
             window.hasPlayedFirstSong = true;
+            if (typeof showPlayer === 'function') showPlayer();
+            else if (window.showPlayer) window.showPlayer();
 
             currentPlaybackToken++;
             const myToken = currentPlaybackToken;

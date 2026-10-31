@@ -12199,19 +12199,7 @@ body.focus-screen-active #mini-player {
    DESKTOP PC VIEWPORT OPTIMIZATIONS (min-width: 769px)
    ═══════════════════════════════════════════════════════════ */
 @media (min-width: 769px) {
-    /* 1. Hide mobile-only edge bezel notch & left trigger column on desktop */
-    .bezel-trigger-edge,
-    #bezel-trigger-edge,
-    .bezel-idle-notch,
-    #bezel-idle-notch,
-    .bezel-bulge-stage,
-    .bezel-nav-container,
-    #radial-nav-container {
-        display: none !important;
-        pointer-events: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
+    /* Navigation bar restored for desktop */
 
     /* 2. PC Playlist Page Desktop Geometry (Centered, Unobstructed, Elite Alignment) */
     .playlist-content-scroll {
