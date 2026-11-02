@@ -168,310 +168,248 @@
             100% { transform: rotate(360deg) scale(1); }
         }
         /* ═══════════════════════════════════════════════════════════
-           PC STICKY LIQUID GLASS HEADER
-           Visible only on desktop (min-width: 769px)
-           Hidden on mobile — mobile keeps original layout
-        ═══════════════════════════════════════════════════════════ */
+            PC STICKY GLASS SHEET HEADER (v0 Pro)
+            Visible only on desktop (min-width: 769px)
+            Hidden on mobile — mobile keeps original layout
+         ═══════════════════════════════════════════════════════════ */
         #pc-sticky-header {
             display: none; /* hidden by default, shown on PC via media query */
         }
 
         @media (min-width: 769px) {
-            #pc-sticky-header {
-                display: flex;
-                align-items: center;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 62px;
-                z-index: 9000;
-                padding: 0 28px 0 90px; /* left padding to clear nav pill */
-                gap: 16px;
-                pointer-events: auto;
-                /* Liquid glass: layered backdrop + tint */
-                background: rgba(8, 4, 18, 0.55);
-                backdrop-filter: blur(48px) saturate(200%) brightness(1.1);
-                -webkit-backdrop-filter: blur(48px) saturate(200%) brightness(1.1);
-                /* Slide in from top on load */
-                animation: pch-slide-in 0.7s 4.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-            }
+/* ===== AxioTune - Glass Sheet top bar ===== */
+#pc-sticky-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 32px 0 90px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
 
-            @keyframes pch-slide-in {
-                from { opacity: 0; transform: translateY(-100%); }
-                to   { opacity: 1; transform: translateY(0); }
-            }
+/* Frosted sheet that fades out at the bottom edge (no hard line) */
+#pc-sticky-header .pch-glass-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25) 60%, rgba(0, 0, 0, 0));
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
 
-            /* Translucent glass tint layer */
-            .pch-glass-bg {
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(
-                    to right,
-                    rgba(60, 10, 180, 0.08) 0%,
-                    rgba(0, 100, 200, 0.04) 50%,
-                    rgba(0, 140, 130, 0.06) 100%
-                );
-                pointer-events: none;
-            }
+#pc-sticky-header .pch-border-line {
+    display: none;
+}
 
-            /* Thin glowing bottom border line */
-            .pch-border-line {
-                position: absolute;
-                bottom: 0; left: 0; right: 0;
-                height: 1px;
-                background: linear-gradient(
-                    90deg,
-                    transparent 0%,
-                    rgba(255,255,255,0.06) 15%,
-                    rgba(168, 85, 247, 0.25) 40%,
-                    rgba(0, 194, 255, 0.25) 60%,
-                    rgba(255,255,255,0.06) 85%,
-                    transparent 100%
-                );
-                pointer-events: none;
-            }
+/* LEFT: logo */
+#pc-sticky-header .pch-logo {
+    position: relative;
+    flex-shrink: 0;
+}
+#pc-sticky-header .pch-logo:hover .pch-logo-img {
+    transform: scale(1.06);
+}
 
-            /* ── Logo in header ── */
-            .pch-logo {
-                flex-shrink: 0;
-                cursor: pointer;
-                position: relative;
-                z-index: 1;
-                user-select: none;
-                display: flex;
-                align-items: center;
-                transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            }
-            .pch-logo:hover {
-                transform: scale(1.08);
-            }
-            .pch-logo-img {
-                width: 42px;
-                height: 42px;
-                object-fit: contain;
-                filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.55));
-                transition: filter 0.25s ease, transform 0.25s ease;
-            }
-            .pch-logo:hover .pch-logo-img {
-                filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.9));
-            }
-            .pch-logo .axio-letter {
-                font-size: 22px;
-            }
+/* CENTER: search */
+#pc-sticky-header .pch-search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 448px;
+    margin: 0 auto;
+}
+#pc-sticky-header .pch-search-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+#pc-sticky-header .pch-search-pill:focus-within {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+#pc-sticky-header .pch-search-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    fill: rgba(255, 255, 255, 0.5);
+}
+#pc-sticky-header #pch-search-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    box-shadow: none;
+}
+#pc-sticky-header #pch-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+}
+#pc-sticky-header .pch-kbd {
+    flex-shrink: 0;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.5);
+    font-family: inherit;
+    font-size: 10px;
+    line-height: 1.4;
+}
 
-            /* ── Search pill (center, grows to fill space) ── */
-            .pch-search-wrap {
-                flex: 1;
-                max-width: 520px;
-                margin: 0 auto;
-                position: relative;
-                z-index: 9005;
-            }
+/* RIGHT: actions */
+#pc-sticky-header .pch-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+#pc-sticky-header .pch-action-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
 
-            .pch-search-pill {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                height: 38px;
-                padding: 0 16px;
-                border-radius: 999px;
-                /* Inner glass */
-                background: rgba(255, 255, 255, 0.065);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow:
-                    0 1px 0 rgba(255,255,255,0.06) inset,
-                    0 4px 24px rgba(0,0,0,0.25);
-                transition:
-                    background 0.25s ease,
-                    border-color 0.25s ease,
-                    box-shadow 0.25s ease,
-                    width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            }
+/* Round icon buttons (GitHub .Btn + .pch-action-btn share one look) */
+#pc-sticky-header .pch-action-group .pch-action-btn,
+#pc-sticky-header .pch-action-group .Btn {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+#pc-sticky-header .pch-action-group .pch-action-btn:hover,
+#pc-sticky-header .pch-action-group .Btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: none;
+}
+#pc-sticky-header .pch-action-group .Btn .svgContainer {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: 0;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    transition: none;
+}
+#pc-sticky-header .pch-action-group .Btn .BG {
+    display: none;
+}
+#pc-sticky-header .pch-action-group .Btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+#pc-sticky-header .pch-action-group .pch-action-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
 
-            .pch-search-pill:focus-within {
-                background: rgba(255, 255, 255, 0.1);
-                border-color: rgba(168, 85, 247, 0.5);
-                box-shadow:
-                    0 1px 0 rgba(255,255,255,0.1) inset,
-                    0 0 0 3px rgba(168, 85, 247, 0.12),
-                    0 8px 32px rgba(0,0,0,0.35);
-            }
+/* Profile button */
+#pc-sticky-header .pch-profile-btn {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fb923c, #c2410c);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+#pc-sticky-header .pch-profile-btn:hover {
+    transform: scale(1.06);
+}
+#pc-sticky-header .pch-profile-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
 
-            .pch-search-icon {
-                width: 16px;
-                height: 16px;
-                fill: rgba(255,255,255,0.45);
-                flex-shrink: 0;
-                transition: fill 0.2s;
-            }
-            .pch-search-pill:focus-within .pch-search-icon {
-                fill: rgba(168, 85, 247, 0.9);
-            }
+#pc-sticky-header .pch-action-btn:focus-visible,
+#pc-sticky-header .Btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline-offset: 2px;
+}
 
-            #pch-search-input {
-                flex: 1;
-                background: none;
-                border: none;
-                outline: none;
-                color: rgba(255,255,255,0.9);
-                font-family: var(--font-family);
-                font-size: 0.88rem;
-                font-weight: 400;
-                letter-spacing: 0.01em;
-                caret-color: #a855f7;
-            }
-            #pch-search-input::placeholder {
-                color: rgba(255,255,255,0.3);
-            }
+@media (max-width: 900px) {
+    #pc-sticky-header {
+        gap: 12px;
+        padding: 0 16px 0 90px;
+    }
+    #pc-sticky-header .pch-kbd {
+        display: none;
+    }
+}
+}
 
-            /* ── Right action buttons ── */
-            .pch-actions {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                flex-shrink: 0;
-                position: relative;
-                z-index: 1;
-            }
+/* ── Sticky header: mobile hidden & PC desktop instant visibility ── */
+@media (max-width: 768px) {
+    #pc-sticky-header {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+}
 
-            .pch-action-btn {
-                width: 36px;
-                height: 36px;
-                border-radius: 50%;
-                border: 1px solid rgba(255,255,255,0.09);
-                background: rgba(255,255,255,0.055);
-                color: rgba(255,255,255,0.55);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition:
-                    background 0.2s ease,
-                    color 0.2s ease,
-                    border-color 0.2s ease,
-                    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                    box-shadow 0.2s ease;
-                /* glass tint */
-                backdrop-filter: blur(10px);
-            }
-            .pch-action-btn svg {
-                width: 17px;
-                height: 17px;
-                fill: currentColor;
-            }
-            .pch-action-btn:hover {
-                background: rgba(255,255,255,0.12);
-                color: white;
-                border-color: rgba(255,255,255,0.2);
-                transform: scale(1.08);
-                box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-            }
-            .pch-action-btn:active {
-                transform: scale(0.93);
-            }
-            #pch-settings-btn svg {
-                transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            }
-            #pch-settings-btn:hover svg {
-                transform: rotate(45deg);
-            }
-
-            /* ── GitHub Button (Rotating Hover Effect) ── */
-            .Btn {
-                width: 36px;
-                height: 36px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                border: none;
-                background-color: transparent;
-                position: relative;
-                border-radius: 10px;
-                cursor: pointer;
-                transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1);
-                text-decoration: none;
-                flex-shrink: 0;
-                box-sizing: border-box;
-                padding: 0;
-                margin: 0;
-            }
-
-            .Btn .svgContainer {
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background-color: transparent;
-                backdrop-filter: blur(0px);
-                -webkit-backdrop-filter: blur(0px);
-                letter-spacing: 0.8px;
-                border-radius: 10px;
-                transition: all .3s ease;
-                border: 1px solid rgba(156, 156, 156, 0.466);
-                z-index: 1;
-            }
-
-            .Btn .svgContainer svg {
-                width: 1.4em;
-                height: 1.4em;
-                fill: white;
-                transition: transform 0.3s ease;
-            }
-
-            .Btn .BG {
-                position: absolute;
-                content: "";
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: #181818;
-                z-index: 0;
-                border-radius: 10px;
-                pointer-events: none;
-                transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-            }
-
-            .Btn:hover {
-                transform: scale(1.08);
-            }
-
-            .Btn:hover .BG {
-                transform: rotate(35deg);
-                transform-origin: bottom;
-                background: #1f1f1f;
-                border-color: rgba(255, 255, 255, 0.2);
-            }
-
-            .Btn:hover .svgContainer {
-                background-color: rgba(156, 156, 156, 0.466);
-                backdrop-filter: blur(4px);
-                -webkit-backdrop-filter: blur(4px);
-                border-color: rgba(255, 255, 255, 0.3);
-            }
-
-            .Btn:active {
-                transform: scale(0.93);
-            }
-
-            /* ── Sticky header: instant 100% visibility on non-player screens ── */
-            #pc-sticky-header {
-                display: flex !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-                pointer-events: auto !important;
-                transform: none !important;
-                transition: opacity 0.15s ease !important;
-            }
-            body.player-screen-active #pc-sticky-header {
-                display: none !important;
-                opacity: 0 !important;
-                visibility: hidden !important;
-                pointer-events: none !important;
-            }
+@media (min-width: 769px) {
+    #pc-sticky-header {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        transition: opacity 0.15s ease !important;
+    }
+    body.player-screen-active #pc-sticky-header {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+}
 
             /* ── Adjust home screen top padding to sit below header ── */
             #home-screen {

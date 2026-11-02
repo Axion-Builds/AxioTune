@@ -10598,3 +10598,16 @@ window.playSurpriseTrack = function() {
     });
 })();
 
+
+
+// ===== AxioTune - Glass Sheet Header Ctrl+K Shortcut =====
+document.addEventListener('keydown', function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    var input = document.getElementById('pch-search-input');
+    if (input) {
+      input.focus();
+      if (input.select) input.select();
+    }
+  }
+});
