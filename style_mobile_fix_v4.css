@@ -193,16 +193,19 @@
     font-family: inherit;
 }
 
-/* Frosted sheet that fades out at the bottom edge (no hard line) */
+/* Frosted sheet extending smoothly below search bar (zero mid-bar cutoff or hard line) */
 #pc-sticky-header .pch-glass-bg {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: -40px;
     pointer-events: none;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25) 60%, rgba(0, 0, 0, 0));
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
-    mask-image: linear-gradient(to bottom, #000 55%, transparent);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.38) 60%, rgba(0, 0, 0, 0) 100%);
+    -webkit-backdrop-filter: blur(28px) saturate(170%);
+    backdrop-filter: blur(28px) saturate(170%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
 }
 
 #pc-sticky-header .pch-border-line {
