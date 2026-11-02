@@ -1461,12 +1461,7 @@
     <div id="macos-wallpaper"></div>
     <div id="background-layer"></div>
     
-    <!-- Party Banner -->
-    <div id="party-banner" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:10000; background:rgba(255,40,100,0.85); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); color:white; padding:12px; text-align:center; font-weight:600; font-size:14px; box-shadow:0 4px 15px rgba(0,0,0,0.3); pointer-events:auto; transition:transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); transform:translateY(-100%);">
-        <span style="margin-right:8px; font-size:1.1em;">🎧</span> 
-        <span id="party-role-text">Listening Together - You are the Host</span>
-        <button id="leave-party-btn" class="apple-btn" style="padding:4px 12px; margin-left:15px; font-size:12px; border-radius:20px;">Leave Party</button>
-    </div>
+
 
 
     <!-- ═══════════════════════════════════════════════════════════
@@ -1783,8 +1778,7 @@
                             <li><a href="javascript:void(0)" onclick="window.scrollToHomeSection('mood-radio-section')">Mood Radio</a></li>
                             <li><a href="javascript:void(0)" onclick="window.scrollToHomeSection('home-top-artists-section')">Top Artists</a></li>
                             <li><a href="javascript:void(0)" onclick="window.toggleQueue()">Up Next Queue</a></li>
-                            <li><a href="javascript:void(0)" onclick="window.openPartyModal()">Listen Together</a></li>
-                        </ul>
+                                                    </ul>
                     </div>
 
                     <!-- Column 3: Tech & Architecture -->
@@ -1794,8 +1788,7 @@
                             <li><a href="javascript:void(0)" onclick="showToast('Streaming 320kbps WebM/Opus audio with zero compression artifacts.')">Lossless Opus Audio</a></li>
                             <li><a href="javascript:void(0)" onclick="showToast('Spatial 60fps WebGL fluid mesh gradient syncing with album art.')">Liquid Shaders (Kawarp)</a></li>
                             <li><a href="javascript:void(0)" onclick="showToast('Synchronized lyrics powered by LRCLIB + YouTube Music.')">Synced Hi-Fi Lyrics</a></li>
-                            <li><a href="javascript:void(0)" onclick="showToast('Peer-to-peer WebSocket sync engine for listening together.')">WebSocket Sync Engine</a></li>
-                            <li><a href="javascript:void(0)" onclick="installPWA()">Progressive Web App</a></li>
+                                                        <li><a href="javascript:void(0)" onclick="installPWA()">Progressive Web App</a></li>
                             <li><a href="javascript:void(0)" onclick="showToast('Zero telemetry, zero audio ads, zero commercial trackers.')">Privacy First Architecture</a></li>
                         </ul>
                     </div>
@@ -1838,7 +1831,7 @@
                         AxioTune is built for fast, distraction-free music and audio discovery.
                     </h2>
                     <p class="footer-hero-desc">
-                        Performance, privacy, and audiophile fidelity drive every release: instant stream resolution, adaptive WebM/Opus audio quality, offline-friendly caching, collaborative Listen Together rooms, and real-time synchronized lyrics. We document changes publicly so listeners see how stability and memory usage improve over time.
+                        Performance, privacy, and audiophile fidelity drive every release: instant stream resolution, adaptive WebM/Opus audio quality, offline-friendly caching, and real-time synchronized lyrics. We document changes publicly so listeners see how stability and memory usage improve over time.
                     </p>
                     <div class="footer-hero-badge">
                         <span class="sparkle">✨</span>
@@ -3042,28 +3035,6 @@
                     </div>
                 </div>
 
-                <!-- 5. LISTEN TOGETHER (PARTY MODE) -->
-                <div class="settings-section" data-category="cloud">
-                    <div class="settings-section-title">
-                        <svg class="settings-section-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 2.21 1.79 4 4 4h3v-8H5v-3c0-3.87 3.13-7 7-7s7 3.13 7 7v3h-5v8h3c2.21 0 4-1.79 4-4v-7c0-4.97-4.03-9-9-9z"/></svg>
-                        Listen Together (Party Mode)
-                    </div>
-                    <div class="settings-card" style="padding: 18px 20px;">
-                        <div style="font-size:0.88rem; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:14px;">
-                            Host an interactive listening session to stream synced audio in real-time with friends worldwide.
-                        </div>
-                        <button id="start-party-btn" class="settings-btn" style="width:100%; justify-content:center; display:flex; align-items:center; gap:8px; padding:10px 16px; font-weight:600;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-                            Start Listening Party
-                        </button>
-                        <div id="party-link-container" style="display:none; margin-top:12px; background:rgba(0,0,0,0.25); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); text-align:center;">
-                            <div style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-bottom:8px;">Share this invite link:</div>
-                            <input type="text" id="party-link-input" readonly style="width:100%; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.82rem; text-align:center; outline:none; margin-bottom:8px;">
-                            <button id="copy-party-link-btn" class="settings-btn" style="width:100%; justify-content:center;">Copy Invite Link</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 6. KEYBOARD SHORTCUTS -->
                 <div class="settings-section" data-category="system">
                     <div class="settings-section-title">
@@ -3239,74 +3210,6 @@
         </button>
     </div>
     
-    <!-- Listen Together Modal -->
-    <div id="listen-together-modal" class="modal-overlay hidden-modal">
-        <div class="modal-content premium-glass">
-            <button class="modal-close-btn" id="close-party-modal-btn">&times;</button>
-            <h2 style="margin-top:0; display:flex; align-items:center; gap:10px; color:white;">
-                <span style="font-size:1.4rem;">🎧</span> Listen Together
-            </h2>
-            <p style="font-size:0.9rem; color:rgba(255,255,255,0.7); line-height:1.4; margin-bottom:20px;">
-                Host a private session to listen in perfect sync with your friends. Only the host can control playback, seek, and select songs.
-            </p>
-            
-            <div id="party-username-container" style="margin-bottom:18px; text-align:left;">
-                <label style="font-size:0.75rem; color:rgba(255,255,255,0.5); font-weight:700; display:block; margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase;">Your Display Name</label>
-                <input type="text" id="party-username-input" placeholder="e.g. Adarsh" style="width:100%; padding:10px 14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:white; font-size:0.9rem; outline:none; transition:0.3s;" />
-            </div>
-
-            <!-- Host a room button -->
-            <button id="modal-start-party-btn" class="apple-btn" style="width:100%; justify-content:center; padding:12px; margin-bottom:15px; font-weight:700;">
-                Host Private Session
-            </button>
-            
-            <!-- Room Info (when connected) -->
-            <div id="modal-party-info-container" style="display:none; background:rgba(0,0,0,0.25); padding:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); text-align:center; margin-top:15px;">
-                <div style="font-size:0.85rem; color:rgba(0,255,150,0.9); font-weight:700; margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;">
-                    <span class="pulse-dot"></span> Active Session: <span id="modal-party-id-text">PARTY_XXXXXX</span>
-                </div>
-                
-                <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-bottom:6px; text-align:left;">Share this link to invite others:</div>
-                <div style="display:flex; gap:8px; margin-bottom:12px;">
-                    <input type="text" id="modal-party-link-input" readonly style="flex:1; padding:8px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.8rem; outline:none;" />
-                    <button id="modal-copy-link-btn" class="apple-btn" style="padding:0 15px; font-size:0.8rem; background:rgba(255,255,255,0.1);">Copy</button>
-                </div>
-                
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:12px; padding:6px 0; border-top:1px solid rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <span>Role: <strong id="modal-party-role-text">Host</strong></span>
-                    <span>Listeners: <strong id="modal-party-listeners-count">1</strong></span>
-                </div>
-                
-                <button id="modal-leave-party-btn" class="apple-btn" style="width:100%; justify-content:center; background:rgba(255,69,58,0.2); border-color:rgba(255,69,58,0.3); color:#ff453a;">
-                    Leave Session
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chat Toggle Button -->
-    <button id="party-chat-btn" class="hidden-chat-btn" title="Chat with Room">
-        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-        <span id="chat-badge" style="display:none;"></span>
-    </button>
-    
-    <!-- Chat Drawer/Panel -->
-    <div id="party-chat-panel" class="chat-panel-collapsed">
-        <div class="chat-header">
-            <h3>💬 Room Chat</h3>
-            <button id="close-chat-btn">&times;</button>
-        </div>
-        <div id="chat-messages-container"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input-box" placeholder="Type a message..." autocomplete="off" />
-            <button id="send-chat-btn">
-                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
-        </div>
-    </div>
-
-
-
     <!-- 🎵 EXACT LYRICS SOURCES FALLBACK MODAL (Matches user screenshot) -->
     <div id="lyrics-sources-modal" class="lyrics-sources-modal-overlay hidden" onclick="if(event.target === this) closeLyricsSourcesModal()">
         <div class="lyrics-sources-modal-content">
