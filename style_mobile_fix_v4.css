@@ -177,7 +177,7 @@
         }
 
         @media (min-width: 769px) {
-/* ===== AxioTune - Glass Sheet top bar ===== */
+/* ===== AxioTune - Clean High-Strength Frosted Glass Top Bar ===== */
 #pc-sticky-header {
     position: fixed;
     top: 0;
@@ -191,25 +191,16 @@
     padding: 0 32px 0 90px;
     box-sizing: border-box;
     font-family: inherit;
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(40px) saturate(180%);
+    background-color: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
-/* Frosted sheet extending smoothly below search bar (zero mid-bar cutoff) */
-#pc-sticky-header .pch-glass-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: -32px;
-    pointer-events: none;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.42) 65%, rgba(0, 0, 0, 0) 100%);
-    -webkit-backdrop-filter: blur(24px) saturate(170%);
-    backdrop-filter: blur(24px) saturate(170%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 68%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 68%, transparent 100%);
-}
-
+#pc-sticky-header .pch-glass-bg,
 #pc-sticky-header .pch-border-line {
-    display: none;
+    display: none !important;
 }
 
 /* LEFT: logo */
@@ -236,9 +227,11 @@
     padding: 0 16px;
     box-sizing: border-box;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
     transition: background 0.2s ease, border-color 0.2s ease;
 }
 #pc-sticky-header .pch-search-pill:focus-within {
@@ -292,9 +285,11 @@
     gap: 2px;
     padding: 4px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
 }
 
 /* Round icon buttons (GitHub .Btn + .pch-action-btn share one look) */
@@ -314,6 +309,8 @@
     overflow: hidden;
     color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
     transition: background 0.2s ease, color 0.2s ease;
 }
 #pc-sticky-header .pch-action-group .pch-action-btn:hover,
@@ -329,8 +326,8 @@
     height: 100%;
     background: transparent;
     border: 0;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
     transition: none;
 }
 #pc-sticky-header .pch-action-group .Btn .BG {
@@ -360,6 +357,8 @@
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
     color: #fff;
     cursor: pointer;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
     transition: transform 0.2s ease;
 }
 #pc-sticky-header .pch-profile-btn:hover {
