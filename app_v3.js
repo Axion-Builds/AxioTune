@@ -8796,18 +8796,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- LYRICS ANIMATION STYLE SETTINGS CONTROLLER ---
 const defaultLyricsSettings = {
-    lineBounce: true,
-    bounceAmplitude: 100,
-    glowIntensity: 100,
-    fillSmoothness: 8
+    lineBounce: false,
+    bounceAmplitude: 0,
+    glowIntensity: 35,
+    fillSmoothness: 20
 };
 
 function getLyricsSettings() {
     try {
         const saved = localStorage.getItem('axiotune_lyrics_settings');
-        return saved ? { ...defaultLyricsSettings, ...JSON.parse(saved) } : defaultLyricsSettings;
+        if (!saved) return { ...defaultLyricsSettings };
+        const parsed = JSON.parse(saved);
+        // Automatically migrate old legacy defaults (100, 100, 8) to new calibrated defaults (0, 35, 20)
+        if (parsed.bounceAmplitude === 100 && parsed.glowIntensity === 100 && parsed.fillSmoothness === 8) {
+            const upgraded = { ...defaultLyricsSettings };
+            saveLyricsSettings(upgraded);
+            return upgraded;
+        }
+        return { ...defaultLyricsSettings, ...parsed };
     } catch(e) {
-        return defaultLyricsSettings;
+        return { ...defaultLyricsSettings };
     }
 }
 
@@ -8821,20 +8829,23 @@ function applyLyricsAnimationSettings(settings) {
     const s = settings || getLyricsSettings();
     const root = document.documentElement;
 
-    // Line Bounce
-    const bounceAmp = s.lineBounce ? s.bounceAmplitude : 0;
-    const bounceScale = (1 + (0.06 * (bounceAmp / 100))).toFixed(3);
+    // Line Bounce: 0 amplitude or lineBounce=false means strictly static (scale 1.000, translateY 0px)
+    const bounceAmp = s.lineBounce ? (s.bounceAmplitude || 0) : 0;
+    const bounceScale = bounceAmp > 0 ? (1 + (0.06 * (bounceAmp / 100))).toFixed(3) : '1.000';
+    const bounceY = bounceAmp > 0 ? `-${(2 * (bounceAmp / 100)).toFixed(1)}px` : '0px';
     root.style.setProperty('--lrc-bounce-scale', bounceScale);
+    root.style.setProperty('--lrc-bounce-y', bounceY);
 
-    // Glow Intensity
-    const glowPct = s.glowIntensity / 100;
+    // Glow Intensity (35% calibrated default)
+    const glowPct = (s.glowIntensity !== undefined ? s.glowIntensity : 35) / 100;
     const glowRadius = `${Math.round(12 * glowPct)}px`;
     const glowOpacity = (0.85 * glowPct).toFixed(2);
     root.style.setProperty('--lrc-glow-radius', glowRadius);
     root.style.setProperty('--lrc-glow-opacity', glowOpacity);
 
-    // Fill Smoothness
-    root.style.setProperty('--lrc-fill-smoothness', `${s.fillSmoothness}px`);
+    // Fill Smoothness (20px full smoothness default)
+    const smoothness = s.fillSmoothness !== undefined ? s.fillSmoothness : 20;
+    root.style.setProperty('--lrc-fill-smoothness', `${smoothness}px`);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8844,29 +8855,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.getElementById('lrc-bounce-toggle');
     const ampSlider = document.getElementById('lrc-bounce-amp');
     const ampVal = document.getElementById('lrc-bounce-amp-val');
+    const bounceOffBtn = document.getElementById('lrc-bounce-off-btn');
     const glowSlider = document.getElementById('lrc-glow-intensity');
     const glowVal = document.getElementById('lrc-glow-intensity-val');
     const fillSlider = document.getElementById('lrc-fill-smoothness');
     const fillVal = document.getElementById('lrc-fill-smoothness-val');
 
+    function syncBounceUI(enabled, amp) {
+        if (toggle) toggle.checked = enabled && amp > 0;
+        if (ampSlider) ampSlider.value = amp;
+        if (ampVal) {
+            ampVal.textContent = amp === 0 || !enabled ? '0% (Off)' : `${amp}%`;
+        }
+    }
+
     if (toggle) {
-        toggle.checked = lyricsSet.lineBounce;
+        toggle.checked = lyricsSet.lineBounce && lyricsSet.bounceAmplitude > 0;
         toggle.addEventListener('change', (e) => {
             const current = getLyricsSettings();
             current.lineBounce = e.target.checked;
+            if (!e.target.checked) {
+                current.bounceAmplitude = 0;
+            } else if (current.bounceAmplitude === 0) {
+                current.bounceAmplitude = 100;
+            }
+            syncBounceUI(current.lineBounce, current.bounceAmplitude);
             saveLyricsSettings(current);
             applyLyricsAnimationSettings(current);
         });
     }
 
     if (ampSlider && ampVal) {
-        ampSlider.value = lyricsSet.bounceAmplitude;
-        ampVal.textContent = `${lyricsSet.bounceAmplitude}%`;
+        syncBounceUI(lyricsSet.lineBounce, lyricsSet.bounceAmplitude);
         ampSlider.addEventListener('input', (e) => {
             const val = parseInt(e.target.value, 10);
-            ampVal.textContent = `${val}%`;
             const current = getLyricsSettings();
             current.bounceAmplitude = val;
+            current.lineBounce = val > 0;
+            syncBounceUI(current.lineBounce, val);
+            saveLyricsSettings(current);
+            applyLyricsAnimationSettings(current);
+        });
+    }
+
+    if (bounceOffBtn) {
+        bounceOffBtn.addEventListener('click', () => {
+            const current = getLyricsSettings();
+            current.lineBounce = false;
+            current.bounceAmplitude = 0;
+            syncBounceUI(false, 0);
             saveLyricsSettings(current);
             applyLyricsAnimationSettings(current);
         });
@@ -8887,10 +8924,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (fillSlider && fillVal) {
         fillSlider.value = lyricsSet.fillSmoothness;
-        fillVal.textContent = `${lyricsSet.fillSmoothness} dp`;
+        fillVal.textContent = lyricsSet.fillSmoothness === 20 ? '20 dp (Full)' : `${lyricsSet.fillSmoothness} dp`;
         fillSlider.addEventListener('input', (e) => {
             const val = parseInt(e.target.value, 10);
-            fillVal.textContent = `${val} dp`;
+            fillVal.textContent = val === 20 ? '20 dp (Full)' : `${val} dp`;
             const current = getLyricsSettings();
             current.fillSmoothness = val;
             saveLyricsSettings(current);

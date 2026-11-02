@@ -196,16 +196,13 @@
 /* Frosted sheet that fades out at the bottom edge (no hard line) */
 #pc-sticky-header .pch-glass-bg {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: -20px;
+    inset: 0;
     pointer-events: none;
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25) 60%, rgba(0, 0, 0, 0));
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent);
 }
 
 #pc-sticky-header .pch-border-line {
@@ -1850,7 +1847,7 @@
                 rgba(255, 255, 255, 0.35) 100%
             );
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
-            transform: scale(var(--lrc-bounce-scale, 1.05)) translateY(-1px);
+            transform: scale(var(--lrc-bounce-scale, 1)) translateY(var(--lrc-bounce-y, 0px));
             filter: drop-shadow(0 0 var(--lrc-glow-radius, 10px) rgba(var(--accent-rgb), var(--lrc-glow-opacity, 0.8)));
         }
 
@@ -8516,7 +8513,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
-    transform: translateY(-2px) scale(var(--lrc-bounce-scale, 1.05)) !important;
+    transform: translateY(var(--lrc-bounce-y, 0px)) scale(var(--lrc-bounce-scale, 1)) !important;
     filter: drop-shadow(0 0 var(--lrc-glow-radius, 6px) rgba(var(--accent-rgb, 140,50,255), var(--lrc-glow-opacity, 0.4))) !important;
 }
 
