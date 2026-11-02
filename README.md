@@ -46,12 +46,42 @@
 
 ## Screen Recordings & Media
 
-### Desktop Playback Interface
+### 1. Desktop Playback Interface & 3D Cover Flow
 
 <p align="center">
-  <img src="assets/recordings/axiotune-desktop-interface.png" alt="AxioTune Desktop Interface" width="100%" style="border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12);" />
+  <img src="assets/recordings/axiotune-home-coverflow.png" alt="AxioTune Desktop Interface & Cover Flow" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);" />
   <br />
-  <sub><em>Full desktop interface showing active track details, queue sidebar, quick picks, and ambient canvas background.</em></sub>
+  <sub><em>Full desktop experience featuring the Apple-inspired seamless frosted top bar, 3D Quick Picks Cover Flow carousel, and ambient visualizer background.</em></sub>
+</p>
+
+<br />
+
+### 2. AI Taste Mix & Smart Recommendations
+
+<p align="center">
+  <img src="assets/recordings/axiotune-ai-taste-mix.png" alt="AxioTune AI Taste Mix & Recommendations" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);" />
+  <br />
+  <sub><em>Intelligent AI Taste Mix balanced across liked songs, top historical artists, and diverse discovery anchors.</em></sub>
+</p>
+
+<br />
+
+### 3. Curated Mood Collections & Thematic Discovery
+
+<p align="center">
+  <img src="assets/recordings/axiotune-curated-discovery.png" alt="AxioTune Curated Mood Collections & Throwbacks" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);" />
+  <br />
+  <sub><em>Richly textured genre, era, and seasonal carousels with instant playback and dynamic ambient background matching.</em></sub>
+</p>
+
+<br />
+
+### 4. Personal Music Library & Playlists
+
+<p align="center">
+  <img src="assets/recordings/axiotune-library-playlists.png" alt="AxioTune Personal Library & Playlists" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);" />
+  <br />
+  <sub><em>Comprehensive personal library with custom playlist creation, liked tracks collections, and local/cloud synchronization.</em></sub>
 </p>
 
 <br />
@@ -146,7 +176,6 @@ pip install -r requirements.txt
 ```powershell
 python backend.py
 ```
-*(Or double-click `start_server.bat`)*
 
 **macOS / Linux:**
 ```bash
