@@ -11985,13 +11985,13 @@ body.focus-screen-active #mini-player {
     border-color: rgba(255, 255, 255, 0.45) !important;
 }
 
-/* Center Active Card: Crisp white halo without heavy dark mud */
+/* Center Active Card: Clean depth without bright white outline */
 .cover-flow-card.is-center {
-    border-color: rgba(255, 255, 255, 0.85) !important;
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35), 0 0 20px rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38) !important;
 }
 
-/* Real Album Artwork Cover */
+/* Real Album Artwork Cover (Completely steady, zero cheap zoom effect on hover) */
 .cover-flow-card .cf-cover-img {
     position: absolute;
     top: 0;
@@ -12001,12 +12001,13 @@ body.focus-screen-active #mini-player {
     object-fit: cover;
     display: block;
     pointer-events: none;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: none !important;
+    transition: none !important;
 }
 
 .cover-flow-card:hover .cf-cover-img,
 .cover-flow-card.is-center .cf-cover-img {
-    transform: scale(1.04);
+    transform: none !important;
 }
 
 /* Subtle Specular Sheen / Reflection */
