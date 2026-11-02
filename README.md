@@ -213,8 +213,6 @@ Access the application at `http://localhost:10000`.
 | <kbd>K</kbd> or <kbd>&rarr;</kbd> | Next Song |
 | <kbd>J</kbd> or <kbd>&larr;</kbd> | Previous Song / Restart Track |
 | <kbd>M</kbd> | Mute / Unmute Volume |
-| <kbd>S</kbd> | Toggle 3D Spatial Audio |
-| <kbd>8</kbd> | Toggle 8D Orbital Audio |
 | <kbd>F</kbd> | Toggle Fullscreen Mode |
 | <kbd>/</kbd> | Focus Search Bar |
 | <kbd>Esc</kbd> | Close Modal / Exit Fullscreen |
