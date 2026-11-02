@@ -104,37 +104,6 @@
 - **Realistic Turntable Physics**: Rotational inertia, acceleration/deceleration curves, and realistic vinyl surface specular shine.
 - **Stylus Tracking**: Animated tonearm that positions itself dynamically based on current track progress.
 
-### 4. Audio DSP Studio (Web Audio API)
-- **3D Spatial Stereo**: Expands the perceived soundstage using a Haas delay network and acoustic frequency filtering.
-- **8D Orbital Panner**: Binaural cyclical panning that moves sound around the stereo field for headphone listening.
-- **Smart Crossfade**: Configurable 0s to 12s transitions between consecutive tracks in the playback queue.
-- **ReplayGain Normalizer**: Dynamic gain scaling to balance volume across quiet and loud tracks.
-- **Speed & Pitch Adjustment**: Independent playback speed controls (0.25x to 2.0x).
-
-### 5. Offline Caching & PWA
-- **IndexedDB Storage**: Saves played songs and metadata locally so tracks can be replayed without re-downloading.
-- **Service Worker**: PWA service worker handles asset caching for instant offline app loading.
-
-### 6. WebSocket Party Mode
-- **Synchronized Listening Rooms**: Real-time room synchronization keeping playback position within milliseconds across connected devices.
-- **Collaborative Queue**: Multiple users can append songs and manage the playlist in real time.
-
----
-
-## Audio DSP Pipeline
-
-```
-[Audio Source] -> [ReplayGain Normalizer] -> [Variable Speed/Pitch Node]
-                         |
-                         v
-              [3D Haas Spatial Matrix]
-                         |
-                         v
-              [8D Orbital Binaural Panner]
-                         |
-                         v
-              [Gain / Crossfade Node] -> [Stereo Master Output]
-```
 
 ---
 
