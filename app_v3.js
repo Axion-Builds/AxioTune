@@ -5996,7 +5996,7 @@ function onPlayerStateChange(event) {
                 const translateZ = Math.max(0, (1 - absA) * 55);
                 const rotateY = -a * 46;
 
-                card.style.transform = `rotateY(${rotateY.toFixed(1)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
+                card.style.transform = `rotateY(${rotateY.toFixed(1)}deg) scale(${scale.toFixed(3)}) translateZ(0)`;
                 card.style.zIndex = Math.max(1, 100 - Math.round(absDeltaX / 18));
 
                 if (absDeltaX < closestDist) {
@@ -6097,7 +6097,7 @@ function onPlayerStateChange(event) {
             (entries || []).forEach(item => {
                 if (!item || typeof item !== 'object') return;
                 const titleStr = (item.title || item.name || '').trim();
-                if (!titleStr) return; // Discard ghost cards with empty titles!
+                if (!titleStr || titleStr.toLowerCase() === 'unknown title' || titleStr.toLowerCase() === 'axiotune') return; // Discard ghost cards with empty/invalid titles!
                 const vid = (item.videoId || item.id || '').trim();
                 const cover = (item.cover || item.thumbnail || item.thumb || '').trim();
                 if (!vid && !cover && !item.browseId && !item.playlistId) return; // Discard invalid ghost items!

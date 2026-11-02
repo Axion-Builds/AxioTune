@@ -193,16 +193,19 @@
     font-family: inherit;
 }
 
-/* Frosted sheet that fades out at the bottom edge (no hard line) */
+/* Frosted sheet extending smoothly below search bar (zero mid-bar cutoff) */
 #pc-sticky-header .pch-glass-bg {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: -32px;
     pointer-events: none;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25) 60%, rgba(0, 0, 0, 0));
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
-    mask-image: linear-gradient(to bottom, #000 55%, transparent);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.42) 65%, rgba(0, 0, 0, 0) 100%);
+    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    backdrop-filter: blur(24px) saturate(170%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 68%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 68%, transparent 100%);
 }
 
 #pc-sticky-header .pch-border-line {
@@ -411,9 +414,13 @@
     }
 }
 
-            /* ── Adjust home screen top padding to sit below header ── */
+            /* ── Adjust home screen top padding & Quick Picks spacing below header ── */
             #home-screen {
-                padding-top: 82px !important; /* 62px header + 20px breathing room */
+                padding-top: 108px !important; /* 72px header + generous 36px breathing room */
+            }
+
+            #home-quick-picks-section {
+                margin-top: 14px !important;
             }
 
             /* ── Hide old home-screen logo + buttons on desktop (moved to sticky header) ── */
@@ -422,7 +429,15 @@
                 display: none !important;
             }
 
-            /* ── top-bar-wrapper: always visible and responsive on non-player screens ── */
+            /* ── CRITICAL: Eliminate ghost pill on desktop (#top-bar rendered behind sticky header) ── */
+            #top-bar {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+
+            /* ── top-bar-wrapper: keep active on non-player screens for global back btn ── */
             body:not(.player-screen-active) #top-bar-wrapper {
                 opacity: 1 !important;
                 pointer-events: auto !important;
@@ -11944,10 +11959,11 @@ body.focus-screen-active #mini-player {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22) !important; /* Clean subtle shadow */
     cursor: pointer !important;
     transform-origin: center center !important;
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+    transform-style: flat !important;
+    -webkit-mask-image: -webkit-radial-gradient(white, black) !important;
     will-change: transform !important;
-    /* content-visibility: auto and contain: paint removed to fix Chromium 3D transform blank cards */
     contain: none !important;
     user-select: none !important;
     -webkit-user-select: none !important;
