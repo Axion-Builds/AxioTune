@@ -1344,7 +1344,7 @@ def _is_unwanted_track(title: str, artist: str) -> bool:
 
 DEFAULT_CURATED_SEEDS = ['PeN-V-wTxOs', 'TSLfG53JUpc', '1gcG6j_RD1k', 'kquPJC4cq7o', 'SBOwcGnwuKM', '4AK30HvoIRk']
 
-async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None, all_home_songs: list = None, limit: int = 32, history_vids: list = None):
+async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None, all_home_songs: list = None, limit: int = 50, history_vids: list = None):
     """
     Smart Hybrid Quick Picks:
     1. Runs parallel radio queues for top user seeds via YouTube Music Up-Next.
@@ -1490,7 +1490,7 @@ async def get_quick_picks(seeds: str = "", history: str = "", refresh: bool = Fa
                     if is_qp:
                         ytm_qp["contents"].append(parsed)
 
-        qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=ytm_qp, all_home_songs=all_home_songs, limit=32, history_vids=history_list)
+        qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=ytm_qp, all_home_songs=all_home_songs, limit=50, history_vids=history_list)
         res = {"status": "success", "section": qp}
         API_CACHE[cache_key] = {"time": time.time(), "data": res}
         return res
@@ -1573,7 +1573,7 @@ async def get_home(seeds: str = "", history: str = ""):
         seed_list = [s.strip() for s in seeds.split(",") if s.strip()] if seeds else []
         history_list = [h.strip() for h in history.split(",") if h.strip()] if history else []
         if seed_list or history_list:
-            smart_qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=quick_picks_section, all_home_songs=all_songs_pool, limit=32, history_vids=history_list)
+            smart_qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=quick_picks_section, all_home_songs=all_songs_pool, limit=50, history_vids=history_list)
             clean_feed.insert(0, smart_qp)
         else:
             # Fallback to standard Quick Picks if no seeds
@@ -1589,7 +1589,7 @@ async def get_home(seeds: str = "", history: str = ""):
                 existing_titles = {s.get("title", "").strip().lower() for s in quick_picks_section["contents"]}
 
                 for s in all_songs_pool:
-                    if len(quick_picks_section["contents"]) >= 32:
+                    if len(quick_picks_section["contents"]) >= 50:
                         break
                     vid = s.get("videoId")
                     title = s.get("title", "").strip().lower()

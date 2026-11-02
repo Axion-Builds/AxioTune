@@ -2294,19 +2294,8 @@ function onPlayerStateChange(event) {
             // Title font: Apple Music System Font Stack
             root.style.setProperty('--title-font', '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Inter", sans-serif');
 
-            // Section heading font (Web Typography skill)
-            const headingFontFamilyMap = {
-                'Newsreader': "'Newsreader', Georgia, serif",
-                'IBM Plex Serif': "'IBM Plex Serif', Georgia, serif",
-                'Lora': "'Lora', Georgia, serif",
-                'IBM Plex Sans': "'IBM Plex Sans', sans-serif",
-                'Plus Jakarta Sans': "'Plus Jakarta Sans', sans-serif",
-                'Manrope': "'Manrope', sans-serif",
-                'Clash Display': "'Clash Display', sans-serif",
-                'Inter': "'Inter', sans-serif",
-                'Outfit': "'Outfit', sans-serif"
-            };
-            root.style.setProperty('--font-heading', headingFontFamilyMap[s.headingFont] || "'Newsreader', Georgia, serif");
+            // Section heading font locked permanently to Apple HIG SF Pro Display
+            root.style.setProperty('--font-heading', '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif');
             // Lyrics font size & family & style
             const fontSizeMap = {
                 small: '1.65rem',
@@ -2404,16 +2393,11 @@ function onPlayerStateChange(event) {
             if (hpt) hpt.checked = s.haptic;
             const igt = document.getElementById('incognito-toggle');
             if (igt) igt.checked = s.incognito;
-            const hfs = document.getElementById('heading-font-select');
-            if (hfs) hfs.value = s.headingFont || 'Newsreader';
+
         }
 
         function setupSettingsUI() {
-            // Heading font (Web Typography skill)
-            document.getElementById('heading-font-select')?.addEventListener('change', (e) => {
-                appSettings.headingFont = e.target.value;
-                saveSettings(appSettings); applySettings(appSettings);
-            });
+
             // Lyrics size
             document.getElementById('lyrics-size-select')?.addEventListener('change', (e) => {
                 appSettings.lyricsFontSize = e.target.value;
@@ -2518,11 +2502,7 @@ function onPlayerStateChange(event) {
                 }, 1000);
                 display.textContent = 'Sleeping in :00';
             });
-            // Heading font (Web Typography skill)
-            document.getElementById('heading-font-select')?.addEventListener('change', (e) => {
-                appSettings.headingFont = e.target.value;
-                saveSettings(appSettings); applySettings(appSettings);
-            });
+
             // Lyrics size
             document.getElementById('lyrics-size-select')?.addEventListener('change', (e) => {
                 appSettings.lyricsFontSize = e.target.value;
@@ -6123,13 +6103,13 @@ function onPlayerStateChange(event) {
 
             if (filteredEntries.length === 0) return;
 
-            // Cap base list to at most 16 unique tracks (optimal for memory and performance)
-            const maxBase = Math.min(16, filteredEntries.length);
+            // Expanded Quick Picks capacity for rich horizontal exploration (up to 48 unique tracks)
+            const maxBase = Math.min(48, filteredEntries.length);
             let baseList = filteredEntries.slice(0, maxBase);
-            while (baseList.length < 8 && filteredEntries.length > 0) {
+            while (baseList.length < 12 && filteredEntries.length > 0) {
                 baseList = baseList.concat(filteredEntries);
             }
-            baseList = baseList.slice(0, 16);
+            baseList = baseList.slice(0, 48);
 
             // 3 Buffer Sets: [Set 0 (left), Set 1 (active center), Set 2 (right)] — 70% fewer DOM elements!
             const loopList = [...baseList, ...baseList, ...baseList];
@@ -6648,29 +6628,118 @@ function onPlayerStateChange(event) {
                 return;
             }
 
-            // Pick 2-3 freshest diverse seeds from history for maximum speed and relevance
+            // ── AI TASTE PORTFOLIO ALGORITHM ──
+            // Do NOT rely solely on the last listened song.
+            // Balance across:
+            // 1. Liked Songs (highest intent of user taste)
+            // 2. High-Frequency / Top Artists from long-term history
+            // 3. Diverse artist buckets (never 2 seeds from the same artist)
+            // 4. Discovery anchors from deeper history
             const seeds = [];
-            const seenSeedTitles = new Set();
-            for (const h of valid) {
-                const norm = (h.title || '').trim().toLowerCase();
-                if (norm && !seenSeedTitles.has(norm)) {
-                    seenSeedTitles.add(norm);
-                    seeds.push(h);
-                    if (seeds.length >= 3) break;
+            const seenSeedArtists = new Set();
+            const seenSeedVids = new Set();
+
+            const likedSongs = (typeof getLikedSongs === 'function' ? getLikedSongs() : []);
+            
+            // Frequency map across full history
+            const artistCounts = new Map();
+            const songCounts = new Map();
+            valid.forEach(item => {
+                const art = (item.artist || item.uploader || '').trim();
+                const normArt = art.toLowerCase();
+                const vid = item.videoId || item.id;
+                if (normArt) artistCounts.set(normArt, (artistCounts.get(normArt) || 0) + 1);
+                if (vid) songCounts.set(vid, (songCounts.get(vid) || 0) + 1);
+            });
+
+            // Anchor 1: User's Top Liked Song (if available)
+            if (likedSongs.length > 0) {
+                for (const lk of likedSongs) {
+                    const lkArt = (lk.artist || lk.uploader || '').trim().toLowerCase();
+                    const lkVid = lk.video_id || lk.videoId || lk.id;
+                    if (lkVid && !seenSeedVids.has(lkVid)) {
+                        seenSeedVids.add(lkVid);
+                        if (lkArt) seenSeedArtists.add(lkArt);
+                        seeds.push({
+                            id: lkVid, videoId: lkVid,
+                            title: lk.title,
+                            artist: lk.artist || lk.uploader || '',
+                            cover: lk.cover || lk.thumbnail || ''
+                        });
+                        break;
+                    }
                 }
             }
-            if (seeds.length === 0) seeds.push(valid[0]);
+
+            // Anchor 2: Most Played Song in History (different artist)
+            const sortedByPlays = [...valid].sort((a, b) => {
+                const countA = songCounts.get(a.videoId || a.id) || 0;
+                const countB = songCounts.get(b.videoId || b.id) || 0;
+                return countB - countA;
+            });
+            for (const item of sortedByPlays) {
+                const art = (item.artist || item.uploader || '').trim().toLowerCase();
+                const vid = item.videoId || item.id;
+                if (vid && !seenSeedVids.has(vid) && art && !seenSeedArtists.has(art)) {
+                    seenSeedVids.add(vid);
+                    seenSeedArtists.add(art);
+                    seeds.push(item);
+                    break;
+                }
+            }
+
+            // Anchor 3: Top Artist from listening history (different artist)
+            const sortedArtists = [...artistCounts.entries()].sort((a, b) => b[1] - a[1]);
+            for (const [topArt] of sortedArtists) {
+                if (!seenSeedArtists.has(topArt)) {
+                    const songForArt = valid.find(s => ((s.artist || s.uploader || '').trim().toLowerCase() === topArt));
+                    if (songForArt && !seenSeedVids.has(songForArt.videoId || songForArt.id)) {
+                        seenSeedVids.add(songForArt.videoId || songForArt.id);
+                        seenSeedArtists.add(topArt);
+                        seeds.push(songForArt);
+                        break;
+                    }
+                }
+            }
+
+            // Anchor 4: Discovery anchor from deeper history
+            if (valid.length > 4) {
+                const olderHalf = valid.slice(Math.floor(valid.length / 2));
+                for (const item of olderHalf) {
+                    const art = (item.artist || item.uploader || '').trim().toLowerCase();
+                    const vid = item.videoId || item.id;
+                    if (vid && !seenSeedVids.has(vid) && art && !seenSeedArtists.has(art)) {
+                        seenSeedVids.add(vid);
+                        seenSeedArtists.add(art);
+                        seeds.push(item);
+                        break;
+                    }
+                }
+            }
+
+            // Fallback backfill up to 4 diverse seeds without repeating artists
+            for (const item of valid) {
+                if (seeds.length >= 4) break;
+                const art = (item.artist || item.uploader || '').trim().toLowerCase();
+                const vid = item.videoId || item.id;
+                if (vid && !seenSeedVids.has(vid) && art && !seenSeedArtists.has(art)) {
+                    seenSeedVids.add(vid);
+                    seenSeedArtists.add(art);
+                    seeds.push(item);
+                }
+            }
+            if (seeds.length === 0 && valid.length > 0) seeds.push(valid[0]);
 
             if (!window._tasteMixCache || window._tasteMixCache.length === 0) {
                 container.innerHTML = '<div class="empty-state" style="padding:24px;">' + TERMINAL_LOADER_HTML + '</div>';
             }
 
-            const allRecs = [];
+            const recsPerSeed = [];
             const seenIds = new Set();
             let firstSeedRendered = false;
 
-            // Fetch recs for each seed concurrently, progressively rendering on first seed completion
-            await Promise.all(seeds.map(async (seed) => {
+            // Fetch recommendations for each diverse seed concurrently
+            await Promise.all(seeds.map(async (seed, sIdx) => {
                 try {
                     const vid = seed.videoId || seed.id || '';
                     const title = seed.title || '';
@@ -6688,11 +6757,12 @@ function onPlayerStateChange(event) {
                     if (myToken !== tasteMixToken) return;
 
                     if (data.status === 'success' && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+                        const seedTracks = [];
                         data.recommendations.forEach(s => {
                             const trackId = s.videoId || s.id;
                             if (trackId && !seenIds.has(trackId)) {
                                 seenIds.add(trackId);
-                                allRecs.push({
+                                seedTracks.push({
                                     videoId: trackId,
                                     id: trackId,
                                     title: s.title,
@@ -6702,17 +6772,30 @@ function onPlayerStateChange(event) {
                                 });
                             }
                         });
+                        recsPerSeed[sIdx] = seedTracks;
 
-                        // Progressive render: Display immediately on first seed completion
-                        if (!firstSeedRendered && allRecs.length >= 8 && myToken === tasteMixToken) {
+                        // Progressive render: show initial batch smoothly
+                        if (!firstSeedRendered && seedTracks.length >= 6 && myToken === tasteMixToken) {
                             firstSeedRendered = true;
-                            populateCinematicCards('home-taste-mix-container', allRecs.slice(0, 24));
+                            populateCinematicCards('home-taste-mix-container', seedTracks.slice(0, 24));
                         }
                     }
                 } catch(e) {
                     console.warn("TasteMix seed error:", e);
                 }
             }));
+
+            // Interleave recommendations round-robin across all diverse seeds
+            const allRecs = [];
+            const maxLen = Math.max(...recsPerSeed.map(r => (r ? r.length : 0)), 0);
+            for (let step = 0; step < maxLen; step++) {
+                for (let sIdx = 0; sIdx < seeds.length; sIdx++) {
+                    const tracks = recsPerSeed[sIdx];
+                    if (tracks && tracks[step]) {
+                        allRecs.push(tracks[step]);
+                    }
+                }
+            }
 
             if (myToken !== tasteMixToken) return;
 

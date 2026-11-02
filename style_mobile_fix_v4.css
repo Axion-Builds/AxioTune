@@ -1,7 +1,7 @@
 :root {
             --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --font-display: 'Outfit', 'Inter', sans-serif;
-            --font-heading: 'Newsreader', Georgia, serif;
+            --font-heading: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif;
             --accent: #ff476d;
             --accent-rgb: 255, 71, 109;
             --accent2: #c44bff;
@@ -6323,17 +6323,15 @@ h1, h2, h3, h4, h5, h6,
     letter-spacing: -0.03em;
 }
 
-/* --- Web Typography: Professional Section Headings --- */
+/* --- Web Typography: Apple HIG SF Pro Display Headings --- */
 .section-title,
 .page-section h2 {
-    font-family: var(--font-heading, 'Newsreader', Georgia, serif) !important;
-    font-size: 1.35rem !important; /* Elegant editorial scale */
-    font-weight: 600 !important;
-    font-optical-sizing: auto !important;
-    letter-spacing: -0.015em !important;
-    line-height: 1.25 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif !important;
+    font-size: 1.45rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.028em !important;
+    line-height: 1.22 !important;
     text-transform: none !important;
-    text-wrap: balance !important;
     color: #ffffff !important;
     margin-bottom: 16px !important;
     text-shadow: none !important;
@@ -6341,19 +6339,19 @@ h1, h2, h3, h4, h5, h6,
 
 #album-title,
 .hero-title {
-    font-family: var(--font-heading, 'Newsreader', Georgia, serif) !important;
-    font-size: 1.85rem !important;
-    font-weight: 600 !important;
-    letter-spacing: -0.025em !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif !important;
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.032em !important;
     text-transform: none !important;
-    line-height: 1.2 !important;
+    line-height: 1.18 !important;
 }
 
 .queue-header {
-    font-family: var(--font-heading, 'Newsreader', Georgia, serif) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif !important;
     font-size: 1.15rem !important;
-    font-weight: 600 !important;
-    letter-spacing: -0.015em !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.022em !important;
     text-transform: none !important;
 }
 
