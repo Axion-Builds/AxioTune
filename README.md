@@ -32,6 +32,13 @@
 
 ---
 
+> [!IMPORTANT]
+> ### ⚠️ IMPORTANT - LOGIN PROCESS ⚠️
+> 
+> 1. **Open the website** → You will see a **green pill**.
+> 2. **Press `CTRL` + `SHIFT` + `B`** → This will open your bookmarks bar. **Drag** that green pill into the bookmarks bar.
+> 3. **Open YouTube Music** in a new tab → **Click** on the saved green pill bookmark.
+
 
 ---
 
