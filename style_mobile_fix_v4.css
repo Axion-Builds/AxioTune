@@ -12009,9 +12009,10 @@ body.focus-screen-active #mini-player {
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
     will-change: transform !important;
-    contain: layout paint style !important;
-    content-visibility: auto !important;
-    contain-intrinsic-size: 190px 260px !important;
+    /* content-visibility: auto and contain: paint removed to fix Chromium 3D transform blank cards */
+    contain: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
     opacity: 1 !important;
     border: 1px solid rgba(255, 255, 255, 0.14) !important;
     transition: none !important;

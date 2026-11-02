@@ -669,12 +669,25 @@ async def suggest(q: str, filter: str = "all"):
     except Exception as e:
         return {"results": [], "error": str(e)}
 
+VERSION_MODIFIERS = [
+    'slowed', 'reverb', 'speed up', 'speedup', 'sped up', 'remix', 'lofi', 'lo-fi',
+    'super slowed', 'bass boosted', 'nightcore', 'edit', 'mashup', 'acoustic',
+    'cover', 'live', 'instrumental', '8d', 'orchestral', 'chopped', 'clean', 'dirty'
+]
+
+def _has_version_modifier(query: str) -> bool:
+    q_lower = (query or "").lower()
+    return any(mod in q_lower for mod in VERSION_MODIFIERS)
+
 @app.get("/api/multi_search")
 async def multi_search(q: str):
     """Fetch songs, videos, albums, and artists simultaneously for the search results page."""
     if not q or len(q.strip()) < 2:
         return {"songs": [], "videos": [], "albums": [], "artists": []}
     
+    q_clean = q.strip()
+    has_mod = _has_version_modifier(q_clean)
+
     def _safe_thumb(item):
         if not item.get("thumbnails"):
             vid = item.get("videoId")
@@ -692,27 +705,38 @@ async def multi_search(q: str):
 
     def fetch_songs():
         try:
-            res = ytmusic.search(q, filter="songs", limit=5)
-            return [{"type": "song", "title": r["title"],
-                     "artist": r["artists"][0]["name"] if r.get("artists") else "Unknown",
-                     "cover": _safe_thumb(r), "videoId": r.get("videoId", ""),
-                     "query": f"{r['title']} {r['artists'][0]['name'] if r.get('artists') else ''}"} for r in res]
+            if has_mod:
+                # Search without filter="songs" because ytmusic's songs filter strips fan/producer edits and variants!
+                res = ytmusic.search(q_clean, limit=12)
+                filtered = [r for r in res if r.get("videoId") and r.get("resultType") in ["song", "video", None]]
+                if not filtered:
+                    filtered = [r for r in res if r.get("videoId")]
+                return [{"type": "song", "title": r["title"],
+                         "artist": r["artists"][0]["name"] if r.get("artists") else "Unknown",
+                         "cover": _safe_thumb(r), "videoId": r.get("videoId", ""),
+                         "query": f"{r['title']} {r['artists'][0]['name'] if r.get('artists') else ''}".strip()} for r in filtered[:8]]
+            else:
+                res = ytmusic.search(q_clean, filter="songs", limit=8)
+                return [{"type": "song", "title": r["title"],
+                         "artist": r["artists"][0]["name"] if r.get("artists") else "Unknown",
+                         "cover": _safe_thumb(r), "videoId": r.get("videoId", ""),
+                         "query": f"{r['title']} {r['artists'][0]['name'] if r.get('artists') else ''}".strip()} for r in res]
         except Exception:
             return []
 
     def fetch_videos():
         try:
-            res = ytmusic.search(q, filter="videos", limit=5)
+            res = ytmusic.search(q_clean, filter="videos", limit=8)
             return [{"type": "video", "title": r["title"],
                      "artist": r["artists"][0]["name"] if r.get("artists") else "Unknown",
                      "cover": _safe_thumb(r), "videoId": r.get("videoId", ""),
-                     "query": f"{r['title']} {r['artists'][0]['name'] if r.get('artists') else ''} official video"} for r in res]
+                     "query": f"{r['title']} {r['artists'][0]['name'] if r.get('artists') else ''}".strip()} for r in res]
         except Exception:
             return []
 
     def fetch_albums():
         try:
-            res = ytmusic.search(q, filter="albums", limit=5)
+            res = ytmusic.search(q_clean, filter="albums", limit=6)
             return [{"type": "album", "title": r["title"],
                      "artist": r["artists"][0]["name"] if r.get("artists") else "Unknown",
                      "cover": _safe_thumb(r), "browseId": r.get("browseId", ""),
@@ -722,7 +746,7 @@ async def multi_search(q: str):
 
     def fetch_artists():
         try:
-            res = ytmusic.search(q, filter="artists", limit=15)
+            res = ytmusic.search(q_clean, filter="artists", limit=15)
             out = []
             for r in res:
                 name = r.get("artist") or (r["artists"][0]["name"] if r.get("artists") else r.get("title", "Unknown"))
@@ -734,7 +758,7 @@ async def multi_search(q: str):
         except Exception:
             return []
 
-    cache_key = f"multi_{q}"
+    cache_key = f"multi_{q_clean.lower()}"
     now = time.time()
     if cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < API_CACHE_TTL:
         return API_CACHE[cache_key]['data']
@@ -755,7 +779,9 @@ async def search_category(q: str, type: str):
     if not q or len(q.strip()) < 2 or type not in ["songs", "videos", "albums", "artists"]:
         return {"results": []}
     
-    cache_key = f"search_cat_{q}_{type}"
+    q_clean = q.strip()
+    has_mod = _has_version_modifier(q_clean)
+    cache_key = f"search_cat_{q_clean.lower()}_{type}"
     now = time.time()
     if cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < API_CACHE_TTL:
         return API_CACHE[cache_key]['data']
@@ -765,7 +791,11 @@ async def search_category(q: str, type: str):
 
     def fetch_cat():
         try:
-            res = ytmusic.search(q, filter=type, limit=20)
+            if type == "songs" and has_mod:
+                res = ytmusic.search(q_clean, limit=25)
+                res = [r for r in res if r.get("videoId") and r.get("resultType") in ["song", "video", None]]
+            else:
+                res = ytmusic.search(q_clean, filter=type, limit=20)
             out = []
             for r in res:
                 title = r.get("title") or r.get("artist") or "Unknown"
@@ -795,18 +825,32 @@ async def search_category(q: str, type: str):
 @app.get("/api/search")
 async def search(q: str):
     try:
-        cache_key = f"search_{q}"
+        q_clean = q.strip()
+        if not q_clean:
+            raise HTTPException(status_code=400, detail="Empty query")
+
+        cache_key = f"search_{q_clean.lower()}"
         now = time.time()
         if cache_key in API_CACHE and (now - API_CACHE[cache_key]['time']) < API_CACHE_TTL:
             return API_CACHE[cache_key]['data']
             
-        # Use ytmusicapi to search strictly for songs. This is 10x faster and returns studio versions, fixing lyrics desync!
+        has_mod = _has_version_modifier(q_clean)
+
         def do_search():
-            results = ytmusic.search(q, filter="songs", limit=1)
-            # If no song found, try all filter
-            if not results:
-                results = ytmusic.search(q, limit=1)
-            return results
+            if has_mod:
+                # Variant searches (slowed, reverb, remix, super slowed, sped up, etc.)
+                # must NOT use filter="songs", which collapses results into canonical studio tracks!
+                results = ytmusic.search(q_clean, limit=5)
+                valid = [r for r in results if r.get("videoId")]
+                if not valid:
+                    valid = ytmusic.search(q_clean, filter="videos", limit=5)
+                return valid
+            else:
+                results = ytmusic.search(q_clean, filter="songs", limit=5)
+                valid = [r for r in results if r.get("videoId")]
+                if not valid:
+                    valid = ytmusic.search(q_clean, limit=5)
+                return valid
             
         results = await run_sync(do_search)
         
@@ -814,16 +858,23 @@ async def search(q: str):
             entry = results[0]
             artist = entry["artists"][0]["name"] if entry.get("artists") else "Unknown"
             thumbnail = entry["thumbnails"][-1]["url"] if entry.get("thumbnails") else ""
+            if not thumbnail and entry.get("videoId"):
+                thumbnail = f"https://img.youtube.com/vi/{entry['videoId']}/hqdefault.jpg"
             
             res_data = {
                 "id": entry.get("videoId"),
+                "videoId": entry.get("videoId"),
                 "title": entry.get("title"),
                 "thumbnail": thumbnail,
-                "uploader": artist
+                "cover": thumbnail,
+                "uploader": artist,
+                "artist": artist
             }
             API_CACHE[cache_key] = {'time': time.time(), 'data': res_data}
             return res_data
             
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         
@@ -1468,6 +1519,11 @@ async def get_home(seeds: str = "", history: str = ""):
                 "contents": []
             }
             for item in section["contents"]:
+                if not item or not isinstance(item, dict):
+                    continue
+                item_title = (item.get("title") or "").strip()
+                if not item_title:
+                    continue
                 artist_name = "Unknown"
                 if item.get("artists"):
                     artist_name = item["artists"][0]["name"]

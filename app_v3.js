@@ -191,7 +191,9 @@ const audioPlayer = {
         // Handle ANY direct audio stream URL (http, https, relative proxy path, or blob)
         if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/') || val.startsWith('blob:')) {
             this._mode = 'local';
-            if (ytPlayer && ytPlayer.pauseVideo) {
+            if (ytPlayer && ytPlayer.stopVideo) {
+                try { ytPlayer.stopVideo(); } catch(e){}
+            } else if (ytPlayer && ytPlayer.pauseVideo) {
                 try { ytPlayer.pauseVideo(); } catch(e){}
             }
             this._realAudio.src = val;
@@ -202,7 +204,11 @@ const audioPlayer = {
 
         // Otherwise handle YouTube Video ID (e.g. 11-char ID like 'dQw4w9WgXcQ')
         this._mode = 'yt';
-        try { this._realAudio.pause(); } catch(e){}
+        try {
+            this._realAudio.pause();
+            this._realAudio.removeAttribute('src');
+            this._realAudio.load();
+        } catch(e){}
 
         if (ytPlayer && ytPlayer.loadVideoById && val) {
             ytPlayer.loadVideoById(val);
@@ -2721,7 +2727,11 @@ function onPlayerStateChange(event) {
                     songSearchInput.value = r.query;
                     if (pchInput) pchInput.value = r.query;
                     if (r.type === 'song' || r.type === 'video') {
-                        searchBtn.click();
+                        if (r.videoId || r.id) {
+                            window.playSong(r.videoId || r.id, r);
+                        } else {
+                            searchBtn.click();
+                        }
                     } else if (r.type === 'artist') {
                         if (r.browseId) {
                             showArtistPage(r.browseId);
@@ -4704,19 +4714,20 @@ function onPlayerStateChange(event) {
             let songData = null;
             let isFromQueue = false;
             try {
-                // STEP 1: Get song metadata (Bypass search if forced from queue)
-                isFromQueue = !!window._forceQueueSong;
+                // STEP 1: Get song metadata (Bypass search if forced from queue/direct song click)
+                const forced = window._forceQueueSong;
+                window._forceQueueSong = null; // consume immediately so it never leaks to subsequent queries!
+                isFromQueue = !!forced;
                 
                 if (isFromQueue) {
                     songData = {
-                        id: window._forceQueueSong.videoId || window._forceQueueSong.id,
-                        videoId: window._forceQueueSong.videoId || window._forceQueueSong.id,
-                        title: window._forceQueueSong.title,
-                        uploader: window._forceQueueSong.artist || 'Unknown',
-                        artist: window._forceQueueSong.artist || 'Unknown',
-                        thumbnail: window._forceQueueSong.thumbnail || window._forceQueueSong.cover || ''
+                        id: forced.videoId || forced.id,
+                        videoId: forced.videoId || forced.id,
+                        title: forced.title,
+                        uploader: forced.artist || forced.uploader || 'Unknown',
+                        artist: forced.artist || forced.uploader || 'Unknown',
+                        thumbnail: forced.thumbnail || forced.cover || ''
                     };
-                    window._forceQueueSong = null; // consume it
                 } else {
                     const ytRes = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal });
                     if (!ytRes.ok) throw new Error("Backend search failed");
@@ -6084,8 +6095,14 @@ function onPlayerStateChange(event) {
             const deferredHistory = [];
 
             (entries || []).forEach(item => {
-                const vid = item.videoId || item.id || '';
-                const titleNorm = (item.title || '').trim().toLowerCase();
+                if (!item || typeof item !== 'object') return;
+                const titleStr = (item.title || item.name || '').trim();
+                if (!titleStr) return; // Discard ghost cards with empty titles!
+                const vid = (item.videoId || item.id || '').trim();
+                const cover = (item.cover || item.thumbnail || item.thumb || '').trim();
+                if (!vid && !cover && !item.browseId && !item.playlistId) return; // Discard invalid ghost items!
+
+                const titleNorm = titleStr.toLowerCase();
                 const isHistory = (vid && historySet.has(vid)) || (titleNorm && historyTitles.has(titleNorm));
                 if (isHistory) {
                     if (historyCount < MAX_HISTORY) {
@@ -6178,7 +6195,7 @@ function onPlayerStateChange(event) {
             let scrollEndTimer = null;
 
             const checkSilentWrap = () => {
-                if (isNormalizing || !setWidth) return;
+                if (isNormalizing || !setWidth || container._scrollAnim) return;
                 const sl = container.scrollLeft;
                 if (sl >= 1.85 * setWidth) {
                     isNormalizing = true;
@@ -7027,7 +7044,11 @@ function onPlayerStateChange(event) {
                         </button>
                     `;
                     topCard.addEventListener('click', () => {
-                        songSearchInput.value = topSong.query; searchBtn.click();
+                        if (topSong.videoId) {
+                            window.playSong(topSong.videoId, topSong, topCard);
+                        } else {
+                            songSearchInput.value = topSong.query; searchBtn.click();
+                        }
                     });
                     
                     // Stacked list (next 4 songs)
@@ -7048,7 +7069,11 @@ function onPlayerStateChange(event) {
                             </button>
                         `;
                         row.addEventListener('click', () => {
-                            songSearchInput.value = s.query; searchBtn.click();
+                            if (s.videoId) {
+                                window.playSong(s.videoId, s, row);
+                            } else {
+                                songSearchInput.value = s.query; searchBtn.click();
+                            }
                         });
                         stackedList.appendChild(row);
                     });
@@ -7076,7 +7101,13 @@ function onPlayerStateChange(event) {
                             <button class="song-options-btn" onclick="event.stopPropagation(); openSongContextMenu(event, '${s.query.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">
                                 <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>`;
-                        row.addEventListener('click', () => { songSearchInput.value = s.query; searchBtn.click(); });
+                        row.addEventListener('click', () => {
+                            if (s.videoId) {
+                                window.playSong(s.videoId, s, row);
+                            } else {
+                                songSearchInput.value = s.query; searchBtn.click();
+                            }
+                        });
                         list.appendChild(row);
                     });
                     contentEl.appendChild(list);
@@ -7112,7 +7143,11 @@ function onPlayerStateChange(event) {
                         </button>
                     `;
                     topCard.addEventListener('click', () => {
-                        songSearchInput.value = topVideo.query; searchBtn.click();
+                        if (topVideo.videoId) {
+                            window.playSong(topVideo.videoId, topVideo, topCard);
+                        } else {
+                            songSearchInput.value = topVideo.query; searchBtn.click();
+                        }
                     });
                     
                     // Stacked list (next 4 videos)
@@ -7133,7 +7168,11 @@ function onPlayerStateChange(event) {
                             </button>
                         `;
                         row.addEventListener('click', () => {
-                            songSearchInput.value = v.query; searchBtn.click();
+                            if (v.videoId) {
+                                window.playSong(v.videoId, v, row);
+                            } else {
+                                songSearchInput.value = v.query; searchBtn.click();
+                            }
                         });
                         stackedList.appendChild(row);
                     });
@@ -7161,7 +7200,11 @@ function onPlayerStateChange(event) {
                                 <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>`;
                         row.addEventListener('click', () => {
-                            songSearchInput.value = v.query; searchBtn.click();
+                            if (v.videoId) {
+                                window.playSong(v.videoId, v, row);
+                            } else {
+                                songSearchInput.value = v.query; searchBtn.click();
+                            }
                         });
                         list.appendChild(row);
                     });
