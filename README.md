@@ -32,23 +32,6 @@
 
 ---
 
-## About AxioTune
-
-Most modern web music players are either sluggish Electron wrappers bundled with tracker telemetry, or minimal clones limited to basic playback.
-
-**AxioTune** is built on a fundamentally different standard: delivering an audiophile-grade web streaming experience that unifies studio sound processing, real-time syllable-synchronized karaoke lyrics, and an authentic Apple "Liquid Glass" interface into a single, blazing-fast client.
-
-Built with **pure Vanilla JavaScript and Modern CSS** on the frontend and an asynchronous **FastAPI (Python)** backend, AxioTune achieves sub-second cold starts, 60 to 120 FPS hardware-accelerated animations, and zero framework bundle overhead.
-
-Zero audio ad interruptions. Zero subscription barriers. 100% free and open-source.
-
-> **Core Capabilities at a Glance:**
->
-> - **Syllable-Level Vocal Karaoke**: Progressive left-to-right text-fill wipes parsed from Apple Music TTML and word-synced LRC files, complete with a floating hover-expandable glass dock for instant provider switching, Romanization, translation, and millisecond sync tuning.
-> - **Client-Side Audio DSP Studio**: Real-time Haas 3D stereo widening, 360-degree 8D orbital binaural panning, ReplayGain volume normalization, and variable pitch/tempo controls running natively in the browser via the Web Audio API.
-> - **Interactive 3D Vinyl Turntable**: High-precision vinyl physics, realistic grooved light reflections, and animated stylus needle tracking.
-> - **Liquid Glass Design System**: Multi-layer frosted glass, dynamic specular highlights, and real-time GPU mesh backgrounds colored by the current album artwork.
-> - **Offline PWA Persistence**: Automatic IndexedDB audio caching allows previously played tracks to load and play offline without re-streaming.
 
 ---
 
