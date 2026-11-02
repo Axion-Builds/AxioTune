@@ -177,7 +177,7 @@
         }
 
         @media (min-width: 769px) {
-/* ===== AxioTune - Clean High-Strength Frosted Glass Top Bar ===== */
+/* ===== AxioTune - Glass Sheet top bar ===== */
 #pc-sticky-header {
     position: fixed;
     top: 0;
@@ -191,17 +191,25 @@
     padding: 0 32px 0 90px;
     box-sizing: border-box;
     font-family: inherit;
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
-    backdrop-filter: blur(40px) saturate(180%);
-    background-color: rgba(255, 255, 255, 0.04);
-    border: none !important;
-    border-bottom: none !important;
-    box-shadow: none !important;
 }
 
-#pc-sticky-header .pch-glass-bg,
+/* Frosted sheet that fades out at the bottom edge (no hard line) */
+#pc-sticky-header .pch-glass-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: -20px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25) 60%, rgba(0, 0, 0, 0));
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+}
+
 #pc-sticky-header .pch-border-line {
-    display: none !important;
+    display: none;
 }
 
 /* LEFT: logo */
