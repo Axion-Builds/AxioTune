@@ -1175,13 +1175,13 @@
         };
 
         window.dismissLoginPortal = function(forceSkipOnboarding = false) {
+            try { localStorage.setItem('axio_login_dismissed', 'true'); } catch(e){}
             loginScreen.classList.add('login-dismissed');
             if (pollInterval) {
                 clearInterval(pollInterval);
                 pollInterval = null;
                 fetch('/api/auth/cancel_login', { method: 'POST' }).catch(() => {});
             }
-            // Mandatory onboarding screen disabled for seamless streaming
         };
 
         window.verifyMandatorySync = async function() {
@@ -1276,6 +1276,16 @@
             }, 300);
         });
 
+        function checkShowWelcome() {
+            try {
+                // If the user has never logged in and never dismissed the welcome portal:
+                const dismissed = localStorage.getItem('axio_login_dismissed');
+                if (!dismissed) {
+                    window.openLoginPortal();
+                }
+            } catch(e) {}
+        }
+
         // Initial session check
         fetch('/api/auth/status')
             .then(res => res.json())
@@ -1308,15 +1318,23 @@
                                 setTimeout(() => window.dismissLoginPortal(true), 600);
                             } else {
                                 window.isYtmSynced = false;
+                                checkShowWelcome();
                             }
                         })
-                        .catch(() => { window.isYtmSynced = false; });
+                        .catch(() => {
+                            window.isYtmSynced = false;
+                            checkShowWelcome();
+                        });
                     } else {
                         window.isYtmSynced = false;
+                        checkShowWelcome();
                     }
                 }
             })
-            .catch(() => {});
+            .catch(() => {
+                window.isYtmSynced = false;
+                checkShowWelcome();
+            });
 
         function initLoginBookmarklet() {
             const links = document.querySelectorAll('.sync-bookmarklet-link, #login-bookmarklet-link, #sync-bookmarklet-link, #mandatory-bookmarklet-link');

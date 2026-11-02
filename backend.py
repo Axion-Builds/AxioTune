@@ -1016,8 +1016,9 @@ async def proxy_stream(request: Request, url: str):
 async def get_trending():
     try:
         def fetch_trending():
-            top = ytmusic.search("Top Songs India Hindi Punjabi", filter="songs", limit=15)
-            trend = ytmusic.search("Trending Hits India", filter="songs", limit=15)
+            # Curated aesthetic pop, indie, and top global charts (strictly avoids regional/Bhojpuri spam)
+            top = ytmusic.search("Top Global Pop Hits 2026", filter="songs", limit=20)
+            trend = ytmusic.search("Top Hindi Indie Pop Hits", filter="songs", limit=20)
             return top, trend
             
         top_res, trend_res = await asyncio.to_thread(fetch_trending)
@@ -1025,16 +1026,22 @@ async def get_trending():
         top_songs = []
         for item in top_res:
             artist_name = item['artists'][0]['name'] if item.get('artists') else "Unknown"
+            title = item.get('title') or ""
+            if _is_unwanted_track(title, artist_name):
+                continue
             thumbnail = item['thumbnails'][-1]['url'] if item.get('thumbnails') else ""
             vid = item.get('videoId') or ""
-            top_songs.append({"title": item['title'], "artist": artist_name, "cover": thumbnail, "videoId": vid, "id": vid})
+            top_songs.append({"title": title, "artist": artist_name, "cover": thumbnail, "videoId": vid, "id": vid})
                 
         trending = []
         for item in trend_res:
             artist_name = item['artists'][0]['name'] if item.get('artists') else "Unknown"
+            title = item.get('title') or ""
+            if _is_unwanted_track(title, artist_name):
+                continue
             thumbnail = item['thumbnails'][-1]['url'] if item.get('thumbnails') else ""
             vid = item.get('videoId') or ""
-            trending.append({"title": item['title'], "artist": artist_name, "cover": thumbnail, "videoId": vid, "id": vid})
+            trending.append({"title": title, "artist": artist_name, "cover": thumbnail, "videoId": vid, "id": vid})
 
         return {"status": "success", "top_songs": top_songs, "trending": trending, "results": top_songs + trending}
     except Exception as e:
@@ -1315,12 +1322,15 @@ def debug_recs(videoId: str = "d349wN8Z81M"):
 
 
 UNWANTED_GENRE_KEYWORDS = {
-    'bhojpuri', 'bhajan', 'aarti', 'chalisa', 'bhakti', 'devotional',
+    'bhojpuri', 'haryanvi', 'bhajan', 'aarti', 'chalisa', 'bhakti', 'devotional',
     'mata rani', 'navratri', 'chhati maiya', 'jagrata', 'katha', 'devi geet',
     'shiv bhajan', 'hanuman chalisa', 'krishna bhajan', 'ram bhajan', 'shri ram',
     'shyam bhajan', 'kanwar', 'kawad', 'bol bam', 'har har shambhu', 'mai ki chunari',
     'devi bhakti', 'kirtan', 'sundarkand', 'stotra', 'amritwani', 'mantra', 'stuti',
-    'geetanjali', 'chath', 'chhath'
+    'geetanjali', 'chath', 'chhath', 'ragni', 'ragani', 'dj remix', 'dj song', 'dholki',
+    'jhankar', 'dehati', 'khortha', 'nagpuri', 'bhojpuriya', 'arkestra', 'stage show',
+    'nach program', 'sapna dance', 'dj vicky', 'dj rahul', 'dj shashi', 'remix song',
+    'desi remix', 'haryanvi song', 'haryanvi ragni', 'bhojpuri video', 'bhojpuri gana'
 }
 UNWANTED_GENRE_ARTISTS = {
     'pawan singh', 'khesari lal yadav', 'shilpi raj', 'pramod premi', 'arvind akela',
@@ -1328,7 +1338,10 @@ UNWANTED_GENRE_ARTISTS = {
     'lakhbir singh lakkha', 'anup jalota', 'maithili thakur', 'khesari', 'pramod premi yadav',
     't-series bhakti sagar', 'bhakti sagar', 'wave music', 'neha raj', 'shilpi dehat',
     'ritesh pandey', 'kallu ji', 'samar singh', 'chandan chanchal', 'bhojpuri hits',
-    'bhojpuri wave', 't-series regional'
+    'bhojpuri wave', 't-series regional', 'sapna choudhary', 'masoom sharma', 'amit saini rohtakiya',
+    'renuka panwar', 'gulzaar chhaniwala', 'diler kharkiya', 'khasa aala chahar', 'vicky kajla',
+    'dhanda nyoliwala', 'billa sonipat ala', 'haryanvi hits', 'sonotek', 'mor music',
+    'maina cassette', 'ndj music', 'haryanvi dildaar', 'desi records'
 }
 
 def _is_unwanted_track(title: str, artist: str) -> bool:
@@ -1342,7 +1355,18 @@ def _is_unwanted_track(title: str, artist: str) -> bool:
             return True
     return False
 
-DEFAULT_CURATED_SEEDS = ['PeN-V-wTxOs', 'TSLfG53JUpc', '1gcG6j_RD1k', 'kquPJC4cq7o', 'SBOwcGnwuKM', '4AK30HvoIRk']
+DEFAULT_CURATED_SEEDS = [
+    'J7p4bzqLvCw',  # Blinding Lights - The Weeknd
+    '4NRXx6U8ABQ',  # Starboy - The Weeknd
+    'PeN-V-wTxOs',  # Tere Bina - Shreea Kaul
+    'f6vQ6P44L4k',  # Husn - Anuv Jain
+    'mRD0-GxqHFU',  # Heat Waves - Glass Animals
+    '1gcG6j_RD1k',  # Aarzu - Noor, Khan & Madhurxo
+    'kquPJC4cq7o',  # KU LO SA - Oxlade & Camila Cabello
+    'SBOwcGnwuKM',  # Udi Udi - Aneesh & Sarkar
+    '4AK30HvoIRk',  # People - Libianca
+    'TSLfG53JUpc'   # Bolo Bolo - W.i.S.H. & Panther
+]
 
 async def _build_smart_quick_picks(seed_vids: list, ytm_quick_picks: dict = None, all_home_songs: list = None, limit: int = 50, history_vids: list = None):
     """
@@ -1549,6 +1573,10 @@ async def get_home(seeds: str = "", history: str = ""):
                 elif b_id:
                     c_type = "artist" if "artist" in b_id.lower() else "album"
                 
+                # Strictly filter out Bhojpuri, Haryanvi, devotional & unwanted noise from home feed
+                if _is_unwanted_track(item.get("title", ""), artist_name):
+                    continue
+
                 entry = {
                     "title": item.get("title", ""),
                     "artist": artist_name,
@@ -1567,41 +1595,18 @@ async def get_home(seeds: str = "", history: str = ""):
             if "quick pick" in title_lower:
                 quick_picks_section = clean_section
             else:
-                clean_feed.append(clean_section)
+                if clean_section["contents"]:
+                    clean_feed.append(clean_section)
 
-        # Smart Hybrid Quick Picks if user provided seeds or history
+        # Smart Hybrid Quick Picks:
+        # Always run smart quick picks with aesthetic curation (uses DEFAULT_CURATED_SEEDS for new/guest users)
         seed_list = [s.strip() for s in seeds.split(",") if s.strip()] if seeds else []
         history_list = [h.strip() for h in history.split(",") if h.strip()] if history else []
-        if seed_list or history_list:
-            smart_qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=quick_picks_section, all_home_songs=all_songs_pool, limit=50, history_vids=history_list)
+        smart_qp = await _build_smart_quick_picks(seed_list, ytm_quick_picks=quick_picks_section, all_home_songs=all_songs_pool, limit=50, history_vids=history_list)
+        if smart_qp and smart_qp.get("contents"):
             clean_feed.insert(0, smart_qp)
-        else:
-            # Fallback to standard Quick Picks if no seeds
-            if not quick_picks_section and len(all_songs_pool) >= 8:
-                quick_picks_section = {
-                    "title": "⚡ Quick Picks",
-                    "contents": []
-                }
-
-            if quick_picks_section:
-                # Enrich Quick Picks up to 32 songs using available song recommendations
-                existing_ids = {s.get("videoId") for s in quick_picks_section["contents"] if s.get("videoId")}
-                existing_titles = {s.get("title", "").strip().lower() for s in quick_picks_section["contents"]}
-
-                for s in all_songs_pool:
-                    if len(quick_picks_section["contents"]) >= 50:
-                        break
-                    vid = s.get("videoId")
-                    title = s.get("title", "").strip().lower()
-                    if (vid and vid in existing_ids) or (title and title in existing_titles):
-                        continue
-                    if vid:
-                        existing_ids.add(vid)
-                    if title:
-                        existing_titles.add(title)
-                    quick_picks_section["contents"].append(s)
-
-                clean_feed.insert(0, quick_picks_section)
+        elif quick_picks_section and quick_picks_section.get("contents"):
+            clean_feed.insert(0, quick_picks_section)
             
         return {"status": "success", "feed": clean_feed}
     except Exception as e:
