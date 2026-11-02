@@ -1686,6 +1686,27 @@
             color: rgba(255, 255, 255, 0.4);
         }
 
+        #right-panel.plain-lyrics-mode {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            scroll-behavior: smooth !important;
+            -webkit-overflow-scrolling: touch !important;
+            pointer-events: auto !important;
+        }
+
+        #right-panel.plain-lyrics-mode::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #right-panel.plain-lyrics-mode::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #right-panel.plain-lyrics-mode::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.22);
+            border-radius: 999px;
+        }
+
         #lyrics-container.plain-lyrics-mode,
         #right-panel.plain-lyrics-mode #lyrics-container {
             position: relative !important;

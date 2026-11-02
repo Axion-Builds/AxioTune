@@ -2247,7 +2247,7 @@ async def get_lyrics(
             elif p_key == "lrclib":
                 tasks.append(("lrclib", fetch_lrclib_lyrics(c_title, c_artist, client)))
 
-        # Also fetch YouTube Music official lyrics concurrently
+        # Also fetch YouTube Music official lyrics concurrently (supporting synchronized timestamps)
         yt_task = None
         if ytmusic and (videoId or c_title or c_artist):
             def fetch_yt_lyrics():
@@ -2274,13 +2274,62 @@ async def get_lyrics(
                             if 'Lyrics' in str(tr.get('title', '')):
                                 browse_id = tr.get('endpoint', {}).get('browseEndpoint', {}).get('browseId')
                                 if browse_id:
-                                    lyr = ytmusic.get_lyrics(browse_id)
-                                    if lyr and lyr.get('lyrics'):
-                                        return lyr
+                                    # 1. Attempt mobile request for synchronized timed lyrics
+                                    try:
+                                        with ytmusic.as_mobile():
+                                            m_resp = ytmusic._send_request('browse', {'browseId': browse_id})
+                                        from ytmusicapi.navigation import nav, TIMESTAMPED_LYRICS
+                                        m_data = nav(m_resp, TIMESTAMPED_LYRICS, True)
+                                        if m_data and 'timedLyricsData' in m_data:
+                                            raw_lines = m_data.get('timedLyricsData', [])
+                                            synced_lines = []
+                                            for item in raw_lines:
+                                                txt = item.get('lyricLine', '')
+                                                cue = item.get('cueRange')
+                                                if cue and 'startTimeMilliseconds' in cue:
+                                                    st = round(int(cue['startTimeMilliseconds']) / 1000.0, 2)
+                                                    synced_lines.append({'time': st, 'text': txt})
+                                                else:
+                                                    synced_lines.append({'time': -1, 'text': txt})
+
+                                            if any(l['time'] >= 0 for l in synced_lines):
+                                                final_lines = []
+                                                curr_time = 0.0
+                                                for l in synced_lines:
+                                                    if l['time'] >= 0:
+                                                        curr_time = l['time']
+                                                        final_lines.append(l)
+                                                    else:
+                                                        final_lines.append({'time': curr_time, 'text': l['text']})
+                                                if final_lines:
+                                                    return {
+                                                        'type': 'line_synced',
+                                                        'lines': final_lines
+                                                    }
+                                            else:
+                                                plain = '\n'.join([x.get('lyricLine', '') for x in raw_lines if x.get('lyricLine')])
+                                                if plain:
+                                                    return {
+                                                        'type': 'plain_text',
+                                                        'lyrics': plain
+                                                    }
+                                    except Exception:
+                                        pass
+
+                                    # 2. Fallback to standard desktop plain lyrics
+                                    try:
+                                        lyr = ytmusic.get_lyrics(browse_id)
+                                        if lyr and lyr.get('lyrics'):
+                                            return {
+                                                'type': 'plain_text',
+                                                'lyrics': lyr.get('lyrics')
+                                            }
+                                    except Exception:
+                                        pass
                     except Exception:
                         continue
                 return None
-            yt_task = asyncio.wait_for(asyncio.to_thread(fetch_yt_lyrics), timeout=4.0)
+            yt_task = asyncio.wait_for(asyncio.to_thread(fetch_yt_lyrics), timeout=5.0)
 
         # Run all provider fetches concurrently
         coros = [t[1] for t in tasks]
@@ -2301,15 +2350,25 @@ async def get_lyrics(
         # Append YouTube Music official lyrics to sources if found
         if yt_task and len(results) > len(tasks):
             yt_res = results[-1]
-            if isinstance(yt_res, dict) and yt_res.get("lyrics"):
-                sources.append({
-                    "id": "ytmusic",
-                    "provider": "YouTube",
-                    "provider_badge": "YT Music",
-                    "name": "YouTube Music (Official)",
-                    "type": "plain_text",
-                    "lyrics": yt_res.get("lyrics", "")
-                })
+            if isinstance(yt_res, dict):
+                if yt_res.get("type") == "line_synced" and yt_res.get("lines"):
+                    sources.append({
+                        "id": "ytmusic",
+                        "provider": "YouTube",
+                        "provider_badge": "YT Music",
+                        "name": "YouTube Music (Official)",
+                        "type": "line_synced",
+                        "lines": yt_res.get("lines", [])
+                    })
+                elif yt_res.get("lyrics"):
+                    sources.append({
+                        "id": "ytmusic",
+                        "provider": "YouTube",
+                        "provider_badge": "YT Music",
+                        "name": "YouTube Music (Official)",
+                        "type": "plain_text",
+                        "lyrics": yt_res.get("lyrics", "")
+                    })
 
         # Strict Guarantee: Any non-word_synced source must never contain word timestamps
         for s in sources:

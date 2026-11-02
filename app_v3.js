@@ -5119,6 +5119,22 @@ function onPlayerStateChange(event) {
             if (rightPanel) {
                 rightPanel.classList.add('plain-lyrics-mode');
                 rightPanel.scrollTop = 0;
+                window._userIsScrollingPlainText = false;
+                if (!rightPanel._hasPlainScrollListeners) {
+                    rightPanel._hasPlainScrollListeners = true;
+                    const onUserScroll = () => {
+                        if (window._currentLyricsType === 'plain_text') {
+                            window._userIsScrollingPlainText = true;
+                            clearTimeout(window._userScrollPlainTimer);
+                            window._userScrollPlainTimer = setTimeout(() => {
+                                window._userIsScrollingPlainText = false;
+                            }, 4000);
+                        }
+                    };
+                    rightPanel.addEventListener('wheel', onUserScroll, { passive: true });
+                    rightPanel.addEventListener('touchmove', onUserScroll, { passive: true });
+                    rightPanel.addEventListener('pointerdown', onUserScroll, { passive: true });
+                }
             }
             if (lyricsContainer) {
                 lyricsContainer.classList.add('plain-lyrics-mode');
@@ -5263,10 +5279,25 @@ function onPlayerStateChange(event) {
 
         function animationLoop() {
             if (!isDraggingProgress) updateProgressUI();
-            if (!window._appTabHidden && lineElements && lineElements.length > 0 && window._currentLyricsType !== 'plain_text') {
-                // Focus Mode: We let it scroll, but CSS will fade it out to prevent lag
-                if (!audioPlayer.paused) processLyricsFrame();
-                else if (Math.abs(targetY - currentY) > 0.1) lerpScroll();
+            if (!window._appTabHidden) {
+                if (lineElements && lineElements.length > 0 && window._currentLyricsType !== 'plain_text') {
+                    // Focus Mode: We let it scroll, but CSS will fade it out to prevent lag
+                    if (!audioPlayer.paused) processLyricsFrame();
+                    else if (Math.abs(targetY - currentY) > 0.1) lerpScroll();
+                } else if (window._currentLyricsType === 'plain_text' && rightPanel && !audioPlayer.paused && !window._userIsScrollingPlainText) {
+                    const dur = audioPlayer.duration;
+                    const cur = audioPlayer.currentTime;
+                    if (dur > 0 && cur > 0) {
+                        const progress = Math.min(1, Math.max(0, cur / dur));
+                        const maxScroll = rightPanel.scrollHeight - rightPanel.clientHeight;
+                        if (maxScroll > 10) {
+                            const desiredScroll = maxScroll * progress;
+                            if (Math.abs(rightPanel.scrollTop - desiredScroll) > 1) {
+                                rightPanel.scrollTop += (desiredScroll - rightPanel.scrollTop) * 0.05;
+                            }
+                        }
+                    }
+                }
             }
             requestAnimationFrame(animationLoop);
         }
