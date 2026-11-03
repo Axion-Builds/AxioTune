@@ -414,7 +414,8 @@
         transform: none !important;
         transition: opacity 0.15s ease !important;
     }
-    body.player-screen-active #pc-sticky-header {
+    body.player-screen-active #pc-sticky-header,
+body.profile-screen-active #pc-sticky-header {
         display: none !important;
         opacity: 0 !important;
         visibility: hidden !important;

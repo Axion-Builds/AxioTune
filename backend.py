@@ -119,6 +119,14 @@ def init_db():
 
 init_db()
 
+try:
+    from setup_profile_db import setup_profile_tables
+    setup_profile_tables()
+    from profile_router import profile_router
+    app.include_router(profile_router)
+except Exception as e:
+    print("Error initializing profile system:", e)
+
 def get_db():
     conn = sqlite3.connect("music_db.sqlite")
     conn.row_factory = sqlite3.Row
@@ -385,6 +393,13 @@ def get_html(filename: str):
     if os.path.exists(f"{filename}.html"):
         return FileResponse(f"{filename}.html", media_type="text/html")
     raise HTTPException(status_code=404, detail="File not found")
+
+@app.get("/assets/{file_path:path}")
+def serve_assets(file_path: str):
+    full_path = os.path.join("assets", file_path)
+    if os.path.exists(full_path) and os.path.isfile(full_path):
+        return FileResponse(full_path)
+    raise HTTPException(status_code=404, detail="Asset not found")
 
 def clean_cover_search_term(q: str) -> str:
     if not q:
