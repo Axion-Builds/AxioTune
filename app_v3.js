@@ -4906,9 +4906,6 @@ function onPlayerStateChange(event) {
             document.getElementById('cover-wrapper').classList.add('playing');
             
             window.hasPlayedFirstSong = true;
-            if (typeof axioUpdateNowPlaying === 'function' && typeof currentSong !== 'undefined') {
-                axioUpdateNowPlaying(currentSong);
-            }
         });
 
         audioPlayer.addEventListener('pause', () => {
@@ -4921,9 +4918,6 @@ function onPlayerStateChange(event) {
         
         // Auto Next Song + Repeat Logic
         audioPlayer.addEventListener('ended', () => {
-            if (typeof axioLogPlayEvent === 'function' && typeof currentSong !== 'undefined') {
-                axioLogPlayEvent(currentSong, true, audioPlayer.currentTime || 30);
-            }
             if (repeatMode === 2) {
                 // Repeat ONE: restart same song
                 audioPlayer.currentTime = 0;
@@ -10250,116 +10244,3 @@ document.addEventListener('keydown', function (e) {
     }
   }
 });
-
-
-// ═══════════════════════════════════════════════════════════
-// AXIOTUNE - PROFILE SYSTEM CONTROLLER & REAL-TIME LISTENING HOOKS
-// ═══════════════════════════════════════════════════════════
-(function() {
-    let currentProfileUsername = 'velvet.static';
-
-    window.openProfileScreen = function(username) {
-        if (username) currentProfileUsername = username;
-        const screen = document.getElementById('profile-screen');
-        if (!screen) return;
-        screen.classList.add('active');
-        document.body.classList.add('profile-screen-active');
-        loadProfileData(currentProfileUsername);
-    };
-
-    window.closeProfileScreen = function() {
-        const screen = document.getElementById('profile-screen');
-        if (!screen) return;
-        screen.classList.remove('active');
-        document.body.classList.remove('profile-screen-active');
-    };
-
-    async function loadProfileData(username) {
-        try {
-            const [pRes, sRes, bRes] = await Promise.all([
-                fetch(`/api/profile/${username}`).then(r => r.json()).catch(() => null),
-                fetch(`/api/profile/${username}/stats`).then(r => r.json()).catch(() => null),
-                fetch(`/api/profile/${username}/badges`).then(r => r.json()).catch(() => null)
-            ]);
-
-            if (pRes && pRes.status === 'success' && pRes.profile) {
-                const p = pRes.profile;
-                const nameParts = (p.display_name || 'velvet static').split(' ');
-                const fName = document.getElementById('prof-first-name');
-                const lName = document.getElementById('prof-last-name');
-                if (fName) fName.textContent = nameParts[0] || 'velvet';
-                if (lName) lName.textContent = nameParts.slice(1).join(' ') || 'static';
-                
-                const bioEl = document.getElementById('prof-bio');
-                if (bioEl && p.bio) bioEl.textContent = p.bio;
-
-                if (p.now_playing) {
-                    const npTitle = document.getElementById('prof-now-title');
-                    const npArtist = document.getElementById('prof-now-artist');
-                    if (npTitle) npTitle.textContent = p.now_playing.title;
-                    if (npArtist) npArtist.textContent = p.now_playing.artist;
-                }
-            }
-
-            if (sRes && sRes.status === 'success' && sRes.stats) {
-                const s = sRes.stats;
-                const hoursEl = document.getElementById('prof-hours');
-                const streakEl = document.getElementById('prof-streak');
-                const songsEl = document.getElementById('prof-songs');
-                const replayEl = document.getElementById('prof-replay-count');
-
-                if (hoursEl) hoursEl.textContent = Number(s.hours).toLocaleString();
-                if (streakEl) streakEl.textContent = s.streak;
-                if (songsEl) songsEl.textContent = Number(s.songs_played).toLocaleString();
-                if (replayEl) replayEl.textContent = s.most_replayed?.plays || '412';
-            }
-        } catch (e) {
-            console.warn('[Profile] Error loading data:', e);
-        }
-    }
-
-    // Real-time listening tracker hook: connects with player playback
-    window.axioLogPlayEvent = function(track, completed = false, seconds = 30) {
-        if (!track || !track.title) return;
-        fetch('/api/plays', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                user_id: 'default_user',
-                video_id: track.videoId || track.id || '',
-                title: track.title,
-                artist: track.artist || track.artists?.[0]?.name || 'Unknown',
-                album: track.album || '',
-                cover: track.cover || track.thumbnail || '',
-                duration_seconds: track.duration || 0,
-                seconds_listened: Math.round(seconds),
-                completed: completed
-            })
-        }).catch(() => {});
-    };
-
-    window.axioUpdateNowPlaying = function(track) {
-        if (!track || !track.title) return;
-        fetch('/api/now-playing', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                user_id: 'default_user',
-                video_id: track.videoId || track.id || '',
-                title: track.title,
-                artist: track.artist || track.artists?.[0]?.name || 'Unknown',
-                cover: track.cover || track.thumbnail || ''
-            })
-        }).catch(() => {});
-    };
-
-    // Global listener for escape key to close profile
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const screen = document.getElementById('profile-screen');
-            if (screen && screen.classList.contains('active')) {
-                closeProfileScreen();
-            }
-        }
-    });
-})();
