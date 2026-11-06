@@ -6176,17 +6176,8 @@ function onPlayerStateChange(event) {
                     </button>
                 `;
 
-                card.addEventListener('pointerdown', (e) => {
-                    card._pX = e.clientX;
-                    card._pY = e.clientY;
-                });
-
-                card.onclick = (e) => {
-                    if (e && e.target && e.target.closest('.cf-more-btn')) return;
-                    const pX = (card._pX !== undefined) ? card._pX : (e ? e.clientX : 0);
-                    const pY = (card._pY !== undefined) ? card._pY : (e ? e.clientY : 0);
-                    const dist = (e && card._pX !== undefined) ? Math.hypot(e.clientX - pX, e.clientY - pY) : 0;
-                    if (dist > 14) return; // Real intentional drag gesture
+                card.onclick = () => {
+                    if (container._justDragged) return;
                     centerCoverFlowCard(container, card, true);
                     if (item.playlistId || item.type === 'playlist') {
                         showRemotePlaylistPage(item.playlistId);
@@ -6269,7 +6260,7 @@ function onPlayerStateChange(event) {
                 if (!isDown) return;
                 const x = e.pageX - container.offsetLeft;
                 const walk = (x - startX);
-                if (Math.abs(walk) > 14) {
+                if (Math.abs(walk) > 4) {
                     hasMoved = true;
                     container._justDragged = true;
                 }
