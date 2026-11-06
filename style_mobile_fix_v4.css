@@ -177,35 +177,36 @@
         }
 
         @media (min-width: 769px) {
-/* ===== AxioTune - Glass Sheet top bar ===== */
+/* ===== AxioTune - Floating Liquid Glass Capsule Island ===== */
 #pc-sticky-header {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 72px;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(1360px, calc(100% - 32px));
+    height: 60px;
     z-index: 1000;
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 0 32px 0 90px;
+    padding: 0 24px;
     box-sizing: border-box;
     font-family: inherit;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    -webkit-backdrop-filter: blur(36px) saturate(210%) brightness(1.04);
+    backdrop-filter: blur(36px) saturate(210%) brightness(1.04);
+    box-shadow: 
+        inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 16px 36px -4px rgba(0, 0, 0, 0.45);
+    border: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Frosted sheet extending smoothly below search bar (zero mid-bar cutoff or hard line) */
+/* Internal glass element hidden as header itself is the floating capsule */
 #pc-sticky-header .pch-glass-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: -40px;
-    pointer-events: none;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.38) 60%, rgba(0, 0, 0, 0) 100%);
-    -webkit-backdrop-filter: blur(28px) saturate(170%);
-    backdrop-filter: blur(28px) saturate(170%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+    display: none !important;
 }
 
 #pc-sticky-header .pch-border-line {
@@ -232,20 +233,21 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 40px;
+    height: 38px;
     padding: 0 16px;
     box-sizing: border-box;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 #pc-sticky-header .pch-search-pill:focus-within {
     background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 0 16px rgba(255, 255, 255, 0.08);
 }
 #pc-sticky-header .pch-search-icon {
     width: 18px;
@@ -1266,12 +1268,34 @@
         }
 
         #prev-btn, #next-btn {
-            width: 52px !important;
-            height: 52px !important;
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 50% !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+            backdrop-filter: blur(20px) saturate(190%) !important;
+            box-shadow: 
+                inset 0 1px 1px 0 rgba(255, 255, 255, 0.36),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 8px 24px -2px rgba(0, 0, 0, 0.35) !important;
+            border: none !important;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background 0.2s ease !important;
+        }
+        #prev-btn:hover:not(:disabled), #next-btn:hover:not(:disabled) {
+            transform: scale(1.08) !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+            box-shadow: 
+                inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.48),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+                0 12px 28px -2px rgba(0, 0, 0, 0.45) !important;
+        }
+        #prev-btn:active:not(:disabled), #next-btn:active:not(:disabled) {
+            transform: scale(0.93) !important;
         }
         #prev-btn svg, #next-btn svg {
-            width: 34px !important;
-            height: 34px !important;
+            width: 32px !important;
+            height: 32px !important;
             fill: currentColor !important;
             filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
         }
@@ -1279,10 +1303,32 @@
         #play-pause-btn {
             width: 68px !important;
             height: 68px !important;
+            border-radius: 50% !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+            -webkit-backdrop-filter: blur(28px) saturate(210%) brightness(1.08) !important;
+            backdrop-filter: blur(28px) saturate(210%) brightness(1.08) !important;
+            box-shadow: 
+                inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.55),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+                0 14px 34px -4px rgba(0, 0, 0, 0.45) !important;
+            border: none !important;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background 0.2s ease !important;
+        }
+        #play-pause-btn:hover:not(:disabled) {
+            transform: scale(1.07) !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.08) 100%) !important;
+            box-shadow: 
+                inset 0 1px 2px 0 rgba(255, 255, 255, 0.65),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+                0 18px 42px -4px rgba(0, 0, 0, 0.55) !important;
+        }
+        #play-pause-btn:active:not(:disabled) {
+            transform: scale(0.94) !important;
         }
         #play-pause-btn .play-icon, #play-pause-btn .pause-icon {
-            width: 46px !important;
-            height: 46px !important;
+            width: 44px !important;
+            height: 44px !important;
             fill: #ffffff !important;
             filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
         }
@@ -1302,33 +1348,45 @@
         }
 
         .player-utility-btn {
-            background: transparent;
-            border: none;
-            color: rgba(255, 255, 255, 0.55);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+            border: none !important;
+            color: rgba(255, 255, 255, 0.7) !important;
+            width: 42px !important;
+            height: 42px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             cursor: pointer;
-            padding: 0;
-            transition: color 0.2s ease, transform 0.15s ease, background 0.2s ease, opacity 0.2s ease;
+            padding: 0 !important;
+            -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+            backdrop-filter: blur(20px) saturate(190%) !important;
+            box-shadow: 
+                inset 0 1px 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+                0 6px 18px rgba(0, 0, 0, 0.35) !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
         .player-utility-btn:hover {
-            color: #ffffff;
-            transform: scale(1.08);
+            color: #ffffff !important;
+            transform: scale(1.08) !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+            box-shadow: 
+                inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 8px 24px rgba(0, 0, 0, 0.4) !important;
         }
         .player-utility-btn:active {
-            transform: scale(0.92);
-            opacity: 0.75;
+            transform: scale(0.92) !important;
+            opacity: 0.8 !important;
         }
         .player-utility-btn.active {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            color: #ffffff !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%) !important;
+            box-shadow: 
+                inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.55),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+                0 8px 24px rgba(0, 0, 0, 0.45) !important;
         }
         .player-utility-btn svg {
             width: 22px;
@@ -2409,14 +2467,16 @@
             z-index: 999; 
             
             /* Apple-Spec Liquid Glass Container - Optimized for GPU */
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%);
-            backdrop-filter: blur(25px) saturate(210%);
-            -webkit-backdrop-filter: blur(25px) saturate(210%);
-            border-radius: 40px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%) !important;
+            backdrop-filter: blur(36px) saturate(220%) brightness(1.06) !important;
+            -webkit-backdrop-filter: blur(36px) saturate(220%) brightness(1.06) !important;
+            border-radius: 40px !important;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            box-shadow: 0 14px 38px rgba(0, 0, 0, 0.35), 
-                        inset 0 1px 1.5px rgba(255, 255, 255, 0.45);
+            border: none !important;
+            box-shadow: 
+                inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 16px 40px -4px rgba(0, 0, 0, 0.5) !important;
             transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.32s ease, box-shadow 0.25s ease;
             cursor: pointer; opacity: 1; pointer-events: auto;
             will-change: transform, opacity;
@@ -2699,13 +2759,14 @@
             top: auto !important;
             width: 100% !important;
             max-width: 100% !important;
-            height: 56vh !important;
+            height: 58vh !important;
             min-height: 440px !important;
-            max-height: 580px !important;
+            max-height: 600px !important;
             margin: 0 !important;
-            background: radial-gradient(ellipse 130% 90% at 20% 40%, rgba(var(--accent-rgb, 140, 50, 255), 0.22) 0%, rgba(15, 7, 32, 0.96) 50%, rgba(5, 2, 12, 0.99) 100%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
-            border-bottom: none !important;
+            background: linear-gradient(165deg, rgba(255, 255, 255, 0.12) 0%, rgba(18, 10, 28, 0.75) 50%, rgba(8, 4, 15, 0.92) 100%) !important;
+            -webkit-backdrop-filter: blur(40px) saturate(210%) brightness(1.05) !important;
+            backdrop-filter: blur(40px) saturate(210%) brightness(1.05) !important;
+            border: none !important;
             border-radius: 32px 32px 0 0 !important;
             z-index: 100001 !important;
             padding: 0 !important;
@@ -2714,7 +2775,10 @@
             overflow: hidden !important;
             display: flex !important;
             flex-direction: column !important;
-            box-shadow: 0 -24px 80px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+            box-shadow: 
+                inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.4),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 -20px 60px rgba(0, 0, 0, 0.7) !important;
         }
         #queue-panel.open {
             transform: translateY(0) !important;
@@ -11777,7 +11841,7 @@ body.focus-screen-active #mini-player {
 .cover-flow-container.is-scrolling .cover-flow-card,
 .cover-flow-container.is-dragging .cover-flow-card {
     transition: none !important;
-    pointer-events: none !important;
+    pointer-events: auto !important;
 }
 
 .cover-flow-card:hover {
