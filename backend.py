@@ -324,7 +324,7 @@ app.add_middleware(
 # Serve the frontend UI
 @app.get("/")
 def read_root():
-    return FileResponse("index.html")
+    return FileResponse("index.html", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"})
 
 @app.get("/{filename}.jpg")
 def get_jpg(filename: str):
@@ -359,7 +359,7 @@ def get_mp4(filename: str):
 @app.get("/{filename}.css")
 def get_css(filename: str):
     if os.path.exists(f"{filename}.css"):
-        return FileResponse(f"{filename}.css")
+        return FileResponse(f"{filename}.css", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"})
     raise HTTPException(status_code=404, detail="File not found")
 
 @app.get("/{filename}.js")
