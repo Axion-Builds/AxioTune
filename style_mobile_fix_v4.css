@@ -177,7 +177,7 @@
         }
 
         @media (min-width: 769px) {
-/* ===== AxioTune - Floating Glass Island Header (Seamless Background, No Full-Width Bar) ===== */
+/* ===== AxioTune - Pure Frosted Blur Top Bar (No Darkness, No Line, Just Pure Heavy Blur) ===== */
 #pc-sticky-header {
     position: fixed;
     top: 0;
@@ -191,16 +191,14 @@
     padding: 0 32px 0 90px;
     box-sizing: border-box;
     font-family: inherit;
-    background: transparent !important;
-    background-color: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    backdrop-filter: blur(40px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    background-color: rgba(255, 255, 255, 0.03) !important;
     border: none !important;
+    border-bottom: none !important;
     box-shadow: none !important;
-    pointer-events: none;
-}
-
-#pc-sticky-header > * {
+    outline: none !important;
     pointer-events: auto;
 }
 
@@ -238,11 +236,11 @@
     box-sizing: border-box;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-    backdrop-filter: blur(25px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
-    transition: all 0.25s ease;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 #pc-sticky-header .pch-search-pill:focus-within {
     background: rgba(255, 255, 255, 0.12);
@@ -296,10 +294,10 @@
     padding: 4px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-    backdrop-filter: blur(25px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 /* Round icon buttons (GitHub .Btn + .pch-action-btn share one look) */
