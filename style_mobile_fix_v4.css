@@ -177,7 +177,7 @@
         }
 
         @media (min-width: 769px) {
-/* ===== AxioTune - Clean High-Strength Frosted Blur Top Bar (macOS/iOS Glass) ===== */
+/* ===== AxioTune - Floating Glass Island Header (Seamless Background, No Full-Width Bar) ===== */
 #pc-sticky-header {
     position: fixed;
     top: 0;
@@ -191,12 +191,17 @@
     padding: 0 32px 0 90px;
     box-sizing: border-box;
     font-family: inherit;
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
-    background-color: rgba(255, 255, 255, 0.04);
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     border: none !important;
-    border-bottom: none !important;
     box-shadow: none !important;
+    pointer-events: none;
+}
+
+#pc-sticky-header > * {
+    pointer-events: auto;
 }
 
 /* REMOVE dark gradient layer, nested backdrop-filter, and mask-image */
@@ -232,12 +237,12 @@
     padding: 0 16px;
     box-sizing: border-box;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+    transition: all 0.25s ease;
 }
 #pc-sticky-header .pch-search-pill:focus-within {
     background: rgba(255, 255, 255, 0.12);
@@ -290,11 +295,11 @@
     gap: 2px;
     padding: 4px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
 }
 
 /* Round icon buttons (GitHub .Btn + .pch-action-btn share one look) */
@@ -7679,12 +7684,12 @@ body.player-screen-active #top-bar:focus-within {
         min-width: 0 !important;
         max-width: 100% !important;
         padding: 15px 15px !important;
-        background: rgba(255, 255, 255, 0.04) !important;
-        backdrop-filter: blur(40px) saturate(180%) !important;
-        -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         border: none !important;
-        border-bottom: none !important;
         box-shadow: none !important;
+        pointer-events: none !important;
         z-index: 90000 !important;
         justify-content: center !important;
         transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
@@ -7962,12 +7967,12 @@ body.player-screen-active #top-bar:focus-within {
         width: 100% !important;
         height: 65px !important;
         padding: 0 15px !important;
-        background: rgba(255, 255, 255, 0.04) !important;
-        backdrop-filter: blur(40px) saturate(180%) !important;
-        -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         border: none !important;
-        border-bottom: none !important;
         box-shadow: none !important;
+        pointer-events: none !important;
         z-index: 90000 !important;
         display: flex !important;
         justify-content: center !important;
