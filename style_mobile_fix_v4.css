@@ -177,28 +177,30 @@
         }
 
         @media (min-width: 769px) {
-/* ===== AxioTune - Pure Frosted Blur Top Bar (No Darkness, No Line, Just Pure Heavy Blur) ===== */
+/* ===== AxioTune - Pure Frosted Blur Top Bar (No Darkness, No Cutoff Line, Seamless Feathered Blur) ===== */
 #pc-sticky-header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 72px;
-    z-index: 1000;
+    height: 90px;
+    z-index: 10000;
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 0 32px 0 90px;
+    padding: 0 32px 18px 90px;
     box-sizing: border-box;
     font-family: inherit;
     backdrop-filter: blur(40px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-    background: rgba(255, 255, 255, 0.03) !important;
-    background-color: rgba(255, 255, 255, 0.03) !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    background-color: rgba(255, 255, 255, 0.02) !important;
     border: none !important;
     border-bottom: none !important;
     box-shadow: none !important;
     outline: none !important;
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50px, transparent 100%) !important;
+    mask-image: linear-gradient(to bottom, black 0%, black 50px, transparent 100%) !important;
     pointer-events: auto;
 }
 

@@ -36,12 +36,12 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=313">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=314">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
-        <!-- PURE FROSTED BLUR HEADER: ZERO DARKNESS, ZERO BORDER LINE, JUST HEAVY BLUR -->
+        <!-- PURE FROSTED BLUR HEADER: ZERO DARKNESS, ZERO CUTOFF LINE, SEAMLESS FEATHERED BLUR -->
     <style id="frosted-header-clean-override">
         /* Desktop: #top-bar-wrapper is hidden so it never covers pc-sticky-header */
         #top-bar-wrapper {
@@ -53,23 +53,25 @@
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            height: 72px !important;
+            height: 90px !important;
             z-index: 10000 !important;
             display: flex !important;
             align-items: center !important;
             gap: 20px !important;
-            padding: 0 32px 0 90px !important;
+            padding: 0 32px 18px 90px !important;
             box-sizing: border-box !important;
             font-family: inherit !important;
             backdrop-filter: blur(40px) saturate(180%) !important;
             -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-            background: rgba(255, 255, 255, 0.03) !important;
-            background-color: rgba(255, 255, 255, 0.03) !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+            background-color: rgba(255, 255, 255, 0.02) !important;
             border: none !important;
             border-bottom: none !important;
             border-top: none !important;
             box-shadow: none !important;
             outline: none !important;
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50px, transparent 100%) !important;
+            mask-image: linear-gradient(to bottom, black 0%, black 50px, transparent 100%) !important;
             pointer-events: auto !important;
         }
         #pc-sticky-header .pch-search-pill {
@@ -111,13 +113,16 @@
                 top: 0 !important;
                 left: 0 !important;
                 width: 100% !important;
-                height: 65px !important;
+                height: 80px !important;
+                padding: 0 15px 15px 15px !important;
                 z-index: 10000 !important;
                 backdrop-filter: blur(40px) saturate(180%) !important;
                 -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-                background: rgba(255, 255, 255, 0.03) !important;
+                background: rgba(255, 255, 255, 0.02) !important;
                 border: none !important;
                 box-shadow: none !important;
+                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45px, transparent 100%) !important;
+                mask-image: linear-gradient(to bottom, black 0%, black 45px, transparent 100%) !important;
             }
         }
     </style>
