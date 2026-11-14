@@ -12115,3 +12115,60 @@ body.focus-screen-active #mini-player {
 .player-collapse-btn:active {
     transform: scale(0.96);
 }
+
+/* =========================================================================
+   APPLE MUSIC SCRIM & CONTRAST VIGNETTE (OPTION 1)
+   Provides high-contrast backdrop for white, bright, or vibrant album artwork
+   so typography, lyrics, and controls remain 100% readable and crisp.
+   ========================================================================= */
+#player-screen::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: radial-gradient(circle at 35% 45%, rgba(10, 10, 16, 0.48) 0%, rgba(8, 8, 14, 0.78) 100%),
+                linear-gradient(to bottom, rgba(10, 10, 16, 0.35) 0%, rgba(8, 8, 14, 0.65) 100%) !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    display: block !important;
+}
+
+#left-panel,
+#right-panel,
+.player-collapse-btn,
+.screen-back-btn,
+#cinematic-actions-bar,
+.player-bottom-utility-row {
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+#player-screen #track-title {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6) !important;
+}
+
+#player-screen #track-artist {
+    color: rgba(255, 255, 255, 0.75) !important;
+    font-weight: 600 !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+#player-screen #player-controls svg,
+#player-screen #player-controls svg path,
+#player-screen .player-utility-btn svg,
+#player-screen .player-collapse-btn svg,
+#player-screen #player-more-btn svg {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+}
+
+#player-screen .lyric-line {
+    color: rgba(255, 255, 255, 0.45) !important;
+}
+
+#player-screen .lyric-line.active-line {
+    color: #ffffff !important;
+    text-shadow: 0 4px 28px rgba(0, 0, 0, 0.7) !important;
+}
+
