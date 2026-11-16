@@ -5720,48 +5720,90 @@ function onPlayerStateChange(event) {
                 
                 const title = (trackTitleEl?.textContent || '').trim();
                 const artist = (trackArtistEl?.textContent || '').trim();
+                const rawSrc = coverArt.src;
+                const isLocalOrData = rawSrc.startsWith('data:') || rawSrc.startsWith('blob:') || rawSrc.startsWith('/') || rawSrc.includes(window.location.host);
                 
-                // Guaranteed CORS-enabled proxy URL for Kawarp WebGL texture
-                const proxyUrl = '/api/cover?yt_thumb=' + encodeURIComponent(coverArt.src) + '&q=' + encodeURIComponent(title + ' ' + artist);
+                // Guaranteed CORS-enabled proxy URL for Kawarp WebGL texture & remote images
+                const proxyUrl = isLocalOrData ? rawSrc : ('/api/cover?yt_thumb=' + encodeURIComponent(rawSrc) + '&q=' + encodeURIComponent(title + ' ' + artist));
                 
                 if (window.AxioShaderEngine) {
                     window.AxioShaderEngine.loadImage(proxyUrl);
                 }
                 
-                // Subtle chameleon glow on navbar
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
+                function processImageData(ctx) {
+                    const data = ctx.getImageData(0, 0, 32, 32).data;
+                    let rSum = 0, gSum = 0, bSum = 0;
+                    let whitePixelCount = 0;
+                    const totalPixels = data.length / 4;
+
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i+1], b = data[i+2];
+                        rSum += r; gSum += g; bSum += b;
+                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                        // Check for near-white pixels (high luminance or all channels high)
+                        if (lum > 210 || (r > 200 && g > 200 && b > 200)) {
+                            whitePixelCount++;
+                        }
+                    }
+
+                    const avgR = Math.round(rSum / totalPixels);
+                    const avgG = Math.round(gSum / totalPixels);
+                    const avgB = Math.round(bSum / totalPixels);
+                    const avgLum = (0.299 * avgR + 0.587 * avgG + 0.114 * avgB) / 255;
+                    const whiteRatio = whitePixelCount / totalPixels;
+
+                    // OPTION 1 CONDITIONAL SCRIM: Only activate dark scrim if poster is majorly white
+                    const isMajorlyWhite = (whiteRatio >= 0.35 || avgLum >= 0.70);
+                    const playerScreenEl = document.getElementById('player-screen');
+                    if (playerScreenEl) {
+                        playerScreenEl.classList.toggle('white-poster-scrim', isMajorlyWhite);
+                    }
+                    document.body.classList.toggle('white-poster-scrim', isMajorlyWhite);
+
+                    sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${avgR},${avgG},${avgB},0.12)`);
+
+                    // Bind radial navigation wheel colors to poster colors
+                    const radialContainer = document.getElementById('radial-nav-container');
+                    if (radialContainer) {
+                        radialContainer.style.setProperty('--radial-color', `rgb(${avgR},${avgG},${avgB})`);
+                        radialContainer.style.setProperty('--radial-glow', `rgba(${avgR},${avgG},${avgB},0.85)`);
+                        radialContainer.style.setProperty('--radial-color-rgb', `${avgR},${avgG},${avgB}`);
+                    }
+                    const stop1 = document.getElementById('radial-grad-stop-1');
+                    const stop2 = document.getElementById('radial-grad-stop-2');
+                    if (stop1) stop1.setAttribute('stop-color', `rgb(${avgR},${avgG},${avgB})`);
+                    if (stop2) stop2.setAttribute('stop-color', `rgb(${avgR},${avgG},${avgB})`);
+                }
+
+                // Try direct canvas read first (instant for local/data/same-origin)
+                let directSuccess = false;
+                if (coverArt.complete && coverArt.naturalWidth > 0) {
                     try {
                         const canvas = document.createElement('canvas');
-                        canvas.width = 16; canvas.height = 16;
+                        canvas.width = 32; canvas.height = 32;
                         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                        ctx.drawImage(img, 0, 0, 16, 16);
-                        const data = ctx.getImageData(0, 0, 16, 16).data;
-                        let rSum = 0, gSum = 0, bSum = 0;
-                        for (let i = 0; i < data.length; i += 4) {
-                            rSum += data[i]; gSum += data[i+1]; bSum += data[i+2];
-                        }
-                        const count = data.length / 4;
-                        const avgR = Math.round(rSum / count);
-                        const avgG = Math.round(gSum / count);
-                        const avgB = Math.round(bSum / count);
-                        sideNavEl?.style.setProperty('--chameleon-glow', `rgba(${avgR},${avgG},${avgB},0.12)`);
+                        ctx.drawImage(coverArt, 0, 0, 32, 32);
+                        processImageData(ctx);
+                        directSuccess = true;
+                    } catch(e) {
+                        directSuccess = false;
+                    }
+                }
 
-                        // Bind radial navigation wheel colors to poster colors
-                        const radialContainer = document.getElementById('radial-nav-container');
-                        if (radialContainer) {
-                            radialContainer.style.setProperty('--radial-color', `rgb(${avgR},${avgG},${avgB})`);
-                            radialContainer.style.setProperty('--radial-glow', `rgba(${avgR},${avgG},${avgB},0.85)`);
-                            radialContainer.style.setProperty('--radial-color-rgb', `${avgR},${avgG},${avgB}`);
-                        }
-                        const stop1 = document.getElementById('radial-grad-stop-1');
-                        const stop2 = document.getElementById('radial-grad-stop-2');
-                        if (stop1) stop1.setAttribute('stop-color', `rgb(${avgR},${avgG},${avgB})`);
-                        if (stop2) stop2.setAttribute('stop-color', `rgb(${avgR},${avgG},${avgB})`);
-                    } catch(e) {}
-                };
-                img.src = proxyUrl;
+                if (!directSuccess) {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 32; canvas.height = 32;
+                            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                            ctx.drawImage(img, 0, 0, 32, 32);
+                            processImageData(ctx);
+                        } catch(e) {}
+                    };
+                    img.src = proxyUrl;
+                }
             } catch(e) {}
         }
         

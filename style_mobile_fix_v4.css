@@ -12118,8 +12118,8 @@ body.focus-screen-active #mini-player {
 
 /* =========================================================================
    APPLE MUSIC SCRIM & CONTRAST VIGNETTE (OPTION 1)
-   Provides high-contrast backdrop for white, bright, or vibrant album artwork
-   so typography, lyrics, and controls remain 100% readable and crisp.
+   Applied ONLY when album artwork is majorly white / high-luminance,
+   preserving original background colors for all normal & dark covers.
    ========================================================================= */
 #player-screen::before {
     content: '' !important;
@@ -12130,16 +12130,38 @@ body.focus-screen-active #mini-player {
     z-index: 1 !important;
     pointer-events: none !important;
     display: block !important;
+    opacity: 0 !important;
+    transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
-#left-panel,
-#right-panel,
-.player-collapse-btn,
-.screen-back-btn,
-#cinematic-actions-bar,
-.player-bottom-utility-row {
-    position: relative !important;
-    z-index: 2 !important;
+/* Scrim is ONLY active on majorly white covers */
+#player-screen.white-poster-scrim::before,
+body.white-poster-scrim #player-screen::before {
+    opacity: 1 !important;
+}
+
+@media (min-width: 769px) {
+    #player-screen #left-panel,
+    #player-screen #right-panel {
+        z-index: 2;
+    }
+}
+
+/* Ensure Queue View is never masked/faded at top & bottom on mobile or desktop */
+#right-panel[data-view="queue"] {
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+}
+
+/* Center empty state in lyrics view so it is never pushed off-screen or faded by mask */
+#lyrics-container .empty-state {
+    position: absolute;
+    top: 25% !important;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    text-align: left;
+    padding-right: 20px;
 }
 
 #player-screen #track-title {
@@ -12171,4 +12193,5 @@ body.focus-screen-active #mini-player {
     color: #ffffff !important;
     text-shadow: 0 4px 28px rgba(0, 0, 0, 0.7) !important;
 }
+
 
