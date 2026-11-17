@@ -1152,28 +1152,97 @@ def _ios_radio_sync(video_id: str):
     return []
 
 
-async def _fetch_radio(video_id: str):
-    """YouTube Music ka asli 'Up next' / radio. Returns (tracks, source)."""
-    # 1) ytmusicapi: pehle standard Up Next queue (radio=False, genuine YTM queue order), phir radio=True
-    for label, kw in (("ytmusicapi", {}), ("ytmusicapi-radio", {'radio': True})):
+def _direct_ytmusic_radio_sync(video_id: str):
+    """Directly query YouTube Music Next API to get genuine Up Next / Radio queue,
+    bypassing ytmusicapi's broken tab-parsers that crash on missing endpoints."""
+    tracks = []
+    for pid in (f"RDAMVM{video_id}", ""):
+        body = {
+            "enablePersistentPlaylistPanel": True,
+            "isAudioOnly": True,
+            "tunerSettingValue": "AUTOMIX_SETTING_NORMAL",
+            "videoId": video_id,
+        }
+        if pid:
+            body["playlistId"] = pid
+            body["params"] = "wAEB"
         try:
-            res = await asyncio.wait_for(
-                asyncio.to_thread(lambda: ytmusic.get_watch_playlist(videoId=video_id, limit=60, **kw)),
-                timeout=7.0)
-            tracks = [p for p in (_parse_wp_track(t) for t in res.get('tracks', [])) if p]
+            resp = ytmusic._send_request("next", body)
+            watchNextRenderer = nav(
+                resp,
+                [
+                    "contents",
+                    "singleColumnMusicWatchNextResultsRenderer",
+                    "tabbedRenderer",
+                    "watchNextTabbedResultsRenderer",
+                ],
+                True
+            )
+            if not watchNextRenderer:
+                continue
+
+            tabs = watchNextRenderer.get("tabs", [])
+            for tab in tabs:
+                content = tab.get("tabRenderer", {}).get("content", {})
+                mq = content.get("musicQueueRenderer", {})
+                panel = mq.get("content", {}).get("playlistPanelRenderer")
+                if panel and "contents" in panel:
+                    parsed = parse_watch_playlist(panel["contents"])
+                    clean_parsed = [p for p in (_parse_wp_track(t) for t in parsed) if p]
+                    if len(clean_parsed) > len(tracks):
+                        tracks = clean_parsed
             if len(tracks) > 5:
-                return tracks, label
-            print(f"[recs] {label} sirf {len(tracks)} track diye ({video_id})")
+                return tracks
+        except Exception:
+            continue
+    return tracks
+
+
+async def _fetch_radio(video_id: str, title: str = "", artist: str = ""):
+    """YouTube Music genuine 'Up next' / radio engine with multi-tier fallback."""
+    # 1) Direct Innertube Next endpoint (Reliable, fast, genuine YTM queue order)
+    if video_id:
+        try:
+            tracks = await asyncio.wait_for(asyncio.to_thread(_direct_ytmusic_radio_sync, video_id), timeout=6.0)
+            if len(tracks) > 5:
+                return tracks, "ytmusic_direct"
         except Exception as e:
-            print(f"[recs] {label} FAILED ({video_id}): {e!r}")
-    # 2) IOS_MUSIC client
-    try:
-        tracks = await asyncio.wait_for(asyncio.to_thread(_ios_radio_sync, video_id), timeout=6.0)
-        if len(tracks) > 5:
-            return tracks, "ios"
-        print(f"[recs] ios sirf {len(tracks)} track diye ({video_id})")
-    except Exception as e:
-        print(f"[recs] ios FAILED ({video_id}): {e!r}")
+            print(f"[recs] direct next failed ({video_id}): {e!r}")
+
+    # 2) If video_id was an unofficial/re-upload or video without direct radio, resolve official song ID
+    if title or artist:
+        try:
+            search_q = f"{title} {artist}".strip()
+            found = await asyncio.wait_for(asyncio.to_thread(ytmusic.search, search_q, filter="songs", limit=2), timeout=4.0)
+            for item in found or []:
+                alt_vid = item.get("videoId")
+                if alt_vid and alt_vid != video_id:
+                    alt_tracks = await asyncio.wait_for(asyncio.to_thread(_direct_ytmusic_radio_sync, alt_vid), timeout=5.0)
+                    if len(alt_tracks) > 5:
+                        return alt_tracks, "ytmusic_resolved_radio"
+        except Exception as e:
+            print(f"[recs] search-resolved radio failed: {e!r}")
+
+    # 3) IOS_MUSIC client fallback
+    if video_id:
+        try:
+            tracks = await asyncio.wait_for(asyncio.to_thread(_ios_radio_sync, video_id), timeout=5.0)
+            if len(tracks) > 5:
+                return tracks, "ios"
+        except Exception as e:
+            print(f"[recs] ios radio failed ({video_id}): {e!r}")
+
+    # 4) Curated artist query fallback (genuine songs from same artist/vibe, never random junk)
+    if artist or title:
+        try:
+            query = f"{artist} songs" if artist else f"{title} songs"
+            found_songs = await asyncio.wait_for(asyncio.to_thread(ytmusic.search, query, filter="songs", limit=25), timeout=5.0)
+            parsed_songs = [p for p in (_parse_wp_track(t) for t in found_songs) if p]
+            if len(parsed_songs) > 3:
+                return parsed_songs, "ytmusic_artist_search"
+        except Exception as e:
+            print(f"[recs] artist search fallback failed: {e!r}")
+
     return [], "none"
 
 
@@ -1185,8 +1254,16 @@ async def _artist_graph(artist: str):
     try:
         found = await asyncio.to_thread(ytmusic.search, name, filter="artists", limit=1)
         if not found or not found[0].get('browseId'):
-            return []
-        a_data = await asyncio.to_thread(ytmusic.get_artist, found[0]['browseId'])
+            # Fallback to direct song search for artist
+            songs_res = await asyncio.to_thread(ytmusic.search, f"{name} songs", filter="songs", limit=15)
+            return [p for p in (_parse_wp_track(t) for t in songs_res) if p]
+        
+        try:
+            a_data = await asyncio.to_thread(ytmusic.get_artist, found[0]['browseId'])
+        except Exception:
+            # If get_artist parser fails, use songs search
+            songs_res = await asyncio.to_thread(ytmusic.search, f"{name} songs", filter="songs", limit=15)
+            return [p for p in (_parse_wp_track(t) for t in songs_res) if p]
 
         def songs_of(data, who, n):
             out = []
@@ -1265,8 +1342,8 @@ async def get_recommendations(videoId: str = "", title: str = "", artist: str = 
             return API_CACHE[cache_key]['data']
 
         tracks, source = ([], "none")
-        if videoId:
-            tracks, source = await _fetch_radio(videoId)
+        if videoId or title or artist:
+            tracks, source = await _fetch_radio(videoId, title, artist)
         recs = _clean_queue(tracks, videoId, title, artist, limit=50)
 
         if len(recs) < 5:                  # radio fail hua -> artist graph

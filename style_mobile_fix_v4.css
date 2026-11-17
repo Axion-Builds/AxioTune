@@ -1857,10 +1857,14 @@
             margin: -0.35em 0.24em -0.25em 0;
             vertical-align: baseline;
             overflow: visible;
-            background: linear-gradient(to right, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.35) 100%);
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+            color: #ffffff;
             transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease;
             transform-origin: bottom center;
+        }
+
+        .lyric-line.active-line .lyric-word {
+            background: linear-gradient(to right, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.65) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
         }
 
         .lyric-word.active { 
@@ -1868,19 +1872,19 @@
                 to right,
                 #ffffff 0%,
                 #ffffff var(--progress, 0%),
-                rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 4px)),
-                rgba(255, 255, 255, 0.35) 100%
+                rgba(255, 255, 255, 0.65) var(--progress, 0%),
+                rgba(255, 255, 255, 0.65) 100%
             );
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
             transform: scale(var(--lrc-bounce-scale, 1)) translateY(var(--lrc-bounce-y, 0px));
-            filter: drop-shadow(0 0 var(--lrc-glow-radius, 10px) rgba(var(--accent-rgb), var(--lrc-glow-opacity, 0.8)));
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
         }
 
         .lyric-word.passed {
-            background: linear-gradient(to right, #ffffff 0%, #ffffff 100%);
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+            background: none;
+            -webkit-background-clip: border-box; background-clip: border-box; -webkit-text-fill-color: #ffffff; color: #ffffff;
             transform: scale(1);
-            filter: none;
+            filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
         }
 
         .am-setting-range-slider {
@@ -8417,7 +8421,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     letter-spacing: -0.025em !important;
     line-height: 1.36 !important;
     transform-origin: left center !important;
-    filter: blur(2.5px) !important;
+    filter: none !important;
     opacity: 0.45 !important;
     transform: scale(0.97) !important;
     padding-left: 0 !important;
@@ -8432,7 +8436,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     font-weight: 800 !important;
     letter-spacing: -0.025em !important;
     line-height: 1.36 !important;
-    filter: blur(0px) !important;
+    filter: none !important;
     opacity: 1 !important;
     transform: scale(1) !important;
     color: #ffffff !important;
@@ -8534,48 +8538,52 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     margin: -0.35em 0.24em -0.25em 0 !important;
     vertical-align: baseline !important;
     overflow: visible !important;
-    background: linear-gradient(
-        to right,
-        rgba(255, 255, 255, 0.35) 0%,
-        rgba(255, 255, 255, 0.35) 100%
-    ) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    color: transparent !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     transform: translateY(0) scale(1);
     transform-origin: bottom center !important;
     transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease !important;
 }
 
-.lyric-word.active {
+/* In active line: future words preview cleanly at 65% white (clear and readable, not dull grey) */
+.lyric-line.active-line .lyric-word {
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.65) 0%,
+        rgba(255, 255, 255, 0.65) 100%
+    ) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+}
+
+/* Currently sung word: fills with pure solid white #ffffff and vivid Apple glow */
+.lyric-line.active-line .lyric-word.active {
     background: linear-gradient(
         to right,
         #ffffff 0%,
-        #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 4px)),
-        rgba(255, 255, 255, 0.35) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 4px)),
-        rgba(255, 255, 255, 0.35) 100%
+        #ffffff var(--progress, 0%),
+        rgba(255, 255, 255, 0.65) var(--progress, 0%),
+        rgba(255, 255, 255, 0.65) 100%
     ) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
     transform: translateY(var(--lrc-bounce-y, 0px)) scale(var(--lrc-bounce-scale, 1)) !important;
-    filter: drop-shadow(0 0 var(--lrc-glow-radius, 6px) rgba(var(--accent-rgb, 140,50,255), var(--lrc-glow-opacity, 0.4))) !important;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 var(--lrc-glow-radius, 6px) rgba(var(--accent-rgb, 140,50,255), var(--lrc-glow-opacity, 0.4))) !important;
 }
 
-.lyric-word.passed {
-    background: linear-gradient(
-        to right,
-        #ffffff 0%,
-        #ffffff 100%
-    ) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    color: transparent !important;
+/* Passed sung words: 100% pure solid, crisp white */
+.lyric-line.active-line .lyric-word.passed {
+    background: none !important;
+    -webkit-background-clip: border-box !important;
+    background-clip: border-box !important;
+    -webkit-text-fill-color: #ffffff !important;
+    color: #ffffff !important;
     transform: translateY(0) scale(1) !important;
-    filter: none !important;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3)) !important;
 }
 
 .art-grid-card, .cinematic-card, .vinyl-card, .q-hero-card {
@@ -12186,12 +12194,12 @@ body.white-poster-scrim #player-screen::before {
 }
 
 #player-screen .lyric-line {
-    color: rgba(255, 255, 255, 0.45) !important;
+    color: #ffffff !important;
 }
 
 #player-screen .lyric-line.active-line {
     color: #ffffff !important;
-    text-shadow: 0 4px 28px rgba(0, 0, 0, 0.7) !important;
+    text-shadow: none !important;
 }
 
 
