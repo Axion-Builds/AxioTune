@@ -2857,7 +2857,10 @@ function onPlayerStateChange(event) {
 
         function setLyricsVisibility(hidden) {
             rightPanel.classList.toggle('lyrics-hidden', hidden);
-            document.getElementById('player-screen').classList.toggle('cinematic-mode', hidden);
+            const playerScr = document.getElementById('player-screen');
+            playerScr?.classList.toggle('cinematic-mode', hidden);
+            playerScr?.classList.toggle('mobile-lyrics-active', !hidden);
+            if (!hidden) playerScr?.classList.remove('mobile-queue-active');
             if (lyricsToggleBtn) lyricsToggleBtn.classList.toggle('lyrics-on', !hidden);
             if (lyricsBtnLabel) lyricsBtnLabel.textContent = hidden ? 'Lyrics OFF' : 'Lyrics ON';
             if (playerLyricsBtn) playerLyricsBtn.classList.toggle('active', !hidden);
@@ -3385,6 +3388,8 @@ function onPlayerStateChange(event) {
                 rPanel.dataset.view = 'queue';
                 rPanel.classList.remove('lyrics-hidden');
                 playerScr?.classList.remove('cinematic-mode');
+                playerScr?.classList.add('mobile-queue-active');
+                playerScr?.classList.remove('mobile-lyrics-active');
                 pQueueBtn?.classList.add('active');
                 pLyricsBtn?.classList.remove('active');
                 queueNavBtn?.classList.add('active');
@@ -3395,6 +3400,9 @@ function onPlayerStateChange(event) {
                 pLyricsBtn?.classList.add('active');
                 queueNavBtn?.classList.remove('active');
                 rPanel.classList.remove('lyrics-hidden');
+                playerScr?.classList.remove('cinematic-mode');
+                playerScr?.classList.add('mobile-lyrics-active');
+                playerScr?.classList.remove('mobile-queue-active');
             }
             if (typeof updateQueueControlsState === 'function') updateQueueControlsState();
             if (typeof appSettings !== 'undefined' && appSettings?.haptic && navigator.vibrate) navigator.vibrate(15);
@@ -3444,6 +3452,13 @@ function onPlayerStateChange(event) {
         playerQueueBtn?.addEventListener('click', (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
             const rPanel = document.getElementById('right-panel');
+            const playerScr = document.getElementById('player-screen');
+            if (rPanel?.dataset.view === 'queue' && playerScr?.classList.contains('mobile-queue-active')) {
+                playerScr.classList.remove('mobile-queue-active');
+                playerScr.classList.add('cinematic-mode');
+                playerQueueBtn.classList.remove('active');
+                return;
+            }
             if (rPanel?.dataset.view === 'queue') {
                 switchPlayerRightPanelView('lyrics');
             } else {
@@ -4590,6 +4605,9 @@ function onPlayerStateChange(event) {
             coverArt.removeAttribute('crossorigin');
             coverArt.src = hdThumb;
             miniCover.src = smallThumb;
+            if (typeof updateDynamicColors === 'function') {
+                updateDynamicColors();
+            }
             // Fetch verified HD Cover in background
             fetchHdCoverForQueueSong(song.title, song.artist, song.videoId, rawYtThumb);
             
@@ -5716,15 +5734,19 @@ function onPlayerStateChange(event) {
 
         async function updateDynamicColors() {
             try {
-                if (!coverArt.src || coverArt.src === window.location.href) return;
-                
                 const title = (trackTitleEl?.textContent || '').trim();
                 const artist = (trackArtistEl?.textContent || '').trim();
-                const rawSrc = coverArt.src;
-                const isLocalOrData = rawSrc.startsWith('data:') || rawSrc.startsWith('blob:') || rawSrc.startsWith('/') || rawSrc.includes(window.location.host);
+                const rawSrc = coverArt.src || '';
+                const effectiveSrc = (rawSrc && !rawSrc.includes('default_cover.jpg') && rawSrc !== window.location.href) 
+                    ? rawSrc 
+                    : (currentSongMeta?.cover || rawSrc);
+
+                if (!effectiveSrc || effectiveSrc === window.location.href) return;
+
+                const isLocalOrData = effectiveSrc.startsWith('data:') || effectiveSrc.startsWith('blob:') || (effectiveSrc.startsWith('/') && !effectiveSrc.includes('default_cover.jpg'));
                 
                 // Guaranteed CORS-enabled proxy URL for Kawarp WebGL texture & remote images
-                const proxyUrl = isLocalOrData ? rawSrc : ('/api/cover?yt_thumb=' + encodeURIComponent(rawSrc) + '&q=' + encodeURIComponent(title + ' ' + artist));
+                const proxyUrl = isLocalOrData ? effectiveSrc : ('/api/cover?yt_thumb=' + encodeURIComponent(effectiveSrc) + '&q=' + encodeURIComponent(title + ' ' + artist));
                 
                 if (window.AxioShaderEngine) {
                     window.AxioShaderEngine.loadImage(proxyUrl);
@@ -5753,7 +5775,7 @@ function onPlayerStateChange(event) {
                     const whiteRatio = whitePixelCount / totalPixels;
 
                     // OPTION 1 CONDITIONAL SCRIM: Only activate dark scrim if poster is majorly white
-                    const isMajorlyWhite = (whiteRatio >= 0.35 || avgLum >= 0.70);
+                    const isMajorlyWhite = (whiteRatio >= 0.28 || avgLum >= 0.60);
                     const playerScreenEl = document.getElementById('player-screen');
                     if (playerScreenEl) {
                         playerScreenEl.classList.toggle('white-poster-scrim', isMajorlyWhite);
@@ -5775,9 +5797,9 @@ function onPlayerStateChange(event) {
                     if (stop2) stop2.setAttribute('stop-color', `rgb(${avgR},${avgG},${avgB})`);
                 }
 
-                // Try direct canvas read first (instant for local/data/same-origin)
+                // Try direct canvas read first if not default cover placeholder
                 let directSuccess = false;
-                if (coverArt.complete && coverArt.naturalWidth > 0) {
+                if (coverArt.complete && coverArt.naturalWidth > 0 && !coverArt.src.includes('default_cover.jpg')) {
                     try {
                         const canvas = document.createElement('canvas');
                         canvas.width = 32; canvas.height = 32;
@@ -5790,20 +5812,19 @@ function onPlayerStateChange(event) {
                     }
                 }
 
-                if (!directSuccess) {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = () => {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = 32; canvas.height = 32;
-                            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                            ctx.drawImage(img, 0, 0, 32, 32);
-                            processImageData(ctx);
-                        } catch(e) {}
-                    };
-                    img.src = proxyUrl;
-                }
+                // Always ensure proxyUrl image is processed to get authentic colors & scrim
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 32; canvas.height = 32;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        ctx.drawImage(img, 0, 0, 32, 32);
+                        processImageData(ctx);
+                    } catch(e) {}
+                };
+                img.src = proxyUrl;
             } catch(e) {}
         }
         
@@ -6005,6 +6026,8 @@ function onPlayerStateChange(event) {
 
         function updateCoverFlow(container) {
             if (!container) return;
+            // High-performance mobile bypass: use native CSS touch snapping on phone screens to eliminate 3D math lag
+            if (window.innerWidth <= 768) return;
             const sl = container.scrollLeft;
             if (Math.abs(sl - _cfLastScrollLeft) < 0.4) return;
             _cfLastScrollLeft = sl;
@@ -7094,6 +7117,12 @@ function onPlayerStateChange(event) {
             // INSTANT MINI-PLAYER & HEADER VISIBILITY SYNC
             const miniPlayerEl = document.getElementById('mini-player');
             const pcHeaderEl = document.getElementById('pc-sticky-header');
+
+            // Sync Mobile Bottom Nav active tab
+            const rawTabName = showId.replace('-screen', '');
+            document.querySelectorAll('.mbn-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === rawTabName);
+            });
             if (showId === 'player-screen') {
                 if (miniPlayerEl) miniPlayerEl.classList.add('hidden-mini');
                 if (pcHeaderEl) pcHeaderEl.style.display = 'none';

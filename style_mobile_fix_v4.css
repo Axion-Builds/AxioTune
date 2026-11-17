@@ -7986,7 +7986,16 @@ body.player-screen-active #top-bar:focus-within {
     #top-bar, #search-bar-pill { width: 65% !important; margin: 0 auto !important; }
     #filter-btn { display: none !important; }
 
-    /* 3. Player Screen Layout - Apple Music Lyrics Mode */
+    /* 3. BitChord-Inspired Dedicated Dark Mobile Player UI */
+    #app-container,
+    #player-screen,
+    #home-screen,
+    #search-screen,
+    #library-screen,
+    #settings-screen {
+        background: #08080c !important;
+    }
+
     #player-screen {
         display: block !important;
         position: fixed !important;
@@ -7994,59 +8003,147 @@ body.player-screen-active #top-bar:focus-within {
         width: 100% !important; height: 100dvh !important;
         overflow: hidden !important;
         padding: 0 !important;
-        z-index: 9999 !important;
-        background: transparent !important;
+        z-index: 99999 !important;
+        background: #08080c !important;
     }
 
-    /* Left Panel as wrapper */
-    #left-panel {
-        position: static !important;
-        width: 100% !important; height: 100% !important;
-        display: block !important;
-        padding: 0 !important; margin: 0 !important;
-    }
-
-    /* Cover Art (Centered when lyrics are hidden) */
-    #cover-wrapper {
+    /* Player Header Bar */
+    #player-collapse-btn {
         position: absolute !important;
-        top: 70px !important;
-        bottom: 285px !important;
-        left: 0 !important;
-        right: 0 !important;
-        margin: auto !important;
-        width: min(320px, 75vw) !important;
-        height: min(320px, 75vw) !important;
-        aspect-ratio: 1 !important;
-        border-radius: 18px !important;
-        z-index: 6 !important;
+        top: 16px !important;
+        left: 16px !important;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: none !important;
-        transition: opacity 0.3s ease, transform 0.3s ease !important;
+        z-index: 40 !important;
+        cursor: pointer !important;
     }
-    #cover-art-container {
-        border-radius: 18px !important;
+    #player-collapse-btn svg {
+        width: 18px !important;
+        height: 18px !important;
+        stroke: #ffffff !important;
+    }
+
+    /* Left Panel: Container for Hero Cover & Player Controls */
+    #left-panel {
+        position: static !important;
         width: 100% !important;
         height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        padding: 62px 24px 28px 24px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
     }
-    /* When lyrics mode is active, hide cover art so lyrics have full focus */
-    #player-screen:not(.cinematic-mode) #cover-wrapper {
+
+    /* Hero Cover Art View (BitChord Scale & Proportions) */
+    #cover-wrapper {
+        position: relative !important;
+        top: auto !important; bottom: auto !important; left: auto !important; right: auto !important;
+        margin: auto !important;
+        width: min(78vw, 300px) !important;
+        height: min(78vw, 300px) !important;
+        aspect-ratio: 1 !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+        z-index: 10 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: opacity 0.25s ease, transform 0.25s ease !important;
+    }
+    #cover-art-container {
+        border-radius: 20px !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+    }
+    #cover-art {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 20px !important;
+    }
+
+    /* When Lyrics or Queue view is active on mobile, hide the cover art so the center stage is clear */
+    #player-screen.mobile-lyrics-active #cover-wrapper,
+    #player-screen.mobile-queue-active #cover-wrapper {
         display: none !important;
     }
 
-    /* Unified Player Control Sheet matching media_1791360686719.png */
-    #player-controls {
+    /* Right Panel: Center Stage for Synced Lyrics & Queue View */
+    #right-panel {
         position: absolute !important;
-        bottom: 24px !important;
-        left: 24px !important;
-        right: 24px !important;
-        width: calc(100% - 48px) !important;
+        top: 64px !important;
+        bottom: 250px !important;
+        left: 20px !important;
+        right: 20px !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 12%, rgba(0,0,0,1) 88%, transparent 100%) !important;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 12%, rgba(0,0,0,1) 88%, transparent 100%) !important;
+        z-index: 20 !important;
+        display: none !important;
+    }
+
+    /* Display Right Panel ONLY when Lyrics or Queue is toggled on mobile */
+    #player-screen.mobile-lyrics-active #right-panel:not([data-view="queue"]),
+    #player-screen.mobile-queue-active #right-panel[data-view="queue"] {
+        display: block !important;
+    }
+
+    #lyrics-container {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 20vh 0 !important;
+        mask-image: none !important;
+        -webkit-mask-image: none !important;
+        overflow-y: visible !important;
+    }
+    .lyric-line {
+        text-align: left !important;
+        font-size: 1.65rem !important;
+        line-height: 1.5 !important;
+        padding-top: 0.35em !important;
+        padding-bottom: 0.35em !important;
+        overflow: visible !important;
+        opacity: 0.45 !important;
+        color: #ffffff !important;
+        transition: opacity 0.25s, transform 0.25s !important;
+    }
+    .lyric-line.active-line {
+        opacity: 1 !important;
+        transform: scale(1.04) !important;
+        transform-origin: left center !important;
+        color: #ffffff !important;
+    }
+
+    /* Player Controls Area */
+    #player-controls {
+        position: relative !important;
+        bottom: auto !important; left: auto !important; right: auto !important;
+        width: 100% !important;
         max-width: 440px !important;
         margin: 0 auto !important;
         display: flex !important;
         flex-direction: column !important;
-        z-index: 25 !important;
+        gap: 12px !important;
+        z-index: 30 !important;
         padding: 0 !important;
     }
 
@@ -8056,9 +8153,7 @@ body.player-screen-active #top-bar:focus-within {
         height: auto !important;
         display: block !important;
         margin: 0 !important;
-        z-index: auto !important;
     }
-
     #track-title-row {
         display: flex !important;
         justify-content: space-between !important;
@@ -8066,31 +8161,26 @@ body.player-screen-active #top-bar:focus-within {
         width: 100% !important;
         gap: 12px !important;
     }
-
     .track-text-group {
         display: flex !important;
         flex-direction: column !important;
         min-width: 0 !important;
         flex: 1 !important;
     }
-
     #track-title {
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Inter", sans-serif !important;
-        font-size: 1.55rem !important;
+        font-size: 1.35rem !important;
         font-weight: 700 !important;
         color: #ffffff !important;
         margin: 0 !important;
-        line-height: 1.2 !important;
+        line-height: 1.25 !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        max-width: 100% !important;
-        text-transform: none !important; /* CRITICAL: natural casing */
     }
-
     #track-artist {
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Inter", sans-serif !important;
-        font-size: 1.05rem !important;
+        font-size: 0.95rem !important;
         color: rgba(255, 255, 255, 0.65) !important;
         font-weight: 400 !important;
         margin-top: 3px !important;
@@ -8098,120 +8188,67 @@ body.player-screen-active #top-bar:focus-within {
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        text-transform: none !important; /* CRITICAL: natural casing */
     }
 
     .player-more-btn {
         width: 38px !important;
         height: 38px !important;
         border-radius: 50% !important;
-        background: rgba(255, 255, 255, 0.16) !important;
-        backdrop-filter: blur(20px) !important;
-        -webkit-backdrop-filter: blur(20px) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
         border: none !important;
         color: #ffffff !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         flex-shrink: 0 !important;
-        padding: 0 !important;
     }
     .player-more-btn svg {
-        width: 20px !important;
-        height: 20px !important;
+        width: 18px !important;
+        height: 18px !important;
         fill: currentColor !important;
     }
 
-    /* Lyrics Area */
-    #right-panel {
-        position: absolute !important;
-        top: 70px !important; /* Below top header */
-        bottom: 275px !important; /* Above unified bottom controls */
-        left: 20px !important;
-        right: 20px !important;
-        width: auto !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent 100%) !important;
-        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent 100%) !important;
-        z-index: 5 !important;
-    }
-    #lyrics-container {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 25vh 0 !important;
-        mask-image: none !important;
-        -webkit-mask-image: none !important;
-        overflow-y: visible !important;
-    }
-    .lyric-line {
-        text-align: left !important;
-        font-size: 1.8rem !important;
-        line-height: 1.6 !important;
-        padding-top: 0.35em !important;
-        padding-bottom: 0.35em !important;
-        overflow: visible !important;
-        opacity: 0.4 !important;
-        padding-left: 0 !important;
-        border-left: none !important;
-        margin-bottom: 1.5rem !important;
-        color: white !important;
-        transition: opacity 0.3s, transform 0.3s !important;
-    }
-    .lyric-line.active-line {
-        opacity: 1 !important;
-        transform: scale(1.05) !important;
-        transform-origin: left center !important;
-    }
-
-    /* Apple Minimalist Scrubber Bar */
+    /* Seekbar */
     #progress-container {
         position: static !important;
         width: 100% !important;
-        height: 6px !important;
-        background: rgba(255,255,255,0.22) !important;
+        height: 5px !important;
+        background: rgba(255, 255, 255, 0.18) !important;
         border-radius: 999px !important;
-        margin-top: 20px !important;
-        z-index: auto !important;
+        margin-top: 8px !important;
+        cursor: pointer !important;
     }
-    #progress-bar { background: #ffffff !important; border-radius: 999px !important; height: 100% !important; }
-
+    #progress-bar {
+        background: #ffffff !important;
+        border-radius: 999px !important;
+        height: 100% !important;
+    }
     .time-display {
         position: static !important;
         width: 100% !important;
-        margin-top: 8px !important;
+        margin-top: 4px !important;
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Inter", sans-serif !important;
         font-size: 0.8rem !important;
-        color: rgba(255,255,255,0.55) !important;
-        font-weight: 500 !important;
+        color: rgba(255, 255, 255, 0.5) !important;
         font-variant-numeric: tabular-nums !important;
-        opacity: 1 !important;
-        z-index: auto !important;
     }
 
+    /* Playback Controls (BitChord Center Focus) */
     .playback-buttons-row {
         position: static !important;
         width: 100% !important;
-        margin-top: 24px !important;
+        margin-top: 12px !important;
         display: flex !important;
-        justify-content: space-between !important;
+        justify-content: space-around !important;
         align-items: center !important;
-        padding: 0 10px !important;
-        z-index: auto !important;
     }
-
     #prev-btn, #next-btn {
-        width: 52px !important;
-        height: 52px !important;
+        width: 48px !important;
+        height: 48px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -8219,190 +8256,202 @@ body.player-screen-active #top-bar:focus-within {
         border: none !important;
     }
     #prev-btn svg, #next-btn svg {
-        width: 34px !important;
-        height: 34px !important;
+        width: 32px !important;
+        height: 32px !important;
         fill: #ffffff !important;
     }
-
     #play-pause-btn {
-        width: 68px !important;
-        height: 68px !important;
+        width: 58px !important;
+        height: 58px !important;
+        border-radius: 50% !important;
+        background: #ffffff !important;
+        color: #0a0a0e !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        background: transparent !important;
         border: none !important;
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25) !important;
+        cursor: pointer !important;
     }
     #play-pause-btn .play-icon, #play-pause-btn .pause-icon {
-        width: 46px !important;
-        height: 46px !important;
-        fill: #ffffff !important;
+        width: 36px !important;
+        height: 36px !important;
+        fill: #0a0a0e !important;
+        color: #0a0a0e !important;
     }
 
+    /* Bottom Pills (BitChord View Switcher) */
     .player-bottom-utility-row {
         position: static !important;
         width: 100% !important;
-        margin-top: 28px !important;
+        margin-top: 12px !important;
         display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        padding: 0 4px !important;
-        z-index: auto !important;
-    }
-
-    .player-utility-btn {
-        width: 40px !important;
-        height: 40px !important;
-        border-radius: 50% !important;
-        display: flex !important;
-        align-items: center !important;
         justify-content: center !important;
-        color: rgba(255, 255, 255, 0.55) !important;
-        background: transparent !important;
-        border: none !important;
+        gap: 16px !important;
+    }
+    .player-utility-btn {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 20px !important;
+        padding: 6px 18px !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
     }
     .player-utility-btn.active {
+        background: rgba(255, 255, 255, 0.22) !important;
+        border-color: rgba(255, 255, 255, 0.4) !important;
         color: #ffffff !important;
-        background: rgba(255, 255, 255, 0.18) !important;
-        backdrop-filter: blur(14px) !important;
-        -webkit-backdrop-filter: blur(14px) !important;
+        box-shadow: 0 0 16px rgba(255, 255, 255, 0.15) !important;
     }
     .player-utility-btn svg {
-        width: 22px !important;
-        height: 22px !important;
+        width: 18px !important;
+        height: 18px !important;
         fill: currentColor !important;
     }
 
-    body.player-screen-active #side-nav {
+    body.player-screen-active #mobile-bottom-nav,
+    body.player-screen-active #mini-player {
         display: none !important;
     }
-    body.player-screen-active #floating-queue-btn {
-        display: none !important;
-    }
 
-    .bottom-extra-controls { display: none !important; }
-
-    /* Bottom Navigation Bar */
-    #side-nav {
-        position: fixed !important;
-        top: auto !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 75px !important;
-        flex-direction: row !important;
-        justify-content: space-around !important;
-        align-items: center !important;
-        padding: 5px 10px 10px 10px !important;
-        background: #000000 !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        border-top: 1px solid rgba(255,255,255,0.08) !important;
-        z-index: 99999 !important;
-        transform: none !important;
-        border-radius: 20px 20px 0 0 !important;
-    }
-    #side-nav .hover-orb, #side-nav #nav-liquid-bg { display: none !important; }
-    #side-nav .nav-tooltip { display: none !important; }
-    #side-nav .nav-btn {
-        flex: 1 !important;
-        height: 100% !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        background: transparent !important;
-    }
-    #side-nav .nav-btn.active { color: var(--accent) !important; }
-
-    /* Floating Queue Button */
-    #floating-queue-btn {
-        position: fixed !important;
-        bottom: 90px !important;
-        right: 15px !important;
-        width: 45px !important;
-        height: 45px !important;
-        background: var(--accent) !important;
-        color: white !important;
-        border-radius: 50% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important;
-        z-index: 99999 !important;
-    }
-    #floating-queue-btn svg { width: 22px !important; height: 22px !important; fill: white !important; }
-
-    /* Floating Mini Player on Mobile */
+    /* Floating Mini Player on Mobile (BitChord Docked Style) */
     #mini-player {
         display: flex !important;
         position: fixed !important;
-        bottom: 85px !important; /* Just above bottom nav */
-        left: 10px !important;
-        width: calc(100% - 20px) !important;
-        height: 60px !important;
-        padding: 5px 15px 5px 5px !important;
-        border-radius: 12px !important;
-        background: rgba(20, 10, 30, 0.92) !important;
-        backdrop-filter: blur(24px) saturate(200%) !important;
-        -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
-        border: 1px solid rgba(255,255,255,0.15) !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
-        z-index: 99998 !important;
-        transform: translate3d(0, 0, 0) scale(1) !important;
-        transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.32s ease !important;
-        will-change: transform, opacity !important;
+        bottom: 68px !important;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        height: 56px !important;
+        border-radius: 14px !important;
+        background: rgba(18, 18, 24, 0.94) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6) !important;
+        z-index: 9997 !important;
+        align-items: center !important;
+        padding: 6px 12px !important;
+        gap: 12px !important;
+        transition: transform 0.28s ease, opacity 0.28s ease !important;
     }
     #mini-player.hidden-mini {
-        transform: translate3d(0, 35px, 0) scale(0.94) !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-    }
-    #mini-player.morph-docking {
-        transform: translate3d(0, 0, 0) scale(1) !important;
-        opacity: 1 !important;
-        transition: opacity 0.52s ease-out !important;
-        pointer-events: none !important;
+        display: none !important;
     }
     #mini-cover {
-        width: 48px !important;
-        height: 48px !important;
-        border-radius: 8px !important;
-        margin-right: 12px !important;
-        box-shadow: none !important;
-        opacity: 1 !important;
+        width: 42px !important;
+        height: 42px !important;
+        border-radius: 10px !important;
+        object-fit: cover !important;
+        flex-shrink: 0 !important;
     }
     #mini-info {
         flex: 1 !important;
-        overflow: hidden !important;
+        min-width: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
     }
     #mini-title {
-        font-size: 0.9rem !important;
+        font-size: 0.88rem !important;
         font-weight: 600 !important;
+        color: #ffffff !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
     }
     #mini-artist {
         font-size: 0.75rem !important;
-        opacity: 0.7 !important;
+        color: rgba(255, 255, 255, 0.6) !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
     }
     #mini-controls {
         display: flex !important;
-        gap: 8px !important;
         align-items: center !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
     }
     .mini-btn {
-        width: 38px !important;
-        height: 38px !important;
+        width: 36px !important;
+        height: 36px !important;
+        background: transparent !important;
+        border: none !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
     }
     .mini-btn svg {
-        width: 20px !important;
-        height: 20px !important;
+        width: 22px !important;
+        height: 22px !important;
+        fill: currentColor !important;
+    }
+
+    /* Native BitChord-Style Mobile Bottom Navigation Bar */
+    #mobile-bottom-nav {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 60px !important;
+        background: rgba(10, 10, 14, 0.96) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        z-index: 9998 !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+        padding: 0 8px !important;
+        box-sizing: border-box !important;
+    }
+    .mbn-tab {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 3px !important;
+        background: transparent !important;
+        border: none !important;
+        color: rgba(255, 255, 255, 0.5) !important;
+        padding: 6px 12px !important;
+        border-radius: 12px !important;
+        cursor: pointer !important;
+        font-size: 0.72rem !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+    .mbn-tab svg {
+        width: 22px !important;
+        height: 22px !important;
+        fill: currentColor !important;
+        transition: transform 0.2s ease, fill 0.2s ease !important;
+    }
+    .mbn-tab.active {
+        color: #ffffff !important;
+    }
+    .mbn-tab.active svg {
+        fill: #ffffff !important;
+        transform: translateY(-1px) scale(1.05) !important;
+    }
+    .mbn-tab:active {
+        transform: scale(0.92) !important;
+    }
+}
+
+@media (min-width: 769px) {
+    #mobile-bottom-nav {
+        display: none !important;
     }
 }
 
@@ -12133,8 +12182,8 @@ body.focus-screen-active #mini-player {
     content: '' !important;
     position: absolute !important;
     inset: 0 !important;
-    background: radial-gradient(circle at 35% 45%, rgba(10, 10, 16, 0.48) 0%, rgba(8, 8, 14, 0.78) 100%),
-                linear-gradient(to bottom, rgba(10, 10, 16, 0.35) 0%, rgba(8, 8, 14, 0.65) 100%) !important;
+    background: radial-gradient(circle at 50% 50%, rgba(10, 10, 16, 0.88) 0%, rgba(6, 6, 10, 0.96) 100%),
+                linear-gradient(to bottom, rgba(10, 10, 16, 0.85) 0%, rgba(6, 6, 10, 0.95) 100%) !important;
     z-index: 1 !important;
     pointer-events: none !important;
     display: block !important;
