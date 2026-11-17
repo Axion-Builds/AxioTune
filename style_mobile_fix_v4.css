@@ -7952,15 +7952,57 @@ body.player-screen-active #top-bar:focus-within {
         gap: 8px !important;
     }
 
-    /* Cinematic Cards — compact on mobile */
-    .cinematic-card {
-        flex: 0 0 260px !important;
-        height: 78px !important;
+    /* Cinematic Cards — square aspect on mobile (Your Taste Mix) */
+    .cinematic-scroll-container {
+        display: flex !important;
+        gap: 14px !important;
+        overflow-x: auto !important;
+        padding: 6px 12px 18px 12px !important;
+        scrollbar-width: none !important;
+        -webkit-overflow-scrolling: touch !important;
     }
-
+    .cinematic-card {
+        flex: 0 0 140px !important;
+        width: 140px !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    .cinematic-poster-wrap {
+        width: 140px !important;
+        height: 140px !important;
+        aspect-ratio: 1 / 1 !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+    }
     .cinematic-card-img {
-        width: 78px !important;
-        height: 78px !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 14px !important;
+    }
+    .cinematic-card-meta {
+        margin-top: 8px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        width: 100% !important;
+    }
+    .cinematic-card-title {
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .cinematic-card-artist {
+        font-size: 0.74rem !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 
     /* 2. Top Bar */
@@ -8035,21 +8077,21 @@ body.player-screen-active #top-bar:focus-within {
         position: static !important;
         width: 100% !important;
         height: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        padding: 62px 24px 28px 24px !important;
+        display: block !important;
+        padding: 0 !important;
         margin: 0 !important;
-        box-sizing: border-box !important;
     }
 
     /* Hero Cover Art View (BitChord Scale & Proportions) */
     #cover-wrapper {
-        position: relative !important;
-        top: auto !important; bottom: auto !important; left: auto !important; right: auto !important;
+        position: absolute !important;
+        top: 64px !important;
+        bottom: 250px !important;
+        left: 0 !important;
+        right: 0 !important;
         margin: auto !important;
-        width: min(78vw, 300px) !important;
-        height: min(78vw, 300px) !important;
+        width: min(76vw, 310px) !important;
+        height: min(76vw, 310px) !important;
         aspect-ratio: 1 !important;
         border-radius: 20px !important;
         overflow: hidden !important;
@@ -8075,15 +8117,16 @@ body.player-screen-active #top-bar:focus-within {
 
     /* When Lyrics or Queue view is active on mobile, hide the cover art so the center stage is clear */
     #player-screen.mobile-lyrics-active #cover-wrapper,
-    #player-screen.mobile-queue-active #cover-wrapper {
+    #player-screen.mobile-queue-active #cover-wrapper,
+    #player-screen:not(.cinematic-mode) #cover-wrapper {
         display: none !important;
     }
 
-    /* Right Panel: Center Stage for Synced Lyrics & Queue View */
+    /* Right Panel: Center Stage for Synced Lyrics & Queue View (strictly bounded ABOVE bottom player controls) */
     #right-panel {
         position: absolute !important;
         top: 64px !important;
-        bottom: 250px !important;
+        bottom: 245px !important;
         left: 20px !important;
         right: 20px !important;
         width: auto !important;
@@ -8097,9 +8140,11 @@ body.player-screen-active #top-bar:focus-within {
         display: none !important;
     }
 
-    /* Display Right Panel ONLY when Lyrics or Queue is toggled on mobile */
+    /* Display Right Panel when Lyrics or Queue is toggled on mobile */
     #player-screen.mobile-lyrics-active #right-panel:not([data-view="queue"]),
-    #player-screen.mobile-queue-active #right-panel[data-view="queue"] {
+    #player-screen:not(.cinematic-mode) #right-panel:not([data-view="queue"]),
+    #player-screen.mobile-queue-active #right-panel[data-view="queue"],
+    #player-screen #right-panel[data-view="queue"] {
         display: block !important;
     }
 
@@ -8133,17 +8178,19 @@ body.player-screen-active #top-bar:focus-within {
         color: #ffffff !important;
     }
 
-    /* Player Controls Area */
+    /* Player Controls Area: Strictly DOCKED at the bottom of the screen, NEVER overlapping lyrics */
     #player-controls {
-        position: relative !important;
-        bottom: auto !important; left: auto !important; right: auto !important;
-        width: 100% !important;
+        position: absolute !important;
+        bottom: 20px !important;
+        left: 20px !important;
+        right: 20px !important;
+        width: calc(100% - 40px) !important;
         max-width: 440px !important;
         margin: 0 auto !important;
         display: flex !important;
         flex-direction: column !important;
-        gap: 12px !important;
-        z-index: 30 !important;
+        gap: 8px !important;
+        z-index: 50 !important;
         padding: 0 !important;
     }
 
@@ -8324,10 +8371,12 @@ body.player-screen-active #top-bar:focus-within {
     #mini-player {
         display: flex !important;
         position: fixed !important;
-        bottom: 68px !important;
+        bottom: 70px !important;
         left: 12px !important;
         right: 12px !important;
-        width: auto !important;
+        width: calc(100% - 24px) !important;
+        max-width: 440px !important;
+        margin: 0 auto !important;
         height: 56px !important;
         border-radius: 14px !important;
         background: rgba(18, 18, 24, 0.94) !important;
@@ -8339,6 +8388,7 @@ body.player-screen-active #top-bar:focus-within {
         align-items: center !important;
         padding: 6px 12px !important;
         gap: 12px !important;
+        transform: none !important; /* CRITICAL: cancels desktop translate3d(-50%, 0, 0) */
         transition: transform 0.28s ease, opacity 0.28s ease !important;
     }
     #mini-player.hidden-mini {
@@ -12031,7 +12081,12 @@ body.focus-screen-active #mini-player {
     }
     #home-quick-picks-title {
         white-space: nowrap !important;
-        font-size: 1.25rem !important;
+        font-size: 1.15rem !important;
+    }
+    .ai-mix-badge {
+        font-size: 0.68rem !important;
+        padding: 2px 7px !important;
+        white-space: nowrap !important;
     }
 }
 
