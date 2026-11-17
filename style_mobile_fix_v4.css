@@ -7557,34 +7557,36 @@ body.player-screen-active:not(.full-screen-mode) #top-bar-wrapper {
     background: transparent !important;
 }
 
-/* Back Button is visible on player screen (hidden in full-screen mode) */
-body.player-screen-active:not(.full-screen-mode) #global-back-btn {
-    display: flex !important;
-    position: relative !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 42px !important;
-    height: 42px !important;
-    border-radius: 50% !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    flex-shrink: 0 !important;
-    z-index: 999999 !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
+/* Back Button is visible on player screen (hidden in full-screen mode, desktop only) */
+@media (min-width: 769px) {
+    body.player-screen-active:not(.full-screen-mode) #global-back-btn {
+        display: flex !important;
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 42px !important;
+        height: 42px !important;
+        border-radius: 50% !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        flex-shrink: 0 !important;
+        z-index: 999999 !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
 
-body.player-screen-active:not(.full-screen-mode) #global-back-btn:hover {
-    background: rgba(255, 255, 255, 0.18) !important;
-    border-color: rgba(255, 255, 255, 0.35) !important;
-    transform: scale(1.08) translateX(-2px) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+    body.player-screen-active:not(.full-screen-mode) #global-back-btn:hover {
+        background: rgba(255, 255, 255, 0.18) !important;
+        border-color: rgba(255, 255, 255, 0.35) !important;
+        transform: scale(1.08) translateX(-2px) !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+    }
 }
 
 /* Search Bar input container on player screen: Auto-hide, reveal on hover */
@@ -7931,19 +7933,93 @@ body.player-screen-active #top-bar:focus-within {
         -webkit-overflow-scrolling: touch !important;
     }
 
-    /* Fix "ghusi ghusi" Grid Stacking - Make it a vertical list on mobile! */
-    .dense-grid-container, .artist-scalloped-row, .grid-container, #trending-grid {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 12px !important;
-        overflow-y: visible !important;
-        overflow-x: hidden !important;
+    /* 🎵 BITCHORD 4-ROW HORIZONTAL CAROUSEL SPECIFICATION */
+    .dense-grid-container {
+        display: grid !important;
+        grid-template-rows: repeat(4, 52px) !important;
+        grid-auto-flow: column !important;
+        grid-auto-columns: minmax(285px, 86vw) !important;
+        gap: 8px 16px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 4px 16px 20px 16px !important;
         width: 100% !important;
+        box-sizing: border-box !important;
+        scrollbar-width: none !important;
+    }
+    .dense-grid-container::-webkit-scrollbar {
+        display: none !important;
     }
 
-    .dense-card, .artist-scallop {
+    .dense-card {
+        scroll-snap-align: start !important;
         width: 100% !important;
-        max-width: 100% !important;
+        height: 52px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 4px !important;
+        box-sizing: border-box !important;
+        border-radius: 8px !important;
+        transition: background 0.15s ease !important;
+    }
+    .dense-card:active {
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+    .dense-card-cover {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 8px !important;
+        object-fit: cover !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+    }
+    .dense-card-info {
+        flex: 1 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+    }
+    .dense-card-title {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        line-height: 1.25 !important;
+    }
+    .dense-card-artist {
+        font-size: 12px !important;
+        font-weight: 400 !important;
+        color: rgba(255, 255, 255, 0.55) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        line-height: 1.25 !important;
+        margin-top: 2px !important;
+    }
+    .song-options-btn {
+        background: transparent !important;
+        border: none !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        padding: 6px !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+    }
+    .song-options-btn svg {
+        width: 20px !important;
+        height: 20px !important;
+        fill: currentColor !important;
     }
 
     /* Art Grid — 2 columns on mobile */
@@ -8024,18 +8100,26 @@ body.player-screen-active #top-bar:focus-within {
         justify-content: center !important;
         align-items: center !important;
     }
-    #global-back-btn { position: absolute !important; left: 15px !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-    #top-bar, #search-bar-pill { width: 65% !important; margin: 0 auto !important; }
+    #global-back-btn { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+    #top-bar, #search-bar-pill { width: 90% !important; margin: 0 auto !important; }
     #filter-btn { display: none !important; }
 
-    /* 3. BitChord-Inspired Dedicated Dark Mobile Player UI */
+    /* 3. Pure OLED Pitch Black Everywhere on Mobile (#000000) */
     #app-container,
     #player-screen,
     #home-screen,
     #search-screen,
     #library-screen,
-    #settings-screen {
-        background: #08080c !important;
+    #settings-screen,
+    #history-screen,
+    #artist-screen,
+    #album-screen,
+    #left-panel,
+    #right-panel,
+    #player-queue-view,
+    body {
+        background: #000000 !important;
+        background-color: #000000 !important;
     }
 
     #player-screen {
@@ -8117,27 +8201,16 @@ body.player-screen-active #top-bar:focus-within {
 
     /* When Lyrics or Queue view is active on mobile, hide the cover art so the center stage is clear */
     #player-screen.mobile-lyrics-active #cover-wrapper,
-    #player-screen.mobile-queue-active #cover-wrapper,
-    #player-screen:not(.cinematic-mode) #cover-wrapper {
+    #player-screen.mobile-queue-active #cover-wrapper {
         display: none !important;
     }
 
-    /* Right Panel: Center Stage for Synced Lyrics & Queue View (strictly bounded ABOVE bottom player controls) */
-    #right-panel {
-        position: absolute !important;
-        top: 64px !important;
-        bottom: 245px !important;
-        left: 20px !important;
-        right: 20px !important;
-        width: auto !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 12%, rgba(0,0,0,1) 88%, transparent 100%) !important;
-        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,1) 12%, rgba(0,0,0,1) 88%, transparent 100%) !important;
-        z-index: 20 !important;
+    #player-collapse-btn,
+    .player-collapse-btn {
         display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
 
     /* Display Right Panel when Lyrics or Queue is toggled on mobile */
@@ -8367,29 +8440,31 @@ body.player-screen-active #top-bar:focus-within {
         display: none !important;
     }
 
-    /* Floating Mini Player on Mobile (BitChord Docked Style) */
+    /* Floating Mini Player on Mobile (BitChord Floating Pill Style) */
     #mini-player {
         display: flex !important;
         position: fixed !important;
-        bottom: 70px !important;
-        left: 12px !important;
-        right: 12px !important;
-        width: calc(100% - 24px) !important;
-        max-width: 440px !important;
+        bottom: 78px !important;
+        left: 14px !important;
+        right: 14px !important;
+        width: auto !important;
+        max-width: 480px !important;
         margin: 0 auto !important;
         height: 56px !important;
-        border-radius: 14px !important;
-        background: rgba(18, 18, 24, 0.94) !important;
-        backdrop-filter: blur(20px) !important;
-        -webkit-backdrop-filter: blur(20px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6) !important;
+        border-radius: 16px !important;
+        background: rgba(20, 20, 20, 0.94) !important;
+        backdrop-filter: blur(25px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.09) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65) !important;
         z-index: 9997 !important;
         align-items: center !important;
-        padding: 6px 12px !important;
+        padding: 6px 14px !important;
         gap: 12px !important;
-        transform: none !important; /* CRITICAL: cancels desktop translate3d(-50%, 0, 0) */
+        transform: none !important;
         transition: transform 0.28s ease, opacity 0.28s ease !important;
+        box-sizing: border-box !important;
+        cursor: pointer !important;
     }
     #mini-player.hidden-mini {
         display: none !important;
@@ -8409,19 +8484,23 @@ body.player-screen-active #top-bar:focus-within {
         justify-content: center !important;
     }
     #mini-title {
-        font-size: 0.88rem !important;
-        font-weight: 600 !important;
+        font-size: 13.5px !important;
+        font-weight: 700 !important;
         color: #ffffff !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        line-height: 1.25 !important;
     }
     #mini-artist {
-        font-size: 0.75rem !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
         color: rgba(255, 255, 255, 0.6) !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        line-height: 1.25 !important;
+        margin-top: 1px !important;
     }
     #mini-controls {
         display: flex !important;
@@ -8439,63 +8518,86 @@ body.player-screen-active #top-bar:focus-within {
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
+        padding: 0 !important;
     }
     .mini-btn svg {
         width: 22px !important;
         height: 22px !important;
-        fill: currentColor !important;
+        fill: #ffffff !important;
     }
 
-    /* Native BitChord-Style Mobile Bottom Navigation Bar */
+    /* Native BitChord-Style Floating Bottom Navigation Dock */
     #mobile-bottom-nav {
         display: flex !important;
         position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        height: 60px !important;
-        background: rgba(10, 10, 14, 0.96) !important;
-        backdrop-filter: blur(20px) !important;
-        -webkit-backdrop-filter: blur(20px) !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        bottom: 12px !important;
+        left: 16px !important;
+        right: 16px !important;
+        height: 58px !important;
+        max-width: 480px !important;
+        margin: 0 auto !important;
+        background: rgba(18, 18, 18, 0.92) !important;
+        backdrop-filter: blur(25px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 999px !important;
         z-index: 9998 !important;
-        justify-content: space-around !important;
+        justify-content: space-between !important;
         align-items: center !important;
-        padding: 0 8px !important;
+        padding: 0 8px 0 14px !important;
         box-sizing: border-box !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75) !important;
     }
     .mbn-tab {
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 3px !important;
+        gap: 8px !important;
         background: transparent !important;
         border: none !important;
-        color: rgba(255, 255, 255, 0.5) !important;
-        padding: 6px 12px !important;
-        border-radius: 12px !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        padding: 8px 16px !important;
+        border-radius: 999px !important;
         cursor: pointer !important;
-        font-size: 0.72rem !important;
-        font-weight: 500 !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
         transition: all 0.2s ease !important;
         -webkit-tap-highlight-color: transparent !important;
     }
     .mbn-tab svg {
-        width: 22px !important;
-        height: 22px !important;
+        width: 20px !important;
+        height: 20px !important;
         fill: currentColor !important;
         transition: transform 0.2s ease, fill 0.2s ease !important;
     }
     .mbn-tab.active {
+        background: rgba(255, 255, 255, 0.18) !important;
         color: #ffffff !important;
     }
     .mbn-tab.active svg {
         fill: #ffffff !important;
-        transform: translateY(-1px) scale(1.05) !important;
     }
     .mbn-tab:active {
-        transform: scale(0.92) !important;
+        transform: scale(0.95) !important;
+    }
+    .mbn-search-circle-btn {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        color: #ffffff !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+    }
+    .mbn-search-circle-btn svg {
+        width: 20px !important;
+        height: 20px !important;
+        stroke: #ffffff !important;
     }
 }
 
@@ -12285,6 +12387,26 @@ body.white-poster-scrim #player-screen::before {
     #player-screen #right-panel {
         z-index: 2;
     }
+    /* Strictly hide all mobile-only BitChord elements on PC / Desktop */
+    #mobile-home-topbar,
+    #find-your-mood-section,
+    .mobile-player-drag-handle,
+    .mobile-compact-header,
+    #mobile-audio-specs-tag,
+    #player-star-btn,
+    #player-lyric-teaser,
+    .player-quality-pill,
+    #player-cast-btn,
+    .pq-capsule-controls,
+    .player-device-label,
+    .lyrics-floating-actions,
+    .mobile-lyrics-credit-badge,
+    #mobile-bottom-nav {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
 }
 
 /* Ensure Queue View is never masked/faded at top & bottom on mobile or desktop */
@@ -12338,5 +12460,733 @@ body.white-poster-scrim #player-screen::before {
 #player-screen .lyric-word {
     text-shadow: none !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   🚀 BITCHORD 1:1 REVOLUTION: GOD-LEVEL OPTIMIZED PITCH BLACK MOBILE ENGINE
+   Exact replica of Kushagrshinhx BitChord / YouTube Music Client
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    /* 1. Pure Pitch Black Background Across All Views */
+    body,
+    html,
+    #app-container,
+    #home-screen,
+    #search-screen,
+    #library-screen,
+    #settings-screen,
+    #player-screen,
+    #left-panel,
+    #right-panel,
+    #player-queue-view {
+        background: #000000 !important;
+        background-color: #000000 !important;
+    }
+
+    #player-screen #cinematic-bg,
+    #player-screen::before {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* 2. Mobile Home Topbar & Profile Avatar (BitChord Header) */
+    .mobile-home-topbar {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        width: 100% !important;
+        padding: 4px 16px 0 16px !important;
+        margin-bottom: 4px !important;
+        box-sizing: border-box !important;
+        z-index: 10 !important;
+    }
+    .mht-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 50% !important;
+        overflow: hidden !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7) !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        transition: transform 0.2s ease !important;
+    }
+    .mht-avatar:active {
+        transform: scale(0.92) !important;
+    }
+    .mht-avatar img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
+
+    /* 3. Find Your Mood Category Cards */
+    .mood-cards-carousel {
+        display: flex !important;
+        gap: 14px !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 4px 16px 14px 16px !important;
+        box-sizing: border-box !important;
+        scrollbar-width: none !important;
+    }
+    .mood-cards-carousel::-webkit-scrollbar {
+        display: none !important;
+    }
+    .mood-card-item {
+        flex: 0 0 118px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        cursor: pointer !important;
+        scroll-snap-align: start !important;
+    }
+    .mood-card-box {
+        width: 118px !important;
+        height: 118px !important;
+        border-radius: 18px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+        transition: transform 0.2s ease !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5) !important;
+    }
+    .mood-card-box:active {
+        transform: scale(0.95) !important;
+    }
+    .mood-bg-energy {
+        background: #16a34a !important;
+    }
+    .mood-bg-relax {
+        background: #0284c7 !important;
+    }
+    .mood-bg-feeling {
+        background: #4f46e5 !important;
+    }
+    .mood-card-icon {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    .mood-card-label {
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+    }
+
+    /* 4. Base Player Screen on Mobile */
+    #player-screen {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: #000000 !important;
+        z-index: 100000 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+    }
+    #top-bar-wrapper {
+        display: none !important;
+    }
+
+    #player-screen #player-collapse-btn,
+    .player-collapse-btn {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    /* Top Drag Handle (Dismiss Handle) */
+    .mobile-player-drag-handle {
+        width: 38px !important;
+        height: 4.5px !important;
+        background: rgba(255, 255, 255, 0.35) !important;
+        border-radius: 999px !important;
+        margin: 10px auto 4px auto !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        z-index: 10 !important;
+    }
+
+    /* Compact Header (Shared by Lyrics and Queue modes) */
+    .mobile-compact-header {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 20px 8px 20px;
+        width: 100%;
+        box-sizing: border-box;
+        flex-shrink: 0;
+        z-index: 10;
+    }
+    .mch-thumb {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    .mch-text {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .mch-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .mch-artist {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.6);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 1px;
+    }
+    .mch-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    .mch-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        border: none;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
+    }
+    .mch-btn svg {
+        stroke: #ffffff;
+    }
+    .mch-btn.active svg {
+        fill: #ffd700;
+        stroke: #ffd700;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       MODE A: COVER ART VIEW (Mobile Default)
+       ══════════════════════════════════════════════════════ */
+    #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .mobile-compact-header {
+        display: none !important;
+    }
+    #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #left-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 12px !important;
+        width: 100% !important;
+        height: calc(100% - 24px) !important;
+        min-height: 0 !important;
+        padding: 8px 20px 20px 20px !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        position: relative !important;
+    }
+    #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #right-panel {
+        display: none !important;
+    }
+
+    /* Cover Art & Specs */
+    #cover-wrapper {
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: min(78vw, 320px) !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        margin: 6px auto 4px auto !important;
+        flex-shrink: 0 !important;
+        border-radius: 24px !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+    #cover-art-container {
+        width: min(78vw, 320px) !important;
+        height: min(78vw, 320px) !important;
+        aspect-ratio: 1 / 1 !important;
+        border-radius: 24px !important;
+        overflow: hidden !important;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85) !important;
+        position: relative !important;
+        flex-shrink: 0 !important;
+    }
+    #cover-art {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 24px !important;
+    }
+    .mobile-audio-specs {
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        letter-spacing: 0.5px !important;
+        margin-top: 8px !important;
+        text-align: center !important;
+    }
+
+    /* Track Metadata Row */
+    #player-controls {
+        width: 100% !important;
+        max-width: min(88vw, 380px) !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        flex-shrink: 0 !important;
+    }
+    #track-title-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 12px !important;
+    }
+    .track-text-group {
+        flex: 1 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+    #track-title {
+        font-size: 22px !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        text-shadow: none !important;
+    }
+    #track-artist {
+        font-size: 15px !important;
+        font-weight: 500 !important;
+        color: rgba(255, 255, 255, 0.65) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        text-shadow: none !important;
+        margin-top: 2px !important;
+    }
+    .track-actions-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex-shrink: 0 !important;
+    }
+    .player-star-btn, #player-more-btn {
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: none !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+    }
+    .player-star-btn svg {
+        stroke: #ffffff !important;
+    }
+    .player-star-btn.active svg {
+        fill: #ffd700 !important;
+        stroke: #ffd700 !important;
+    }
+
+    /* Lyric Teaser Line (BitChord Spec) */
+    .player-lyric-teaser {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        padding: 4px 6px !important;
+        cursor: pointer !important;
+        border-radius: 8px !important;
+        box-sizing: border-box !important;
+    }
+    #player-lyric-teaser-text {
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        color: rgba(255, 255, 255, 0.55) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .player-lyric-teaser-arrow {
+        font-size: 18px !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        margin-left: 8px !important;
+    }
+
+    /* Scrubber Progress & High Quality Badge */
+    #progress-container {
+        width: 100% !important;
+        height: 4.5px !important;
+        background: rgba(255, 255, 255, 0.18) !important;
+        border-radius: 999px !important;
+        cursor: pointer !important;
+        position: relative !important;
+        margin-top: 4px !important;
+    }
+    #progress-bar {
+        height: 100% !important;
+        background: #ffffff !important;
+        border-radius: 999px !important;
+    }
+    .time-display {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        font-size: 11.5px !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        font-weight: 500 !important;
+        width: 100% !important;
+        margin-top: 3px !important;
+    }
+    .player-quality-pill {
+        font-size: 11px !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        font-weight: 500 !important;
+    }
+
+    /* Playback Buttons */
+    .playback-buttons-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-around !important;
+        width: 100% !important;
+        margin: 8px 0 !important;
+    }
+    #play-pause-btn {
+        background: transparent !important;
+        border: none !important;
+        color: #ffffff !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    #play-pause-btn svg {
+        width: 52px !important;
+        height: 52px !important;
+        fill: #ffffff !important;
+    }
+    #prev-btn, #next-btn {
+        background: transparent !important;
+        border: none !important;
+        color: #ffffff !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+    }
+    #prev-btn svg, #next-btn svg {
+        width: 36px !important;
+        height: 36px !important;
+        fill: #ffffff !important;
+    }
+
+    /* Bottom Utility Row */
+    .player-bottom-utility-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-around !important;
+        width: 100% !important;
+        margin-top: 4px !important;
+        position: relative !important;
+    }
+    .player-utility-btn {
+        background: transparent !important;
+        border: none !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        cursor: pointer !important;
+        padding: 8px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+    }
+    .player-utility-btn svg {
+        fill: currentColor !important;
+    }
+    .player-utility-btn.active {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.14) !important;
+    }
+
+    /* BitChord Queue 3-Button Capsule Controls (Shuffle | Repeat | AutoPlay) */
+    .pq-capsule-controls {
+        display: none !important; /* Strictly hidden in Cover and Lyrics views */
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 999px !important;
+        padding: 3px 6px !important;
+        gap: 4px !important;
+        box-sizing: border-box !important;
+    }
+    .pq-capsule-btn {
+        width: 44px !important;
+        height: 32px !important;
+        border-radius: 999px !important;
+        background: transparent !important;
+        border: none !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.18s ease !important;
+        padding: 0 !important;
+    }
+    .pq-capsule-btn svg {
+        stroke: currentColor !important;
+        fill: none !important;
+    }
+    .pq-capsule-btn.active {
+        background: rgba(255, 255, 255, 0.22) !important;
+        color: #ffffff !important;
+    }
+    .pq-capsule-btn.active svg {
+        stroke: #ffffff !important;
+    }
+
+    .player-device-label {
+        font-size: 11px !important;
+        color: rgba(255, 255, 255, 0.35) !important;
+        text-align: center !important;
+        margin-top: 6px !important;
+        font-weight: 500 !important;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       MODE B: LYRICS VIEW (BitChord Synchronized View)
+       ══════════════════════════════════════════════════════ */
+    #player-screen.mobile-lyrics-active .mobile-compact-header {
+        display: flex !important;
+    }
+    #player-screen.mobile-lyrics-active #left-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 20px 14px 20px !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: #000000 !important;
+        z-index: 20 !important;
+    }
+    #player-screen.mobile-lyrics-active #cover-wrapper,
+    #player-screen.mobile-lyrics-active #track-info,
+    #player-screen.mobile-lyrics-active .player-lyric-teaser {
+        display: none !important;
+    }
+    #player-screen.mobile-lyrics-active .pq-capsule-controls {
+        display: none !important;
+    }
+    #player-screen.mobile-lyrics-active #player-cast-btn {
+        display: flex !important;
+    }
+    #player-screen.mobile-lyrics-active #right-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        width: 100% !important;
+        height: calc(100vh - 240px) !important;
+        position: absolute !important;
+        top: 62px !important;
+        bottom: 175px !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: #000000 !important;
+        padding: 0 !important;
+        z-index: 5 !important;
+    }
+    #player-screen.mobile-lyrics-active #lyrics-container {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        padding: 30px 24px 80px 24px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%) !important;
+        mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%) !important;
+    }
+    #player-screen.mobile-lyrics-active .lyric-line {
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        opacity: 0.35 !important;
+        line-height: 1.35 !important;
+        margin: 18px 0 !important;
+        text-shadow: none !important;
+        filter: none !important;
+        transition: all 0.25s ease !important;
+    }
+    #player-screen.mobile-lyrics-active .lyric-line.active-line {
+        font-size: 1.85rem !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+        line-height: 1.25 !important;
+        margin: 24px 0 !important;
+        text-shadow: none !important;
+        filter: none !important;
+    }
+    #player-screen.mobile-lyrics-active .lyric-line.active-line .lyric-word {
+        text-shadow: none !important;
+    }
+
+    /* Floating Quick Action Buttons on Lyrics Area */
+    .lyrics-floating-actions {
+        position: absolute !important;
+        bottom: 90px !important;
+        left: 20px !important;
+        right: 20px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        pointer-events: none !important;
+        z-index: 15 !important;
+    }
+    .lyrics-circle-action-btn {
+        pointer-events: auto !important;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+    }
+    .mobile-lyrics-credit-badge {
+        position: absolute !important;
+        bottom: 60px !important;
+        left: 24px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: rgba(255, 255, 255, 0.55) !important;
+        text-decoration: underline !important;
+        cursor: pointer !important;
+        z-index: 15 !important;
+    }
+    #player-screen.mobile-lyrics-active #lyrics-floating-dock,
+    #player-screen #lyrics-floating-dock,
+    #lyrics-floating-dock {
+        display: none !important;
+    }
+    #lyrics-credit-badge {
+        display: none !important;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       MODE C: QUEUE VIEW (BitChord Upcoming + AutoPlay)
+       ══════════════════════════════════════════════════════ */
+    #player-screen.mobile-queue-active .mobile-compact-header {
+        display: flex !important;
+    }
+    #player-screen.mobile-queue-active #left-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 20px 14px 20px !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: #000000 !important;
+        z-index: 20 !important;
+    }
+    #player-screen.mobile-queue-active #cover-wrapper,
+    #player-screen.mobile-queue-active #track-info {
+        display: none !important;
+    }
+    #player-screen.mobile-queue-active .player-lyric-teaser {
+        display: flex !important;
+        margin-bottom: 4px !important;
+    }
+    #player-screen.mobile-queue-active #right-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        width: 100% !important;
+        height: calc(100vh - 325px) !important;
+        position: absolute !important;
+        top: 62px !important;
+        bottom: 260px !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: #000000 !important;
+        padding: 0 !important;
+        z-index: 5 !important;
+    }
+    #player-screen.mobile-queue-active #lyrics-container,
+    #player-screen.mobile-queue-active .lyrics-floating-actions,
+    #player-screen.mobile-queue-active .mobile-lyrics-credit-badge,
+    #player-screen.mobile-queue-active #lyrics-floating-dock {
+        display: none !important;
+    }
+    #player-screen.mobile-queue-active #player-queue-view {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 20px !important;
+        box-sizing: border-box !important;
+        background: #000000 !important;
+        overflow: hidden !important;
+    }
+    #player-screen.mobile-queue-active .pq-scroll-area {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 24px !important;
+        overscroll-behavior: contain !important;
+    }
+    #player-screen.mobile-queue-active .pq-capsule-controls {
+        display: flex !important;
+    }
+    #player-screen.mobile-queue-active #player-cast-btn {
+        display: none !important;
+    }
+}
+
 
 

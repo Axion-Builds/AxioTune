@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=325">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=345">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet">
@@ -111,7 +111,12 @@
             #pc-sticky-header {
                 display: none !important;
             }
+            /* Hide top search bar on Home screen (BitChord uses bottom nav search) */
             #top-bar-wrapper {
+                display: none !important;
+            }
+            body.search-screen-active #top-bar-wrapper,
+            #search-screen.active-screen #top-bar-wrapper {
                 display: flex !important;
                 position: fixed !important;
                 top: 0 !important;
@@ -123,7 +128,6 @@
                 box-sizing: border-box !important;
                 z-index: 10000 !important;
                 background: transparent !important;
-                pointer-events: none !important;
                 justify-content: center !important;
                 align-items: center !important;
             }
@@ -157,6 +161,30 @@
             }
             #top-bar input#song-search::placeholder {
                 color: rgba(255, 255, 255, 0.5) !important;
+            }
+
+            /* Hide old collapse arrow on mobile (BitChord uses top drag handle) */
+            #player-collapse-btn,
+            .player-collapse-btn {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+
+            /* Hide heavy 3D Cover Flow section on mobile so BitChord 4-row carousel takes center stage */
+            #home-quick-picks-section {
+                display: none !important;
+            }
+
+            /* Zero canvas lag on mobile - pure OLED pitch black #000000 */
+            #player-background-canvas,
+            #ambient-canvas,
+            .ambient-backdrop,
+            .blur-backdrop {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
             }
         }
     </style>
@@ -1744,6 +1772,14 @@
     <!-- Home Screen with 3D Vinyl Gallery -->
     <!-- Home Screen -->
     <div id="home-screen" class="screen-view active-screen">
+        <!-- Mobile Profile Avatar Bar (BitChord Header) -->
+        <div id="mobile-home-topbar" class="mobile-home-topbar">
+            <div class="mht-spacer"></div>
+            <div class="mht-avatar" onclick="if(typeof showSettings==='function') showSettings();" title="Account / Settings">
+                <img src="character_clean.webp" alt="Avatar" onerror="this.src='default_cover.jpg';">
+            </div>
+        </div>
+
         <!-- AXIØTUNE Holographic Logo -->
         <div id="axiotune-logo" title="AXIØTUNE" style="display: flex; align-items: center; gap: 14px;">
             <img src="logo.png?v=6" alt="AxioTune" class="home-logo-img" style="width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 0 14px rgba(255,255,255,0.7)); flex-shrink: 0;">
@@ -1835,6 +1871,34 @@
             </div>
             <div class="artist-circle-scroll-container" id="home-top-artists-container">
                 <!-- Populated dynamically by JS -->
+            </div>
+        </div>
+
+        <!-- 🎨 BitChord "Find Your Mood" Category Cards -->
+        <div class="home-section" id="find-your-mood-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding:0 4px;">
+                <h2 class="section-title" style="margin:0;">Find Your Mood</h2>
+                <span class="section-show-all-btn" onclick="document.getElementById('mood-radio-section')?.scrollIntoView({behavior:'smooth'})" style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.6); cursor:pointer;">Show all</span>
+            </div>
+            <div class="mood-cards-carousel">
+                <div class="mood-card-item" onclick="if(typeof playMoodRadio==='function') playMoodRadio('Workout');">
+                    <div class="mood-card-box mood-bg-energy">
+                        <svg class="mood-card-icon" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
+                    <span class="mood-card-label">Energy</span>
+                </div>
+                <div class="mood-card-item" onclick="if(typeof playMoodRadio==='function') playMoodRadio('Chill');">
+                    <div class="mood-card-box mood-bg-relax">
+                        <svg class="mood-card-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><ellipse cx="12" cy="18" rx="8" ry="3.5"/><ellipse cx="12" cy="12" rx="6" ry="2.8"/><ellipse cx="12" cy="6.5" rx="4" ry="2"/></svg>
+                    </div>
+                    <span class="mood-card-label">Relax</span>
+                </div>
+                <div class="mood-card-item" onclick="if(typeof playMoodRadio==='function') playMoodRadio('Romantic');">
+                    <div class="mood-card-box mood-bg-feeling">
+                        <svg class="mood-card-icon" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round"><path d="M2 12c3-4 6-4 9 0s6 4 9 0"/><path d="M2 17c3-4 6-4 9 0s6 4 9 0"/></svg>
+                    </div>
+                    <span class="mood-card-label">Feel Good</span>
+                </div>
             </div>
         </div>
 
@@ -1980,6 +2044,27 @@
 
     <div id="player-screen" class="screen-view hidden-screen">
         <div id="cinematic-bg"></div>
+
+        <!-- Mobile Top Drag Handle (BitChord Spec) -->
+        <div class="mobile-player-drag-handle" onclick="window.collapsePlayerView()" title="Swipe down to dismiss"></div>
+
+        <!-- Mobile Compact Header (BitChord Lyrics & Queue Views) -->
+        <div id="mobile-compact-header" class="mobile-compact-header">
+            <img id="mch-cover" src="default_cover.jpg?v=3" alt="" class="mch-thumb" onclick="if(typeof switchPlayerRightPanelView==='function') switchPlayerRightPanelView('lyrics');">
+            <div class="mch-text">
+                <div id="mch-title" class="mch-title">AxioTune</div>
+                <div id="mch-artist" class="mch-artist">Ready to stream</div>
+            </div>
+            <div class="mch-actions">
+                <button id="mch-star-btn" class="mch-btn" title="Favorite" onclick="if(typeof toggleLike==='function') toggleLike();">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </button>
+                <button id="mch-more-btn" class="mch-btn" title="More options" onclick="openSongContextMenuFromPlayer(event)">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+            </div>
+        </div>
+
         <button id="player-collapse-btn" class="player-collapse-btn" onclick="window.collapsePlayerView()" title="Back" aria-label="Back">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -1993,9 +2078,11 @@
                     <img src="default_cover.jpg?v=3" id="default-cover-icon" alt="Default Cover" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 1;">
                     <img id="cover-art" src="" alt="Album Cover" onerror="this.onerror=null; this.src='default_cover.jpg?v=3';">
                 </div>
+                <!-- BitChord Hi-Fi Audio Specs Tag -->
+                <div id="mobile-audio-specs-tag" class="mobile-audio-specs">AAC • 44.1 kHz • 320 kbps • Stereo</div>
             </div> <!-- Closes cover-wrapper -->
             
-            <!-- Apple Music Player Control Center -->
+            <!-- Apple Music / BitChord Player Control Center -->
             <div id="player-controls">
                 <div id="track-info">
                     <div id="track-title-row">
@@ -2003,14 +2090,25 @@
                             <div id="track-title">AxioTune</div>
                             <div id="track-artist">Ready to stream</div>
                         </div>
-                        <button id="player-more-btn" class="player-more-btn" onclick="openSongContextMenuFromPlayer(event)" title="More options">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                <circle cx="5" cy="12" r="2"/>
-                                <circle cx="12" cy="12" r="2"/>
-                                <circle cx="19" cy="12" r="2"/>
-                            </svg>
-                        </button>
+                        <div class="track-actions-right">
+                            <button id="player-star-btn" class="player-star-btn" title="Favorite" onclick="if(typeof toggleLike==='function') toggleLike();">
+                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </button>
+                            <button id="player-more-btn" class="player-more-btn" onclick="openSongContextMenuFromPlayer(event)" title="More options">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <circle cx="5" cy="12" r="2"/>
+                                    <circle cx="12" cy="12" r="2"/>
+                                    <circle cx="19" cy="12" r="2"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Tappable Lyric Teaser Row (Direct Portal to Lyrics) -->
+                <div id="player-lyric-teaser" class="player-lyric-teaser" onclick="if(typeof switchPlayerRightPanelView==='function') switchPlayerRightPanelView('lyrics');">
+                    <span id="player-lyric-teaser-text">Hit the road, I'm taking off with you</span>
+                    <span class="player-lyric-teaser-arrow">›</span>
                 </div>
                 
                 <div id="progress-container">
@@ -2018,6 +2116,7 @@
                 </div>
                 <div class="time-display">
                     <span id="current-time">0:00</span>
+                    <span class="player-quality-pill">🎧 High quality</span>
                     <span id="duration">-0:00</span>
                 </div>
                 
@@ -2043,19 +2142,39 @@
                     </button>
                 </div>
 
-                <!-- Bottom Player Action Bar: Lyrics on Left, Queue on Right -->
+                <!-- Bottom Player Action Bar: Lyrics on Left, Cast/Capsule in Center, Queue on Right -->
                 <div class="player-bottom-utility-row">
                     <button id="player-lyrics-btn" class="player-utility-btn active" title="Toggle Lyrics">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                             <path d="M19.5 3.5h-15C3.12 3.5 2 4.62 2 6v9c0 1.38 1.12 2.5 2.5 2.5h2v3.25c0 .67.81 1 1.28.53L11.53 17.5h7.97c1.38 0 2.5-1.12 2.5-2.5V6c0-1.38-1.12-2.5-2.5-2.5zm-11 8.5c-.83 0-1.5-.67-1.5-1.5 0-.41.17-.79.44-1.06.66-.66.86-1.04.86-1.69h-1.3c0-.55.45-1 1-1 1.38 0 2.5 1.12 2.5 2.5 0 .97-.43 1.63-1.06 2.25-.13.13-.25.26-.44.5zm6 0c-.83 0-1.5-.67-1.5-1.5 0-.41.17-.79.44-1.06.66-.66.86-1.04.86-1.69h-1.3c0-.55.45-1 1-1 1.38 0 2.5 1.12 2.5 2.5 0 .97-.43 1.63-1.06 2.25-.13.13-.25.26-.44.5z"/>
                         </svg>
                     </button>
+                    <button id="player-cast-btn" class="player-utility-btn" title="Cast Audio" onclick="alert('AxioTune Cast is active on your network');">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path>
+                            <line x1="2" y1="20" x2="2.01" y2="20"></line>
+                        </svg>
+                    </button>
+                    <!-- Queue Capsule Controls (Shuffle, Repeat, AutoPlay) visible on queue mode -->
+                    <div id="pq-capsule-controls" class="pq-capsule-controls">
+                        <button id="pq-capsule-shuffle" class="pq-capsule-btn" title="Shuffle" onclick="toggleShuffle(event)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                        </button>
+                        <button id="pq-capsule-repeat" class="pq-capsule-btn" title="Repeat" onclick="cycleRepeatMode(event)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        </button>
+                        <button id="pq-capsule-autoplay" class="pq-capsule-btn active" title="AutoPlay" onclick="toggleAutoPlay(event)">
+                            <span style="font-size:18px; line-height:1; font-weight:700;">∞</span >
+                        </button>
+                    </div>
                     <button id="player-queue-btn" class="player-utility-btn" title="Toggle Queue">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                             <path d="M4 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM8.5 4.5h12c.55 0 1 .45 1 1s-.45 1-1 1h-12c-.55 0-1-.45-1-1s.45-1 1-1zm0 7.5h12c.55 0 1 .45 1 1s-.45 1-1 1h-12c-.55 0-1-.45-1-1s.45-1 1-1zm0 7.5h12c.55 0 1 .45 1 1s-.45 1-1 1h-12c-.55 0-1-.45-1-1s.45-1 1-1z"/>
                         </svg>
                     </button>
                 </div>
+                <!-- BitChord Phone Device Label -->
+                <div class="player-device-label">AXIØN's Phone</div>
             </div>
                 
                 <div class="bottom-extra-controls" style="display:none !important; align-items:center; justify-content:center; margin-top: 5px; width: 100%;">
@@ -2074,6 +2193,20 @@
         <div id="right-panel">
             <div id="lyrics-container">
                 <div class="empty-state">Type a song in the top-left to stream.</div>
+            </div>
+
+            <!-- Mobile Floating Quick Actions (Globe & Translate) -->
+            <div class="lyrics-floating-actions">
+                <button id="mobile-lyrics-globe-btn" class="lyrics-circle-action-btn" title="Sources" onclick="if(typeof openLyricsSourcesModal==='function') openLyricsSourcesModal(event);">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </button>
+                <button id="mobile-lyrics-trans-btn" class="lyrics-circle-action-btn" title="Translate" onclick="if(typeof toggleLyricsTranslation==='function') toggleLyricsTranslation(event);">
+                    <span style="font-size:13px; font-weight:700;">文A</span>
+                </button>
+            </div>
+            <!-- Mobile Lyrics Provider Credit Badge -->
+            <div class="mobile-lyrics-credit-badge" onclick="if(typeof handleLyricsBadgeClick==='function') handleLyricsBadgeClick(event);">
+                <span id="mobile-lyrics-credit-text">Lyrics by lrc.red</span>
             </div>
 
                         <!-- 🎤 BETTER-LYRICS FLOATING CONTROL PILL DOCK (Apple Liquid Glass UI) -->
@@ -3406,25 +3539,24 @@
     <!-- Native BitChord-Style Mobile Bottom Navigation Bar (Hidden on desktop min-width: 769px) -->
     <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Mobile Navigation">
         <button class="mbn-tab active" id="mbn-tab-home" data-tab="home" onclick="if(typeof showHome==='function') showHome();">
-            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
             <span>Home</span>
         </button>
-        <button class="mbn-tab" id="mbn-tab-search" data-tab="search" onclick="if(typeof showSearchScreen==='function') showSearchScreen(); else if(typeof showScreenExcept==='function') showScreenExcept('search-screen'); else document.getElementById('song-search')?.focus();">
-            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            <span>Search</span>
+        <button class="mbn-tab" id="mbn-tab-explore" data-tab="explore" onclick="if(typeof showHome==='function') showHome(); document.getElementById('find-your-mood-section')?.scrollIntoView({behavior:'smooth'});">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+            <span>Explore</span>
         </button>
         <button class="mbn-tab" id="mbn-tab-library" data-tab="library" onclick="if(typeof showLibrary==='function') showLibrary(); else if(window.showLibrary) window.showLibrary(); else if(typeof showScreenExcept==='function') showScreenExcept('library-screen');">
-            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
             <span>Library</span>
         </button>
-        <button class="mbn-tab" id="mbn-tab-settings" data-tab="settings" onclick="if(typeof showSettings==='function') showSettings(); else if(window.showSettings) window.showSettings(); else if(typeof showScreenExcept==='function') showScreenExcept('settings-screen');">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-            <span>Settings</span>
+        <button class="mbn-tab mbn-search-circle-btn" id="mbn-tab-search" data-tab="search" onclick="if(typeof showSearchScreen==='function') showSearchScreen(); else if(typeof showScreenExcept==='function') showScreenExcept('search-screen'); else document.getElementById('song-search')?.focus();" title="Search">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </button>
     </nav>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=320"></script>
+    <script src="app_v3.js?v=330"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -734,7 +734,27 @@ function onPlayerStateChange(event) {
                 miniLikeBtn.innerHTML = isLiked ? filledHeart : emptyHeart;
                 miniLikeBtn.classList.toggle('liked', isLiked);
             }
+            const starSvg = isLiked 
+                ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffd700" stroke="#ffd700" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+                : '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+            ['player-star-btn', 'mch-star-btn'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.toggle('active', isLiked);
+                    el.innerHTML = starSvg;
+                }
+            });
         }
+
+        function syncBitChordMobileHeader(title, artist, cover) {
+            const mchTitle = document.getElementById('mch-title');
+            const mchArtist = document.getElementById('mch-artist');
+            const mchCover = document.getElementById('mch-cover');
+            if (mchTitle && title) mchTitle.textContent = title;
+            if (mchArtist && artist) mchArtist.textContent = artist;
+            if (mchCover && cover) mchCover.src = cover;
+        }
+        window.syncBitChordMobileHeader = syncBitChordMobileHeader;
 
         // Like button click
         document.getElementById('like-btn')?.addEventListener('click', () => toggleLike());
@@ -4554,6 +4574,7 @@ function onPlayerStateChange(event) {
                 document.getElementById('track-artist').textContent = song.artist;
                 miniTitle.textContent = song.title;
                 miniArtist.textContent = song.artist;
+                syncBitChordMobileHeader(song.title, song.artist, song.cover);
                 delete coverArt.dataset.fallbackDone;
                 delete miniCover.dataset.fallbackDone;
                 coverArt.src = song.cover;
@@ -4605,6 +4626,7 @@ function onPlayerStateChange(event) {
             coverArt.removeAttribute('crossorigin');
             coverArt.src = hdThumb;
             miniCover.src = smallThumb;
+            syncBitChordMobileHeader(song.title, song.artist, smallThumb);
             if (typeof updateDynamicColors === 'function') {
                 updateDynamicColors();
             }
@@ -4778,6 +4800,7 @@ function onPlayerStateChange(event) {
                     
                     const smallThumb = resolveYtThumb(songData.thumbnail, 'small');
                     miniCover.src = smallThumb;
+            syncBitChordMobileHeader(song.title, song.artist, smallThumb);
                     
                     const bgImg = new Image();
                     bgImg.crossOrigin = 'Anonymous';
@@ -5342,6 +5365,11 @@ function onPlayerStateChange(event) {
                     }
                     if (currentLineIndex !== -1 && lineElements[currentLineIndex]) {
                         lineElements[currentLineIndex].el.classList.add('active-line');
+                        const teaserEl = document.getElementById('player-lyric-teaser-text');
+                        if (teaserEl) {
+                            const rawTxt = lineElements[currentLineIndex].el.textContent?.trim() || '';
+                            if (rawTxt) teaserEl.textContent = rawTxt;
+                        }
                     }
                     activeLineIndex = currentLineIndex;
 
@@ -8150,15 +8178,19 @@ function onPlayerStateChange(event) {
             renderQueue();
         });
 
-        // ── QUEUE CONTROL BUTTONS SYNC ──
+        // ── QUEUE CONTROL BUTTONS SYNC (Apple & BitChord Spec) ──
         function updateQueueControlsState() {
             const qShuffleBtn = document.getElementById('queue-shuffle-btn');
             const qRepeatBtn = document.getElementById('queue-repeat-btn');
             const qAutoplayBtn = document.getElementById('queue-autoplay-btn');
 
-            if (qShuffleBtn) {
-                qShuffleBtn.classList.toggle('active', isShuffled);
-            }
+            const pqShuffle = document.getElementById('pq-capsule-shuffle');
+            const pqRepeat = document.getElementById('pq-capsule-repeat');
+            const pqAutoplay = document.getElementById('pq-capsule-autoplay');
+
+            if (qShuffleBtn) qShuffleBtn.classList.toggle('active', isShuffled);
+            if (pqShuffle) pqShuffle.classList.toggle('active', isShuffled);
+
             if (qRepeatBtn) {
                 qRepeatBtn.classList.remove('active', 'repeat-one');
                 if (repeatMode === 1) {
@@ -8167,12 +8199,33 @@ function onPlayerStateChange(event) {
                     qRepeatBtn.classList.add('active', 'repeat-one');
                 }
             }
-            if (qAutoplayBtn) {
-                const apt = document.getElementById('autoplay-toggle');
-                const isAutoplay = apt ? apt.checked : false;
-                qAutoplayBtn.classList.toggle('active', isAutoplay);
+            if (pqRepeat) {
+                pqRepeat.classList.toggle('active', repeatMode > 0);
             }
+
+            const apt = document.getElementById('autoplay-toggle');
+            const isAutoplay = apt ? apt.checked : true;
+            if (qAutoplayBtn) qAutoplayBtn.classList.toggle('active', isAutoplay);
+            if (pqAutoplay) pqAutoplay.classList.toggle('active', isAutoplay);
         }
+        window.updateQueueControlsState = updateQueueControlsState;
+
+        window.cycleRepeatMode = function(e) {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            const mainRepeat = document.getElementById('repeat-btn');
+            mainRepeat?.click();
+            updateQueueControlsState();
+        };
+
+        window.toggleAutoPlay = function(e) {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            const apt = document.getElementById('autoplay-toggle');
+            if (apt) {
+                apt.checked = !apt.checked;
+                apt.dispatchEvent(new Event('change'));
+            }
+            updateQueueControlsState();
+        };
 
         // Register queue controls click listeners
         document.getElementById('queue-shuffle-btn')?.addEventListener('click', () => {
