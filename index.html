@@ -36,93 +36,127 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=319">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=321">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
-        <!-- PURE FROSTED BLUR HEADER: ZERO DARKNESS, ZERO CUTOFF LINE, SEAMLESS FEATHERED BLUR -->
+    <!-- FLOATING ISLAND HEADER OVERRIDE: SEAMLESS BACKGROUND, NO FULL-WIDTH BAR CUTOFF -->
     <style id="frosted-header-clean-override">
-        /* Desktop: #top-bar-wrapper is hidden so it never covers pc-sticky-header */
-        #top-bar-wrapper {
-            display: none !important;
-        }
-
-        #pc-sticky-header {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            height: 90px !important;
-            z-index: 10000 !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 20px !important;
-            padding: 0 32px 18px 90px !important;
-            box-sizing: border-box !important;
-            font-family: inherit !important;
-            backdrop-filter: blur(40px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-            background: rgba(255, 255, 255, 0.02) !important;
-            background-color: rgba(255, 255, 255, 0.02) !important;
-            border: none !important;
-            border-bottom: none !important;
-            border-top: none !important;
-            box-shadow: none !important;
-            outline: none !important;
-            -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50px, transparent 100%) !important;
-            mask-image: linear-gradient(to bottom, black 0%, black 50px, transparent 100%) !important;
-            pointer-events: auto !important;
-        }
-        #pc-sticky-header .pch-search-pill {
-            display: flex !important;
-            align-items: center !important;
-            gap: 10px !important;
-            height: 40px !important;
-            padding: 0 16px !important;
-            box-sizing: border-box !important;
-            border-radius: 999px !important;
-            background: rgba(255, 255, 255, 0.08) !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-        }
-        #pc-sticky-header .pch-action-group {
-            display: flex !important;
-            align-items: center !important;
-            gap: 2px !important;
-            padding: 4px !important;
-            border-radius: 999px !important;
-            background: rgba(255, 255, 255, 0.08) !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-        }
-        #pc-sticky-header .pch-glass-bg,
-        #pc-sticky-header .pch-border-line {
-            display: none !important;
+        @media (min-width: 769px) {
+            #top-bar-wrapper {
+                display: none !important;
+            }
+            #pc-sticky-header {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                height: 72px !important;
+                z-index: 10000 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 20px !important;
+                padding: 0 32px 0 32px !important;
+                box-sizing: border-box !important;
+                font-family: inherit !important;
+                background: transparent !important;
+                background-color: transparent !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                border: none !important;
+                box-shadow: none !important;
+                outline: none !important;
+                pointer-events: none !important;
+            }
+            #pc-sticky-header > * {
+                pointer-events: auto !important;
+            }
+            #pc-sticky-header .pch-search-pill {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                height: 42px !important;
+                padding: 0 18px !important;
+                box-sizing: border-box !important;
+                border-radius: 999px !important;
+                background: rgba(22, 22, 30, 0.75) !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+                backdrop-filter: blur(28px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+            }
+            #pc-sticky-header .pch-action-group {
+                display: flex !important;
+                align-items: center !important;
+                gap: 4px !important;
+                padding: 4px 6px !important;
+                border-radius: 999px !important;
+                background: rgba(22, 22, 30, 0.75) !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+                backdrop-filter: blur(28px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+            }
+            #pc-sticky-header .pch-glass-bg,
+            #pc-sticky-header .pch-border-line {
+                display: none !important;
+            }
+            body.player-screen-active #pc-sticky-header {
+                display: none !important;
+            }
         }
 
         @media (max-width: 768px) {
-            #pc-sticky-header { display: none !important; }
+            #pc-sticky-header {
+                display: none !important;
+            }
             #top-bar-wrapper {
                 display: flex !important;
                 position: fixed !important;
                 top: 0 !important;
                 left: 0 !important;
+                right: 0 !important;
                 width: 100% !important;
-                height: 80px !important;
-                padding: 0 15px 15px 15px !important;
+                height: 60px !important;
+                padding: 8px 16px !important;
+                box-sizing: border-box !important;
                 z-index: 10000 !important;
-                backdrop-filter: blur(40px) saturate(180%) !important;
-                -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-                background: rgba(255, 255, 255, 0.02) !important;
+                background: transparent !important;
+                pointer-events: none !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            body.player-screen-active #top-bar-wrapper {
+                display: none !important;
+            }
+            #top-bar {
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 42px !important;
+                padding: 0 14px !important;
+                box-sizing: border-box !important;
+                border-radius: 999px !important;
+                background: rgba(18, 18, 26, 0.82) !important;
+                backdrop-filter: blur(25px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+                border: 1px solid rgba(255, 255, 255, 0.14) !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+                pointer-events: auto !important;
+            }
+            #top-bar input#song-search {
+                display: block !important;
+                color: #ffffff !important;
+                background: transparent !important;
                 border: none !important;
-                box-shadow: none !important;
-                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45px, transparent 100%) !important;
-                mask-image: linear-gradient(to bottom, black 0%, black 45px, transparent 100%) !important;
+                outline: none !important;
+                font-size: 0.92rem !important;
+                width: 100% !important;
+            }
+            #top-bar input#song-search::placeholder {
+                color: rgba(255, 255, 255, 0.5) !important;
             }
         }
     </style>
@@ -3390,7 +3424,7 @@
     </nav>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=319"></script>
+    <script src="app_v3.js?v=320"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -6026,8 +6026,6 @@ function onPlayerStateChange(event) {
 
         function updateCoverFlow(container) {
             if (!container) return;
-            // High-performance mobile bypass: use native CSS touch snapping on phone screens to eliminate 3D math lag
-            if (window.innerWidth <= 768) return;
             const sl = container.scrollLeft;
             if (Math.abs(sl - _cfLastScrollLeft) < 0.4) return;
             _cfLastScrollLeft = sl;

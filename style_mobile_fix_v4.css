@@ -421,37 +421,36 @@
         visibility: hidden !important;
         pointer-events: none !important;
     }
+
+    /* ── Adjust home screen top padding & Quick Picks spacing below header ── */
+    #home-screen {
+        padding-top: 108px !important; /* 72px header + generous 36px breathing room */
+    }
+
+    #home-quick-picks-section {
+        margin-top: 14px !important;
+    }
+
+    /* ── Hide old home-screen logo + buttons on desktop (moved to sticky header) ── */
+    #home-screen #axiotune-logo,
+    #home-settings-container {
+        display: none !important;
+    }
+
+    /* ── CRITICAL: Eliminate ghost pill on desktop (#top-bar rendered behind sticky header) ── */
+    #top-bar {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    /* ── top-bar-wrapper: keep active on non-player screens for global back btn ── */
+    body:not(.player-screen-active) #top-bar-wrapper {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
 }
-
-            /* ── Adjust home screen top padding & Quick Picks spacing below header ── */
-            #home-screen {
-                padding-top: 108px !important; /* 72px header + generous 36px breathing room */
-            }
-
-            #home-quick-picks-section {
-                margin-top: 14px !important;
-            }
-
-            /* ── Hide old home-screen logo + buttons on desktop (moved to sticky header) ── */
-            #home-screen #axiotune-logo,
-            #home-settings-container {
-                display: none !important;
-            }
-
-            /* ── CRITICAL: Eliminate ghost pill on desktop (#top-bar rendered behind sticky header) ── */
-            #top-bar {
-                display: none !important;
-                opacity: 0 !important;
-                visibility: hidden !important;
-                pointer-events: none !important;
-            }
-
-            /* ── top-bar-wrapper: keep active on non-player screens for global back btn ── */
-            body:not(.player-screen-active) #top-bar-wrapper {
-                opacity: 1 !important;
-                pointer-events: auto !important;
-            }
-        }
 
         /* ====================================
            AXIØTUNE - HOLOGRAPHIC LOGO
@@ -11833,10 +11832,10 @@ body.focus-screen-active #mini-player {
 /* Individual Cover Flow Card (Clean subtle shadow, zero muddy smear) */
 .cover-flow-card,
 .cover-flow-container .t {
-    flex: 0 0 190px !important;
-    width: 190px !important;
-    height: 260px !important;
-    margin: 0 -22px !important;
+    flex: 0 0 176px !important;
+    width: 176px !important;
+    height: 245px !important;
+    margin: 0 8px !important;
     border-radius: 18px !important;
     position: relative !important;
     overflow: hidden !important;
@@ -12014,6 +12013,28 @@ body.focus-screen-active #mini-player {
     transform: scale(0.94);
 }
 
+@media (max-width: 768px) {
+    #axiotune-logo,
+    #home-screen #axiotune-logo,
+    #home-settings-container,
+    #home-settings-btn {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+    #home-screen {
+        padding: 72px 16px 120px 16px !important;
+    }
+    .qp-prev-btn, .qp-next-btn {
+        display: none !important;
+    }
+    #home-quick-picks-title {
+        white-space: nowrap !important;
+        font-size: 1.25rem !important;
+    }
+}
+
 @media (max-width: 600px) {
     .cover-flow-container,
     .cover-flow-container.flow,
@@ -12025,10 +12046,10 @@ body.focus-screen-active #mini-player {
     }
     .cover-flow-card,
     .cover-flow-container .t {
-        flex: 0 0 158px !important;
-        width: 158px !important;
-        height: 218px !important;
-        margin: 0 -18px !important;
+        flex: 0 0 148px !important;
+        width: 148px !important;
+        height: 206px !important;
+        margin: 0 6px !important;
     }
 }
 
