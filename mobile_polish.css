@@ -558,6 +558,445 @@
     }
 
     /* ══════════════════════════════════════════════════════════════
+       AXIOTUNE 9 MOBILE HOME STACKS
+       Fan Deck, Bento Mix, Record Spines, Arc Carousel, Coverflow,
+       Polaroid Pile, Vinyl Peek, Marquee Rows, Top Chart
+       ══════════════════════════════════════════════════════════════ */
+    html body #home-screen #ax-home-stacks {
+        display: block !important;
+        width: 100% !important;
+        order: -998 !important;
+        padding-bottom: 24px !important;
+    }
+
+    html body .ax-sec {
+        margin: 0 0 34px !important;
+        display: block !important;
+    }
+    html body .ax-head {
+        padding: 0 16px !important;
+        margin: 0 0 14px !important;
+    }
+    html body .ax-head small {
+        display: block !important;
+        font-size: 11px !important;
+        letter-spacing: .08em !important;
+        text-transform: uppercase !important;
+        color: #a094ae !important;
+    }
+    html body .ax-head b {
+        font-size: 22px !important;
+        color: #ffffff !important;
+    }
+    html body .ax-cover {
+        background: var(--c, #444) center/cover !important;
+        border-radius: 12px !important;
+        aspect-ratio: 1 !important;
+    }
+
+    /* ---- deck engine (fan + arc) ---- */
+    html body .ax-deck {
+        position: relative !important;
+        height: var(--h, 230px) !important;
+        touch-action: pan-y !important;
+        user-select: none !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+    html body .ax-deck .ax-card {
+        position: absolute !important;
+        left: 50% !important;
+        top: 10px !important;
+        width: var(--w, 150px) !important;
+        margin-left: calc(var(--w, 150px) / -2) !important;
+        transition: transform .45s cubic-bezier(.2, .9, .25, 1), opacity .35s !important;
+        will-change: transform !important;
+        cursor: pointer !important;
+    }
+    html body .ax-deck .ax-card.drag {
+        transition: none !important;
+    }
+    html body .ax-deck .ax-cover {
+        width: 100% !important;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, .55) !important;
+    }
+    html body .ax-card.on .ax-cover {
+        outline: 2px solid #ffffff !important;
+    }
+    html body .ax-meta {
+        text-align: center !important;
+        margin-top: 6px !important;
+        transition: opacity .25s !important;
+    }
+    html body .ax-meta b {
+        display: block !important;
+        font-size: 16px !important;
+        color: #ffffff !important;
+    }
+    html body .ax-meta span {
+        font-size: 13px !important;
+        color: #a094ae !important;
+    }
+    html body .ax-meta.sw {
+        opacity: 0 !important;
+    }
+
+    /* ---- bento ---- */
+    html body .ax-bento {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        grid-auto-rows: calc((100vw - 32px - 16px) / 3) !important;
+        gap: 8px !important;
+        padding: 0 16px !important;
+    }
+    html body .ax-bento .ax-cover {
+        width: 100% !important;
+        height: 100% !important;
+        aspect-ratio: auto !important;
+        position: relative !important;
+        opacity: 0 !important;
+        transform: translateY(18px) scale(.94) !important;
+        animation: axIn .55s cubic-bezier(.2, .9, .25, 1) forwards !important;
+        animation-delay: calc(var(--i) * 70ms) !important;
+        transition: transform .15s !important;
+        cursor: pointer !important;
+    }
+    html body .ax-bento .ax-cover:active {
+        transform: scale(.96) !important;
+    }
+    html body .ax-bento .big {
+        grid-column: span 2 !important;
+        grid-row: span 2 !important;
+    }
+    html body .ax-bento .wide {
+        grid-column: span 2 !important;
+    }
+    html body .ax-bento i {
+        position: absolute !important;
+        left: 8px !important;
+        bottom: 6px !important;
+        right: 8px !important;
+        font: 500 12px/1.2 system-ui, sans-serif !important;
+        font-style: normal !important;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, .7) !important;
+        color: #fff !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+    @keyframes axIn {
+        to { opacity: 1; transform: none; }
+    }
+
+    /* ---- spines ---- */
+    html body .ax-spines {
+        display: flex !important;
+        gap: 6px !important;
+        padding: 0 16px !important;
+        height: 190px !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x proximity !important;
+        scrollbar-width: none !important;
+        align-items: flex-end !important;
+    }
+    html body .ax-spines::-webkit-scrollbar {
+        display: none !important;
+    }
+    html body .ax-spine {
+        flex: 0 0 34px !important;
+        height: 170px !important;
+        border-radius: 6px !important;
+        background: var(--c) !important;
+        position: relative !important;
+        overflow: hidden !important;
+        cursor: pointer !important;
+        scroll-snap-align: center !important;
+        transition: flex-basis .5s cubic-bezier(.2, .9, .25, 1), height .5s cubic-bezier(.2, .9, .25, 1) !important;
+    }
+    html body .ax-spine:nth-child(3n) { height: 150px !important; }
+    html body .ax-spine:nth-child(3n+1) { height: 184px !important; }
+    html body .ax-spine span {
+        position: absolute !important;
+        inset: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        writing-mode: vertical-rl !important;
+        transform: rotate(180deg) !important;
+        font-size: 12px !important;
+        color: rgba(0, 0, 0, .75) !important;
+        padding: 8px 0 !important;
+        transition: opacity .2s !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+    }
+    html body .ax-spine .ax-cover {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0 !important;
+        aspect-ratio: auto !important;
+        opacity: 0 !important;
+        transition: opacity .35s .1s !important;
+    }
+    html body .ax-spine em {
+        position: absolute !important;
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 8px !important;
+        font: 500 13px/1.2 system-ui, sans-serif !important;
+        font-style: normal !important;
+        color: #fff !important;
+        opacity: 0 !important;
+        text-shadow: 0 1px 6px #000 !important;
+        transition: opacity .3s .2s !important;
+    }
+    html body .ax-spine.on {
+        flex-basis: 170px !important;
+        height: 190px !important;
+    }
+    html body .ax-spine.on span { opacity: 0 !important; }
+    html body .ax-spine.on .ax-cover,
+    html body .ax-spine.on em { opacity: 1 !important; }
+
+    /* ---- headings: styles B, C, D ---- */
+    html body .ax-hb {
+        position: relative !important;
+        padding: 14px 16px 0 !important;
+        margin: 0 0 14px !important;
+    }
+    html body .ax-hb em {
+        position: absolute !important;
+        right: 16px !important;
+        top: 4px !important;
+        font: 800 64px/1 system-ui, sans-serif !important;
+        font-style: normal !important;
+        color: transparent !important;
+        -webkit-text-stroke: 1px #3b3350 !important;
+        letter-spacing: -.04em !important;
+    }
+    html body .ax-hb b {
+        position: relative !important;
+        font-size: 22px !important;
+        color: #ffffff !important;
+    }
+    html body .ax-hb small {
+        position: relative !important;
+        display: block !important;
+        font-size: 12px !important;
+        color: #a094ae !important;
+    }
+    html body .ax-hc {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 0 16px !important;
+        margin: 0 0 14px !important;
+    }
+    html body .ax-hc .ax-cover {
+        width: 46px !important;
+        height: 46px !important;
+        flex: none !important;
+        border-radius: 10px !important;
+    }
+    html body .ax-hc small {
+        display: block !important;
+        font-size: 12px !important;
+        color: #a094ae !important;
+    }
+    html body .ax-hc b {
+        font-size: 21px !important;
+        color: #ffffff !important;
+    }
+    html body .ax-hd {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: baseline !important;
+        margin: 0 16px 14px !important;
+        padding-bottom: 8px !important;
+        border-bottom: 1px solid #2b2438 !important;
+    }
+    html body .ax-hd b {
+        font-size: 20px !important;
+        color: #ffffff !important;
+    }
+    html body .ax-hd a {
+        font-size: 13px !important;
+        color: #E8745B !important;
+        text-decoration: none !important;
+    }
+
+    /* ---- coverflow ---- */
+    html body .ax-deck.flow {
+        perspective: 760px !important;
+    }
+
+    /* ---- polaroid pile ---- */
+    html body .ax-pile {
+        position: relative !important;
+        height: 270px !important;
+        width: 100% !important;
+    }
+    html body .ax-pol {
+        position: absolute !important;
+        left: 50% !important;
+        top: 6px !important;
+        width: 170px !important;
+        margin-left: -85px !important;
+        background: #f5efe6 !important;
+        padding: 8px 8px 30px !important;
+        border-radius: 4px !important;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, .55) !important;
+        transition: transform .45s cubic-bezier(.2, .9, .25, 1), opacity .35s !important;
+        cursor: pointer !important;
+        color: #1C1727 !important;
+        font-size: 12px !important;
+        text-align: center !important;
+    }
+    html body .ax-pol .ax-cover {
+        border-radius: 2px !important;
+        width: 100% !important;
+    }
+    html body .ax-pol span {
+        position: absolute !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 8px !important;
+        font-weight: 600 !important;
+        color: #1c1727 !important;
+    }
+    html body .ax-pol.fly {
+        transform: translateX(130%) rotate(24deg) !important;
+        opacity: 0 !important;
+    }
+
+    /* ---- vinyl peek ---- */
+    html body .ax-vrow {
+        display: flex !important;
+        gap: 14px !important;
+        padding: 0 16px 4px !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+    }
+    html body .ax-vrow::-webkit-scrollbar {
+        display: none !important;
+    }
+    html body .ax-vs {
+        flex: none !important;
+        position: relative !important;
+        width: 130px !important;
+        margin-right: 34px !important;
+        cursor: pointer !important;
+    }
+    html body .ax-vs .ax-cover {
+        position: relative !important;
+        z-index: 2 !important;
+        width: 130px !important;
+    }
+    html body .ax-vs .disc {
+        position: absolute !important;
+        z-index: 1 !important;
+        left: 6px !important;
+        top: 4px !important;
+        width: 122px !important;
+        height: 122px !important;
+        border-radius: 50% !important;
+        background: repeating-radial-gradient(circle, #15101c 0 2px, #221a2e 3px 4px) !important;
+        transform: translateX(16px) !important;
+        transition: transform .55s cubic-bezier(.2, .9, .25, 1) !important;
+        display: grid !important;
+        place-items: center !important;
+    }
+    html body .ax-vs .disc::after {
+        content: "" !important;
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 50% !important;
+        background: var(--c) !important;
+    }
+    html body .ax-vs.on .disc {
+        transform: translateX(70px) rotate(220deg) !important;
+    }
+    html body .ax-vs p {
+        margin: 8px 0 0 !important;
+        font-size: 13px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        color: #ffffff !important;
+    }
+
+    /* ---- marquee ---- */
+    html body .ax-mq {
+        overflow: hidden !important;
+        margin-bottom: 8px !important;
+        width: 100% !important;
+    }
+    html body .ax-track {
+        display: flex !important;
+        gap: 8px !important;
+        width: max-content !important;
+        animation: axM 32s linear infinite !important;
+    }
+    html body .ax-mq.rev .ax-track {
+        animation-direction: reverse !important;
+        animation-duration: 38s !important;
+    }
+    html body .ax-mq:active .ax-track {
+        animation-play-state: paused !important;
+    }
+    html body .ax-track .ax-cover {
+        width: 92px !important;
+        height: 92px !important;
+        flex: none !important;
+        cursor: pointer !important;
+    }
+    @keyframes axM {
+        to { transform: translateX(-50%); }
+    }
+
+    /* ---- top chart ---- */
+    html body .ax-chart {
+        display: flex !important;
+        gap: 8px !important;
+        padding: 0 16px !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+    }
+    html body .ax-chart::-webkit-scrollbar {
+        display: none !important;
+    }
+    html body .ax-ch {
+        flex: none !important;
+        position: relative !important;
+        width: 150px !important;
+        height: 130px !important;
+        cursor: pointer !important;
+    }
+    html body .ax-ch em {
+        position: absolute !important;
+        left: 0 !important;
+        bottom: -14px !important;
+        font: 800 128px/1 system-ui, sans-serif !important;
+        font-style: normal !important;
+        color: #0a0a0a !important;
+        -webkit-text-stroke: 2px #5a4d72 !important;
+        letter-spacing: -.08em !important;
+    }
+    html body .ax-ch .ax-cover {
+        position: absolute !important;
+        right: 0 !important;
+        top: 0 !important;
+        width: 104px !important;
+        box-shadow: -8px 0 16px rgba(0, 0, 0, .5) !important;
+        transition: transform .15s !important;
+    }
+    html body .ax-ch:active .ax-cover {
+        transform: scale(.95) !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
        BUG 3: Home screen shelves fix (#home-screen shelves)
        Horizontal scroll-snap rows with 42vw cards, image on top
        (aspect-ratio: 1, 12px radius), title (2-line clamp) and

@@ -188,7 +188,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="mobile_polish.css?v=4">
+    <link rel="stylesheet" href="mobile_polish.css?v=5">
 </head>
 <body class="">
     <!-- ══════════════════════════════════════════════════════════════
@@ -1786,6 +1786,9 @@
                 <img src="character_clean.webp" alt="Avatar" onerror="this.src='default_cover.jpg';">
             </div>
         </div>
+
+        <!-- Axiotune Mobile 9 Interactive Card Stacks -->
+        <div id="ax-home-stacks" class="ax-stacks-container" style="display: none;"></div>
 
         <!-- AXIØTUNE Holographic Logo -->
         <div id="axiotune-logo" title="AXIØTUNE" style="display: flex; align-items: center; gap: 14px;">
@@ -3568,6 +3571,7 @@
 
     <script src="kawarp.js?v=252"></script>
     <script src="app_v3.js?v=332"></script>
+    <script src="mobile_stacks.js?v=1" defer></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
