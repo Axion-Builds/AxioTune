@@ -341,22 +341,7 @@
                 <div id="ax-vinyl"></div>
             </div>
 
-            <!-- 7. YOUR SHELF (SAVED VINYLS & LIKED) -->
-            <div class="ax-sec" id="sec-spines">
-                <div class="ax-head"><small>Your shelf</small><b>Saved Vinyls &amp; Liked</b></div>
-                <div id="ax-spines"></div>
-            </div>
-
-            <!-- 8. SECONDARY SEED RECOMMENDATIONS (POLAROID) -->
-            <div class="ax-sec" id="sec-pile">
-                <div class="ax-hc">
-                    <div class="ax-cover" style="background-image: url('${seed2.img}') !important; --c:${seed2.c};"></div>
-                    <div><small>More for you &bull; Based on</small><b>${seed2.t}</b></div>
-                </div>
-                <div id="ax-pile"></div>
-            </div>
-
-            <!-- 9. DISCOVER (MARQUEE DRIFT) -->
+            <!-- 7. DISCOVER (MARQUEE DRIFT) -->
             <div class="ax-sec" id="sec-mq">
                 <div class="ax-head"><small>Discover</small><b>Trending &amp; New Drops</b></div>
                 <div id="ax-mq"></div>
@@ -430,47 +415,6 @@
         }
 
         // ══════════════════════════════════════════════════════════════
-        // SECTION 3: RECORD SPINES ("Your shelf")
-        // ══════════════════════════════════════════════════════════════
-        const spEl = document.getElementById('ax-spines');
-        if (spEl) {
-            // User's personal collection of saved vinyls
-            const shelfPool = [];
-            liked.forEach(l => { shelfPool.push(formatTrack(l, '#D9A86C')); });
-            history.forEach(h => {
-                if (shelfPool.length < 8 && !shelfPool.some(s => s.t === h.title)) {
-                    shelfPool.push(formatTrack(h, '#4FB3A3'));
-                }
-            });
-            CURATED_LIBRARY.forEach(c => {
-                if (shelfPool.length < 8 && !shelfPool.some(s => s.t === c.t)) {
-                    shelfPool.push(c);
-                }
-            });
-
-            spEl.className = 'ax-spines';
-            spEl.innerHTML = '';
-            shelfPool.slice(0, 8).forEach(function (s) {
-                const d = document.createElement('div');
-                d.className = 'ax-spine';
-                d.style.setProperty('--c', s.c || '#444');
-                d.innerHTML = '<span>' + s.t + '</span><em>' + s.t + '</em>';
-                d.prepend(cov(s));
-                d.onclick = function (e) {
-                    e.stopPropagation();
-                    if (d.classList.contains('on')) return onPlay(s);
-                    spEl.querySelectorAll('.on').forEach(function (x) { x.classList.remove('on'); });
-                    d.classList.add('on');
-                    setTimeout(function () {
-                        d.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }, 60);
-                };
-                spEl.appendChild(d);
-            });
-            if (spEl.children[2]) spEl.children[2].classList.add('on');
-        }
-
-        // ══════════════════════════════════════════════════════════════
         // SECTION 4: ARC CAROUSEL ("Pick up where you left")
         // ══════════════════════════════════════════════════════════════
         const arcEl = document.getElementById('ax-arc');
@@ -523,52 +467,6 @@
                     }
                 }
             }).catch(() => {});
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // SECTION 6: POLAROID PILE ("Because you listened to [Seed 2]")
-        // ══════════════════════════════════════════════════════════════
-        const pileEl = document.getElementById('ax-pile');
-        if (pileEl) {
-            pileEl.className = 'ax-pile';
-            let pilePool = [seed2].concat(CURATED_LIBRARY.filter(c => c.t !== seed2.t)).slice(0, 6);
-            const rot = function (i) { return [0, -6, 5, -3, 7, -8][i % 6]; };
-            
-            function drawPile() {
-                pileEl.innerHTML = '';
-                pilePool.forEach(function (s, i) {
-                    const d = document.createElement('div');
-                    d.className = 'ax-pol';
-                    d.appendChild(cov(s));
-                    const sp = document.createElement('span');
-                    sp.textContent = s.t;
-                    d.appendChild(sp);
-                    d.style.zIndex = 50 - i;
-                    d.style.transform = 'rotate(' + rot(i) + 'deg) translateY(' + (i * 4) + 'px)';
-                    if (i === 0) {
-                        d.onclick = function (e) {
-                            e.stopPropagation();
-                            d.classList.add('fly');
-                            setTimeout(function () {
-                                pilePool.push(pilePool.shift());
-                                drawPile();
-                            }, 380);
-                        };
-                    } else {
-                        d.onclick = function () { onPlay(s); };
-                    }
-                    pileEl.appendChild(d);
-                });
-            }
-            drawPile();
-
-            // Fetch live recommendations for Seed 2
-            fetchRecommendations(seed2.videoId, seed2.t + ' ' + seed2.a).then(recs => {
-                if (recs && recs.length >= 4) {
-                    pilePool = [seed2].concat(recs).slice(0, 6);
-                    drawPile();
-                }
-            });
         }
 
         // ══════════════════════════════════════════════════════════════
