@@ -303,54 +303,63 @@
         else if (hour >= 17 && hour < 22) currentMood = 'Chill';
         else currentMood = 'Romantic';
 
-        // Render Base HTML skeleton with dynamic headers
+        // Render Base HTML skeleton with dynamic headers in Natural Music Flow order
         container.innerHTML = `
-            <div class="ax-sec" id="sec-fan">
-                <div class="ax-head"><small>Because you listened to</small><b>${seed1.t}</b></div>
-                <div id="ax-fan"></div>
-            </div>
-
-            <div class="ax-sec" id="sec-bento">
-                <div class="ax-head"><small>Your taste mix</small><b>Personalized Mix</b></div>
-                <div id="ax-bento"></div>
-            </div>
-
-            <div class="ax-sec" id="sec-spines">
-                <div class="ax-head"><small>Your shelf</small><b>Saved Vinyls &amp; Liked</b></div>
-                <div id="ax-spines"></div>
-            </div>
-
+            <!-- 1. RESUME PLAYBACK -->
             <div class="ax-sec" id="sec-arc">
                 <div class="ax-head"><small>Pick up where you left</small><b>Recent Sessions</b></div>
                 <div id="ax-arc"></div>
             </div>
 
+            <!-- 2. QUICK PICKS (3D COVERFLOW HERO) -->
             <div class="ax-sec" id="sec-flow">
-                <div class="ax-hb"><em>05</em><b>Quick Picks Flow</b><small>3D Flip through discovery</small></div>
+                <div class="ax-hb"><em>3D</em><b>Quick Picks Flow</b><small>Flip through discovery albums</small></div>
                 <div id="ax-flow"></div>
             </div>
 
+            <!-- 3. PRIMARY RECOMMENDATIONS (SEED 1) -->
+            <div class="ax-sec" id="sec-fan">
+                <div class="ax-head"><small>Because you listened to</small><b>${seed1.t}</b></div>
+                <div id="ax-fan"></div>
+            </div>
+
+            <!-- 4. YOUR TASTE MIX -->
+            <div class="ax-sec" id="sec-bento">
+                <div class="ax-head"><small>Your taste mix</small><b>Personalized Mix</b></div>
+                <div id="ax-bento"></div>
+            </div>
+
+            <!-- 5. TOP 8 THIS WEEK (CHARTS) -->
+            <div class="ax-sec" id="sec-chart">
+                <div class="ax-hd"><b>Top 8 This Week</b><a href="javascript:void(0)">Global Hits</a></div>
+                <div id="ax-chart"></div>
+            </div>
+
+            <!-- 6. MOOD RADIO (VINYL PEEK) -->
+            <div class="ax-sec" id="sec-vinyl">
+                <div class="ax-hd"><b>Mood Radio • ${currentMood}</b><a href="javascript:void(0)" onclick="document.getElementById('mood-radio-section')?.scrollIntoView({behavior:'smooth'})">See all</a></div>
+                <div id="ax-vinyl"></div>
+            </div>
+
+            <!-- 7. YOUR SHELF (SAVED VINYLS & LIKED) -->
+            <div class="ax-sec" id="sec-spines">
+                <div class="ax-head"><small>Your shelf</small><b>Saved Vinyls &amp; Liked</b></div>
+                <div id="ax-spines"></div>
+            </div>
+
+            <!-- 8. SECONDARY SEED RECOMMENDATIONS (POLAROID) -->
             <div class="ax-sec" id="sec-pile">
                 <div class="ax-hc">
                     <div class="ax-cover" style="background-image: url('${seed2.img}') !important; --c:${seed2.c};"></div>
-                    <div><small>Because you listened to</small><b>${seed2.t}</b></div>
+                    <div><small>More for you &bull; Based on</small><b>${seed2.t}</b></div>
                 </div>
                 <div id="ax-pile"></div>
             </div>
 
-            <div class="ax-sec" id="sec-vinyl">
-                <div class="ax-hd"><b>Vinyl peek • ${currentMood} Radio</b><a href="javascript:void(0)" onclick="document.getElementById('mood-radio-section')?.scrollIntoView({behavior:'smooth'})">See all</a></div>
-                <div id="ax-vinyl"></div>
-            </div>
-
+            <!-- 9. DISCOVER (MARQUEE DRIFT) -->
             <div class="ax-sec" id="sec-mq">
-                <div class="ax-head"><small>Discover</small><b>Trending Now</b></div>
+                <div class="ax-head"><small>Discover</small><b>Trending &amp; New Drops</b></div>
                 <div id="ax-mq"></div>
-            </div>
-
-            <div class="ax-sec" id="sec-chart">
-                <div class="ax-hd"><b>Top 8 This Week</b><a href="javascript:void(0)">Global Hits</a></div>
-                <div id="ax-chart"></div>
             </div>
         `;
 
