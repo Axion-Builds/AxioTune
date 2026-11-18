@@ -1,0 +1,240 @@
+/* mobile_polish.css - Mobile Only Polish Layer (max-width: 768px) */
+@media (max-width: 768px) {
+    /* ══════════════════════════════════════════════════════════════
+       BUG 1: Now Playing, lyrics view layout fix
+       Full player flex column: header (fixed height), lyrics area
+       (flex:1; min-height:0; overflow-y:auto; with soft top/bottom fade),
+       controls block (flex-shrink:0, own solid/blurred background).
+       Lyrics never render under controls. Dedicated dock & credit space.
+       ══════════════════════════════════════════════════════════════ */
+
+    /* Drag Handle placed at the very top */
+    html body #player-screen.mobile-lyrics-active .mobile-player-drag-handle {
+        position: absolute !important;
+        top: 6px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        z-index: 30 !important;
+        width: 38px !important;
+        height: 4px !important;
+        background: rgba(255, 255, 255, 0.45) !important;
+        border-radius: 999px !important;
+        margin: 0 !important;
+        cursor: pointer !important;
+    }
+
+    /* Player Screen flex container (100vh / 100dvh) */
+    html body #player-screen.mobile-lyrics-active {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        position: fixed !important;
+        inset: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        background: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 100000 !important;
+    }
+
+    /* 1. Header: Fixed height, flex-shrink: 0, order: 1 */
+    html body #player-screen.mobile-lyrics-active #mobile-compact-header {
+        order: 1 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-shrink: 0 !important;
+        height: 56px !important;
+        min-height: 56px !important;
+        padding: 12px 20px 6px 20px !important;
+        box-sizing: border-box !important;
+        background: #000000 !important;
+        z-index: 25 !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+
+    /* 2. Lyrics Area: flex: 1, min-height: 0, order: 2 */
+    html body #player-screen.mobile-lyrics-active #right-panel,
+    html body #player-screen.mobile-lyrics-active #right-panel:not([data-view="queue"]) {
+        order: 2 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        background: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 10 !important;
+    }
+
+    /* Hide non-lyrics panels inside right-panel during lyrics mode */
+    html body #player-screen.mobile-lyrics-active #player-queue-view,
+    html body #player-screen.mobile-lyrics-active #lyrics-floating-dock {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Lyrics Wrapper (injected by app_v3.js): flex column filling right-panel above dock */
+    html body #player-screen.mobile-lyrics-active #lyrics-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Lyrics Container: fills lyrics-wrapper, scrolls natively, top/bottom fade */
+    html body #player-screen.mobile-lyrics-active #lyrics-container {
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        display: block !important;
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 16px 24px 20px 24px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 90%, transparent 100%) !important;
+        mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 90%, transparent 100%) !important;
+    }
+
+    /* Dedicated Dock Bar for Globe & Translate Buttons (sits below lyrics, above controls) */
+    html body #player-screen.mobile-lyrics-active .lyrics-floating-actions {
+        display: flex !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        padding: 0 20px 4px 20px !important;
+        box-sizing: border-box !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        pointer-events: auto !important;
+        background: #000000 !important;
+        z-index: 15 !important;
+        margin: 0 !important;
+    }
+
+    html body #player-screen.mobile-lyrics-active .lyrics-circle-action-btn {
+        pointer-events: auto !important;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Lyrics Credit Text ("Lyrics by lrc.red") Centered in the Dedicated Dock Bar */
+    html body #player-screen.mobile-lyrics-active .mobile-lyrics-credit-badge {
+        position: absolute !important;
+        bottom: 14px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        color: rgba(255, 255, 255, 0.55) !important;
+        text-decoration: underline !important;
+        cursor: pointer !important;
+        z-index: 16 !important;
+        white-space: nowrap !important;
+        pointer-events: auto !important;
+        top: auto !important;
+        right: auto !important;
+    }
+
+    /* 3. Controls Block: order: 3, flex-shrink: 0, solid black background, safe area padding */
+    html body #player-screen.mobile-lyrics-active #left-panel {
+        order: 3 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 6px 20px calc(env(safe-area-inset-bottom, 0px) + 14px) 20px !important;
+        box-sizing: border-box !important;
+        background: #000000 !important;
+        z-index: 25 !important;
+        box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.95) !important;
+    }
+
+    /* Player controls inside left-panel: relative, natural flow */
+    html body #player-screen.mobile-lyrics-active #player-controls {
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+    }
+}
