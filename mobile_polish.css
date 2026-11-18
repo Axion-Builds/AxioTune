@@ -1184,4 +1184,32 @@
         position: relative !important;
         cursor: pointer !important;
     }
+
+    /* ══════════════════════════════════════════════════════════════
+       BUG 4: FLOATING BOTTOM NAV & MINI-PLAYER CLEARANCE & SAFE-AREA
+       Prevents floating controls from obscuring screen content on scroll.
+       ══════════════════════════════════════════════════════════════ */
+    html body #mobile-bottom-nav {
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+        z-index: 9998 !important;
+    }
+
+    html body #mini-player {
+        bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+        z-index: 9997 !important;
+    }
+
+    /* All scrolling screen containers clear the floating mini-player & bottom nav */
+    html body #home-screen,
+    html body #library-screen,
+    html body #search-screen,
+    html body #history-screen,
+    html body #settings-screen,
+    html body #artist-screen,
+    html body #album-screen,
+    html body #playlist-full-screen,
+    html body .screen {
+        padding-bottom: calc(152px + env(safe-area-inset-bottom, 0px)) !important;
+        box-sizing: border-box !important;
+    }
 }
