@@ -237,4 +237,289 @@
         justify-content: flex-start !important;
         gap: 8px !important;
     }
+
+    /* ══════════════════════════════════════════════════════════════
+       BUG 2: Now Playing, artwork view layout fix
+       Row layout with text column (flex:1; min-width:0) and buttons
+       column (flex-shrink:0). Title on one line with ellipsis,
+       artist under it, quality info on its own line below, truncated.
+       Zero overlap between title, quality line, and star/menu buttons.
+       ══════════════════════════════════════════════════════════════ */
+
+    /* Player Screen in Artwork View */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        position: fixed !important;
+        inset: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        background: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 100000 !important;
+    }
+
+    /* Left Panel (Main Artwork Container): Flex column with safe-area padding */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #left-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        padding: 10px 24px calc(env(safe-area-inset-bottom, 0px) + 16px) 24px !important;
+        margin: 0 !important;
+        justify-content: space-between !important;
+        background: #000000 !important;
+        z-index: 10 !important;
+    }
+
+    /* Top Drag Handle on Artwork View */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .mobile-player-drag-handle {
+        position: absolute !important;
+        top: 8px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        z-index: 30 !important;
+        width: 38px !important;
+        height: 4px !important;
+        background: rgba(255, 255, 255, 0.45) !important;
+        border-radius: 999px !important;
+        margin: 0 !important;
+        cursor: pointer !important;
+    }
+
+    /* Cover Wrapper as direct flex parent */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #cover-wrapper {
+        display: contents !important;
+    }
+
+    /* Cover Art Container: centered rounded square poster */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #cover-art-container {
+        order: 1 !important;
+        width: 100% !important;
+        max-width: 290px !important;
+        height: auto !important;
+        aspect-ratio: 1 / 1 !important;
+        max-height: 38vh !important;
+        margin: 18px auto 6px auto !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+        position: relative !important;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75) !important;
+        -webkit-mask-image: none !important;
+        mask-image: none !important;
+        flex-shrink: 0 !important;
+    }
+
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #cover-art,
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #default-cover-icon {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 20px !important;
+    }
+
+    /* Player Controls container: unrolls naturally into the flex flow */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #player-controls {
+        display: contents !important;
+    }
+
+    /* Track Info: Row layout container */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #track-info {
+        order: 2 !important;
+        width: 100% !important;
+        margin: 6px 0 2px 0 !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        padding: 0 !important;
+    }
+
+    /* Track Title Row: Row layout with text column (flex:1; min-width:0) and buttons column (flex-shrink:0) */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #track-title-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 12px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Text column (flex: 1, min-width: 0) */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .track-text-group {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Title on one line with ellipsis */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #track-title {
+        font-size: 21px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        letter-spacing: -0.3px !important;
+        line-height: 1.25 !important;
+        width: 100% !important;
+    }
+
+    /* Explicit badge inline with title */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .player-explicit-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        color: #ffffff !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 3px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Artist under it on its own line */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #track-artist {
+        font-size: 14.5px !important;
+        font-weight: 500 !important;
+        color: rgba(255, 255, 255, 0.65) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        line-height: 1.25 !important;
+        margin-top: 3px !important;
+        width: 100% !important;
+    }
+
+    /* Buttons column (flex-shrink: 0, star and menu buttons side-by-side) */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .track-actions-right {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important;
+        flex-shrink: 0 !important;
+    }
+
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .player-star-btn,
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #player-more-btn {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: none !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Quality info on its own line below, truncated */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .mobile-audio-specs {
+        order: 3 !important;
+        display: block !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        letter-spacing: 0.4px !important;
+        text-align: left !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        margin: 3px 0 6px 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Lyric Teaser Row */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #player-lyric-teaser {
+        order: 4 !important;
+        display: flex !important;
+        margin: 4px 0 8px 0 !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+    }
+
+    /* Scrubber Progress */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #progress-container {
+        order: 5 !important;
+        margin: 6px 0 !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+    }
+
+    /* Time Display */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .time-display {
+        order: 6 !important;
+        margin: 0 0 8px 0 !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+    }
+
+    /* Playback Buttons Row */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .playback-buttons-row {
+        order: 7 !important;
+        margin: 6px 0 !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+    }
+
+    /* Bottom Utility Row (Lyrics, Cast, Queue) */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .player-bottom-utility-row {
+        order: 8 !important;
+        margin: 4px 0 !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+    }
+
+    /* Device Label */
+    html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .player-device-label {
+        order: 9 !important;
+        margin: 4px 0 0 0 !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+    }
 }
