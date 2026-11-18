@@ -522,4 +522,189 @@
         top: auto !important;
         bottom: auto !important;
     }
+
+    /* ══════════════════════════════════════════════════════════════
+       BUG 3: Home screen shelves fix (#home-screen shelves)
+       Horizontal scroll-snap rows with 42vw cards, image on top
+       (aspect-ratio: 1, 12px radius), title (2-line clamp) and
+       artist (1-line clamp) below. Unhide sections with clean spacing.
+       Nothing clipped by screen edge.
+       ══════════════════════════════════════════════════════════════ */
+
+    /* Ensure Home Screen Sections are visible with clean rhythm */
+    html body #home-screen .home-section,
+    html body #home-screen #home-because-rows-container,
+    html body #home-screen #home-because-rows-container .home-section,
+    html body #home-screen #home-taste-mix-section,
+    html body #home-screen #jump-back-in-section,
+    html body #home-screen #mood-radio-section,
+    html body #home-screen #home-quick-picks-section,
+    html body #home-screen #home-top-artists-section {
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin-bottom: 34px !important;
+        pointer-events: auto !important;
+        padding: 0 !important;
+    }
+
+    /* Section Headings: Category subtitle + bold title rhythm */
+    html body #home-screen .section-title {
+        font-size: 21px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        letter-spacing: -0.3px !important;
+        padding: 0 16px !important;
+        margin: 0 0 14px 0 !important;
+        line-height: 1.25 !important;
+    }
+
+    /* All Home Shelves: Horizontal Scroll-Snap Rows */
+    html body #home-screen .dense-grid-container,
+    html body #home-screen .cinematic-scroll-container,
+    html body #home-screen .cover-flow-container,
+    html body #home-screen .vinyl-scroll-container,
+    html body #home-screen .artist-circle-scroll-container {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        grid-template-rows: none !important;
+        grid-template-columns: none !important;
+        grid-auto-flow: dense !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 14px !important;
+        padding: 0 16px 14px 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        scrollbar-width: none !important;
+        scroll-padding-left: 16px !important;
+        scroll-padding-right: 20px !important;
+    }
+
+    html body #home-screen .dense-grid-container::-webkit-scrollbar,
+    html body #home-screen .cinematic-scroll-container::-webkit-scrollbar,
+    html body #home-screen .cover-flow-container::-webkit-scrollbar,
+    html body #home-screen .vinyl-scroll-container::-webkit-scrollbar,
+    html body #home-screen .artist-circle-scroll-container::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Trailing gap spacer so the final card in the row is never clipped by screen edge */
+    html body #home-screen .dense-grid-container::after,
+    html body #home-screen .cinematic-scroll-container::after,
+    html body #home-screen .cover-flow-container::after,
+    html body #home-screen .vinyl-scroll-container::after {
+        content: '' !important;
+        flex: 0 0 8px !important;
+        width: 8px !important;
+        height: 1px !important;
+    }
+
+    /* Dense Cards (#home-because-rows-container): 42vw scroll-snap card */
+    html body #home-screen .dense-card {
+        flex: 0 0 42vw !important;
+        width: 42vw !important;
+        max-width: 175px !important;
+        min-width: 140px !important;
+        height: auto !important;
+        min-height: 0 !important;
+        scroll-snap-align: start !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        cursor: pointer !important;
+        transition: transform 0.15s ease !important;
+    }
+
+    html body #home-screen .dense-card:active {
+        transform: scale(0.96) !important;
+    }
+
+    /* Image on top (aspect-ratio: 1, 12px radius, clean shadow) */
+    html body #home-screen .dense-card-cover {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 1 / 1 !important;
+        border-radius: 12px !important;
+        object-fit: cover !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45) !important;
+        flex-shrink: 0 !important;
+        display: block !important;
+        margin: 0 !important;
+    }
+
+    /* Card Info: text below image */
+    html body #home-screen .dense-card-info {
+        width: 100% !important;
+        margin-top: 8px !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Title: 1-2 line clamp, ellipsis */
+    html body #home-screen .dense-card-title {
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        line-height: 1.25 !important;
+        width: 100% !important;
+        white-space: normal !important;
+        margin: 0 !important;
+    }
+
+    /* Artist: 1 line clamp, muted color */
+    html body #home-screen .dense-card-artist {
+        display: -webkit-box !important;
+        -webkit-line-clamp: 1 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        font-size: 12px !important;
+        font-weight: 400 !important;
+        color: rgba(255, 255, 255, 0.55) !important;
+        line-height: 1.25 !important;
+        margin-top: 2px !important;
+        width: 100% !important;
+        white-space: normal !important;
+    }
+
+    /* Cinematic Cards (#home-taste-mix-section): 42vw portrait card with bottom gradient text */
+    html body #home-screen #home-taste-mix-section .cinematic-card {
+        flex: 0 0 42vw !important;
+        width: 42vw !important;
+        max-width: 175px !important;
+        min-width: 140px !important;
+        height: 220px !important;
+        border-radius: 16px !important;
+        scroll-snap-align: start !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    /* Vinyl peek shelves (#mood-radio-section): 130px card with peek margin */
+    html body #home-screen .vinyl-card {
+        flex: 0 0 130px !important;
+        width: 130px !important;
+        margin-right: 28px !important;
+        scroll-snap-align: start !important;
+        position: relative !important;
+        cursor: pointer !important;
+    }
 }
