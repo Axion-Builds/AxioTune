@@ -246,6 +246,14 @@
        Zero overlap between title, quality line, and star/menu buttons.
        ══════════════════════════════════════════════════════════════ */
 
+    /* Hide top bar completely when full player is active */
+    html body.player-screen-active #top-bar-wrapper,
+    html body.player-screen-active #top-bar {
+        display: none !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+    }
+
     /* Player Screen in Artwork View */
     html body #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) {
         display: flex !important;
@@ -1211,5 +1219,149 @@
     html body .screen {
         padding-bottom: calc(152px + env(safe-area-inset-bottom, 0px)) !important;
         box-sizing: border-box !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       MOBILE PLAYER SCREEN: SWIPE-DOWN HANDLE & BACK / COLLAPSE BUTTON
+       ══════════════════════════════════════════════════════════════ */
+    html body #player-screen #player-collapse-btn,
+    html body #player-screen .player-collapse-btn {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        position: absolute !important;
+        top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+        left: 16px !important;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 9999 !important;
+        cursor: pointer !important;
+        color: #ffffff !important;
+        padding: 0 !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+        transition: transform 0.15s ease, background-color 0.15s ease !important;
+    }
+    html body #player-screen #player-collapse-btn:active {
+        transform: scale(0.9) !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+    }
+    html body #player-screen #player-collapse-btn svg {
+        display: block !important;
+        width: 22px !important;
+        height: 22px !important;
+        stroke: #ffffff !important;
+        stroke-width: 2.5 !important;
+    }
+
+    /* Top Drag Handle Bar on Mobile Full Player */
+    html body #player-screen .mobile-player-drag-handle {
+        display: flex !important;
+        position: absolute !important;
+        top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 90px !important;
+        height: 32px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 9998 !important;
+        cursor: pointer !important;
+        touch-action: none !important;
+        background: transparent !important;
+    }
+    html body #player-screen .mobile-player-drag-handle::after {
+        content: '' !important;
+        display: block !important;
+        width: 42px !important;
+        height: 5px !important;
+        background: rgba(255, 255, 255, 0.5) !important;
+        border-radius: 999px !important;
+        transition: background-color 0.15s ease !important;
+    }
+    html body #player-screen .mobile-player-drag-handle:active::after {
+        background: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    /* Enforce strict hidden-screen isolation on mobile so inactive screens never intercept touches */
+    html body .hidden-screen,
+    html body .hidden-screen * {
+        pointer-events: none !important;
+    }
+    html body .hidden-screen {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       UNIVERSAL MOBILE BACK BUTTONS ON ALL SCREENS & VIEWS
+       Ensures user can always return from albums, artists, playlists,
+       settings, history, and search.
+       ══════════════════════════════════════════════════════════════ */
+    html body .active-screen .screen-back-btn,
+    html body .active-screen #search-back-btn,
+    html body .active-screen #playlist-exit-btn,
+    html body .active-screen .pl-exit-btn,
+    html body .active-screen .settings-header .screen-back-btn,
+    html body .active-screen .screen-header-row .screen-back-btn {
+        display: inline-flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+        transition: transform 0.15s ease, background 0.15s ease !important;
+    }
+    html body .screen-back-btn:active,
+    html body #search-back-btn:active,
+    html body #playlist-exit-btn:active {
+        transform: scale(0.92) !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+    }
+    html body .screen-back-btn svg,
+    html body #search-back-btn svg,
+    html body #playlist-exit-btn svg {
+        width: 20px !important;
+        height: 20px !important;
+        fill: #ffffff !important;
+    }
+
+    /* Fixed Top Back Button on Album and Artist Pages so they never get lost */
+    html body #album-screen .hero-back-btn,
+    html body #artist-screen .hero-back-btn {
+        position: fixed !important;
+        top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
+        left: 16px !important;
+        z-index: 100 !important;
+    }
+
+    /* Playlist full screen header on mobile */
+    html body #playlist-full-screen .playlist-nav {
+        top: 0 !important;
+        padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px 16px !important;
+        background: rgba(10, 10, 10, 0.85) !important;
+        backdrop-filter: blur(25px) !important;
+        -webkit-backdrop-filter: blur(25px) !important;
+        position: sticky !important;
+        z-index: 100 !important;
     }
 }

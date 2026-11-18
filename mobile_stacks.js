@@ -683,9 +683,13 @@
 
     // Initialize when page is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', runStacksAlgorithm);
+        document.addEventListener('DOMContentLoaded', function () {
+            runStacksAlgorithm();
+            initMobilePlayerSwipeDismiss();
+        });
     } else {
         runStacksAlgorithm();
+        initMobilePlayerSwipeDismiss();
     }
 
     // Reactive Refresh when user plays a track or changes music history
@@ -694,4 +698,177 @@
             runStacksAlgorithm();
         }
     });
+
+    // ══════════════════════════════════════════════════════════════
+    // MOBILE FULL PLAYER DRAG-DOWN DISMISS & BACK NAVIGATION ENGINE
+    // Smooth swipe-down gesture to collapse full player into mini player
+    // ══════════════════════════════════════════════════════════════
+    function initMobilePlayerSwipeDismiss() {
+        if (window._mobilePlayerSwipeDismissInitialized) return;
+        window._mobilePlayerSwipeDismissInitialized = true;
+
+        const playerEl = document.getElementById('player-screen');
+        if (!playerEl) return;
+
+        let startY = 0;
+        let startX = 0;
+        let currentY = 0;
+        let startTime = 0;
+        let isDragging = false;
+        let isGestureActive = false;
+
+        function isInteractiveTarget(target) {
+            if (!target) return false;
+            if (target.closest('input, button, select, textarea, a, .scrubber-bar, .player-timeline, .volume-slider, #seek-bar, #progress-bar-container, .slider-thumb, .mch-btn')) {
+                return true;
+            }
+            // If inside lyrics and scrolled down, let user scroll lyrics freely
+            const lyricsScroll = target.closest('#lyrics-scroll-container, .lyrics-container, #lyrics-container');
+            if (lyricsScroll && lyricsScroll.scrollTop > 5) {
+                return true;
+            }
+            return false;
+        }
+
+        let _lastCollapseTime = 0;
+        const _origCollapse = window.collapsePlayerView;
+        window.collapsePlayerView = function () {
+            const now = Date.now();
+            if (now - _lastCollapseTime < 450) return;
+            _lastCollapseTime = now;
+
+            if (typeof _origCollapse === 'function') {
+                _origCollapse();
+            } else if (typeof showHome === 'function') {
+                showHome();
+            }
+        };
+
+        function dismissPlayer() {
+            playerEl.style.transition = 'transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.22s ease, border-radius 0.2s ease';
+            playerEl.style.transform = 'translateY(100%)';
+            playerEl.style.opacity = '0';
+            playerEl.style.borderRadius = '28px';
+
+            setTimeout(function () {
+                playerEl.style.transform = '';
+                playerEl.style.transition = '';
+                playerEl.style.opacity = '';
+                playerEl.style.borderRadius = '';
+
+                window.collapsePlayerView();
+            }, 230);
+        }
+
+        function snapBack() {
+            playerEl.style.transition = 'transform 0.24s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease, border-radius 0.2s ease';
+            playerEl.style.transform = 'translateY(0)';
+            playerEl.style.opacity = '1';
+            playerEl.style.borderRadius = '';
+
+            setTimeout(function () {
+                playerEl.style.transform = '';
+                playerEl.style.transition = '';
+            }, 250);
+        }
+
+        function onTouchStart(e) {
+            if (window.innerWidth > 768) return;
+            // Only active when player screen is open
+            if (!document.body.classList.contains('player-screen-active') && playerEl.classList.contains('hidden-screen')) return;
+
+            const touch = e.touches ? e.touches[0] : e;
+            if (isInteractiveTarget(e.target)) return;
+
+            startY = touch.clientY;
+            startX = touch.clientX;
+            currentY = startY;
+            startTime = Date.now();
+            isDragging = false;
+            isGestureActive = true;
+        }
+
+        function onTouchMove(e) {
+            if (!isGestureActive) return;
+            const touch = e.touches ? e.touches[0] : e;
+            currentY = touch.clientY;
+            const dy = currentY - startY;
+            const dx = touch.clientX - startX;
+
+            // Downward pull dominates horizontal swipe
+            if (dy > 8 && dy > Math.abs(dx) * 1.1) {
+                isDragging = true;
+                if (e.cancelable) e.preventDefault();
+
+                // Apply elastic damping past 240px
+                const translateY = dy < 240 ? dy : 240 + (dy - 240) * 0.35;
+                playerEl.style.transition = 'none';
+                playerEl.style.transform = 'translateY(' + translateY + 'px)';
+                
+                const progress = Math.min(dy / 420, 1);
+                playerEl.style.opacity = '' + (1 - progress * 0.28);
+                playerEl.style.borderRadius = Math.min(30, progress * 30) + 'px';
+            } else if (Math.abs(dx) > Math.abs(dy) && !isDragging) {
+                // Horizontal motion, abort drag-down
+                isGestureActive = false;
+            }
+        }
+
+        function onTouchEnd(e) {
+            if (!isGestureActive) return;
+            isGestureActive = false;
+
+            if (!isDragging) {
+                // If user tapped directly on handle or collapse button
+                if (e.target && e.target.closest('.mobile-player-drag-handle, #player-collapse-btn')) {
+                    dismissPlayer();
+                }
+                return;
+            }
+
+            const dy = currentY - startY;
+            const elapsed = Math.max(1, Date.now() - startTime);
+            const velocity = dy / elapsed; // px per ms
+
+            // Dismiss threshold: dragged > 75px or flick velocity > 0.45 px/ms
+            if (dy > 75 || (velocity > 0.45 && dy > 30)) {
+                dismissPlayer();
+            } else {
+                snapBack();
+            }
+            isDragging = false;
+        }
+
+        // Touch event bindings
+        playerEl.addEventListener('touchstart', onTouchStart, { passive: false });
+        playerEl.addEventListener('touchmove', onTouchMove, { passive: false });
+        playerEl.addEventListener('touchend', onTouchEnd, { passive: true });
+        playerEl.addEventListener('touchcancel', snapBack, { passive: true });
+
+        // Pointer event bindings for testing & pointer devices
+        playerEl.addEventListener('pointerdown', onTouchStart);
+        playerEl.addEventListener('pointermove', onTouchMove);
+        playerEl.addEventListener('pointerup', onTouchEnd);
+        playerEl.addEventListener('pointercancel', snapBack);
+
+        // Global delegation for all back buttons on mobile
+        document.addEventListener('click', function (e) {
+            if (window.innerWidth > 768) return;
+            const btn = e.target.closest('.screen-back-btn, #search-back-btn, #playlist-exit-btn, .pl-exit-btn, #player-collapse-btn, .mobile-player-drag-handle');
+            if (btn) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (btn.id === 'player-collapse-btn' || btn.classList.contains('mobile-player-drag-handle')) {
+                    dismissPlayer();
+                } else if (btn.id === 'playlist-exit-btn' || btn.classList.contains('pl-exit-btn')) {
+                    if (typeof window.exitPlaylistView === 'function') window.exitPlaylistView();
+                    else if (typeof window.goBack === 'function') window.goBack();
+                } else if (typeof window.goBack === 'function') {
+                    window.goBack();
+                } else if (typeof showHome === 'function') {
+                    showHome();
+                }
+            }
+        });
+    }
 })();
