@@ -12176,7 +12176,7 @@ body.focus-screen-active #mini-player {
         pointer-events: none !important;
     }
     #home-screen {
-        padding: 72px 16px 120px 16px !important;
+        padding: 0 0 140px 0 !important;
     }
     .qp-prev-btn, .qp-next-btn {
         display: none !important;
@@ -12483,6 +12483,14 @@ body.white-poster-scrim #player-screen::before {
         background-color: #000000 !important;
     }
 
+    #home-screen {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 0 0 140px 0 !important;
+        background: #000000 !important;
+        overflow-x: hidden !important;
+    }
+
     #player-screen #cinematic-bg,
     #player-screen::before {
         display: none !important;
@@ -12490,23 +12498,35 @@ body.white-poster-scrim #player-screen::before {
         visibility: hidden !important;
     }
 
-    /* 2. Mobile Home Topbar & Profile Avatar (BitChord Header) */
+    /* 2. Mobile Home Topbar & Profile Avatar (BitChord 1:1 Header) */
     .mobile-home-topbar {
+        order: 1 !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: flex-end !important;
+        justify-content: space-between !important;
         width: 100% !important;
-        padding: 4px 16px 0 16px !important;
-        margin-bottom: 4px !important;
+        padding: 12px 18px 8px 18px !important;
         box-sizing: border-box !important;
-        z-index: 10 !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: #000000 !important;
+        z-index: 50 !important;
+    }
+    .mht-logo {
+        display: flex !important;
+        align-items: center !important;
+        cursor: pointer !important;
+        padding: 4px 0 !important;
+    }
+    .mht-logo svg {
+        display: block !important;
     }
     .mht-avatar {
-        width: 36px !important;
-        height: 36px !important;
+        width: 38px !important;
+        height: 38px !important;
         border-radius: 50% !important;
         overflow: hidden !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7) !important;
         cursor: pointer !important;
         flex-shrink: 0 !important;
@@ -12521,7 +12541,203 @@ body.white-poster-scrim #player-screen::before {
         object-fit: cover !important;
     }
 
-    /* 3. Find Your Mood Category Cards */
+    /* 3. Top Picks for You (BitChord Portrait Cards Carousel) */
+    #home-taste-mix-section {
+        order: 2 !important;
+        margin-bottom: 24px !important;
+        padding: 0 !important;
+    }
+    #home-taste-mix-section .section-title {
+        font-size: 0 !important;
+        padding: 8px 18px 10px 18px !important;
+        margin: 0 !important;
+    }
+    #home-taste-mix-section .section-title::before {
+        content: "Top Picks for You" !important;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        display: block !important;
+    }
+    #home-taste-mix-section .ai-mix-badge {
+        display: none !important;
+    }
+    #home-taste-mix-container {
+        display: flex !important;
+        gap: 14px !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 4px 18px 14px 18px !important;
+        box-sizing: border-box !important;
+        scrollbar-width: none !important;
+    }
+    #home-taste-mix-container::-webkit-scrollbar {
+        display: none !important;
+    }
+    #home-taste-mix-section .cinematic-card {
+        flex: 0 0 160px !important;
+        width: 160px !important;
+        height: 225px !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+        position: relative !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+        scroll-snap-align: start !important;
+        display: block !important;
+    }
+    #home-taste-mix-section .cinematic-poster-wrap {
+        width: 100% !important;
+        height: 100% !important;
+        position: absolute !important;
+        inset: 0 !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+    }
+    #home-taste-mix-section .cinematic-card-img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 20px !important;
+    }
+    #home-taste-mix-section .cinematic-card-play {
+        display: none !important;
+    }
+    #home-taste-mix-section .cinematic-card-meta {
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 12px 10px !important;
+        background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 55%, transparent 100%) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        box-sizing: border-box !important;
+        border-radius: 0 0 20px 20px !important;
+        z-index: 2 !important;
+    }
+    #home-taste-mix-section .cinematic-card-artist {
+        font-size: 11.5px !important;
+        font-weight: 500 !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        order: 1 !important;
+    }
+    #home-taste-mix-section .cinematic-card-title-row {
+        order: 2 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        margin-top: 2px !important;
+    }
+    #home-taste-mix-section .cinematic-card-title {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    #home-taste-mix-section .cinematic-card-more {
+        display: none !important;
+    }
+
+    /* 4. Recents Section (BitChord Vertical Track List) */
+    #jump-back-in-section {
+        order: 3 !important;
+        margin-bottom: 24px !important;
+    }
+    #jump-back-in-section .section-title {
+        font-size: 0 !important;
+        padding: 14px 18px 8px 18px !important;
+        margin: 0 !important;
+    }
+    #jump-back-in-section .section-title::before {
+        content: "Recents" !important;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        display: block !important;
+    }
+    #home-top-artists-section { order: 4 !important; }
+    #find-your-mood-section { order: 5 !important; }
+    #mood-radio-section { order: 6 !important; }
+    #dynamic-sections { order: 7 !important; }
+    #axio-site-footer { order: 8 !important; }
+    #jump-back-in-section .jump-back-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: visible !important;
+        padding: 0 16px !important;
+        gap: 8px !important;
+    }
+    #jump-back-in-section .jump-back-slide {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    #jump-back-in-section .art-grid-card {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        width: 100% !important;
+        height: 58px !important;
+        padding: 6px 8px !important;
+        box-sizing: border-box !important;
+        border-radius: 12px !important;
+        background: transparent !important;
+        gap: 14px !important;
+    }
+    #jump-back-in-section .art-grid-card img {
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 8px !important;
+        object-fit: cover !important;
+        flex-shrink: 0 !important;
+    }
+    #jump-back-in-section .art-grid-overlay {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+        background: transparent !important;
+        padding: 0 !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        opacity: 1 !important;
+    }
+    #jump-back-in-section .art-grid-play-btn {
+        display: none !important;
+    }
+    #jump-back-in-section .art-grid-title {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        width: 100% !important;
+    }
+    #jump-back-in-section .art-grid-artist {
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        width: 100% !important;
+        margin-top: 2px !important;
+    }
+    #jump-back-in-section .carousel-dots {
+        display: none !important;
+    }
+
+    /* 5. Find Your Mood Category Cards */
     .mood-cards-carousel {
         display: flex !important;
         gap: 14px !important;
@@ -12576,12 +12792,13 @@ body.white-poster-scrim #player-screen::before {
         color: #ffffff !important;
     }
 
-    /* 4. Base Player Screen on Mobile */
+    /* 6. Base Player Screen on Mobile */
     #player-screen {
         position: fixed !important;
         inset: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
+        height: 100dvh !important;
         background: #000000 !important;
         z-index: 100000 !important;
         display: flex !important;
@@ -12601,16 +12818,19 @@ body.white-poster-scrim #player-screen::before {
         pointer-events: none !important;
     }
 
-    /* Top Drag Handle (Dismiss Handle) */
+    /* Top Drag Handle (Dismiss Handle) placed over top of poster */
     .mobile-player-drag-handle {
+        position: absolute !important;
+        top: 10px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
         width: 38px !important;
-        height: 4.5px !important;
-        background: rgba(255, 255, 255, 0.35) !important;
+        height: 4px !important;
+        background: rgba(255, 255, 255, 0.45) !important;
         border-radius: 999px !important;
-        margin: 10px auto 4px auto !important;
+        z-index: 100 !important;
+        margin: 0 !important;
         cursor: pointer !important;
-        flex-shrink: 0 !important;
-        z-index: 10 !important;
     }
 
     /* Compact Header (Shared by Lyrics and Queue modes) */
@@ -12685,82 +12905,101 @@ body.white-poster-scrim #player-screen::before {
     }
 
     /* ══════════════════════════════════════════════════════
-       MODE A: COVER ART VIEW (Mobile Default)
+       MODE A: FULL-SCREEN POSTER VIEW (BitChord 1:1 Spec)
        ══════════════════════════════════════════════════════ */
-    #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .mobile-compact-header {
-        display: none !important;
-    }
-    #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #left-panel {
+    #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) {
+        height: 100vh !important;
+        height: 100dvh !important;
+        width: 100vw !important;
+        position: fixed !important;
+        inset: 0 !important;
+        background: #000000 !important;
+        overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        gap: 12px !important;
-        width: 100% !important;
-        height: calc(100% - 24px) !important;
-        min-height: 0 !important;
-        padding: 8px 20px 20px 20px !important;
-        box-sizing: border-box !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        position: relative !important;
+    }
+    #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) .mobile-compact-header {
+        display: none !important;
     }
     #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #right-panel {
         display: none !important;
     }
 
-    /* Cover Art & Specs */
-    #cover-wrapper {
-        position: relative !important;
-        top: auto !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        width: min(78vw, 320px) !important;
-        height: auto !important;
+    #player-screen:not(.mobile-lyrics-active):not(.mobile-queue-active) #left-panel {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        margin: 6px auto 4px auto !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        position: relative !important;
+    }
+
+    /* Full Width Top Poster with soft bottom gradient mask */
+    #cover-wrapper {
+        position: relative !important;
+        width: 100% !important;
+        height: 44vh !important;
+        min-height: 270px !important;
+        max-height: 410px !important;
+        margin: 0 !important;
+        padding: 0 !important;
         flex-shrink: 0 !important;
-        border-radius: 24px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        overflow: hidden !important;
+        border-radius: 0 !important;
         box-shadow: none !important;
-        overflow: visible !important;
     }
     #cover-art-container {
-        width: min(78vw, 320px) !important;
-        height: min(78vw, 320px) !important;
-        aspect-ratio: 1 / 1 !important;
-        border-radius: 24px !important;
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0 !important;
         overflow: hidden !important;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85) !important;
         position: relative !important;
-        flex-shrink: 0 !important;
+        box-shadow: none !important;
+        -webkit-mask-image: linear-gradient(to bottom, #000000 0%, #000000 68%, transparent 100%) !important;
+        mask-image: linear-gradient(to bottom, #000000 0%, #000000 68%, transparent 100%) !important;
     }
-    #cover-art {
+    #cover-art,
+    #default-cover-icon {
         width: 100% !important;
         height: 100% !important;
         object-fit: cover !important;
-        border-radius: 24px !important;
+        object-position: center !important;
+        border-radius: 0 !important;
     }
     .mobile-audio-specs {
+        position: absolute !important;
+        bottom: 6px !important;
+        left: 0 !important;
+        right: 0 !important;
+        margin: 0 auto !important;
         font-size: 11px !important;
         font-weight: 500 !important;
-        color: rgba(255, 255, 255, 0.45) !important;
-        letter-spacing: 0.5px !important;
-        margin-top: 8px !important;
+        color: rgba(255, 255, 255, 0.48) !important;
+        letter-spacing: 0.6px !important;
         text-align: center !important;
+        z-index: 10 !important;
     }
 
-    /* Track Metadata Row */
+    /* Track Metadata & Controls Area */
     #player-controls {
         width: 100% !important;
-        max-width: min(88vw, 380px) !important;
-        margin: 0 auto !important;
+        max-width: 100% !important;
+        flex: 1 !important;
+        padding: 4px 24px 16px 24px !important;
+        box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
-        gap: 8px !important;
-        flex-shrink: 0 !important;
+        justify-content: space-evenly !important;
+        margin: 0 !important;
     }
     #track-title-row {
         display: flex !important;
@@ -12774,13 +13013,27 @@ body.white-poster-scrim #player-screen::before {
         min-width: 0 !important;
         overflow: hidden !important;
     }
+    .player-explicit-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        color: #ffffff !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 3px !important;
+        flex-shrink: 0 !important;
+    }
     #track-title {
-        font-size: 22px !important;
-        font-weight: 800 !important;
+        font-size: 21px !important;
+        font-weight: 700 !important;
         color: #ffffff !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        letter-spacing: -0.3px !important;
         text-shadow: none !important;
     }
     #track-artist {
@@ -12791,19 +13044,20 @@ body.white-poster-scrim #player-screen::before {
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         text-shadow: none !important;
-        margin-top: 2px !important;
+        margin-top: 3px !important;
     }
     .track-actions-right {
         display: flex !important;
         align-items: center !important;
-        gap: 8px !important;
+        gap: 10px !important;
         flex-shrink: 0 !important;
     }
-    .player-star-btn, #player-more-btn {
-        width: 38px !important;
-        height: 38px !important;
+    .player-star-btn,
+    #player-more-btn {
+        width: 40px !important;
+        height: 40px !important;
         border-radius: 50% !important;
-        background: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
         border: none !important;
         color: #ffffff !important;
         display: flex !important;
@@ -12811,6 +13065,11 @@ body.white-poster-scrim #player-screen::before {
         justify-content: center !important;
         cursor: pointer !important;
         padding: 0 !important;
+        transition: transform 0.15s ease !important;
+    }
+    .player-star-btn:active,
+    #player-more-btn:active {
+        transform: scale(0.92) !important;
     }
     .player-star-btn svg {
         stroke: #ffffff !important;
@@ -12820,40 +13079,49 @@ body.white-poster-scrim #player-screen::before {
         stroke: #ffd700 !important;
     }
 
-    /* Lyric Teaser Line (BitChord Spec) */
+    /* Lyric Teaser Line */
     .player-lyric-teaser {
         display: flex !important;
         align-items: center !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
         width: 100% !important;
-        padding: 4px 6px !important;
+        padding: 4px 0 !important;
+        margin: 2px 0 6px 0 !important;
         cursor: pointer !important;
         border-radius: 8px !important;
         box-sizing: border-box !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+    .player-lyric-teaser-icon {
+        font-size: 14px !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        flex-shrink: 0 !important;
     }
     #player-lyric-teaser-text {
         font-size: 14px !important;
         font-weight: 500 !important;
-        color: rgba(255, 255, 255, 0.55) !important;
+        color: rgba(255, 255, 255, 0.6) !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        flex: 1 !important;
     }
     .player-lyric-teaser-arrow {
-        font-size: 18px !important;
-        color: rgba(255, 255, 255, 0.45) !important;
-        margin-left: 8px !important;
+        font-size: 16px !important;
+        color: rgba(255, 255, 255, 0.4) !important;
+        flex-shrink: 0 !important;
     }
 
-    /* Scrubber Progress & High Quality Badge */
+    /* Scrubber Progress */
     #progress-container {
         width: 100% !important;
-        height: 4.5px !important;
+        height: 4px !important;
         background: rgba(255, 255, 255, 0.18) !important;
         border-radius: 999px !important;
         cursor: pointer !important;
         position: relative !important;
-        margin-top: 4px !important;
+        margin: 6px 0 !important;
     }
     #progress-bar {
         height: 100% !important;
@@ -12864,16 +13132,14 @@ body.white-poster-scrim #player-screen::before {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        font-size: 11.5px !important;
-        color: rgba(255, 255, 255, 0.45) !important;
+        font-size: 12px !important;
+        color: rgba(255, 255, 255, 0.5) !important;
         font-weight: 500 !important;
         width: 100% !important;
-        margin-top: 3px !important;
+        margin-top: 2px !important;
     }
     .player-quality-pill {
-        font-size: 11px !important;
-        color: rgba(255, 255, 255, 0.45) !important;
-        font-weight: 500 !important;
+        display: none !important;
     }
 
     /* Playback Buttons */
@@ -12895,8 +13161,8 @@ body.white-poster-scrim #player-screen::before {
         padding: 0 !important;
     }
     #play-pause-btn svg {
-        width: 52px !important;
-        height: 52px !important;
+        width: 48px !important;
+        height: 48px !important;
         fill: #ffffff !important;
     }
     #prev-btn, #next-btn {
@@ -12907,8 +13173,8 @@ body.white-poster-scrim #player-screen::before {
         padding: 0 !important;
     }
     #prev-btn svg, #next-btn svg {
-        width: 36px !important;
-        height: 36px !important;
+        width: 34px !important;
+        height: 34px !important;
         fill: #ffffff !important;
     }
 
@@ -12918,13 +13184,13 @@ body.white-poster-scrim #player-screen::before {
         align-items: center !important;
         justify-content: space-around !important;
         width: 100% !important;
-        margin-top: 4px !important;
+        margin-top: 2px !important;
         position: relative !important;
     }
     .player-utility-btn {
         background: transparent !important;
         border: none !important;
-        color: rgba(255, 255, 255, 0.45) !important;
+        color: rgba(255, 255, 255, 0.5) !important;
         cursor: pointer !important;
         padding: 8px !important;
         border-radius: 50% !important;
@@ -12935,6 +13201,8 @@ body.white-poster-scrim #player-screen::before {
     }
     .player-utility-btn svg {
         fill: currentColor !important;
+        width: 22px !important;
+        height: 22px !important;
     }
     .player-utility-btn.active {
         color: #ffffff !important;

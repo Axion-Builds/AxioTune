@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=345">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=346">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet">
@@ -1774,7 +1774,13 @@
     <div id="home-screen" class="screen-view active-screen">
         <!-- Mobile Profile Avatar Bar (BitChord Header) -->
         <div id="mobile-home-topbar" class="mobile-home-topbar">
-            <div class="mht-spacer"></div>
+            <div class="mht-logo" onclick="window.location.reload();" title="AxioTune">
+                <svg width="34" height="26" viewBox="0 0 34 26" fill="none">
+                    <path d="M4 5C11 1.5 23 1.5 30 5" stroke="white" stroke-width="3.2" stroke-linecap="round"/>
+                    <path d="M4 13C11 9.5 23 9.5 30 13" stroke="white" stroke-width="3.2" stroke-linecap="round"/>
+                    <path d="M4 21C11 17.5 23 17.5 30 21" stroke="white" stroke-width="3.2" stroke-linecap="round"/>
+                </svg>
+            </div>
             <div class="mht-avatar" onclick="if(typeof showSettings==='function') showSettings();" title="Account / Settings">
                 <img src="character_clean.webp" alt="Avatar" onerror="this.src='default_cover.jpg';">
             </div>
@@ -2087,7 +2093,10 @@
                 <div id="track-info">
                     <div id="track-title-row">
                         <div class="track-text-group">
-                            <div id="track-title">AxioTune</div>
+                            <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                                <span id="player-explicit-badge" class="player-explicit-badge" style="display:none;">E</span>
+                                <div id="track-title">AxioTune</div>
+                            </div>
                             <div id="track-artist">Ready to stream</div>
                         </div>
                         <div class="track-actions-right">
@@ -2107,6 +2116,7 @@
 
                 <!-- Tappable Lyric Teaser Row (Direct Portal to Lyrics) -->
                 <div id="player-lyric-teaser" class="player-lyric-teaser" onclick="if(typeof switchPlayerRightPanelView==='function') switchPlayerRightPanelView('lyrics');">
+                    <span class="player-lyric-teaser-icon" style="font-size:14px; margin-right:4px;">♫</span>
                     <span id="player-lyric-teaser-text">Hit the road, I'm taking off with you</span>
                     <span class="player-lyric-teaser-arrow">›</span>
                 </div>
@@ -3556,7 +3566,7 @@
     </nav>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=330"></script>
+    <script src="app_v3.js?v=331"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

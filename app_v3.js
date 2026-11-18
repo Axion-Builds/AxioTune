@@ -825,6 +825,7 @@ function onPlayerStateChange(event) {
 
         // ── TOAST NOTIFICATION ──
         function showToast(msg) {
+            if (window.innerWidth <= 768 && (msg.includes('Lyrics Active') || msg.includes('YouTube Official'))) return;
             let t = document.getElementById('toast-notif');
             if (!t) {
                 t = document.createElement('div');
@@ -4639,6 +4640,11 @@ function onPlayerStateChange(event) {
             coverArt.src = hdThumb;
             miniCover.src = smallThumb;
             syncBitChordMobileHeader(song.title, song.artist, smallThumb);
+            const expBadge = document.getElementById('player-explicit-badge');
+            if (expBadge) {
+                const isExp = Boolean(song.isExplicit || song.explicit || /\b(explicit|dirty|uncensored)\b/i.test(song.title));
+                expBadge.style.display = isExp ? 'inline-flex' : 'none';
+            }
             if (typeof updateDynamicColors === 'function') {
                 updateDynamicColors();
             }
@@ -4812,7 +4818,13 @@ function onPlayerStateChange(event) {
                     
                     const smallThumb = resolveYtThumb(songData.thumbnail, 'small');
                     miniCover.src = smallThumb;
-            syncBitChordMobileHeader(song.title, song.artist, smallThumb);
+                    syncBitChordMobileHeader(songData.title, songData.uploader || songData.artist || '', smallThumb);
+
+                    const expBadge = document.getElementById('player-explicit-badge');
+                    if (expBadge) {
+                        const isExp = Boolean(songData.isExplicit || songData.explicit || /\b(explicit|dirty|uncensored)\b/i.test(songData.title));
+                        expBadge.style.display = isExp ? 'inline-flex' : 'none';
+                    }
                     
                     const bgImg = new Image();
                     bgImg.crossOrigin = 'Anonymous';
@@ -4898,12 +4910,14 @@ function onPlayerStateChange(event) {
                     populateQueue(songData.videoId || songData.id || currentVideoId, true, songData.title, songData.uploader || songData.artist || '');
                 }
 
-                // Instant Player Badge
-                const badge = document.createElement('div');
-                badge.style.cssText = 'position:fixed;top:20px;right:80px;background:rgba(var(--accent-rgb),0.85);color:white;padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;z-index:9999;backdrop-filter:blur(10px);transition:opacity 1s;';
-                badge.textContent = '⚡ YouTube Official Player';
-                document.body.appendChild(badge);
-                setTimeout(() => { badge.style.opacity = '0'; setTimeout(() => badge.remove(), 1000); }, 3000);
+                // Instant Player Badge (Desktop Only)
+                if (window.innerWidth > 768) {
+                    const badge = document.createElement('div');
+                    badge.style.cssText = 'position:fixed;top:20px;right:80px;background:rgba(var(--accent-rgb),0.85);color:white;padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;z-index:9999;backdrop-filter:blur(10px);transition:opacity 1s;';
+                    badge.textContent = '⚡ YouTube Official Player';
+                    document.body.appendChild(badge);
+                    setTimeout(() => { badge.style.opacity = '0'; setTimeout(() => badge.remove(), 1000); }, 3000);
+                }
 
                 // STEP 3: Now process lyrics via Word-by-Word Priority + YT Fallback Pipeline
                 fetchLyricsForQueueSong(cleanTitle, cleanArtist, songData.id || songData.videoId);
