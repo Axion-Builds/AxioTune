@@ -36,7 +36,7 @@
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
-    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=346">
+    <link rel="stylesheet" href="style_mobile_fix_v4.css?v=347">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Pacifico&family=Bebas+Neue&family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Permanent+Marker&family=Abril+Fatface&family=Bungee&family=Oswald:wght@700&display=swap" rel="stylesheet">
@@ -1817,8 +1817,8 @@
                     <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                 </button>
                 <div id="download-dropdown-menu" class="hidden-dropdown">
-                    <button id="pwa-install-btn" onclick="installPWA()">💻 Install for Desktop</button>
-                    <button onclick="showMobileInstallAlert()">📱 Get Mobile App</button>
+                    <button id="pwa-install-btn" onclick="installPWA()">Install for Desktop</button>
+                    <button onclick="showMobileInstallAlert()">Get Mobile App</button>
                 </div>
             </div>
             <button id="home-settings-btn" title="Settings" onclick="if(typeof showSettings === 'function') showSettings(); else if(window.showSettings) window.showSettings();" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); width: 44px; height: 44px; border-radius: 50%; color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='white'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='rgba(255,255,255,0.6)'; this.style.transform='scale(1)';">
@@ -1829,12 +1829,12 @@
 
 
 
-        <!-- ⚡ Quick Picks Section (3D Cover Flow) -->
+        <!-- Quick Picks Section (3D Cover Flow) -->
         <div class="home-section" id="home-quick-picks-section" style="display:none; margin-bottom:36px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding: 0 4px;">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <h2 class="section-title" id="home-quick-picks-title" style="margin:0;">⚡ Quick Picks</h2>
-                    <span class="ai-mix-badge" style="font-size:0.72rem; padding:3px 10px; border-radius:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:#FFFFFF;"><span class="ai-sparkle">✦</span> Cover Flow</span>
+                    <h2 class="section-title" id="home-quick-picks-title" style="margin:0;">Quick Picks</h2>
+                    <span class="ai-mix-badge" style="font-size:0.72rem; padding:3px 10px; border-radius:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:#FFFFFF;">Cover Flow</span>
                 </div>
                 <div class="qp-header-actions" style="display:flex; align-items:center; gap:8px;">
                     <button type="button" class="qp-nav-btn qp-prev-btn" onclick="window.scrollQuickPicks(-1)" title="Previous card" aria-label="Previous card">
@@ -1852,7 +1852,7 @@
         </div>
 
         <div class="home-section" id="jump-back-in-section" style="display:none;">
-            <h2 class="section-title">Jump Back In</h2>
+            <h2 class="section-title">Recents</h2>
             <div class="art-grid-container" id="jump-back-in-container">
                 <!-- Populated from History -->
             </div>
@@ -1861,8 +1861,8 @@
         <!-- Your Taste Mix -->
         <div class="home-section" id="home-taste-mix-section" style="display:none; margin-bottom:44px;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
-                <h2 class="section-title" style="margin:0;">Your Taste Mix</h2>
-                <span class="ai-mix-badge"><span class="ai-sparkle">✦</span> AI Mix</span>
+                <h2 class="section-title" style="margin:0;">Top Picks for You</h2>
+                <span class="ai-mix-badge">AI Mix</span>
             </div>
             <div class="cinematic-scroll-container" id="home-taste-mix-container"></div>
         </div>
@@ -1870,17 +1870,17 @@
         <!-- Dynamic Because You Listened To Rows -->
         <div id="home-because-rows-container"></div>
 
-        <!-- 🎙️ ARTISTS & FOLLOWED TALENT ROW -->
+        <!-- ARTISTS & FOLLOWED TALENT ROW -->
         <div class="home-section" id="home-top-artists-section" style="margin-bottom:38px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h2 class="section-title" style="margin:0;">🎙️ Followed & Favorite Artists</h2>
+                <h2 class="section-title" style="margin:0;">Followed &amp; Favorite Artists</h2>
             </div>
             <div class="artist-circle-scroll-container" id="home-top-artists-container">
                 <!-- Populated dynamically by JS -->
             </div>
         </div>
 
-        <!-- 🎨 BitChord "Find Your Mood" Category Cards -->
+        <!-- BitChord "Find Your Mood" Category Cards -->
         <div class="home-section" id="find-your-mood-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding:0 4px;">
                 <h2 class="section-title" style="margin:0;">Find Your Mood</h2>
@@ -1909,16 +1909,16 @@
         </div>
 
         <div class="home-section" id="mood-radio-section">
-            <h2 class="section-title">🎧 Mood Radio</h2>
+            <h2 class="section-title">Mood Radio</h2>
             <div class="mood-chips-row">
-                <button class="mood-chip" data-mood="Party">🎉 Party</button>
-                <button class="mood-chip" data-mood="Lofi Study">📚 Lofi Study</button>
-                <button class="mood-chip" data-mood="Workout">💪 Workout</button>
-                <button class="mood-chip" data-mood="Romantic">💜 Romantic</button>
-                <button class="mood-chip" data-mood="Sad">🌧️ Sad</button>
-                <button class="mood-chip" data-mood="Chill">😌 Chill</button>
-                <button class="mood-chip" data-mood="Desi Hits">🇮🇳 Desi Hits</button>
-                <button class="mood-chip" data-mood="Sleep">🌙 Sleep</button>
+                <button class="mood-chip" data-mood="Party">Party</button>
+                <button class="mood-chip" data-mood="Lofi Study">Lofi Study</button>
+                <button class="mood-chip" data-mood="Workout">Workout</button>
+                <button class="mood-chip" data-mood="Romantic">Romantic</button>
+                <button class="mood-chip" data-mood="Sad">Sad</button>
+                <button class="mood-chip" data-mood="Chill">Chill</button>
+                <button class="mood-chip" data-mood="Desi Hits">Desi Hits</button>
+                <button class="mood-chip" data-mood="Sleep">Sleep</button>
             </div>
             <div class="vinyl-scroll-container" id="mood-radio-container"></div>
         </div>
@@ -2930,11 +2930,11 @@
             </div>
             <!-- Category Tabs -->
             <div id="search-category-tabs">
-                <button class="sr-tab active" data-cat="all">✨ All</button>
-                <button class="sr-tab" data-cat="song">🎵 Songs</button>
-                <button class="sr-tab" data-cat="video">🎬 Videos</button>
-                <button class="sr-tab" data-cat="album">💿 Albums</button>
-                <button class="sr-tab" data-cat="artist">🎤 Artists</button>
+                <button class="sr-tab active" data-cat="all">All</button>
+                <button class="sr-tab" data-cat="song">Songs</button>
+                <button class="sr-tab" data-cat="video">Videos</button>
+                <button class="sr-tab" data-cat="album">Albums</button>
+                <button class="sr-tab" data-cat="artist">Artists</button>
             </div>
             <!-- Results Grid -->
             <div id="search-results-body">
@@ -3566,7 +3566,7 @@
     </nav>
 
     <script src="kawarp.js?v=252"></script>
-    <script src="app_v3.js?v=331"></script>
+    <script src="app_v3.js?v=332"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

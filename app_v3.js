@@ -6765,7 +6765,11 @@ function onPlayerStateChange(event) {
             // If no history items yet, load trending tracks into Taste Mix as a starter AI Mix
             if (valid.length === 0) {
                 if (!window._tasteMixCache || window._tasteMixCache.length === 0) {
-                    container.innerHTML = '<div class="empty-state" style="padding:24px;">' + TERMINAL_LOADER_HTML + '</div>';
+                    if (window.innerWidth <= 768) {
+                        container.innerHTML = '<div class="cinematic-card skeleton-card" style="width:160px;height:225px;border-radius:20px;background:rgba(255,255,255,0.06);flex-shrink:0;"></div><div class="cinematic-card skeleton-card" style="width:160px;height:225px;border-radius:20px;background:rgba(255,255,255,0.06);flex-shrink:0;"></div>';
+                    } else {
+                        container.innerHTML = '<div class="empty-state" style="padding:24px;">' + TERMINAL_LOADER_HTML + '</div>';
+                    }
                 }
                 try {
                     const trendRes = await fetch('/api/trending');
@@ -7013,6 +7017,10 @@ function onPlayerStateChange(event) {
         async function populateBecauseRows(historyItems) {
             const rowsContainer = document.getElementById('home-because-rows-container');
             if (!rowsContainer || !historyItems || historyItems.length === 0) return;
+            if (window.innerWidth <= 768) {
+                rowsContainer.innerHTML = '';
+                return;
+            }
 
             const myToken = ++becauseRowsToken;
             const validHistory = historyItems.filter(h => h && (h.videoId || h.id || h.title));
