@@ -28,22 +28,22 @@
             <div class="ax-sec"><div class="ax-head"><small>Your shelf</small><b>Record spines</b></div><div id="ax-spines"></div></div>
             <div class="ax-sec"><div class="ax-head"><small>Pick up where you left</small><b>Arc carousel</b></div><div id="ax-arc"></div></div>
             <div class="ax-sec"><div class="ax-hb"><em>05</em><b>Coverflow</b><small>3D flip through albums</small></div><div id="ax-flow"></div></div>
-            <div class="ax-sec"><div class="ax-hc"><div class="ax-cover" style="--c:#9A8CE0"></div><div><small>Because you listened to</small><b>Wide Awake</b></div></div><div id="ax-pile"></div></div>
+            <div class="ax-sec"><div class="ax-hc"><div class="ax-cover" style="--c:#9A8CE0; background-image: url('cover_wide_awake.jpg') !important;"></div><div><small>Because you listened to</small><b>Wide Awake</b></div></div><div id="ax-pile"></div></div>
             <div class="ax-sec"><div class="ax-hd"><b>Vinyl peek</b><a href="javascript:void(0)" onclick="document.getElementById('mood-radio-section')?.scrollIntoView({behavior:'smooth'})">See all</a></div><div id="ax-vinyl"></div></div>
             <div class="ax-sec"><div class="ax-head"><small>Discover</small><b>Marquee rows</b></div><div id="ax-mq"></div></div>
             <div class="ax-sec"><div class="ax-hd"><b>Top 8 this week</b><a href="javascript:void(0)">See all</a></div><div id="ax-chart"></div></div>
         `;
 
-        // Curated Songs Data
+        // Curated Songs with High-Res Posters & Cohesive Fallback Tints
         const SONGS = [
-            { id: 'track_1', t: 'Dracula', a: 'Tame Impala ft. JENNIE', c: '#E8745B', img: 'default_cover.jpg' },
-            { id: 'track_2', t: 'Wide Awake', a: 'Katy Perry', c: '#9A8CE0', img: 'default_cover.jpg' },
-            { id: 'track_3', t: 'Harleys In Hawaii', a: 'Katy Perry', c: '#D9A86C', img: 'default_cover.jpg' },
-            { id: 'track_4', t: '34+35', a: 'Ariana Grande', c: '#4FB3A3', img: 'default_cover.jpg' },
-            { id: 'track_5', t: 'positions', a: 'Ariana Grande', c: '#E58AA8', img: 'default_cover.jpg' },
-            { id: 'track_6', t: 'Attention', a: 'Charlie Puth', c: '#F3E9DB', img: 'default_cover.jpg' },
-            { id: 'track_7', t: 'Something About You', a: 'Eyedress, Dent May', c: '#7FA8E8', img: 'default_cover.jpg' },
-            { id: 'track_8', t: 'Tip Toe', a: 'HYBS', c: '#C7B37A', img: 'default_cover.jpg' }
+            { id: 'track_1', t: 'Dracula', a: 'Tame Impala ft. JENNIE', c: '#E8745B', img: 'cover_dracula.jpg' },
+            { id: 'track_2', t: 'Wide Awake', a: 'Katy Perry', c: '#9A8CE0', img: 'cover_wide_awake.jpg' },
+            { id: 'track_3', t: 'Harleys In Hawaii', a: 'Katy Perry', c: '#D9A86C', img: 'cover_harleys.jpg' },
+            { id: 'track_4', t: '34+35', a: 'Ariana Grande', c: '#4FB3A3', img: 'cover_34_35.jpg' },
+            { id: 'track_5', t: 'positions', a: 'Ariana Grande', c: '#E58AA8', img: 'cover_positions.jpg' },
+            { id: 'track_6', t: 'Attention', a: 'Charlie Puth', c: '#F3E9DB', img: 'cover_attention.jpg' },
+            { id: 'track_7', t: 'Starboy', a: 'The Weeknd ft. Daft Punk', c: '#7FA8E8', img: 'cover_starboy.jpg' },
+            { id: 'track_8', t: 'Something About You', a: 'Eyedress, Dent May', c: '#C7B37A', img: 'cover_something_about_you.jpg' }
         ];
 
         // Play handler: Dispatches to AxioTune player
@@ -67,7 +67,7 @@
             d.className = 'ax-cover ' + (cls || '');
             d.style.setProperty('--c', s.c || '#444');
             if (s.img) {
-                d.style.backgroundImage = 'url("' + s.img + '")';
+                d.style.setProperty('background-image', 'url("' + s.img + '")', 'important');
             }
             return d;
         };
@@ -76,12 +76,13 @@
             return Math.max(a, Math.min(b, v));
         };
 
-        // ── Deck Engine (Fan, Arc, Coverflow) ──
+        // ── High-Precision Gesture Deck Engine (Fan, Arc, Coverflow) ──
+        // Seamlessly differentiates vertical scrolling from horizontal swipe
         function deck(root, songs, layout, options) {
             if (!root) return;
             options = options || {};
-            const w = options.w || 150;
-            const h = options.h || 230;
+            const w = options.w || 168;
+            const h = options.h || 250;
             const cls = options.cls || '';
 
             root.className = 'ax-deck ' + cls;
@@ -133,60 +134,109 @@
                 label();
             }
 
-            let sx = 0, drag = false, moved = false;
-            root.addEventListener('pointerdown', function (e) {
-                sx = e.clientX;
-                drag = true;
-                moved = false;
-                cards.forEach(function (c) { c.classList.add('drag'); });
-                root.setPointerCapture(e.pointerId);
-            });
+            let startX = 0, startY = 0;
+            let isDragging = false;
+            let gestureLocked = false;
+            let isHorizontalSwipe = false;
+            let currentDx = 0;
 
-            root.addEventListener('pointermove', function (e) {
-                if (!drag) return;
-                const dx = e.clientX - sx;
-                if (Math.abs(dx) > 6) moved = true;
-                paint(dx);
-            });
+            function onPointerDown(e) {
+                startX = e.clientX;
+                startY = e.clientY;
+                currentDx = 0;
+                isDragging = true;
+                gestureLocked = false;
+                isHorizontalSwipe = false;
+            }
 
-            const end = function (e) {
-                if (!drag) return;
-                drag = false;
-                cards.forEach(function (c) { c.classList.remove('drag'); });
-                const dx = e.clientX - sx;
-                if (dx < -45) go(cur + 1);
-                else if (dx > 45) go(cur - 1);
-                else {
-                    paint();
-                    if (!moved) {
-                        const el = document.elementFromPoint(e.clientX, e.clientY);
-                        const i = cards.findIndex(function (c) { return c.contains(el); });
-                        if (i === cur) onPlay(songs[cur]);
-                        else if (i > -1) go(i);
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                if (!gestureLocked) {
+                    // Check gesture direction threshold
+                    if (Math.abs(dy) > 7 && Math.abs(dy) > Math.abs(dx)) {
+                        // User is scrolling the page vertically! Cancel deck drag immediately
+                        isDragging = false;
+                        gestureLocked = true;
+                        cards.forEach(function (c) { c.classList.remove('drag'); });
+                        return;
+                    } else if (Math.abs(dx) > 7 && Math.abs(dx) >= Math.abs(dy)) {
+                        // User is swiping the deck horizontally! Lock horizontal gesture
+                        gestureLocked = true;
+                        isHorizontalSwipe = true;
+                        try {
+                            if (root.setPointerCapture) root.setPointerCapture(e.pointerId);
+                        } catch (err) {}
+                        cards.forEach(function (c) { c.classList.add('drag'); });
                     }
                 }
-            };
 
-            root.addEventListener('pointerup', end);
-            root.addEventListener('pointercancel', end);
+                if (isHorizontalSwipe) {
+                    currentDx = dx;
+                    paint(dx);
+                }
+            }
+
+            function onPointerUp(e) {
+                if (!isDragging && !isHorizontalSwipe) return;
+
+                cards.forEach(function (c) { c.classList.remove('drag'); });
+                try {
+                    if (root.hasPointerCapture && root.hasPointerCapture(e.pointerId)) {
+                        root.releasePointerCapture(e.pointerId);
+                    }
+                } catch (err) {}
+
+                if (isHorizontalSwipe) {
+                    if (currentDx < -35) {
+                        go(cur + 1);
+                    } else if (currentDx > 35) {
+                        go(cur - 1);
+                    } else {
+                        paint(0);
+                    }
+                } else {
+                    // It was a tap!
+                    const el = document.elementFromPoint(e.clientX, e.clientY);
+                    const i = cards.findIndex(function (c) { return c.contains(el); });
+                    if (i === cur) {
+                        onPlay(songs[cur]);
+                    } else if (i > -1) {
+                        go(i);
+                    }
+                }
+
+                isDragging = false;
+                isHorizontalSwipe = false;
+                gestureLocked = false;
+                currentDx = 0;
+            }
+
+            root.addEventListener('pointerdown', onPointerDown, { passive: true });
+            root.addEventListener('pointermove', onPointerMove, { passive: true });
+            root.addEventListener('pointerup', onPointerUp);
+            root.addEventListener('pointercancel', onPointerUp);
+
             go(0);
         }
 
-        // 1. Fan Deck
+        // 1. Fan Deck (Slightly larger: 168x250)
         const fanEl = document.getElementById('ax-fan');
         if (fanEl) {
             deck(fanEl, SONGS, function (o, dx) {
                 const f = o - dx / 90;
                 const a = Math.abs(f);
                 return {
-                    t: 'translateX(' + (f * 34) + 'px) translateY(' + (a * a * 3) + 'px) rotate(' + (f * 7) + 'deg) scale(' + (1 - Math.min(a, 4) * 0.07) + ')',
+                    t: 'translateX(' + (f * 38) + 'px) translateY(' + (a * a * 3.5) + 'px) rotate(' + (f * 7) + 'deg) scale(' + (1 - Math.min(a, 4) * 0.07) + ')',
                     o: a > 4 ? 0 : 1 - a * 0.08,
                     z: 100 - Math.round(a * 10)
                 };
-            });
+            }, { w: 168, h: 250 });
         }
 
-        // 2. Bento Mix
+        // 2. Bento Mix (Posters visible + clean labels)
         const bentoEl = document.getElementById('ax-bento');
         if (bentoEl) {
             const shape = ['big', '', '', '', '', 'wide'];
@@ -200,7 +250,7 @@
             });
         }
 
-        // 3. Record Spines
+        // 3. Record Spines (Expanded shelf: 38px unexpanded, 185px expanded)
         const spEl = document.getElementById('ax-spines');
         if (spEl) {
             spEl.className = 'ax-spines';
@@ -210,7 +260,8 @@
                 d.style.setProperty('--c', s.c || '#444');
                 d.innerHTML = '<span>' + s.t + '</span><em>' + s.t + '</em>';
                 d.prepend(cov(s));
-                d.onclick = function () {
+                d.onclick = function (e) {
+                    e.stopPropagation();
                     if (d.classList.contains('on')) return onPlay(s);
                     spEl.querySelectorAll('.on').forEach(function (x) { x.classList.remove('on'); });
                     d.classList.add('on');
@@ -223,35 +274,35 @@
             if (spEl.children[2]) spEl.children[2].classList.add('on');
         }
 
-        // 4. Arc Carousel
+        // 4. Arc Carousel (Slightly larger: 150x260)
         const arcEl = document.getElementById('ax-arc');
         if (arcEl) {
             deck(arcEl, SONGS, function (o, dx) {
                 const f = o - dx / 90;
                 const a = Math.abs(f);
                 return {
-                    t: 'translateX(' + (f * 88) + 'px) translateY(' + (a * a * 14) + 'px) rotate(' + (f * 9) + 'deg) scale(' + (1 - Math.min(a, 3) * 0.14) + ')',
+                    t: 'translateX(' + (f * 96) + 'px) translateY(' + (a * a * 15) + 'px) rotate(' + (f * 9) + 'deg) scale(' + (1 - Math.min(a, 3) * 0.14) + ')',
                     o: a > 2.6 ? 0 : 1 - a * 0.12,
                     z: 100 - Math.round(a * 10)
                 };
-            }, { w: 132, h: 240 });
+            }, { w: 150, h: 260 });
         }
 
-        // 5. Coverflow (3D)
+        // 5. Coverflow (3D) (Slightly larger: 155x235)
         const flowEl = document.getElementById('ax-flow');
         if (flowEl) {
             deck(flowEl, SONGS, function (o, dx) {
                 const f = o - dx / 90;
                 const a = Math.abs(f);
                 return {
-                    t: 'translateX(' + (f * 64) + 'px) translateZ(' + (-a * 60) + 'px) rotateY(' + clamp(f * -42, -60, 60) + 'deg) scale(' + (1 - Math.min(a, 3) * 0.06) + ')',
+                    t: 'translateX(' + (f * 70) + 'px) translateZ(' + (-a * 65) + 'px) rotateY(' + clamp(f * -42, -60, 60) + 'deg) scale(' + (1 - Math.min(a, 3) * 0.06) + ')',
                     o: a > 3 ? 0 : 1 - a * 0.1,
                     z: 100 - Math.round(a * 10)
                 };
-            }, { w: 140, h: 210, cls: 'flow' });
+            }, { w: 155, h: 235, cls: 'flow' });
         }
 
-        // 6. Polaroid Pile
+        // 6. Polaroid Pile (Slightly larger: 190x295 with snappy tap flick)
         const pileEl = document.getElementById('ax-pile');
         if (pileEl) {
             pileEl.className = 'ax-pile';
@@ -269,7 +320,8 @@
                     d.style.zIndex = 50 - i;
                     d.style.transform = 'rotate(' + rot(i) + 'deg) translateY(' + (i * 4) + 'px)';
                     if (i === 0) {
-                        d.onclick = function () {
+                        d.onclick = function (e) {
+                            e.stopPropagation();
                             d.classList.add('fly');
                             setTimeout(function () {
                                 order.push(order.shift());
@@ -283,7 +335,7 @@
             drawPile();
         }
 
-        // 7. Vinyl Peek
+        // 7. Vinyl Peek (Slightly larger: 145px card, 136px disc)
         const vinylEl = document.getElementById('ax-vinyl');
         if (vinylEl) {
             vinylEl.className = 'ax-vrow';
@@ -294,7 +346,8 @@
                 d.innerHTML = '<div class="disc"></div>';
                 d.appendChild(cov(s));
                 d.insertAdjacentHTML('beforeend', '<p>' + s.t + '</p>');
-                d.onclick = function () {
+                d.onclick = function (e) {
+                    e.stopPropagation();
                     if (d.classList.contains('on')) return onPlay(s);
                     vinylEl.querySelectorAll('.on').forEach(function (x) { x.classList.remove('on'); });
                     d.classList.add('on');
@@ -303,7 +356,7 @@
             });
         }
 
-        // 8. Marquee Rows
+        // 8. Marquee Rows (Slightly larger: 104x104)
         const mqEl = document.getElementById('ax-mq');
         if (mqEl) {
             [0, 1].forEach(function (n) {
@@ -322,7 +375,7 @@
             });
         }
 
-        // 9. Top Chart
+        // 9. Top Chart (Slightly larger: 165px wide, 116px cover)
         const chartEl = document.getElementById('ax-chart');
         if (chartEl) {
             chartEl.className = 'ax-chart';

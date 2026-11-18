@@ -589,7 +589,10 @@
         color: #ffffff !important;
     }
     html body .ax-cover {
-        background: var(--c, #444) center/cover !important;
+        background-color: var(--c, #222) !important;
+        background-position: center !important;
+        background-size: cover !important;
+        background-repeat: no-repeat !important;
         border-radius: 12px !important;
         aspect-ratio: 1 !important;
     }
@@ -597,7 +600,7 @@
     /* ---- deck engine (fan + arc) ---- */
     html body .ax-deck {
         position: relative !important;
-        height: var(--h, 230px) !important;
+        height: var(--h, 250px) !important;
         touch-action: pan-y !important;
         user-select: none !important;
         overflow: hidden !important;
@@ -607,8 +610,8 @@
         position: absolute !important;
         left: 50% !important;
         top: 10px !important;
-        width: var(--w, 150px) !important;
-        margin-left: calc(var(--w, 150px) / -2) !important;
+        width: var(--w, 168px) !important;
+        margin-left: calc(var(--w, 168px) / -2) !important;
         transition: transform .45s cubic-bezier(.2, .9, .25, 1), opacity .35s !important;
         will-change: transform !important;
         cursor: pointer !important;
@@ -691,9 +694,9 @@
     /* ---- spines ---- */
     html body .ax-spines {
         display: flex !important;
-        gap: 6px !important;
+        gap: 8px !important;
         padding: 0 16px !important;
-        height: 190px !important;
+        height: 205px !important;
         overflow-x: auto !important;
         scroll-snap-type: x proximity !important;
         scrollbar-width: none !important;
@@ -703,9 +706,9 @@
         display: none !important;
     }
     html body .ax-spine {
-        flex: 0 0 34px !important;
-        height: 170px !important;
-        border-radius: 6px !important;
+        flex: 0 0 38px !important;
+        height: 180px !important;
+        border-radius: 8px !important;
         background: var(--c) !important;
         position: relative !important;
         overflow: hidden !important;
@@ -713,8 +716,8 @@
         scroll-snap-align: center !important;
         transition: flex-basis .5s cubic-bezier(.2, .9, .25, 1), height .5s cubic-bezier(.2, .9, .25, 1) !important;
     }
-    html body .ax-spine:nth-child(3n) { height: 150px !important; }
-    html body .ax-spine:nth-child(3n+1) { height: 184px !important; }
+    html body .ax-spine:nth-child(3n) { height: 160px !important; }
+    html body .ax-spine:nth-child(3n+1) { height: 195px !important; }
     html body .ax-spine span {
         position: absolute !important;
         inset: 0 !important;
@@ -723,7 +726,7 @@
         justify-content: center !important;
         writing-mode: vertical-rl !important;
         transform: rotate(180deg) !important;
-        font-size: 12px !important;
+        font-size: 12.5px !important;
         color: rgba(0, 0, 0, .75) !important;
         padding: 8px 0 !important;
         transition: opacity .2s !important;
@@ -745,7 +748,7 @@
         left: 10px !important;
         right: 10px !important;
         bottom: 8px !important;
-        font: 500 13px/1.2 system-ui, sans-serif !important;
+        font: 600 13.5px/1.2 system-ui, sans-serif !important;
         font-style: normal !important;
         color: #fff !important;
         opacity: 0 !important;
@@ -753,8 +756,8 @@
         transition: opacity .3s .2s !important;
     }
     html body .ax-spine.on {
-        flex-basis: 170px !important;
-        height: 190px !important;
+        flex-basis: 185px !important;
+        height: 205px !important;
     }
     html body .ax-spine.on span { opacity: 0 !important; }
     html body .ax-spine.on .ax-cover,
@@ -835,27 +838,27 @@
     /* ---- polaroid pile ---- */
     html body .ax-pile {
         position: relative !important;
-        height: 270px !important;
+        height: 295px !important;
         width: 100% !important;
     }
     html body .ax-pol {
         position: absolute !important;
         left: 50% !important;
         top: 6px !important;
-        width: 170px !important;
-        margin-left: -85px !important;
+        width: 190px !important;
+        margin-left: -95px !important;
         background: #f5efe6 !important;
-        padding: 8px 8px 30px !important;
-        border-radius: 4px !important;
-        box-shadow: 0 10px 22px rgba(0, 0, 0, .55) !important;
+        padding: 9px 9px 32px !important;
+        border-radius: 6px !important;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, .6) !important;
         transition: transform .45s cubic-bezier(.2, .9, .25, 1), opacity .35s !important;
         cursor: pointer !important;
         color: #1C1727 !important;
-        font-size: 12px !important;
+        font-size: 13px !important;
         text-align: center !important;
     }
     html body .ax-pol .ax-cover {
-        border-radius: 2px !important;
+        border-radius: 4px !important;
         width: 100% !important;
     }
     html body .ax-pol span {
@@ -863,7 +866,7 @@
         left: 0 !important;
         right: 0 !important;
         bottom: 8px !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         color: #1c1727 !important;
     }
     html body .ax-pol.fly {
@@ -874,8 +877,8 @@
     /* ---- vinyl peek ---- */
     html body .ax-vrow {
         display: flex !important;
-        gap: 14px !important;
-        padding: 0 16px 4px !important;
+        gap: 16px !important;
+        padding: 0 16px 8px !important;
         overflow-x: auto !important;
         scrollbar-width: none !important;
     }
@@ -885,22 +888,22 @@
     html body .ax-vs {
         flex: none !important;
         position: relative !important;
-        width: 130px !important;
-        margin-right: 34px !important;
+        width: 145px !important;
+        margin-right: 40px !important;
         cursor: pointer !important;
     }
     html body .ax-vs .ax-cover {
         position: relative !important;
         z-index: 2 !important;
-        width: 130px !important;
+        width: 145px !important;
     }
     html body .ax-vs .disc {
         position: absolute !important;
         z-index: 1 !important;
         left: 6px !important;
         top: 4px !important;
-        width: 122px !important;
-        height: 122px !important;
+        width: 136px !important;
+        height: 136px !important;
         border-radius: 50% !important;
         background: repeating-radial-gradient(circle, #15101c 0 2px, #221a2e 3px 4px) !important;
         transform: translateX(16px) !important;
@@ -910,17 +913,18 @@
     }
     html body .ax-vs .disc::after {
         content: "" !important;
-        width: 34px !important;
-        height: 34px !important;
+        width: 38px !important;
+        height: 38px !important;
         border-radius: 50% !important;
         background: var(--c) !important;
     }
     html body .ax-vs.on .disc {
-        transform: translateX(70px) rotate(220deg) !important;
+        transform: translateX(78px) rotate(220deg) !important;
     }
     html body .ax-vs p {
         margin: 8px 0 0 !important;
-        font-size: 13px !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
@@ -935,7 +939,7 @@
     }
     html body .ax-track {
         display: flex !important;
-        gap: 8px !important;
+        gap: 10px !important;
         width: max-content !important;
         animation: axM 32s linear infinite !important;
     }
@@ -947,8 +951,8 @@
         animation-play-state: paused !important;
     }
     html body .ax-track .ax-cover {
-        width: 92px !important;
-        height: 92px !important;
+        width: 104px !important;
+        height: 104px !important;
         flex: none !important;
         cursor: pointer !important;
     }
@@ -959,7 +963,7 @@
     /* ---- top chart ---- */
     html body .ax-chart {
         display: flex !important;
-        gap: 8px !important;
+        gap: 10px !important;
         padding: 0 16px !important;
         overflow-x: auto !important;
         scrollbar-width: none !important;
@@ -970,15 +974,15 @@
     html body .ax-ch {
         flex: none !important;
         position: relative !important;
-        width: 150px !important;
-        height: 130px !important;
+        width: 165px !important;
+        height: 140px !important;
         cursor: pointer !important;
     }
     html body .ax-ch em {
         position: absolute !important;
         left: 0 !important;
         bottom: -14px !important;
-        font: 800 128px/1 system-ui, sans-serif !important;
+        font: 800 132px/1 system-ui, sans-serif !important;
         font-style: normal !important;
         color: #0a0a0a !important;
         -webkit-text-stroke: 2px #5a4d72 !important;
@@ -988,7 +992,7 @@
         position: absolute !important;
         right: 0 !important;
         top: 0 !important;
-        width: 104px !important;
+        width: 116px !important;
         box-shadow: -8px 0 16px rgba(0, 0, 0, .5) !important;
         transition: transform .15s !important;
     }
