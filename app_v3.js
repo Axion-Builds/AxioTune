@@ -18,6 +18,9 @@ window.AxioShaderEngine = (function() {
     let animId = null;
 
     function init() {
+        if (window.innerWidth <= 768) {
+            return; // Pure OLED black on mobile - prevent mobile GPU overheat & battery drain
+        }
         canvas = document.getElementById('webgl-shader-canvas');
         if (!canvas) return;
 
@@ -87,6 +90,7 @@ window.AxioShaderEngine = (function() {
     }
 
     function start() {
+        if (window.innerWidth <= 768) return;
         if (kawarp) kawarp.start();
         isRunning = true;
     }
@@ -95,6 +99,14 @@ window.AxioShaderEngine = (function() {
         if (kawarp) kawarp.stop();
         isRunning = false;
     }
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768) {
+            stop();
+        } else if (!isRunning && kawarp) {
+            start();
+        }
+    }, { passive: true });
 
     if (document.getElementById('webgl-shader-canvas')) {
         setTimeout(init, 10);
@@ -5413,6 +5425,16 @@ function onPlayerStateChange(event) {
                 } else if (lineElements.length > 0) {
                     targetY = (panelHeight / 2) - (lineElements[0].el.offsetHeight / 2) - lineElements[0].el.offsetTop;
                 } else targetY = panelHeight / 2;
+
+                // On mobile: Hardware-accelerated smooth center scroll without fighting touch gestures
+                if (lineChanged && window.innerWidth <= 768 && activeLineIndex !== -1 && lineElements[activeLineIndex]) {
+                    const activeEl = lineElements[activeLineIndex].el;
+                    const container = document.getElementById('lyrics-container');
+                    if (container && activeEl) {
+                        const targetScroll = activeEl.offsetTop - (container.clientHeight / 2) + (activeEl.clientHeight / 2);
+                        container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+                    }
+                }
             }
 
             // ONLY animate active line's words on every frame if in word_synced mode
@@ -5451,6 +5473,13 @@ function onPlayerStateChange(event) {
 
         function lerpScroll() {
             if (window._currentLyricsType === 'plain_text') return;
+            // On mobile (<= 768px), we do NOT apply inline translateY transforms to avoid fighting native touch scrolling
+            if (window.innerWidth <= 768) {
+                if (lyricsContainer && lyricsContainer.style.transform && lyricsContainer.style.transform !== 'none') {
+                    lyricsContainer.style.transform = 'none';
+                }
+                return;
+            }
             const diff = targetY - currentY;
             if (Math.abs(diff) > 0.5) {
                 currentY += diff * 0.05; 
