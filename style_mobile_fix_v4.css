@@ -1870,13 +1870,13 @@
             background: linear-gradient(
                 to right,
                 #ffffff 0%,
-                #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 6px)),
-                rgba(255, 255, 255, 0.5) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 6px)),
+                #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 20px)),
+                rgba(255, 255, 255, 0.5) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 20px)),
                 rgba(255, 255, 255, 0.5) 100%
             );
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
             transform: scale(var(--lrc-bounce-scale, 1)) translateY(var(--lrc-bounce-y, 0px));
-            filter: drop-shadow(0 0 var(--lrc-glow-radius, 6px) rgba(255, 255, 255, var(--lrc-glow-opacity, 0.35)));
+            filter: drop-shadow(0 0 var(--lrc-glow-radius, 8px) rgba(255, 255, 255, var(--lrc-glow-opacity, 0.35)));
         }
 
         .lyric-word.passed {
@@ -8760,7 +8760,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     -webkit-text-fill-color: #ffffff !important;
     transform: translateY(0) scale(1);
     transform-origin: bottom center !important;
-    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s ease !important;
 }
 
 /* In active line: future words preview cleanly at 50% white */
@@ -8778,13 +8778,13 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     filter: none !important;
 }
 
-/* Currently sung word: buttery smooth wipe, zero flicker, stable font metrics */
+/* Currently sung word: buttery liquid wipe honoring user Liquid Fill Smoothness & Sung Word Glow settings */
 .lyric-line.active-line .lyric-word.active {
     background: linear-gradient(
         to right,
         #ffffff 0%,
-        #ffffff calc(var(--progress, 0%) - 2%),
-        rgba(255, 255, 255, 0.5) calc(var(--progress, 0%) + 2%),
+        #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 20px)),
+        rgba(255, 255, 255, 0.5) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 20px)),
         rgba(255, 255, 255, 0.5) 100%
     ) !important;
     -webkit-background-clip: text !important;
@@ -8792,7 +8792,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
     transform: translateY(var(--lrc-bounce-y, 0px)) scale(var(--lrc-bounce-scale, 1)) !important;
-    filter: none !important;
+    filter: drop-shadow(0 0 var(--lrc-glow-radius, 8px) rgba(255, 255, 255, var(--lrc-glow-opacity, 0.35))) !important;
     text-shadow: none !important;
 }
 
