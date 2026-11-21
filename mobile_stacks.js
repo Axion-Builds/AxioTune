@@ -305,40 +305,40 @@
 
         // Render Base HTML skeleton with dynamic headers in Natural Music Flow order
         container.innerHTML = `
-            <!-- 1. RESUME PLAYBACK -->
-            <div class="ax-sec" id="sec-arc">
-                <div class="ax-head"><small>Pick up where you left</small><b>Recent Sessions</b></div>
-                <div id="ax-arc"></div>
-            </div>
-
-            <!-- 2. QUICK PICKS (3D COVERFLOW HERO) -->
+            <!-- 1. HERO 3D COVERFLOW (DISCOVERY AT TOP) -->
             <div class="ax-sec" id="sec-flow">
                 <div class="ax-hb"><em>3D</em><b>Quick Picks Flow</b><small>Flip through discovery albums</small></div>
                 <div id="ax-flow"></div>
             </div>
 
-            <!-- 3. PRIMARY RECOMMENDATIONS (SEED 1) -->
+            <!-- 2. FAN DECK (PRIMARY RECOMMENDATION) -->
             <div class="ax-sec" id="sec-fan">
                 <div class="ax-head"><small>Because you listened to</small><b>${seed1.t}</b></div>
                 <div id="ax-fan"></div>
             </div>
 
-            <!-- 4. YOUR TASTE MIX -->
-            <div class="ax-sec" id="sec-bento">
-                <div class="ax-head"><small>Your taste mix</small><b>Personalized Mix</b></div>
-                <div id="ax-bento"></div>
-            </div>
-
-            <!-- 5. TOP 8 THIS WEEK (CHARTS) -->
+            <!-- 3. TOP 8 THIS WEEK (OFFICIAL CHARTS) -->
             <div class="ax-sec" id="sec-chart">
                 <div class="ax-hd"><b>Top 8 This Week</b><a href="javascript:void(0)">Global Hits</a></div>
                 <div id="ax-chart"></div>
             </div>
 
-            <!-- 6. MOOD RADIO (VINYL PEEK) -->
+            <!-- 4. YOUR TASTE MIX (BENTO MOSAIC) -->
+            <div class="ax-sec" id="sec-bento">
+                <div class="ax-head"><small>Your taste mix</small><b>Personalized Mix</b></div>
+                <div id="ax-bento"></div>
+            </div>
+
+            <!-- 5. MOOD RADIO (VINYL SLEEVES) -->
             <div class="ax-sec" id="sec-vinyl">
                 <div class="ax-hd"><b>Mood Radio • ${currentMood}</b><a href="javascript:void(0)" onclick="document.getElementById('mood-radio-section')?.scrollIntoView({behavior:'smooth'})">See all</a></div>
                 <div id="ax-vinyl"></div>
+            </div>
+
+            <!-- 6. RESUME PLAYBACK (ARC CAROUSEL) -->
+            <div class="ax-sec" id="sec-arc">
+                <div class="ax-head"><small>Pick up where you left</small><b>Recent Sessions</b></div>
+                <div id="ax-arc"></div>
             </div>
 
             <!-- 7. DISCOVER (MARQUEE DRIFT) -->
