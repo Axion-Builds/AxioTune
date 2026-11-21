@@ -1822,7 +1822,7 @@
             filter: blur(0px) !important;
             opacity: 1 !important; transform: scale(1) !important;
             color: #ffffff !important;
-            font-weight: 800 !important;
+            font-weight: 700 !important;
             letter-spacing: -0.025em !important;
             line-height: 1.36 !important;
             padding-left: 0 !important;
@@ -8631,9 +8631,9 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     letter-spacing: -0.025em !important;
     line-height: 1.36 !important;
     transform-origin: left center !important;
-    filter: none !important;
-    opacity: 0.45 !important;
-    transform: scale(0.97) !important;
+    filter: blur(2.2px) !important;
+    opacity: 0.38 !important;
+    transform: scale(0.98) !important;
     padding-left: 0 !important;
     border-left: none !important;
     padding-top: 0.25em !important;
@@ -8641,13 +8641,19 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     margin-bottom: 1.25rem !important;
     overflow: visible !important;
     text-shadow: none !important;
+    transition: filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+.lyric-line:hover {
+    opacity: 0.75 !important;
+    filter: blur(0.8px) !important;
+    transform: scale(0.99) !important;
 }
 .lyric-line.active-line {
     font-family: var(--lyrics-font-family, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif) !important;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
     letter-spacing: -0.025em !important;
     line-height: 1.36 !important;
-    filter: none !important;
+    filter: blur(0px) drop-shadow(0 0 var(--lrc-glow-radius, 8px) rgba(255, 255, 255, calc(var(--lrc-glow-opacity, 0.35) * 0.7))) !important;
     opacity: 1 !important;
     transform: scale(1) !important;
     color: #ffffff !important;
@@ -8754,7 +8760,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     -webkit-text-fill-color: #ffffff !important;
     transform: translateY(0) scale(1);
     transform-origin: bottom center !important;
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease !important;
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 /* In active line: future words preview cleanly at 50% white */
@@ -8772,13 +8778,13 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     filter: none !important;
 }
 
-/* Currently sung word: smooth, natural fill without harsh razor cut lines; glow directly tied to user settings */
+/* Currently sung word: buttery smooth wipe, zero flicker, stable font metrics */
 .lyric-line.active-line .lyric-word.active {
     background: linear-gradient(
         to right,
         #ffffff 0%,
-        #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 6px)),
-        rgba(255, 255, 255, 0.5) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 6px)),
+        #ffffff calc(var(--progress, 0%) - 2%),
+        rgba(255, 255, 255, 0.5) calc(var(--progress, 0%) + 2%),
         rgba(255, 255, 255, 0.5) 100%
     ) !important;
     -webkit-background-clip: text !important;
@@ -8786,11 +8792,11 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
     transform: translateY(var(--lrc-bounce-y, 0px)) scale(var(--lrc-bounce-scale, 1)) !important;
-    filter: drop-shadow(0 0 var(--lrc-glow-radius, 6px) rgba(255, 255, 255, var(--lrc-glow-opacity, 0.35))) !important;
+    filter: none !important;
     text-shadow: none !important;
 }
 
-/* Passed sung words: 100% pure solid, crisp white without any dark shadows */
+/* Passed sung words: 100% pure solid, crisp white without any dark shadows or abrupt cuts */
 .lyric-line.active-line .lyric-word.passed {
     background: none !important;
     -webkit-background-clip: border-box !important;
