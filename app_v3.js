@@ -1985,7 +1985,7 @@ function onPlayerStateChange(event) {
         window.openAddToPlaylistPopup = openAddToPlaylistPopup;
 
         currentY = targetY = rightPanel.offsetHeight / 2;
-        lyricsContainer.style.transform = `translateY(${currentY}px)`;
+        lyricsContainer.style.transform = `translate3d(0, ${currentY.toFixed(2)}px, 0)`;
 
         // Handle ENTER key in search — show results page first
         songSearchInput.addEventListener('keydown', (e) => {
@@ -2356,9 +2356,9 @@ function onPlayerStateChange(event) {
                 document.head.appendChild(t); return t;
             })();
             if (s.lyricsStyle === 'glow') {
-                styleTag.textContent = '.lyric-line.active-line { text-shadow: 0 0 20px white, 0 0 40px white; filter: none !important; }';
+                styleTag.textContent = '.lyric-line.active-line { text-shadow: 0 0 14px rgba(255, 255, 255, 0.28); }';
             } else if (s.lyricsStyle === 'underline') {
-                styleTag.textContent = '.lyric-line.active-line { text-decoration: underline; text-decoration-color: white; filter: none !important; }';
+                styleTag.textContent = '.lyric-line.active-line { text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.7); }';
             } else {
                 styleTag.textContent = '';
             }
@@ -4181,7 +4181,7 @@ function onPlayerStateChange(event) {
                         words: hasWords ? l.words.map((w, idx, arr) => {
                             let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
                             if (nextTime <= w.time) nextTime = w.time + 0.3;
-                            return { text: w.word || w.text || '', start: w.time || w.start || 0, end: nextTime };
+                            return { text: w.word || w.text || '', start: w.time || w.start || 0, end: nextTime, spaceAfter: w.spaceAfter !== false };
                         }) : []
                     };
                 });
@@ -4447,7 +4447,7 @@ function onPlayerStateChange(event) {
                                         words: hasWords ? l.words.map((w, idx, arr) => {
                                             let nextTime = (idx + 1 < arr.length) ? arr[idx + 1].time : (w.time + 0.48);
                                             if (nextTime <= w.time) nextTime = w.time + 0.3;
-                                            return { text: w.word || w.text || '', start: w.time || w.start || 0, end: nextTime };
+                                            return { text: w.word || w.text || '', start: w.time || w.start || 0, end: nextTime, spaceAfter: w.spaceAfter !== false };
                                         }) : []
                                     };
                                 });
@@ -5298,15 +5298,18 @@ function onPlayerStateChange(event) {
                         ? line.words
                         : (line.text || '').split(/\s+/).filter(Boolean).map(w => ({ text: w, start: line.start, end: line.end }));
 
-                    rawWords.forEach((word) => {
+                    rawWords.forEach((word, wIdx) => {
                         const wordSpan = document.createElement('span');
-                        wordSpan.className = 'lyric-word';
+                        const joinNext = word.spaceAfter === false && wIdx < rawWords.length - 1;
+                        wordSpan.className = joinNext ? 'lyric-word is-joined-syl' : 'lyric-word';
                         wordSpan.textContent = word.text;
                         wordSpan.dataset.start = word.start;
                         wordSpan.dataset.end = word.end;
                         wordsWrapper.appendChild(wordSpan);
-                        wordsWrapper.appendChild(document.createTextNode(' '));
-                        const wData = { el: wordSpan, start: word.start, end: word.end, state: 'future' };
+                        if (!joinNext && wIdx < rawWords.length - 1) {
+                            wordsWrapper.appendChild(document.createTextNode(' '));
+                        }
+                        const wData = { el: wordSpan, start: word.start, end: word.end, state: 'future', joinNext };
                         wordElements.push(wData);
                         lineWords.push(wData);
                     });
@@ -5406,7 +5409,7 @@ function onPlayerStateChange(event) {
                         if (i < currentLineIndex) {
                             line.words.forEach(w => {
                                 if (w.state !== 'passed') {
-                                    w.el.className = 'lyric-word passed';
+                                    w.el.className = w.joinNext ? 'lyric-word is-joined-syl passed' : 'lyric-word passed';
                                     w.el.style.setProperty('--progress', '100%');
                                     w.state = 'passed';
                                 }
@@ -5415,7 +5418,7 @@ function onPlayerStateChange(event) {
                             // Line-synced: All words in the active line light up in Apple Music pure white!
                             line.words.forEach(w => {
                                 if (w.state !== 'passed') {
-                                    w.el.className = 'lyric-word passed';
+                                    w.el.className = w.joinNext ? 'lyric-word is-joined-syl passed' : 'lyric-word passed';
                                     w.el.style.setProperty('--progress', '100%');
                                     w.state = 'passed';
                                 }
@@ -5423,7 +5426,7 @@ function onPlayerStateChange(event) {
                         } else if (i > currentLineIndex) {
                             line.words.forEach(w => {
                                 if (w.state !== 'future') {
-                                    w.el.className = 'lyric-word';
+                                    w.el.className = w.joinNext ? 'lyric-word is-joined-syl' : 'lyric-word';
                                     w.el.style.setProperty('--progress', '0%');
                                     w.state = 'future';
                                 }
@@ -5432,8 +5435,8 @@ function onPlayerStateChange(event) {
                     }
                 }
 
-                // Only calculate layout when the line changes or window resizes to prevent massive layout thrashing
-                const panelHeight = rightPanel.offsetHeight;
+                // Calculate center scroll target using cached panel height to avoid layout thrashing
+                const panelHeight = cachedPanelHeight || rightPanel.offsetHeight;
                 if (activeLineIndex !== -1 && lineElements[activeLineIndex]) {
                     targetY = (panelHeight / 2) - (lineElements[activeLineIndex].el.offsetHeight / 2) - lineElements[activeLineIndex].el.offsetTop;
                 } else if (lineElements.length > 0) {
@@ -5458,22 +5461,23 @@ function onPlayerStateChange(event) {
                     activeLine.words.forEach(w => {
                         let pct = 0;
                         const dur = Math.max(0.15, w.end - w.start);
+                        const baseCls = w.joinNext ? 'lyric-word is-joined-syl' : 'lyric-word';
                         if (time >= w.end) {
                             if (w.state !== 'passed') {
-                                w.el.className = 'lyric-word passed';
+                                w.el.className = baseCls + ' passed';
                                 w.el.style.setProperty('--progress', '100%');
                                 w.state = 'passed';
                             }
                         } else if (time >= w.start) {
                             pct = Math.max(0, Math.min(100, ((time - w.start) / dur) * 100));
                             if (w.state !== 'active') {
-                                w.el.className = 'lyric-word active';
+                                w.el.className = baseCls + ' active';
                                 w.state = 'active';
                             }
                             w.el.style.setProperty('--progress', `${pct}%`);
                         } else {
                             if (w.state !== 'future') {
-                                w.el.className = 'lyric-word';
+                                w.el.className = baseCls;
                                 w.el.style.setProperty('--progress', '0%');
                                 w.state = 'future';
                             }
@@ -5485,7 +5489,11 @@ function onPlayerStateChange(event) {
             lerpScroll();
         }
 
+        let lastLerpTs = performance.now();
         function lerpScroll() {
+            const now = performance.now();
+            const dt = Math.min(0.05, Math.max(0.001, (now - lastLerpTs) / 1000));
+            lastLerpTs = now;
             if (window._currentLyricsType === 'plain_text') return;
             // On mobile (<= 768px), we do NOT apply inline translateY transforms to avoid fighting native touch scrolling
             if (window.innerWidth <= 768) {
@@ -5495,12 +5503,14 @@ function onPlayerStateChange(event) {
                 return;
             }
             const diff = targetY - currentY;
-            if (Math.abs(diff) > 0.5) {
-                currentY += diff * 0.05; 
-                lyricsContainer.style.transform = `translateY(${currentY}px)`;
+            if (Math.abs(diff) > 0.25) {
+                // Frame-rate independent smooth exponential glide (identical smoothness at 60/120/144Hz)
+                const alpha = 1 - Math.exp(-7.2 * dt);
+                currentY += diff * alpha;
+                lyricsContainer.style.transform = `translate3d(0, ${currentY.toFixed(2)}px, 0)`;
             } else if (Math.abs(diff) > 0) {
                 currentY = targetY;
-                lyricsContainer.style.transform = `translateY(${currentY}px)`;
+                lyricsContainer.style.transform = `translate3d(0, ${currentY.toFixed(2)}px, 0)`;
             }
         }
 

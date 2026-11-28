@@ -1764,21 +1764,28 @@ def parse_ttml_lyrics(ttml_text: str):
 
     for b_str, content in p_matches:
         line_start = parse_time_str(b_str)
-        # Extract <span> word tags if available: <span begin="..." end="...">word</span>
-        span_matches = re.findall(r'<span\s+[^>]*begin=["\']([^"\']+)["\'][^>]*>(.*?)</span>', content, re.DOTALL | re.IGNORECASE)
+        # Extract <span> word/syllable tags while preserving whitespace boundaries between spans
+        span_iter = list(re.finditer(r'<span\s+[^>]*begin=["\']([^"\']+)["\'][^>]*>(.*?)</span>', content, re.DOTALL | re.IGNORECASE))
         words = []
         clean_text = re.sub(r'<[^>]+>', '', content).strip()
         if not clean_text:
             continue
 
-        if span_matches:
-            for s_begin, s_text in span_matches:
-                w_clean = re.sub(r'<[^>]+>', '', s_text).strip()
-                if w_clean:
-                    words.append({
-                        "word": w_clean,
-                        "time": parse_time_str(s_begin)
-                    })
+        if span_iter:
+            for idx, m in enumerate(span_iter):
+                s_begin = m.group(1)
+                raw_inner = re.sub(r'<[^>]+>', '', m.group(2))
+                w_clean = raw_inner.strip()
+                if not w_clean:
+                    continue
+                next_start = span_iter[idx + 1].start() if idx + 1 < len(span_iter) else len(content)
+                between_gap = re.sub(r'<[^>]+>', '', content[m.end():next_start])
+                has_trailing_ws = bool(raw_inner and raw_inner[-1].isspace()) or any(ch.isspace() for ch in between_gap)
+                words.append({
+                    "word": w_clean,
+                    "time": parse_time_str(s_begin),
+                    "spaceAfter": has_trailing_ws or (idx == len(span_iter) - 1)
+                })
         else:
             words = []
 
@@ -2073,12 +2080,16 @@ async def fetch_lyricsplus_lyrics(title: str, artist: str, client: httpx.AsyncCl
                     dur = item.get("duration", 0) / 1000.0
                     words = []
                     if l_type == "word":
-                        for syl in item.get("syllabus", []):
-                            w_text = syl.get("text", "").strip()
+                        syls = item.get("syllabus", [])
+                        for s_idx, syl in enumerate(syls):
+                            raw_txt = syl.get("text", "")
+                            w_text = raw_txt.strip()
                             if w_text:
+                                has_space = bool(raw_txt and raw_txt[-1].isspace()) or (s_idx == len(syls) - 1)
                                 words.append({
                                     "word": w_text,
-                                    "time": round(syl.get("time", 0) / 1000.0, 2)
+                                    "time": round(syl.get("time", 0) / 1000.0, 2),
+                                    "spaceAfter": has_space
                                 })
                     lines.append({
                         "time": start,

@@ -1351,10 +1351,10 @@
             mask-image: none !important;
         }
 
-        /* LYRICS VIEW TRANSITION (SPRING PHYSICS) */
+        /* LYRICS VIEW TRANSITION (Do NOT put transform transition here: rAF lerpScroll drives translate3d!) */
         #lyrics-container {
             position: absolute; top: 0; width: 100%; padding: 50vh 0; will-change: transform, opacity, filter;
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s ease, filter 0.35s ease;
+            transition: opacity 0.35s ease, filter 0.35s ease;
             transform-origin: center right;
         }
 
@@ -1852,17 +1852,17 @@
 
         .lyric-word {
             display: inline-block;
-            padding: 0.35em 0.08em 0.25em 0.08em;
-            margin: -0.35em 0.24em -0.25em 0;
+            padding: 0.2em 0;
+            margin: -0.2em 0;
             vertical-align: baseline;
             overflow: visible;
             color: #ffffff;
-            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
             transform-origin: bottom center;
         }
 
         .lyric-line.active-line .lyric-word {
-            background: linear-gradient(to right, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.5) 100%);
+            background: linear-gradient(to right, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.45) 100%);
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
         }
 
@@ -1871,17 +1871,16 @@
                 to right,
                 #ffffff 0%,
                 #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 20px)),
-                rgba(255, 255, 255, 0.5) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 20px)),
-                rgba(255, 255, 255, 0.5) 100%
+                rgba(255, 255, 255, 0.45) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 20px)),
+                rgba(255, 255, 255, 0.45) 100%
             );
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
             transform: scale(var(--lrc-bounce-scale, 1)) translateY(var(--lrc-bounce-y, 0px));
-            filter: drop-shadow(0 0 var(--lrc-glow-radius, 8px) rgba(255, 255, 255, var(--lrc-glow-opacity, 0.35)));
         }
 
         .lyric-word.passed {
-            background: none;
-            -webkit-background-clip: border-box; background-clip: border-box; -webkit-text-fill-color: #ffffff; color: #ffffff;
+            background: linear-gradient(to right, #ffffff 0%, #ffffff 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
             transform: scale(1);
             filter: none;
             text-shadow: none;
@@ -6428,7 +6427,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .lyric-line.active {
-    font-weight: 800;
+    font-weight: 700;
 }
 
 
@@ -8633,7 +8632,7 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     transform-origin: left center !important;
     filter: blur(2.2px) !important;
     opacity: 0.38 !important;
-    transform: scale(0.98) !important;
+    transform: scale(0.985) !important;
     padding-left: 0 !important;
     border-left: none !important;
     padding-top: 0.25em !important;
@@ -8641,19 +8640,19 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     margin-bottom: 1.25rem !important;
     overflow: visible !important;
     text-shadow: none !important;
-    transition: filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transition: filter 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 .lyric-line:hover {
     opacity: 0.75 !important;
     filter: blur(0.8px) !important;
-    transform: scale(0.99) !important;
+    transform: scale(0.992) !important;
 }
 .lyric-line.active-line {
     font-family: var(--lyrics-font-family, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif) !important;
     font-weight: 700 !important;
     letter-spacing: -0.025em !important;
     line-height: 1.36 !important;
-    filter: blur(0px) drop-shadow(0 0 var(--lrc-glow-radius, 8px) rgba(255, 255, 255, calc(var(--lrc-glow-opacity, 0.35) * 0.7))) !important;
+    filter: blur(0px) drop-shadow(0 0 var(--lrc-glow-radius, 6px) rgba(255, 255, 255, calc(var(--lrc-glow-opacity, 0.35) * 0.6))) !important;
     opacity: 1 !important;
     transform: scale(1) !important;
     color: #ffffff !important;
@@ -8749,26 +8748,46 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     will-change: transform, scroll-position !important;
 }
 
-/* --- PURE APPLE MUSIC CRISP TYPOGRAPHY LYRICS --- */
+/* --- PURE APPLE MUSIC CRISP TYPOGRAPHY LYRICS (Consistent font-clip path across ALL states: zero bold snapping!) --- */
 .lyric-word {
     display: inline-block !important;
-    padding: 0.35em 0.08em 0.25em 0.08em !important;
-    margin: -0.35em 0.24em -0.25em 0 !important;
+    padding: 0.2em 0 !important;
+    margin: -0.2em 0 !important;
     vertical-align: baseline !important;
     overflow: visible !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.45) 100%
+    ) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
     transform: translateY(0) scale(1);
     transform-origin: bottom center !important;
-    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s ease !important;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
-/* In active line: future words preview cleanly at 50% white */
+/* On inactive lines, keep consistent background text fill matching line opacity */
+.lyric-line:not(.active-line) .lyric-word {
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.85) 0%,
+        rgba(255, 255, 255, 0.85) 100%
+    ) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+}
+
+/* In active line: future words preview cleanly at 45% white using identical background-clip path */
 .lyric-line.active-line .lyric-word {
     background: linear-gradient(
         to right,
-        rgba(255, 255, 255, 0.5) 0%,
-        rgba(255, 255, 255, 0.5) 100%
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.45) 100%
     ) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
@@ -8778,31 +8797,35 @@ body.player-screen-active #top-bar-wrapper { justify-content: flex-start !import
     filter: none !important;
 }
 
-/* Currently sung word: buttery liquid wipe honoring user Liquid Fill Smoothness & Sung Word Glow settings */
+/* Currently sung word: smooth liquid wipe tied to user Liquid Fill Smoothness; zero per-word drop-shadow flicker */
 .lyric-line.active-line .lyric-word.active {
     background: linear-gradient(
         to right,
         #ffffff 0%,
         #ffffff calc(var(--progress, 0%) - var(--lrc-fill-smoothness, 20px)),
-        rgba(255, 255, 255, 0.5) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 20px)),
-        rgba(255, 255, 255, 0.5) 100%
+        rgba(255, 255, 255, 0.45) calc(var(--progress, 0%) + var(--lrc-fill-smoothness, 20px)),
+        rgba(255, 255, 255, 0.45) 100%
     ) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
     transform: translateY(var(--lrc-bounce-y, 0px)) scale(var(--lrc-bounce-scale, 1)) !important;
-    filter: drop-shadow(0 0 var(--lrc-glow-radius, 8px) rgba(255, 255, 255, var(--lrc-glow-opacity, 0.35))) !important;
+    filter: none !important;
     text-shadow: none !important;
 }
 
-/* Passed sung words: 100% pure solid, crisp white without any dark shadows or abrupt cuts */
+/* Passed sung words: identical background-clip:text path at 100% white -> ZERO bold rasterization snap! */
 .lyric-line.active-line .lyric-word.passed {
-    background: none !important;
-    -webkit-background-clip: border-box !important;
-    background-clip: border-box !important;
-    -webkit-text-fill-color: #ffffff !important;
-    color: #ffffff !important;
+    background: linear-gradient(
+        to right,
+        #ffffff 0%,
+        #ffffff 100%
+    ) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
     transform: translateY(0) scale(1) !important;
     filter: none !important;
     text-shadow: none !important;
